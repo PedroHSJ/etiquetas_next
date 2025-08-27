@@ -28,7 +28,7 @@ Um sistema completo para criação, personalização e impressão de etiquetas a
 ### 🖨️ Sistema de Impressão
 
 - **Preview de Impressão**: Visualize antes de imprimir
-- **Configuração Flexível**: 
+- **Configuração Flexível**:
   - Quantidade de etiquetas
   - Layout de impressão (etiquetas por linha/coluna)
   - Margens personalizáveis

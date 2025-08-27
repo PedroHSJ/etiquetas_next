@@ -1,34 +1,56 @@
-import React, { useState, useCallback } from 'react';
-import { DndContext, DragEndEvent, DragOverEvent, closestCenter } from '@dnd-kit/core';
-import { LabelType, LabelTemplate, LabelField, LABEL_TYPES_CONFIG } from '@/lib/types/labels';
-import { FieldPalette } from './FieldPalette';
-import { LabelCanvas } from './LabelCanvas';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, Download, Eye, Settings, Grid, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState, useCallback } from "react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  LabelType,
+  LabelTemplate,
+  LabelField,
+  LABEL_TYPES_CONFIG,
+} from "@/lib/types/labels";
+import { Product } from "@/lib/types/products";
+import { FieldPalette } from "./FieldPalette";
+import { LabelCanvas } from "./LabelCanvas";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Save, Download, Eye, Settings, Grid, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface LabelEditorProps {
   initialTemplate?: LabelTemplate;
   onSave?: (template: LabelTemplate) => void;
   onClose?: () => void;
+  products?: Product[];
 }
 
 export const LabelEditor: React.FC<LabelEditorProps> = ({
   initialTemplate,
   onSave,
-  onClose
+  onClose,
+  products = [],
 }) => {
   const [template, setTemplate] = useState<LabelTemplate>(
     initialTemplate || {
-      id: '',
-      name: '',
+      id: "",
+      name: "",
       label_type: LabelType.PRODUTO_ABERTO,
-      paper_size: 'A4',
+      paper_size: "A4",
       labels_per_row: 1,
       labels_per_column: 1,
       label_width: 200,
@@ -40,25 +62,34 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
       gap_horizontal: 10,
       gap_vertical: 10,
       fields: [],
-      organization_id: '',
-      created_by: '',
-      created_at: '',
-      updated_at: ''
+      organization_id: "",
+      created_by: "",
+      created_at: "",
+      updated_at: "",
     }
   );
 
   const [showGrid, setShowGrid] = useState(true);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [activeTab, setActiveTab] = useState('design');
+  const [activeTab, setActiveTab] = useState("design");
+
+  // Configure drag sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 1, // Start dragging after moving 1px
+      },
+    })
+  );
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
-    
-    if (!over || over.id !== 'canvas') return;
+
+    if (!over || over.id !== "canvas") return;
 
     const activeData = active.data.current;
-    
-    if (activeData?.type === 'new-field') {
+
+    if (activeData?.type === "new-field") {
       // Add new field
       const newField: LabelField = {
         id: `field_${Date.now()}`,
@@ -68,53 +99,53 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
         size: { width: 120, height: 30 },
         style: {
           fontSize: 12,
-          fontWeight: 'normal',
-          textAlign: 'left',
-          color: '#000000',
-        }
+          fontWeight: "normal",
+          textAlign: "left",
+          color: "#000000",
+        },
       };
-      
-      setTemplate(prev => ({
+
+      setTemplate((prev) => ({
         ...prev,
-        fields: [...prev.fields, newField]
+        fields: [...prev.fields, newField],
       }));
-      
-      toast.success('Campo adicionado ao template');
+
+      toast.success("Campo adicionado ao template");
     }
   }, []);
 
   const handleSave = () => {
     if (!template.name.trim()) {
-      toast.error('Nome do template é obrigatório');
+      toast.error("Nome do template é obrigatório");
       return;
     }
 
     if (template.fields.length === 0) {
-      toast.error('Adicione pelo menos um campo ao template');
+      toast.error("Adicione pelo menos um campo ao template");
       return;
     }
 
     const savedTemplate = {
       ...template,
       id: template.id || `template_${Date.now()}`,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     onSave?.(savedTemplate);
-    toast.success('Template salvo com sucesso!');
+    toast.success("Template salvo com sucesso!");
   };
 
   const handleExportPDF = () => {
     // TODO: Implement PDF export functionality
-    toast.info('Funcionalidade de exportar PDF será implementada');
+    toast.info("Funcionalidade de exportar PDF será implementada");
   };
 
   const clearTemplate = () => {
-    setTemplate(prev => ({
+    setTemplate((prev) => ({
       ...prev,
-      fields: []
+      fields: [],
     }));
-    toast.success('Template limpo');
+    toast.success("Template limpo");
   };
 
   return (
@@ -124,14 +155,16 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">Editor de Etiquetas</h1>
-            <div 
+            <div
               className="px-3 py-1 rounded-full text-xs font-medium text-white"
-              style={{ backgroundColor: LABEL_TYPES_CONFIG[template.label_type].color }}
+              style={{
+                backgroundColor: LABEL_TYPES_CONFIG[template.label_type].color,
+              }}
             >
               {LABEL_TYPES_CONFIG[template.label_type].name}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -139,36 +172,28 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
               onClick={() => setShowGrid(!showGrid)}
             >
               <Grid className="w-4 h-4 mr-2" />
-              Grade: {showGrid ? 'ON' : 'OFF'}
+              Grade: {showGrid ? "ON" : "OFF"}
             </Button>
-            
+
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsPreviewMode(!isPreviewMode)}
             >
               <Eye className="w-4 h-4 mr-2" />
-              {isPreviewMode ? 'Editar' : 'Visualizar'}
+              {isPreviewMode ? "Editar" : "Visualizar"}
             </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearTemplate}
-            >
+
+            <Button variant="outline" size="sm" onClick={clearTemplate}>
               <Trash2 className="w-4 h-4 mr-2" />
               Limpar
             </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportPDF}
-            >
+
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
               <Download className="w-4 h-4 mr-2" />
               Exportar PDF
             </Button>
-            
+
             <Button
               onClick={handleSave}
               className="bg-blue-600 hover:bg-blue-700"
@@ -176,7 +201,7 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
               <Save className="w-4 h-4 mr-2" />
               Salvar Template
             </Button>
-            
+
             {onClose && (
               <Button variant="outline" onClick={onClose}>
                 Fechar
@@ -189,21 +214,24 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Field Palette */}
-        {!isPreviewMode && (
-          <FieldPalette labelType={template.label_type} />
-        )}
+        {!isPreviewMode && <FieldPalette labelType={template.label_type} />}
 
         {/* Center - Canvas and Settings */}
         <div className="flex-1 flex flex-col">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex-1 flex flex-col"
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="design">Design</TabsTrigger>
               <TabsTrigger value="settings">Configurações</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="design" className="flex-1 p-6 overflow-auto">
               <div className="flex justify-center">
                 <DndContext
+                  sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
                 >
@@ -212,11 +240,12 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
                     onTemplateUpdate={setTemplate}
                     isEditing={!isPreviewMode}
                     showGrid={showGrid}
+                    products={products}
                   />
                 </DndContext>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="settings" className="flex-1 p-6 overflow-auto">
               <div className="max-w-2xl mx-auto space-y-6">
                 <Card>
@@ -229,28 +258,38 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
                       <Input
                         id="template-name"
                         value={template.name}
-                        onChange={(e) => setTemplate(prev => ({ ...prev, name: e.target.value }))}
+                        onChange={(e) =>
+                          setTemplate((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
                         placeholder="Nome do template de etiqueta"
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="label-type">Tipo de Etiqueta</Label>
                       <Select
                         value={template.label_type}
-                        onValueChange={(value: LabelType) => 
-                          setTemplate(prev => ({ ...prev, label_type: value }))
+                        onValueChange={(value: LabelType) =>
+                          setTemplate((prev) => ({
+                            ...prev,
+                            label_type: value,
+                          }))
                         }
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(LABEL_TYPES_CONFIG).map(([key, config]) => (
-                            <SelectItem key={key} value={key}>
-                              {config.name}
-                            </SelectItem>
-                          ))}
+                          {Object.entries(LABEL_TYPES_CONFIG).map(
+                            ([key, config]) => (
+                              <SelectItem key={key} value={key}>
+                                {config.name}
+                              </SelectItem>
+                            )
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -269,10 +308,12 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
                           id="label-width"
                           type="number"
                           value={template.label_width}
-                          onChange={(e) => setTemplate(prev => ({ 
-                            ...prev, 
-                            label_width: parseInt(e.target.value) || 200 
-                          }))}
+                          onChange={(e) =>
+                            setTemplate((prev) => ({
+                              ...prev,
+                              label_width: parseInt(e.target.value) || 200,
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -281,10 +322,12 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
                           id="label-height"
                           type="number"
                           value={template.label_height}
-                          onChange={(e) => setTemplate(prev => ({ 
-                            ...prev, 
-                            label_height: parseInt(e.target.value) || 100 
-                          }))}
+                          onChange={(e) =>
+                            setTemplate((prev) => ({
+                              ...prev,
+                              label_height: parseInt(e.target.value) || 100,
+                            }))
+                          }
                         />
                       </div>
                     </div>
@@ -300,8 +343,11 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
                       <Label htmlFor="paper-size">Tamanho do Papel</Label>
                       <Select
                         value={template.paper_size}
-                        onValueChange={(value: 'A4' | 'CUSTOM') => 
-                          setTemplate(prev => ({ ...prev, paper_size: value }))
+                        onValueChange={(value: "A4" | "CUSTOM") =>
+                          setTemplate((prev) => ({
+                            ...prev,
+                            paper_size: value,
+                          }))
                         }
                       >
                         <SelectTrigger>
@@ -313,32 +359,40 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="labels-per-row">Etiquetas por Linha</Label>
+                        <Label htmlFor="labels-per-row">
+                          Etiquetas por Linha
+                        </Label>
                         <Input
                           id="labels-per-row"
                           type="number"
                           min="1"
                           value={template.labels_per_row}
-                          onChange={(e) => setTemplate(prev => ({ 
-                            ...prev, 
-                            labels_per_row: parseInt(e.target.value) || 1 
-                          }))}
+                          onChange={(e) =>
+                            setTemplate((prev) => ({
+                              ...prev,
+                              labels_per_row: parseInt(e.target.value) || 1,
+                            }))
+                          }
                         />
                       </div>
                       <div>
-                        <Label htmlFor="labels-per-column">Etiquetas por Coluna</Label>
+                        <Label htmlFor="labels-per-column">
+                          Etiquetas por Coluna
+                        </Label>
                         <Input
                           id="labels-per-column"
                           type="number"
                           min="1"
                           value={template.labels_per_column}
-                          onChange={(e) => setTemplate(prev => ({ 
-                            ...prev, 
-                            labels_per_column: parseInt(e.target.value) || 1 
-                          }))}
+                          onChange={(e) =>
+                            setTemplate((prev) => ({
+                              ...prev,
+                              labels_per_column: parseInt(e.target.value) || 1,
+                            }))
+                          }
                         />
                       </div>
                     </div>

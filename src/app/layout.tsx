@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/provider/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProfileProvider } from "@/contexts/ProfileContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,11 +17,15 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ProfileProvider>
+              {children}
+            </ProfileProvider>
+          </AuthProvider>
           <Toaster />
         </ThemeProvider>
       </body>

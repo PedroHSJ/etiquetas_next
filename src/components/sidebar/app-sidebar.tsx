@@ -7,6 +7,7 @@ import {
   SquareTerminal,
   Settings,
   Tags,
+  Package,
 } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -145,24 +146,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
+        title: "Produtos",
+        url: "/produtos",
+        icon: Package,
+        isActive: pathname.startsWith("/produtos"),
+      },
+      {
         title: "Etiquetas",
         url: "/etiquetas",
         icon: Tags,
         isActive: pathname.startsWith("/etiquetas"),
       },
-      {
-        title: "Configurações",
-        url: "#",
-        icon: Settings,
-        isActive: pathname.startsWith("/observacoes"),
-        items: [
-          {
-            title: "Observações",
-            url: "/observacoes/list",
-            isActive: pathname.startsWith("/observacoes"),
-          },
-        ],
-      },
+              {
+          title: "Configurações",
+          url: "#",
+          icon: Settings,
+          isActive: pathname.startsWith("/observacoes") || pathname.startsWith("/configuracoes"),
+          items: [
+            {
+              title: "Observações",
+              url: "/observacoes/list",
+              isActive: pathname.startsWith("/observacoes"),
+            },
+
+          ],
+        },
       // {
       //   title: "Documentation",
       //   url: "#",
@@ -213,7 +221,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
   return (
     <Sidebar {...props} variant="inset">
-      <SidebarHeader>{/* <TeamSwitcher /> */}</SidebarHeader>
+      <SidebarHeader>
+        <TeamSwitcher />
+      </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>

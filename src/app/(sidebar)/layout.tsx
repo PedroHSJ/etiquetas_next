@@ -10,6 +10,7 @@ import { NavigationProvider } from "@/contexts/NavigationContext";
 import { NavigationLoading } from "@/components/ui/navigation-loading";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
 
 export default function RootLayout({
   children,
@@ -22,6 +23,8 @@ export default function RootLayout({
         <Toaster />
         <NavigationProvider>
           <NavigationLoading />
+          <OrganizationProvider>
+
           <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
@@ -55,8 +58,9 @@ export default function RootLayout({
               >
                 <div className="p-6">{children}</div>
               </Suspense>
-            </SidebarInset>
-          </SidebarProvider>
+              </SidebarInset>
+            </SidebarProvider>
+          </OrganizationProvider>
         </NavigationProvider>
       </body>
     </html>

@@ -1,10 +1,10 @@
-import React, { useRef } from 'react';
-import { LabelTemplate, LabelField } from '@/lib/types/labels';
-import { Button } from '@/components/ui/button';
-import { Download, Printer } from 'lucide-react';
-import { toast } from 'sonner';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import React, { useRef } from "react";
+import { LabelTemplate, LabelField } from "@/lib/types/labels";
+import { Button } from "@/components/ui/button";
+import { Download, Printer } from "lucide-react";
+import { toast } from "sonner";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface LabelPrintPreviewProps {
   template: LabelTemplate;
@@ -15,33 +15,47 @@ interface LabelPrintPreviewProps {
 export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
   template,
   data = {},
-  count = 1
+  count = 1,
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
 
   const renderField = (field: LabelField) => {
-    let value = data[field.label] || field.value || '';
-    
+    let value = data[field.label] || field.value || "";
+
     // Format values based on field type
     switch (field.type) {
-      case 'date':
+      case "date":
         if (value && value !== field.label) {
           try {
-            value = new Date(value).toLocaleDateString('pt-BR');
+            value = new Date(value).toLocaleDateString("pt-BR");
           } catch {
             // Keep original value if date parsing fails
           }
         }
         break;
-      case 'temperature':
-        if (value && !value.includes('°C')) {
+      case "temperature":
+        if (value && !value.includes("°C")) {
           value = `${value}°C`;
         }
+        break;
+      case "product":
+        // Product field shows the selected product name
+        value = field.selectedProduct?.name || "Selecione um produto";
+        break;
+      case "quantity":
+        // Quantity field shows quantity + unit of measure
+        const qty = field.quantity || "";
+        const unit = field.unitOfMeasure || "";
+        value = qty && unit ? `${qty} ${unit}` : "Quantidade";
+        break;
+      case "label-type":
+        // Label type field shows the label type in a badge format
+        value = field.labelType || template.label_type || "Tipo";
         break;
     }
 
     const commonStyles = {
-      position: 'absolute' as const,
+      position: "absolute" as const,
       left: field.position.x,
       top: field.position.y,
       width: field.size.width,
@@ -50,73 +64,100 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
       fontWeight: field.style.fontWeight,
       textAlign: field.style.textAlign,
       color: field.style.color,
-      backgroundColor: field.style.backgroundColor || 'transparent',
-      borderStyle: field.style.borderStyle || 'none',
+      backgroundColor: field.style.backgroundColor || "transparent",
+      borderStyle: field.style.borderStyle || "none",
       borderWidth: field.style.borderWidth || 0,
-      borderColor: field.style.borderColor || 'transparent',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '2px',
-      overflow: 'hidden',
+      borderColor: field.style.borderColor || "transparent",
+      display: "flex",
+      alignItems: "center",
+      padding: "2px",
+      overflow: "hidden",
     };
 
     switch (field.type) {
-      case 'qrcode':
+      case "qrcode":
         return (
           <div key={field.id} style={commonStyles}>
             {value ? (
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=${field.size.width}x${field.size.height}&data=${encodeURIComponent(value)}`}
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=${
+                  field.size.width
+                }x${field.size.height}&data=${encodeURIComponent(value)}`}
                 alt="QR Code"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             ) : (
-              <div style={{ 
-                width: '100%', 
-                height: '100%', 
-                border: '2px dashed #ccc', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                fontSize: '10px',
-                color: '#999'
-              }}>
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  border: "2px dashed #ccc",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "10px",
+                  color: "#999",
+                }}
+              >
                 QR Code
               </div>
             )}
           </div>
         );
-      
-      case 'barcode':
+
+      case "barcode":
         return (
           <div key={field.id} style={commonStyles}>
             {value ? (
-              <img 
-                src={`https://barcode.tec-it.com/barcode.ashx?data=${encodeURIComponent(value)}&code=Code128&multiplebarcodes=false&translate-esc=false&unit=Fit&dpi=96&imagetype=Gif&rotation=0&color=%23000000&bgcolor=%23ffffff&fontsize=8&qunit=Mm`}
+              <img
+                src={`https://barcode.tec-it.com/barcode.ashx?data=${encodeURIComponent(
+                  value
+                )}&code=Code128&multiplebarcodes=false&translate-esc=false&unit=Fit&dpi=96&imagetype=Gif&rotation=0&color=%23000000&bgcolor=%23ffffff&fontsize=8&qunit=Mm`}
                 alt="Barcode"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             ) : (
-              <div style={{ 
-                width: '100%', 
-                height: '100%', 
-                border: '2px dashed #ccc', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                fontSize: '10px',
-                color: '#999'
-              }}>
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  border: "2px dashed #ccc",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "10px",
+                  color: "#999",
+                }}
+              >
                 Código de Barras
               </div>
             )}
           </div>
         );
-      
+
+      case "label-type":
+        return (
+          <div
+            key={field.id}
+            style={{
+              ...commonStyles,
+              backgroundColor: field.style.backgroundColor || "#3b82f6",
+              color: field.style.color || "white",
+              borderRadius: "4px",
+              justifyContent: "center",
+              fontWeight: "bold" as const,
+              textTransform: "uppercase" as const,
+              fontSize: Math.min(field.style.fontSize, 12),
+            }}
+          >
+            <span style={{ wordBreak: "break-word" }}>{value}</span>
+          </div>
+        );
+
       default:
         return (
           <div key={field.id} style={commonStyles}>
-            <span style={{ wordBreak: 'break-word' }}>
+            <span style={{ wordBreak: "break-word" }}>
               {value || field.label}
             </span>
           </div>
@@ -135,8 +176,11 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
             width: template.label_width,
             height: template.label_height,
             marginBottom: template.gap_vertical,
-            marginRight: i % template.labels_per_row === template.labels_per_row - 1 ? 0 : template.gap_horizontal,
-            breakInside: 'avoid',
+            marginRight:
+              i % template.labels_per_row === template.labels_per_row - 1
+                ? 0
+                : template.gap_horizontal,
+            breakInside: "avoid",
           }}
         >
           {template.fields.map(renderField)}
@@ -154,31 +198,33 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
     if (!printRef.current) return;
 
     try {
-      toast.info('Gerando PDF...');
-      
+      toast.info("Gerando PDF...");
+
       const canvas = await html2canvas(printRef.current, {
         scale: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         useCORS: true,
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`etiquetas-${template.name.replace(/\s+/g, '-').toLowerCase()}.pdf`);
-      
-      toast.success('PDF gerado com sucesso!');
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(
+        `etiquetas-${template.name.replace(/\s+/g, "-").toLowerCase()}.pdf`
+      );
+
+      toast.success("PDF gerado com sucesso!");
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast.error('Erro ao gerar PDF');
+      console.error("Error generating PDF:", error);
+      toast.error("Erro ao gerar PDF");
     }
   };
 
@@ -190,14 +236,18 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
           <Printer className="w-4 h-4" />
           Imprimir
         </Button>
-        
-        <Button onClick={handleExportPDF} variant="outline" className="flex items-center gap-2">
+
+        <Button
+          onClick={handleExportPDF}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
           <Download className="w-4 h-4" />
           Exportar PDF
         </Button>
-        
+
         <div className="text-sm text-gray-600">
-          {count} etiqueta{count !== 1 ? 's' : ''}
+          {count} etiqueta{count !== 1 ? "s" : ""}
         </div>
       </div>
 
@@ -228,20 +278,20 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
           .no-print {
             display: none !important;
           }
-          
+
           body {
             margin: 0;
             padding: 0;
           }
-          
+
           .print\\:border-none {
             border: none !important;
           }
-          
+
           .print\\:p-0 {
             padding: 0 !important;
           }
-          
+
           .print\\:border-black {
             border-color: black !important;
           }

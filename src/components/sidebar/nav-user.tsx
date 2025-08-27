@@ -97,7 +97,7 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => router.push("/dashboard")}>
                 <User />
-                Perfil
+                Dashboard
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/organizations/list")}

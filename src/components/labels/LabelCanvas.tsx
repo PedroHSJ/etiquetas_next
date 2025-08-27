@@ -1,52 +1,57 @@
-import React, { useRef, useState } from 'react';
-import { useDroppable } from '@dnd-kit/core';
-import { LabelField, LabelTemplate } from '@/lib/types/labels';
-import { DraggableField } from './DraggableField';
-import { cn } from '@/lib/utils';
+import React, { useRef, useState } from "react";
+import { useDroppable } from "@dnd-kit/core";
+import { LabelField, LabelTemplate } from "@/lib/types/labels";
+import { Product } from "@/lib/types/products";
+import { DraggableField } from "./DraggableField";
+import { cn } from "@/lib/utils";
 
 interface LabelCanvasProps {
   template: LabelTemplate;
   onTemplateUpdate: (template: LabelTemplate) => void;
   isEditing?: boolean;
   showGrid?: boolean;
+  products?: Product[];
 }
 
 export const LabelCanvas: React.FC<LabelCanvasProps> = ({
   template,
   onTemplateUpdate,
   isEditing = false,
-  showGrid = true
+  showGrid = true,
+  products = [],
 }) => {
   const [selectedField, setSelectedField] = useState<LabelField | null>(null);
-  
+
   const { isOver, setNodeRef } = useDroppable({
-    id: 'canvas'
+    id: "canvas",
   });
 
   const handleFieldUpdate = (updatedField: LabelField) => {
-    const updatedFields = template.fields.map(field =>
+    const updatedFields = template.fields.map((field) =>
       field.id === updatedField.id ? updatedField : field
     );
-    
+
     onTemplateUpdate({
       ...template,
-      fields: updatedFields
+      fields: updatedFields,
     });
   };
 
   const handleFieldDelete = () => {
     if (!selectedField) return;
-    
-    const updatedFields = template.fields.filter(field => field.id !== selectedField.id);
+
+    const updatedFields = template.fields.filter(
+      (field) => field.id !== selectedField.id
+    );
     onTemplateUpdate({
       ...template,
-      fields: updatedFields
+      fields: updatedFields,
     });
     setSelectedField(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Delete' && selectedField) {
+    if (e.key === "Delete" && selectedField) {
       handleFieldDelete();
     }
   };
@@ -63,10 +68,10 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
         style={{
           width: template.label_width,
           height: template.label_height,
-          backgroundImage: showGrid ? 
-            'linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px)' :
-            'none',
-          backgroundSize: showGrid ? '10px 10px' : 'auto',
+          backgroundImage: showGrid
+            ? "linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px)"
+            : "none",
+          backgroundSize: showGrid ? "10px 10px" : "auto",
         }}
         tabIndex={0}
         onKeyDown={handleKeyDown}
@@ -88,6 +93,8 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
             onSelect={setSelectedField}
             onUpdate={handleFieldUpdate}
             isEditing={isEditing}
+            products={products}
+            labelType={template.label_type}
           />
         ))}
 
@@ -111,10 +118,15 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
               <input
                 type="number"
                 value={selectedField.position.x}
-                onChange={(e) => handleFieldUpdate({
-                  ...selectedField,
-                  position: { ...selectedField.position, x: parseInt(e.target.value) }
-                })}
+                onChange={(e) =>
+                  handleFieldUpdate({
+                    ...selectedField,
+                    position: {
+                      ...selectedField.position,
+                      x: parseInt(e.target.value),
+                    },
+                  })
+                }
                 className="w-full px-2 py-1 border rounded"
               />
             </div>
@@ -123,10 +135,15 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
               <input
                 type="number"
                 value={selectedField.position.y}
-                onChange={(e) => handleFieldUpdate({
-                  ...selectedField,
-                  position: { ...selectedField.position, y: parseInt(e.target.value) }
-                })}
+                onChange={(e) =>
+                  handleFieldUpdate({
+                    ...selectedField,
+                    position: {
+                      ...selectedField.position,
+                      y: parseInt(e.target.value),
+                    },
+                  })
+                }
                 className="w-full px-2 py-1 border rounded"
               />
             </div>
@@ -135,10 +152,15 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
               <input
                 type="number"
                 value={selectedField.size.width}
-                onChange={(e) => handleFieldUpdate({
-                  ...selectedField,
-                  size: { ...selectedField.size, width: parseInt(e.target.value) }
-                })}
+                onChange={(e) =>
+                  handleFieldUpdate({
+                    ...selectedField,
+                    size: {
+                      ...selectedField.size,
+                      width: parseInt(e.target.value),
+                    },
+                  })
+                }
                 className="w-full px-2 py-1 border rounded"
               />
             </div>
@@ -147,10 +169,15 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
               <input
                 type="number"
                 value={selectedField.size.height}
-                onChange={(e) => handleFieldUpdate({
-                  ...selectedField,
-                  size: { ...selectedField.size, height: parseInt(e.target.value) }
-                })}
+                onChange={(e) =>
+                  handleFieldUpdate({
+                    ...selectedField,
+                    size: {
+                      ...selectedField.size,
+                      height: parseInt(e.target.value),
+                    },
+                  })
+                }
                 className="w-full px-2 py-1 border rounded"
               />
             </div>
@@ -159,10 +186,15 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
               <input
                 type="number"
                 value={selectedField.style.fontSize}
-                onChange={(e) => handleFieldUpdate({
-                  ...selectedField,
-                  style: { ...selectedField.style, fontSize: parseInt(e.target.value) }
-                })}
+                onChange={(e) =>
+                  handleFieldUpdate({
+                    ...selectedField,
+                    style: {
+                      ...selectedField.style,
+                      fontSize: parseInt(e.target.value),
+                    },
+                  })
+                }
                 className="w-full px-2 py-1 border rounded"
               />
             </div>
@@ -171,10 +203,12 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
               <input
                 type="color"
                 value={selectedField.style.color}
-                onChange={(e) => handleFieldUpdate({
-                  ...selectedField,
-                  style: { ...selectedField.style, color: e.target.value }
-                })}
+                onChange={(e) =>
+                  handleFieldUpdate({
+                    ...selectedField,
+                    style: { ...selectedField.style, color: e.target.value },
+                  })
+                }
                 className="w-full px-2 py-1 border rounded"
               />
             </div>

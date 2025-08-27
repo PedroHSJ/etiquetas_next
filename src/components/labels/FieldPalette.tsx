@@ -1,18 +1,19 @@
-import React from 'react';
-import { useDraggable } from '@dnd-kit/core';
-import { LabelType, LABEL_TYPES_CONFIG } from '@/lib/types/labels';
-import { 
-  Type, 
-  Calendar, 
-  Thermometer, 
-  QrCode, 
+import React from "react";
+import { useDraggable } from "@dnd-kit/core";
+import { LabelType, LABEL_TYPES_CONFIG } from "@/lib/types/labels";
+import {
+  Type,
+  Calendar,
+  Thermometer,
+  QrCode,
   Barcode,
   FileText,
   User,
   Package,
-  Clock
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+  Hash,
+  Tag,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FieldPaletteProps {
   labelType: LabelType;
@@ -29,25 +30,24 @@ interface DraggableFieldTypeProps {
   fieldType: FieldType;
 }
 
-const DraggableFieldType: React.FC<DraggableFieldTypeProps> = ({ fieldType }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    isDragging,
-  } = useDraggable({
-    id: `palette-${fieldType.type}-${fieldType.label}`,
-    data: {
-      type: 'new-field',
-      fieldType: fieldType.type,
-      label: fieldType.label
-    }
-  });
+const DraggableFieldType: React.FC<DraggableFieldTypeProps> = ({
+  fieldType,
+}) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: `palette-${fieldType.type}-${fieldType.label}`,
+      data: {
+        type: "new-field",
+        fieldType: fieldType.type,
+        label: fieldType.label,
+      },
+    });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
 
   return (
     <div
@@ -71,65 +71,89 @@ const DraggableFieldType: React.FC<DraggableFieldTypeProps> = ({ fieldType }) =>
 
 export const FieldPalette: React.FC<FieldPaletteProps> = ({ labelType }) => {
   const config = LABEL_TYPES_CONFIG[labelType];
-  
+
   const commonFields: FieldType[] = [
     {
-      type: 'text',
-      label: 'Texto',
+      type: "label-type",
+      label: "Tipo da Etiqueta",
+      icon: <Tag className="w-4 h-4" />,
+      description: "Badge com o tipo da etiqueta",
+    },
+    {
+      type: "product",
+      label: "Produto",
+      icon: <Package className="w-4 h-4" />,
+      description: "Seletor de produto do catálogo",
+    },
+    {
+      type: "quantity",
+      label: "Quantidade",
+      icon: <Hash className="w-4 h-4" />,
+      description: "Quantidade e unidade de medida",
+    },
+    {
+      type: "text",
+      label: "Texto",
       icon: <Type className="w-4 h-4" />,
-      description: 'Campo de texto livre'
+      description: "Campo de texto livre",
     },
     {
-      type: 'date',
-      label: 'Data',
+      type: "date",
+      label: "Data",
       icon: <Calendar className="w-4 h-4" />,
-      description: 'Campo de data'
+      description: "Campo de data",
     },
     {
-      type: 'temperature',
-      label: 'Temperatura',
+      type: "temperature",
+      label: "Temperatura",
       icon: <Thermometer className="w-4 h-4" />,
-      description: 'Campo de temperatura em °C'
+      description: "Campo de temperatura em °C",
     },
     {
-      type: 'qrcode',
-      label: 'QR Code',
+      type: "qrcode",
+      label: "QR Code",
       icon: <QrCode className="w-4 h-4" />,
-      description: 'Código QR'
+      description: "Código QR",
     },
     {
-      type: 'barcode',
-      label: 'Código de Barras',
+      type: "barcode",
+      label: "Código de Barras",
       icon: <Barcode className="w-4 h-4" />,
-      description: 'Código de barras'
-    }
+      description: "Código de barras",
+    },
   ];
 
   const specificFields: FieldType[] = [];
-  
+
   // Adicionar campos específicos baseados no tipo de etiqueta
   if (config.defaultFields) {
-    config.defaultFields.forEach(field => {
+    config.defaultFields.forEach((field) => {
       let icon = <FileText className="w-4 h-4" />;
-      
+
       switch (field.label.toLowerCase()) {
-        case 'produto':
+        case "tipo da etiqueta":
+          icon = <Tag className="w-4 h-4" />;
+          break;
+        case "produto":
           icon = <Package className="w-4 h-4" />;
           break;
-        case 'responsável':
+        case "quantidade":
+          icon = <Hash className="w-4 h-4" />;
+          break;
+        case "responsável":
           icon = <User className="w-4 h-4" />;
           break;
-        case 'data de abertura':
-        case 'data de manipulação':
-        case 'data de descongelamento':
-        case 'data da amostra':
-        case 'validade':
+        case "data de abertura":
+        case "data de manipulação":
+        case "data de descongelamento":
+        case "data da amostra":
+        case "validade":
           icon = <Calendar className="w-4 h-4" />;
           break;
-        case 'temperatura':
+        case "temperatura":
           icon = <Thermometer className="w-4 h-4" />;
           break;
-        case 'lote':
+        case "lote":
           icon = <Barcode className="w-4 h-4" />;
           break;
         default:
@@ -140,7 +164,7 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({ labelType }) => {
         type: field.type,
         label: field.label,
         icon,
-        description: `Campo específico para ${config.name.toLowerCase()}`
+        description: `Campo específico para ${config.name.toLowerCase()}`,
       });
     });
   }
@@ -181,7 +205,8 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({ labelType }) => {
       <div className="mt-6 p-3 bg-blue-50 rounded-lg">
         <h4 className="text-sm font-medium text-blue-800 mb-1">Dica</h4>
         <p className="text-xs text-blue-600">
-          Após adicionar um campo, clique nele para personalizar posição, tamanho e estilo.
+          Após adicionar um campo, clique nele para personalizar posição,
+          tamanho e estilo.
         </p>
       </div>
     </div>
