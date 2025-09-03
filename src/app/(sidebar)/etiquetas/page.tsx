@@ -11,6 +11,13 @@ export default function Page() {
   const [filtroGrupo, setFiltroGrupo] = useState("");
   const [filtroProduto, setFiltroProduto] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [produtoSelecionado, setProdutoSelecionado] = useState<any | null>(null);
+  const [quantidade, setQuantidade] = useState(1);
+  const [observacoes, setObservacoes] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [tipoEtiqueta, setTipoEtiqueta] = useState<string>("produto_aberto");
 
   // Configure o Supabase Client (ajuste para seu ambiente)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -58,6 +65,39 @@ export default function Page() {
     p.nome.toLowerCase().includes(filtroProduto.toLowerCase())
   );
 
+  // Função para abrir modal ao clicar no produto
+  function handleProdutoClick(produto: any) {
+    setProdutoSelecionado(produto);
+    setQuantidade(1);
+    setObservacoes("");
+    setErro(null);
+    setModalAberto(true);
+  }
+
+  // Função para inserir etiqueta
+  async function handleSalvarEtiqueta() {
+    setSalvando(true);
+    setErro(null);
+    // TODO: obter usuario_id e organizacao_id do contexto/auth
+    const usuario_id = null;
+    const organizacao_id = null;
+    const { error } = await supabase.from("etiquetas").insert({
+      produto_id: produtoSelecionado.id,
+      quantidade,
+      observacoes,
+      usuario_id,
+      organizacao_id,
+      tipo: tipoEtiqueta,
+    });
+    setSalvando(false);
+    if (error) {
+      setErro("Erro ao salvar etiqueta: " + error.message);
+    } else {
+      setModalAberto(false);
+      setProdutoSelecionado(null);
+    }
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-6">
       {/* Cabeçalho */}
@@ -78,9 +118,8 @@ export default function Page() {
         <CardHeader>
           {grupoSelecionado ? 
           <p className="text-lg font-medium">Selecione o produto</p> : <p className="text-lg font-medium">Selecione o grupo</p>}
-          
         </CardHeader>
-  <CardContent className="h-[420px] overflow-y-auto">
+        <CardContent className="h-[420px] overflow-y-auto">
           {carregando && <div className="text-gray-500">Carregando...</div>}
           {!grupoSelecionado ? (
             <div className="flex flex-col gap-3">
@@ -125,7 +164,8 @@ export default function Page() {
                 {produtosFiltrados.map((produto) => (
                   <li
                     key={produto.id}
-                    className="py-2 px-2"
+                    className="py-2 px-2 cursor-pointer hover:bg-emerald-50 rounded"
+                    onClick={() => handleProdutoClick(produto)}
                   >
                     {produto.nome}
                   </li>
@@ -138,6 +178,90 @@ export default function Page() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de criação de etiqueta */}
+      {modalAberto && produtoSelecionado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+              onClick={() => setModalAberto(false)}
+              aria-label="Fechar"
+            >
+              ×
+            </button>
+            <h2 className="text-xl font-semibold mb-4">Nova etiqueta para: <span className="font-bold">{produtoSelecionado.nome}</span></h2>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleSalvarEtiqueta();
+              }}
+              className="flex flex-col gap-4"
+            >
+              <div>
+                <label className="block text-sm font-medium mb-1">Tipo de etiqueta</label>
+                <div className="flex gap-2">
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="tipoEtiqueta"
+                      value="produto_aberto"
+                      checked={tipoEtiqueta === "produto_aberto"}
+                      onChange={() => setTipoEtiqueta("produto_aberto")}
+                    /> Produto Aberto
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="tipoEtiqueta"
+                      value="amostra"
+                      checked={tipoEtiqueta === "amostra"}
+                      onChange={() => setTipoEtiqueta("amostra")}
+                    /> Amostra
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="tipoEtiqueta"
+                      value="descongelo"
+                      checked={tipoEtiqueta === "descongelo"}
+                      onChange={() => setTipoEtiqueta("descongelo")}
+                    /> Descongelo
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Quantidade</label>
+                <input
+                  type="number"
+                  min={1}
+                  className="input input-bordered w-full px-3 py-2 border rounded"
+                  value={quantidade}
+                  onChange={e => setQuantidade(Number(e.target.value))}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Observações</label>
+                <textarea
+                  className="input input-bordered w-full px-3 py-2 border rounded"
+                  value={observacoes}
+                  onChange={e => setObservacoes(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              {erro && <div className="text-red-600 text-sm">{erro}</div>}
+              <button
+                type="submit"
+                className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 disabled:opacity-60"
+                disabled={salvando}
+              >
+                {salvando ? "Salvando..." : "Salvar etiqueta"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

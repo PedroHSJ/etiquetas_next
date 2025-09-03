@@ -1,12 +1,12 @@
 import { useContext, useEffect, useState } from 'react';
-import { AuthContext } from '@/contexts/AuthContext';
-import { ProfileContext } from '@/contexts/ProfileContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { PermissionService } from '@/lib/services/permissionService';
 import { UsuarioPermissoes } from '@/types/permissions';
 
 export function usePermissions() {
-  const { user } = useContext(AuthContext);
-  const { activeProfile } = useContext(ProfileContext);
+  const { user } = useAuth();
+  const { activeProfile } = useProfile();
   const [permissoes, setPermissoes] = useState<UsuarioPermissoes | null>(null);
   const [loading, setLoading] = useState(true);
 
