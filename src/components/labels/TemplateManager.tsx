@@ -88,6 +88,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
       created_by: "",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      is_default: false,
     };
 
     setSelectedTemplate(newTemplate);
@@ -118,6 +119,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
       name: `${template.name} (Cópia)`,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      is_default: false,
     };
 
     setSelectedTemplate(duplicatedTemplate);

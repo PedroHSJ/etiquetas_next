@@ -1,7 +1,7 @@
 "use client";
 
-import { EtiquetaSelectorWrapper } from '@/components/etiquetas/EtiquetaSelectorWrapper';
+import { EtiquetasPage } from '@/components/etiquetas/EtiquetasPage';
 
-export default function EtiquetasPage() {
-  return <EtiquetaSelectorWrapper />;
+export default function EtiquetasPageRoute() {
+  return <EtiquetasPage />;
 }

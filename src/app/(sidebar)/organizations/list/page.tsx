@@ -35,6 +35,7 @@ import Link from "next/link";
 import FilterBar from "@/components/filters/FilterBar";
 import Pagination from "@/components/pagination/Pagination";
 import { useAuth } from "@/contexts/AuthContext";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 
 interface Organization {
   id: string;
@@ -369,113 +370,121 @@ export default function Page() {
         </div>
       }
     >
-      <div className="flex flex-1 flex-col gap-6">
-        {/* Cabeçalho */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Lista de organizações</h1>
-            <p className="text-muted-foreground">
-              Visualize e gerencie todas as suas organizações
-            </p>
-          </div>
-          <NavigationButton href="/organizations/create">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Organização
-          </NavigationButton>
-        </div>
-
-        {/* Filtros */}
-        <FilterBar
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedOrganization={selectedOrganization}
-          setSelectedOrganization={setSelectedOrganization}
-          selectedDepartment={selectedDepartment}
-          setSelectedDepartment={setSelectedDepartment}
-          organizations={organizations}
-          departments={departments}
-          searchPlaceholder="Nome da organização, tipo..."
-          showDepartmentFilter={false}
-          onClearFilters={clearFilters}
-          loading={loading}
-        />
-
-        {/* Lista/Tabela de Integrantes */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5" />
-              Organizações ({totalItems})
-            </CardTitle>
-            <CardDescription>
-              {loading
-                ? "Carregando..."
-                : totalPages > 1
-                ? `Mostrando ${startIndex + 1}-${Math.min(
-                    endIndex,
-                    totalItems
-                  )} de ${totalItems} organizações`
-                : `${totalItems} organização(s) encontrada(s)`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-2 text-muted-foreground">
-                  Carregando integrantes...
+      <PermissionGuard funcionalidade="Organizações" acao="visualizar">
+        <div className="flex flex-1 flex-col gap-6">
+          {/* Cabeçalho */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">Lista de organizações</h1>
+                <p className="text-muted-foreground">
+                  Visualize e gerencie todas as suas organizações
                 </p>
               </div>
-            ) : totalItems === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {searchTerm || selectedOrganization || selectedDepartment
-                  ? "Nenhum integrante encontrado com os filtros aplicados"
-                  : "Nenhum integrante cadastrado"}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Visualização em Cards para mobile */}
-                <div className="block md:hidden space-y-4">
-                  {paginatedOrganizations.map((org) => (
-                    <Card key={org.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback className="bg-blue-100 text-blue-600">
-                                {getInitials(org.nome)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-medium">{org.nome}</h3>
-                              {/* <p className="text-sm text-muted-foreground">
+            </div>
+            <NavigationButton href="/organizations/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Organização
+            </NavigationButton>
+          </div>
+
+          {/* Filtros */}
+          <FilterBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedOrganization={selectedOrganization}
+            setSelectedOrganization={setSelectedOrganization}
+            selectedDepartment={selectedDepartment}
+            setSelectedDepartment={setSelectedDepartment}
+            organizations={organizations}
+            departments={departments}
+            searchPlaceholder="Nome da organização, tipo..."
+            showDepartmentFilter={false}
+            onClearFilters={clearFilters}
+            loading={loading}
+          />
+
+          {/* Lista/Tabela de Integrantes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                Organizações ({totalItems})
+              </CardTitle>
+              <CardDescription>
+                {loading
+                  ? "Carregando..."
+                  : totalPages > 1
+                  ? `Mostrando ${startIndex + 1}-${Math.min(
+                      endIndex,
+                      totalItems
+                    )} de ${totalItems} organizações`
+                  : `${totalItems} organização(s) encontrada(s)`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-muted-foreground">
+                    Carregando integrantes...
+                  </p>
+                </div>
+              ) : totalItems === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {searchTerm || selectedOrganization || selectedDepartment
+                    ? "Nenhum integrante encontrado com os filtros aplicados"
+                    : "Nenhum integrante cadastrado"}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Visualização em Cards para mobile */}
+                  <div className="block md:hidden space-y-4">
+                    {paginatedOrganizations.map((org) => (
+                      <Card key={org.id}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <Avatar>
+                                <AvatarFallback className="bg-blue-100 text-blue-600">
+                                  {getInitials(org.nome)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h3 className="font-medium">{org.nome}</h3>
+                                {/* <p className="text-sm text-muted-foreground">
                                 {member.departamento?.organizacao?.nome} • {member.departamento?.nome}
                               </p> */}
-                              {/* <p className="text-xs text-muted-foreground">
+                                {/* <p className="text-xs text-muted-foreground">
                                 Cadastrado em {format(new Date(member.created_at), "dd/MM/yyyy", { locale: ptBR })}
                               </p> */}
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <NavigationButton
+                                href={`/organizations/edit/${org.id}`}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </NavigationButton>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  console.log("Delete organization:", org.id)
+                                }
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-1">
-                            <NavigationButton
-                              href={`/organizations/edit/${org.id}`}
-                              variant="outline"
-                              size="sm"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </NavigationButton>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                console.log("Delete organization:", org.id)
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        {/* {member.especializacoes && member.especializacoes.length > 0 && (
+                          {/* {member.especializacoes && member.especializacoes.length > 0 && (
                           <div className="flex gap-1 mt-3 flex-wrap">
                             {member.especializacoes.map((esp) => (
                               <Badge key={esp.id} variant="secondary" className="text-xs">
@@ -484,75 +493,75 @@ export default function Page() {
                             ))}
                           </div>
                         )} */}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
 
-                {/* Visualização em Tabela para desktop */}
-                <div className="hidden md:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Cadastrado</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedOrganizations.map((org) => (
-                        <TableRow key={org.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                                  {getInitials(org.nome)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium">{org.nome}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              {org.tipo && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {org.tipo.slice(0, 1).toUpperCase() +
-                                    org.tipo.slice(1)}
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="text-sm">
-                                {format(
-                                  new Date(org.created_at),
-                                  "dd/MM/yyyy",
-                                  { locale: ptBR }
+                  {/* Visualização em Tabela para desktop */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Cadastrado</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedOrganizations.map((org) => (
+                          <TableRow key={org.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                                    {getInitials(org.nome)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">{org.nome}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                {org.tipo && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {org.tipo.slice(0, 1).toUpperCase() +
+                                      org.tipo.slice(1)}
+                                  </Badge>
                                 )}
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex gap-1 justify-end">
-                              <NavigationButton
-                                href={`/organizations/edit/${org.id}`}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </NavigationButton>
-                              {/* <Button
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-sm">
+                                  {format(
+                                    new Date(org.created_at),
+                                    "dd/MM/yyyy",
+                                    { locale: ptBR }
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex gap-1 justify-end">
+                                <NavigationButton
+                                  href={`/organizations/edit/${org.id}`}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </NavigationButton>
+                                {/* <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openDeleteDialog(org as any)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button> */}
-                            </div>
-                          </TableCell>
-                          {/* <TableCell>
+                              </div>
+                            </TableCell>
+                            {/* <TableCell>
                             <div>
                               <div className="font-medium">{member.departamento?.organizacao?.nome}</div>
                               <div className="text-xs text-muted-foreground capitalize">
@@ -602,90 +611,91 @@ export default function Page() {
                               </Button>
                             </div>
                           </TableCell> */}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Paginação */}
+                  {totalPages > 1 && (
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      totalItems={totalItems}
+                      itemsPerPage={itemsPerPage}
+                      onPageChange={setCurrentPage}
+                      onItemsPerPageChange={setItemsPerPage}
+                    />
+                  )}
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                {/* Paginação */}
-                {totalPages > 1 && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={totalItems}
-                    itemsPerPage={itemsPerPage}
-                    onPageChange={setCurrentPage}
-                    onItemsPerPageChange={setItemsPerPage}
-                  />
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          {/* Dialog de Confirmação de Exclusão */}
+          <Dialog open={deleteDialog.isOpen} onOpenChange={closeDeleteDialog}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  Confirmar Exclusão
+                </DialogTitle>
+                <DialogDescription>
+                  Esta ação não pode ser desfeita. O integrante será removido
+                  permanentemente do sistema.
+                </DialogDescription>
+              </DialogHeader>
 
-        {/* Dialog de Confirmação de Exclusão */}
-        <Dialog open={deleteDialog.isOpen} onOpenChange={closeDeleteDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                Confirmar Exclusão
-              </DialogTitle>
-              <DialogDescription>
-                Esta ação não pode ser desfeita. O integrante será removido
-                permanentemente do sistema.
-              </DialogDescription>
-            </DialogHeader>
-
-            {deleteDialog.member && (
-              <div className="py-4">
-                <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-red-100 text-red-600">
-                      {getInitials(deleteDialog.member.nome)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{deleteDialog.member.nome}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {deleteDialog.member.departamento?.organizacao?.nome} •{" "}
-                      {deleteDialog.member.departamento?.nome}
-                    </p>
+              {deleteDialog.member && (
+                <div className="py-4">
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-red-100 text-red-600">
+                        {getInitials(deleteDialog.member.nome)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{deleteDialog.member.nome}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {deleteDialog.member.departamento?.organizacao?.nome} •{" "}
+                        {deleteDialog.member.departamento?.nome}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <DialogFooter className="gap-2">
-              <Button
-                variant="outline"
-                onClick={closeDeleteDialog}
-                disabled={deleteDialog.isDeleting}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => console.log("Confirmar exclusão")} // confirmDeleteMember
-                disabled={deleteDialog.isDeleting}
-              >
-                {deleteDialog.isDeleting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Excluindo...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir Integrante
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="outline"
+                  onClick={closeDeleteDialog}
+                  disabled={deleteDialog.isDeleting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => console.log("Confirmar exclusão")} // confirmDeleteMember
+                  disabled={deleteDialog.isDeleting}
+                >
+                  {deleteDialog.isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Excluindo...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir Integrante
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </PermissionGuard>
     </Suspense>
   );
 }

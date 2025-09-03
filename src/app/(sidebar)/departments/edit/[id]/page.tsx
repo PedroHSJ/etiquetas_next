@@ -190,9 +190,16 @@ export default function EditDepartmentPage() {
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
           </NavigationButton>
-          <div>
-            <h1 className="text-3xl font-bold">Editar Departamento</h1>
-            <p className="text-muted-foreground">Carregando dados...</p>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Editar Departamento</h1>
+              <p className="text-muted-foreground">Carregando dados...</p>
+            </div>
           </div>
         </div>
 
@@ -225,11 +232,18 @@ export default function EditDepartmentPage() {
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
           </NavigationButton>
-          <div>
-            <h1 className="text-3xl font-bold">Departamento não encontrado</h1>
-            <p className="text-muted-foreground">
-              O departamento solicitado não existe.
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Departamento não encontrado</h1>
+              <p className="text-muted-foreground">
+                O departamento solicitado não existe.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -243,11 +257,18 @@ export default function EditDepartmentPage() {
         <NavigationButton href="/departments/list" variant="outline" size="sm">
           <ArrowLeft className="h-4 w-4 mr-2" />
         </NavigationButton>
-        <div>
-          <h1 className="text-3xl font-bold">Editar Departamento</h1>
-          <p className="text-muted-foreground">
-            Atualize as informações do departamento
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Editar Departamento</h1>
+            <p className="text-muted-foreground">
+              Atualize as informações do departamento
+            </p>
+          </div>
         </div>
       </div>
 

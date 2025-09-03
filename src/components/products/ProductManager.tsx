@@ -92,7 +92,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
       product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCategory =
-      selectedCategory === "all" || product.category === selectedCategory;
+      selectedCategory === "all" || product.category?.name === selectedCategory;
 
     return matchesSearch && matchesCategory && product.is_active;
   });
@@ -103,8 +103,8 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
       setFormData({
         name: product.name,
         description: product.description || "",
-        category: product.category,
-        unit_of_measure: product.unit_of_measure,
+        category: product.category?.name || "",
+        unit_of_measure: "un",
         brand: product.brand || "",
         supplier: product.supplier || "",
         barcode: product.barcode || "",

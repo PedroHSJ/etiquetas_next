@@ -147,11 +147,18 @@ export default function PrintLabelsPage() {
           <ArrowLeft className="w-4 h-4" />
           Voltar
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Imprimir Etiquetas</h1>
-          <p className="text-gray-600">
-            Selecione um template e preencha os dados para impressão
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Imprimir Etiquetas</h1>
+            <p className="text-gray-600">
+              Selecione um template e preencha os dados para impressão
+            </p>
+          </div>
         </div>
       </div>
 

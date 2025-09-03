@@ -191,7 +191,7 @@ export class PermissionService {
               const func = perm.funcionalidade;
               permissoes.push({
                 id: perm.id,
-                funcionalidade_id: '', // Campo não existe no resultado do Supabase
+                funcionalidade_id: perm.funcionalidade_id || '',
                 perfil_usuario_id: p.id,
                 acao: perm.acao as 'visualizar' | 'criar' | 'editar' | 'excluir' | 'gerenciar',
                 ativo: true,
@@ -332,7 +332,7 @@ export class PermissionService {
       const permissoesConfig = permissoes?.map(p => {
         const func = p.funcionalidade;
         return {
-          funcionalidade_id: '', // Campo não existe no resultado do Supabase
+          funcionalidade_id: p.funcionalidade_id || '',
           funcionalidade_nome: func && Array.isArray(func) && func.length > 0 ? func[0].nome : '',
           acao: p.acao || '',
           ativo: true

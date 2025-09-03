@@ -124,11 +124,18 @@ export default function CreateDepartmentPage() {
         <NavigationButton href="/departments/list" variant="outline" size="sm">
           <ArrowLeft className="h-4 w-4 mr-2" />
         </NavigationButton>
-        <div>
-          <h1 className="text-3xl font-bold">Novo Departamento</h1>
-          <p className="text-muted-foreground">
-            Crie um novo departamento para uma de suas organizações
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Novo Departamento</h1>
+            <p className="text-muted-foreground">
+              Crie um novo departamento para uma de suas organizações
+            </p>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -28,16 +29,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Building2, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Trash2, Plus, Building, Edit, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toast } from "sonner";
+import Link from "next/link";
+import FilterBar from "@/components/filters/FilterBar";
+import Pagination from "@/components/pagination/Pagination";
 import { useAuth } from "@/contexts/AuthContext";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import {
   OrganizationContext,
   useOrganization,
 } from "@/contexts/OrganizationContext";
-
+import { toast } from "sonner";
 interface Department {
   id: string;
   nome: string;
@@ -145,9 +149,16 @@ export default function DepartmentsListPage() {
     return (
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Departamentos</h1>
-            <p className="text-muted-foreground">Carregando departamentos...</p>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Departamentos</h1>
+              <p className="text-muted-foreground">Carregando departamentos...</p>
+            </div>
           </div>
         </div>
         <div className="space-y-4">
@@ -168,11 +179,18 @@ export default function DepartmentsListPage() {
     <div className="flex flex-1 flex-col gap-6">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Departamentos</h1>
-          <p className="text-muted-foreground">
-            Gerencie os departamentos das suas organizações
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Departamentos</h1>
+            <p className="text-muted-foreground">
+              Gerencie os departamentos das suas organizações
+            </p>
+          </div>
         </div>
         <NavigationButton href="/departments/create">
           <Plus className="h-4 w-4 mr-2" />

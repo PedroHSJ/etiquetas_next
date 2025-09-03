@@ -41,11 +41,7 @@ export function EtiquetaSelector({ onEtiquetaCreated }: EtiquetaSelectorProps) {
       await loadProdutosByGrupo(grupo.id);
       setStep('produtos');
     } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Erro ao carregar produtos do grupo',
-        variant: 'destructive',
-      });
+      toast.error('Erro ao carregar produtos do grupo');
     }
   };
 
@@ -58,7 +54,7 @@ export function EtiquetaSelector({ onEtiquetaCreated }: EtiquetaSelectorProps) {
     if (step === 'produtos') {
       setStep('grupos');
       setSelectedGrupo(null);
-      setProdutos([]);
+      // Não precisamos limpar produtos pois eles vêm do hook
     } else if (step === 'confirmacao') {
       setStep('produtos');
       setSelectedProduto(null);
@@ -78,10 +74,7 @@ export function EtiquetaSelector({ onEtiquetaCreated }: EtiquetaSelectorProps) {
 
       await createEtiqueta(etiquetaData);
       
-      toast({
-        title: 'Sucesso',
-        description: 'Etiqueta criada com sucesso!',
-      });
+      toast.success('Etiqueta criada com sucesso!');
 
       // Imprimir etiqueta
       await printEtiqueta(selectedGrupo, selectedProduto, quantidade, observacoes);
@@ -95,11 +88,7 @@ export function EtiquetaSelector({ onEtiquetaCreated }: EtiquetaSelectorProps) {
       
       onEtiquetaCreated?.();
     } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Erro ao criar etiqueta',
-        variant: 'destructive',
-      });
+      toast.error('Erro ao criar etiqueta');
     }
   };
 
@@ -368,10 +357,19 @@ export function EtiquetaSelector({ onEtiquetaCreated }: EtiquetaSelectorProps) {
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold">Sistema de Etiquetas</h1>
-        <p className="text-muted-foreground">
-          Selecione um grupo e produto para criar uma etiqueta
-        </p>
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Sistema de Etiquetas</h1>
+            <p className="text-muted-foreground">
+              Selecione um grupo e produto para criar uma etiqueta
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Indicador de progresso */}

@@ -168,7 +168,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               url: "/observacoes/list",
               isActive: pathname.startsWith("/observacoes"),
             },
-
+            {
+              title: "Permissões",
+              url: "/configuracoes/permissoes",
+              isActive: pathname.startsWith("/configuracoes/permissoes"),
+            },
           ],
         },
       // {
