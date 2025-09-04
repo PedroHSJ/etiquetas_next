@@ -24,8 +24,8 @@ export default function RootLayout({
       <body>
         <Toaster />
         <NavigationProvider>
-              <OrganizationProvider>
-          <NavigationLoading />
+          <OrganizationProvider>
+            <NavigationLoading />
             <NotificationProvider>
               <SidebarProvider>
                 <AppSidebar />

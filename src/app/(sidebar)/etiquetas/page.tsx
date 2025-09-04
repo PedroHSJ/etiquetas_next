@@ -1,10 +1,30 @@
 "use client";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { useMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
+import { Label } from "@/components/ui/label";
 
 export default function Page() {
+  const [horario, setHorario] = useState("");
+  const [dataColeta, setDataColeta] = useState("");
+  const [dataDescarte, setDataDescarte] = useState("");
+  const [responsavelAmostra, setResponsavelAmostra] = useState("");
+  const [obsAmostra, setObsAmostra] = useState("");
+  const { user } = useAuth();
   const [grupos, setGrupos] = useState<any[]>([]);
   const [produtos, setProdutos] = useState<any[]>([]);
   const [grupoSelecionado, setGrupoSelecionado] = useState<string | null>(null);
@@ -12,12 +32,18 @@ export default function Page() {
   const [filtroProduto, setFiltroProduto] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
-  const [produtoSelecionado, setProdutoSelecionado] = useState<any | null>(null);
+  const [produtoSelecionado, setProdutoSelecionado] = useState<any | null>(
+    null
+  );
   const [quantidade, setQuantidade] = useState(1);
   const [observacoes, setObservacoes] = useState("");
+  const [dataAbertura, setDataAbertura] = useState("");
+  const [dataValidade, setDataValidade] = useState("");
+  const [responsavel, setResponsavel] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [tipoEtiqueta, setTipoEtiqueta] = useState<string>("produto_aberto");
+  const isMobile = useMobile();
 
   // Configure o Supabase Client (ajuste para seu ambiente)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -81,14 +107,28 @@ export default function Page() {
     // TODO: obter usuario_id e organizacao_id do contexto/auth
     const usuario_id = null;
     const organizacao_id = null;
-    const { error } = await supabase.from("etiquetas").insert({
+    const etiquetaData: any = {
       produto_id: produtoSelecionado.id,
       quantidade,
       observacoes,
       usuario_id,
       organizacao_id,
       tipo: tipoEtiqueta,
-    });
+    };
+    if (tipoEtiqueta === "produto_aberto") {
+      etiquetaData.data_abertura = dataAbertura;
+      etiquetaData.data_validade = dataValidade;
+      etiquetaData.responsavel = responsavel;
+    }
+    if (tipoEtiqueta === "amostra") {
+      etiquetaData.horario = horario;
+      etiquetaData.data_coleta = dataColeta;
+      etiquetaData.data_descarte = dataDescarte;
+      etiquetaData.responsavel =
+        user?.user_metadata?.full_name || user?.email || responsavelAmostra;
+      etiquetaData.obs = obsAmostra;
+    }
+    const { error } = await supabase.from("etiquetas").insert(etiquetaData);
     setSalvando(false);
     if (error) {
       setErro("Erro ao salvar etiqueta: " + error.message);
@@ -104,8 +144,12 @@ export default function Page() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            <svg
+              className="w-7 h-7 text-white"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
             </svg>
           </div>
           <div>
@@ -114,10 +158,13 @@ export default function Page() {
         </div>
       </div>
 
-      <Card>
+      <Card className="">
         <CardHeader>
-          {grupoSelecionado ? 
-          <p className="text-lg font-medium">Selecione o produto</p> : <p className="text-lg font-medium">Selecione o grupo</p>}
+          {grupoSelecionado ? (
+            <p className="text-lg font-medium">Selecione o produto</p>
+          ) : (
+            <p className="text-lg font-medium">Selecione o grupo</p>
+          )}
         </CardHeader>
         <CardContent className="h-[420px] overflow-y-auto">
           {carregando && <div className="text-gray-500">Carregando...</div>}
@@ -128,7 +175,7 @@ export default function Page() {
                 placeholder="Filtrar grupos..."
                 className="input input-bordered w-full mb-2 px-3 py-2 border rounded"
                 value={filtroGrupo}
-                onChange={e => setFiltroGrupo(e.target.value)}
+                onChange={(e) => setFiltroGrupo(e.target.value)}
               />
               <ul className="divide-y">
                 {gruposFiltrados.map((grupo) => (
@@ -141,7 +188,9 @@ export default function Page() {
                   </li>
                 ))}
                 {gruposFiltrados.length === 0 && (
-                  <li className="text-gray-400 py-2">Nenhum grupo encontrado.</li>
+                  <li className="text-gray-400 py-2">
+                    Nenhum grupo encontrado.
+                  </li>
                 )}
               </ul>
             </div>
@@ -158,7 +207,7 @@ export default function Page() {
                 placeholder="Filtrar produtos..."
                 className="input input-bordered w-full mb-2 px-3 py-2 border rounded"
                 value={filtroProduto}
-                onChange={e => setFiltroProduto(e.target.value)}
+                onChange={(e) => setFiltroProduto(e.target.value)}
               />
               <ul className="divide-y">
                 {produtosFiltrados.map((produto) => (
@@ -171,7 +220,9 @@ export default function Page() {
                   </li>
                 ))}
                 {produtosFiltrados.length === 0 && (
-                  <li className="text-gray-400 py-2">Nenhum produto encontrado.</li>
+                  <li className="text-gray-400 py-2">
+                    Nenhum produto encontrado.
+                  </li>
                 )}
               </ul>
             </div>
@@ -190,66 +241,186 @@ export default function Page() {
             >
               ×
             </button>
-            <h2 className="text-xl font-semibold mb-4">Nova etiqueta para: <span className="font-bold">{produtoSelecionado.nome}</span></h2>
+            <h2 className="text-xl font-semibold mb-4">
+              Nova etiqueta para:{" "}
+              <span className="font-bold">{produtoSelecionado.nome}</span>
+            </h2>
             <form
-              onSubmit={e => {
+              onSubmit={(e) => {
                 e.preventDefault();
                 handleSalvarEtiqueta();
               }}
               className="flex flex-col gap-4"
             >
               <div>
-                <label className="block text-sm font-medium mb-1">Tipo de etiqueta</label>
-                <div className="flex gap-2">
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="radio"
-                      name="tipoEtiqueta"
-                      value="produto_aberto"
-                      checked={tipoEtiqueta === "produto_aberto"}
-                      onChange={() => setTipoEtiqueta("produto_aberto")}
-                    /> Produto Aberto
-                  </label>
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="radio"
-                      name="tipoEtiqueta"
-                      value="amostra"
-                      checked={tipoEtiqueta === "amostra"}
-                      onChange={() => setTipoEtiqueta("amostra")}
-                    /> Amostra
-                  </label>
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="radio"
-                      name="tipoEtiqueta"
-                      value="descongelo"
-                      checked={tipoEtiqueta === "descongelo"}
-                      onChange={() => setTipoEtiqueta("descongelo")}
-                    /> Descongelo
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Quantidade</label>
-                <input
-                  type="number"
-                  min={1}
-                  className="input input-bordered w-full px-3 py-2 border rounded"
-                  value={quantidade}
-                  onChange={e => setQuantidade(Number(e.target.value))}
+                <label
+                  className="block text-sm font-medium mb-1"
+                  htmlFor="tipoEtiqueta"
+                >
+                  Tipo de etiqueta
+                </label>
+                <Select
+                  value={tipoEtiqueta}
+                  onValueChange={setTipoEtiqueta}
                   required
-                />
+                >
+                  <SelectTrigger
+                    id="tipoEtiqueta"
+                    className={
+                      isMobile
+                        ? "w-full px-3 py-3 border rounded text-lg"
+                        : "w-full px-3 py-2 border rounded"
+                    }
+                  >
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Tipos</SelectLabel>
+                      <SelectItem value="produto_aberto">
+                        Produto Aberto
+                      </SelectItem>
+                      <SelectItem value="amostra">Amostra</SelectItem>
+                      <SelectItem value="descongelo">Descongelo</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Observações</label>
-                <textarea
-                  className="input input-bordered w-full px-3 py-2 border rounded"
-                  value={observacoes}
-                  onChange={e => setObservacoes(e.target.value)}
-                  rows={2}
-                />
-              </div>
+              {tipoEtiqueta === "amostra" && (
+                <>
+                  <div>
+                    <Label
+                      className="block text-sm font-medium mb-1"
+                      htmlFor="horario"
+                    >
+                      Horário
+                    </Label>
+                    <Input
+                      type="time"
+                      id="horario"
+                      value={horario}
+                      onChange={(e) => setHorario(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      className="block text-sm font-medium mb-1"
+                      htmlFor="dataColeta"
+                    >
+                      Data da coleta
+                    </Label>
+                    <Input
+                      type="date"
+                      id="dataColeta"
+                      value={dataColeta}
+                      onChange={(e) => setDataColeta(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      className="block text-sm font-medium mb-1"
+                      htmlFor="dataDescarte"
+                    >
+                      Data do descarte
+                    </Label>
+                    <Input
+                      type="date"
+                      id="dataDescarte"
+                      value={dataDescarte}
+                      onChange={(e) => setDataDescarte(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      className="block text-sm font-medium mb-1"
+                      htmlFor="responsavelAmostra"
+                    >
+                      Responsável
+                    </Label>
+                    <Input
+                      type="text"
+                      id="responsavelAmostra"
+                      value={
+                        user?.user_metadata?.full_name ||
+                        user?.email ||
+                        responsavelAmostra
+                      }
+                      onChange={(e) => setResponsavelAmostra(e.target.value)}
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      className="block text-sm font-medium mb-1"
+                      htmlFor="obsAmostra"
+                    >
+                      Observações
+                    </Label>
+                    <Textarea
+                      id="obsAmostra"
+                      value={obsAmostra}
+                      onChange={(e) => setObsAmostra(e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                </>
+              )}
+              {tipoEtiqueta === "produto_aberto" && (
+                <>
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-1"
+                      htmlFor="dataAbertura"
+                    >
+                      Data de abertura
+                    </label>
+                    <Input
+                      type="date"
+                      id="dataAbertura"
+                      value={dataAbertura}
+                      onChange={(e) => setDataAbertura(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-1"
+                      htmlFor="dataValidade"
+                    >
+                      Data de validade
+                    </label>
+                    <Input
+                      type="date"
+                      id="dataValidade"
+                      value={dataValidade}
+                      onChange={(e) => setDataValidade(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      className="block text-sm font-medium mb-1"
+                      htmlFor="responsavel"
+                    >
+                      Responsável
+                    </Label>
+                    <Input
+                      type="text"
+                      id="responsavel"
+                      value={
+                        user?.user_metadata?.full_name ||
+                        user?.email ||
+                        responsavel
+                      }
+                      onChange={(e) => setResponsavel(e.target.value)}
+                      readOnly
+                    />
+                  </div>
+                </>
+              )}
               {erro && <div className="text-red-600 text-sm">{erro}</div>}
               <button
                 type="submit"
