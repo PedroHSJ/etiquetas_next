@@ -56,6 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updated_at: new Date().toISOString(),
       } as User;
 
+      console.log("Mock user for development:", mockUser);
+
       const mockSession = {
         user: mockUser,
         access_token: "mock-token",

@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PermissionService } from "@/lib/services/permissionService";
-import { Funcionalidade, PerfilUsuario, Permissao } from "@/types/permissions";
+import { Funcionalidade, Perfil, Permissao } from "@/types/permissions";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -19,15 +25,11 @@ export default function PermissoesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [funcionalidades, setFuncionalidades] = useState<Funcionalidade[]>([]);
-  const [perfis, setPerfis] = useState<PerfilUsuario[]>([]);
+  const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [permissoes, setPermissoes] = useState<Permissao[]>([]);
-  const [configuracoes, setConfiguracoes] = useState<Record<string, Record<string, boolean>>>({});
-
-  useEffect(() => {
-    if (isMaster) {
-      loadData();
-    }
-  }, [isMaster]);
+  const [configuracoes, setConfiguracoes] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
 
   const loadData = async () => {
     try {
@@ -35,7 +37,7 @@ export default function PermissoesPage() {
       const [funcData, perfisData, permissoesData] = await Promise.all([
         PermissionService.getFuncionalidades(),
         PermissionService.getPerfisUsuario(),
-        PermissionService.getPermissoes()
+        PermissionService.getPermissoes(),
       ]);
 
       setFuncionalidades(funcData);
@@ -44,29 +46,36 @@ export default function PermissoesPage() {
 
       // Inicializar configurações
       const config: Record<string, Record<string, boolean>> = {};
-      perfisData.forEach(perfil => {
+      perfisData.forEach((perfil) => {
         config[perfil.id] = {};
-        permissoesData.forEach(permissao => {
-          config[perfil.id][`${permissao.funcionalidade_id}_${permissao.acao}`] = false;
+        permissoesData.forEach((permissao) => {
+          config[perfil.id][
+            `${permissao.funcionalidade_id}_${permissao.acao}`
+          ] = false;
         });
       });
 
       setConfiguracoes(config);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      toast.error('Erro ao carregar dados de permissões');
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados de permissões");
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePermissaoChange = (perfilId: string, funcionalidadeId: string, acao: string, checked: boolean) => {
-    setConfiguracoes(prev => ({
+  const handlePermissaoChange = (
+    perfilId: string,
+    funcionalidadeId: string,
+    acao: string,
+    checked: boolean
+  ) => {
+    setConfiguracoes((prev) => ({
       ...prev,
       [perfilId]: {
         ...prev[perfilId],
-        [`${funcionalidadeId}_${acao}`]: checked
-      }
+        [`${funcionalidadeId}_${acao}`]: checked,
+      },
     }));
   };
 
@@ -77,20 +86,27 @@ export default function PermissoesPage() {
       const permissoesAtivas = Object.entries(perfilConfig)
         .filter(([_, ativo]) => ativo)
         .map(([key, _]) => {
-          const [funcionalidade_id, acao] = key.split('_');
+          const [funcionalidade_id, acao] = key.split("_");
           return { funcionalidade_id, acao, ativo: true };
         });
 
-      const success = await PermissionService.atualizarPermissoesPerfil(perfilId, permissoesAtivas);
-      
+      const success = await PermissionService.atualizarPermissoesPerfil(
+        perfilId,
+        permissoesAtivas
+      );
+
       if (success) {
-        toast.success(`Permissões do perfil "${perfis.find(p => p.id === perfilId)?.nome}" atualizadas com sucesso!`);
+        toast.success(
+          `Permissões do perfil "${
+            perfis.find((p) => p.id === perfilId)?.nome
+          }" atualizadas com sucesso!`
+        );
       } else {
-        toast.error('Erro ao atualizar permissões');
+        toast.error("Erro ao atualizar permissões");
       }
     } catch (error) {
-      console.error('Erro ao salvar permissões:', error);
-      toast.error('Erro ao salvar permissões');
+      console.error("Erro ao salvar permissões:", error);
+      toast.error("Erro ao salvar permissões");
     } finally {
       setSaving(false);
     }
@@ -104,12 +120,14 @@ export default function PermissoesPage() {
           <CardHeader>
             <CardTitle className="text-red-600">Acesso Negado</CardTitle>
             <CardDescription>
-              Você não tem permissão para acessar esta página. Apenas usuários com perfil "Master" podem configurar permissões.
+              Você não tem permissão para acessar esta página. Apenas usuários
+              com perfil "Master" podem configurar permissões.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Entre em contato com um administrador do sistema para solicitar acesso.
+              Entre em contato com um administrador do sistema para solicitar
+              acesso.
             </p>
           </CardContent>
         </Card>
@@ -133,8 +151,8 @@ export default function PermissoesPage() {
   }
 
   return (
-    <PermissionGuard 
-      funcionalidade="permissoes" 
+    <PermissionGuard
+      funcionalidade="permissoes"
       acao="gerenciar"
       fallback={
         <div className="container mx-auto p-6">
@@ -177,13 +195,12 @@ export default function PermissoesPage() {
                     <div key={perfil.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h3 className="text-lg font-semibold">{perfil.nome}</h3>
-                          <p className="text-sm text-muted-foreground">{perfil.descricao}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                              Nível {perfil.nivel_acesso}
-                            </span>
-                          </div>
+                          <h3 className="text-lg font-semibold">
+                            {perfil.nome}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {perfil.descricao}
+                          </p>
                         </div>
                         <Button
                           onClick={() => handleSavePerfil(perfil.id)}
@@ -199,15 +216,27 @@ export default function PermissoesPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {funcionalidades.map((funcionalidade) => (
                           <div key={funcionalidade.id} className="space-y-3">
-                            <h4 className="font-medium text-sm">{funcionalidade.nome}</h4>
+                            <h4 className="font-medium text-sm">
+                              {funcionalidade.nome}
+                            </h4>
                             <div className="space-y-2">
                               {permissoes
-                                .filter(p => p.funcionalidade_id === funcionalidade.id)
+                                .filter(
+                                  (p) =>
+                                    p.funcionalidade_id === funcionalidade.id
+                                )
                                 .map((permissao) => (
-                                  <div key={permissao.id} className="flex items-center space-x-2">
+                                  <div
+                                    key={permissao.id}
+                                    className="flex items-center space-x-2"
+                                  >
                                     <Checkbox
                                       id={`${perfil.id}_${permissao.id}`}
-                                      checked={configuracoes[perfil.id]?.[`${funcionalidade.id}_${permissao.acao}`] || false}
+                                      checked={
+                                        configuracoes[perfil.id]?.[
+                                          `${funcionalidade.id}_${permissao.acao}`
+                                        ] || false
+                                      }
                                       onCheckedChange={(checked) =>
                                         handlePermissaoChange(
                                           perfil.id,
@@ -241,15 +270,23 @@ export default function PermissoesPage() {
               <CardHeader>
                 <CardTitle>Funcionalidades do Sistema</CardTitle>
                 <CardDescription>
-                  Lista de todas as funcionalidades disponíveis para configuração de permissões
+                  Lista de todas as funcionalidades disponíveis para
+                  configuração de permissões
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {funcionalidades.map((funcionalidade) => (
-                    <div key={funcionalidade.id} className="border rounded-lg p-4">
-                      <h3 className="font-semibold mb-2">{funcionalidade.nome}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{funcionalidade.descricao}</p>
+                    <div
+                      key={funcionalidade.id}
+                      className="border rounded-lg p-4"
+                    >
+                      <h3 className="font-semibold mb-2">
+                        {funcionalidade.nome}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {funcionalidade.descricao}
+                      </p>
                       <div className="flex items-center gap-2">
                         <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
                           {funcionalidade.categoria}

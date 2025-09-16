@@ -37,3 +37,12 @@ import FilterBar from "@/components/filters/FilterBar";
 import Pagination from "@/components/pagination/Pagination";
 import { useAuth } from "@/contexts/AuthContext";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
+
+export default function MembersListPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Membros</h1>
+      <p className="text-muted-foreground">Lista de membros (em construção)</p>
+    </div>
+  );
+}

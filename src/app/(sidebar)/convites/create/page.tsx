@@ -21,21 +21,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CalendarIcon, Mail, UserPlus, Building, Shield, Info, CheckCircle, ArrowLeft } from "lucide-react";
+import {
+  CalendarIcon,
+  Mail,
+  UserPlus,
+  Building,
+  Shield,
+  Info,
+  CheckCircle,
+  ArrowLeft,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useActiveProfile } from "@/hooks/usePermissions";
+import {} from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { InviteService } from "@/lib/services/inviteService";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
-interface PerfilUsuario {
+interface Perfil {
   id: string;
   nome: string;
   descricao: string;
@@ -44,68 +58,69 @@ interface PerfilUsuario {
 export default function CreateConvitePage() {
   const router = useRouter();
   const { userId } = useAuth();
-  const { organizacaoId, organizacaoNome } = useActiveProfile();
+  const { selectedOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
-  const [perfis, setPerfis] = useState<PerfilUsuario[]>([]);
-  
+  const [perfis, setPerfis] = useState<Perfil[]>([]);
+
   // Estados do formulário
   const [email, setEmail] = useState("");
   const [perfilId, setPerfilId] = useState("");
-  const [dataExpiracao, setDataExpiracao] = useState<Date | undefined>(undefined);
+  const [dataExpiracao, setDataExpiracao] = useState<Date | undefined>(
+    undefined
+  );
   const [mensagem, setMensagem] = useState("");
 
   useEffect(() => {
-    if (organizacaoId) {
+    if (selectedOrganization) {
       fetchPerfis();
     }
-  }, [organizacaoId]);
+  }, [selectedOrganization]);
 
   const fetchPerfis = async () => {
     try {
       // Buscar perfis disponíveis (excluindo master)
       const { data, error } = await supabase
-        .from('perfis_usuario')
-        .select('*')
-        .neq('nome', 'master')
-        .eq('ativo', true);
-        
+        .from("perfis")
+        .select("*")
+        .neq("nome", "master")
+        .eq("ativo", true);
+
       if (error) throw error;
       setPerfis(data || []);
     } catch (error) {
-      console.error('Erro ao buscar perfis:', error);
-      toast.error('Erro ao carregar perfis');
+      console.error("Erro ao buscar perfis:", error);
+      toast.error("Erro ao carregar perfis");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!organizacaoId || !email || !perfilId || !dataExpiracao) {
-      toast.error('Preencha todos os campos obrigatórios');
+
+    if (!selectedOrganization || !email || !perfilId || !dataExpiracao) {
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
     setLoading(true);
     try {
-      await InviteService.criarConvite({
-        email: email.trim(),
-        organizacao_id: organizacaoId,
-        perfil_id: perfilId,
-        convidado_por: userId,
-        expira_em: dataExpiracao.toISOString()
-      });
+      await InviteService.createInvite(
+        email.trim(),
+        selectedOrganization.id,
+        perfilId,
+        userId
+      );
 
-      toast.success('Convite enviado com sucesso!');
-      router.push('/convites');
+      toast.success("Convite enviado com sucesso!");
+      router.push("/convites");
     } catch (error) {
-      console.error('Erro ao criar convite:', error);
-      toast.error('Erro ao enviar convite');
+      console.error("Erro ao criar convite:", error);
+      toast.error("Erro ao enviar convite");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!organizacaoId) {
+  if (!selectedOrganization) {
     return (
       <div className="flex flex-1 flex-col gap-6">
         <div className="text-center py-8">
@@ -119,7 +134,7 @@ export default function CreateConvitePage() {
   }
 
   return (
-         <PermissionGuard funcionalidade="Convites" acao="criar">
+    <PermissionGuard funcionalidade="Convites" acao="criar">
       <div className="flex flex-1 flex-col gap-6">
         {/* Cabeçalho */}
         <div className="flex items-center gap-4">
@@ -128,14 +143,18 @@ export default function CreateConvitePage() {
           </NavigationButton>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 4H12v8H9V2H4v10h3v8h5v-6h2l4 6z"/>
+              <svg
+                className="w-7 h-7 text-white"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 4H12v8H9V2H4v10h3v8h5v-6h2l4 6z" />
               </svg>
             </div>
             <div>
               <h1 className="text-3xl font-bold">Criar Convite</h1>
               <p className="text-muted-foreground">
-                Convide novos usuários para {organizacaoNome}
+                Convide novos usuários para {selectedOrganization.nome}
               </p>
             </div>
           </div>
@@ -248,10 +267,18 @@ export default function CreateConvitePage() {
 
               {/* Botões */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <NavigationButton href="/convites" variant="outline" className="order-2 sm:order-1">
+                <NavigationButton
+                  href="/convites"
+                  variant="outline"
+                  className="order-2 sm:order-1"
+                >
                   Cancelar
                 </NavigationButton>
-                <Button type="submit" disabled={loading} className="flex-1 order-1 sm:order-2">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 order-1 sm:order-2"
+                >
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -291,7 +318,8 @@ export default function CreateConvitePage() {
               <div className="space-y-2">
                 <h4 className="font-medium">✅ Aceitação</h4>
                 <p className="text-sm text-muted-foreground">
-                  Ao aceitar, o usuário será adicionado automaticamente à organização
+                  Ao aceitar, o usuário será adicionado automaticamente à
+                  organização
                 </p>
               </div>
               <div className="space-y-2">

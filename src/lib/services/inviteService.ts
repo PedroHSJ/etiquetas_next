@@ -1,7 +1,33 @@
 import { supabase } from '../supabaseClient';
-import { Convite, PerfilUsuario } from '@/types/onboarding';
+import { Convite, Perfil } from '@/types/onboarding';
 
 export class InviteService {
+  // Buscar dados de múltiplos usuários via RPC (mais eficiente)
+  private static async getMultipleUsersData(userIds: string[]) {
+    if (userIds.length === 0) return {};
+
+    try {
+      const { data, error } = await supabase
+        .rpc('get_multiple_users_data', { user_ids: userIds });
+      
+      if (error) {
+        console.error('Erro ao buscar dados dos usuários:', error);
+        return {};
+      }
+      
+      // Converter array para objeto indexado por ID
+      const usersMap: Record<string, any> = {};
+      (data || []).forEach((user: any) => {
+        usersMap[user.id] = user;
+      });
+      
+      return usersMap;
+    } catch (error) {
+      console.error('Erro ao buscar dados dos usuários:', error);
+      return {};
+    }
+  }
+
   // Buscar convites pendentes para um email
   static async getPendingInvites(email: string): Promise<Convite[]> {
     const { data, error } = await supabase
@@ -9,7 +35,7 @@ export class InviteService {
       .select(`
         *,
         organizacao:organizacoes(nome, tipo),
-        perfil:perfis_usuario(nome, descricao)
+        perfil:perfis(nome, descricao)
       `)
       .eq('email', email)
       .eq('status', 'pendente')
@@ -21,7 +47,19 @@ export class InviteService {
       throw new Error('Erro ao buscar convites');
     }
 
-    return data || [];
+    if (!data || data.length === 0) return [];
+
+    // Buscar dados de todos os usuários de uma vez
+    const userIds = [...new Set(data.map(convite => convite.convidado_por))];
+    const usersData = await this.getMultipleUsersData(userIds);
+
+    // Mapear convites com dados dos usuários
+    const convitesComUsuario = data.map((convite) => ({
+      ...convite,
+      convidado_por_usuario: usersData[convite.convidado_por] || { nome: 'Usuário', email: '' }
+    }));
+
+    return convitesComUsuario;
   }
 
   // Aceitar um convite
@@ -116,9 +154,9 @@ export class InviteService {
   }
 
   // Buscar perfis disponíveis
-  static async getPerfis(): Promise<PerfilUsuario[]> {
+  static async getPerfis(): Promise<Perfil[]> {
     const { data, error } = await supabase
-      .from('perfis_usuario')
+      .from('perfis')
       .select('*')
       .order('nome');
 
@@ -145,5 +183,123 @@ export class InviteService {
     }
 
     return data && data.length > 0;
+  }
+
+  // Buscar convites por email (todos os status)
+  static async getConvitesByEmail(email: string): Promise<Convite[]> {
+    const { data, error } = await supabase
+      .from("convites")
+      .select(
+        `
+        *,
+        organizacao:organizacoes(nome, tipo),
+        perfil:perfis(nome, descricao)
+      `
+      )
+      .eq("email", email)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Erro ao buscar convites por email:", error);
+      throw new Error("Erro ao buscar convites");
+    }
+
+    if (!data || data.length === 0) return [];
+
+    // Buscar dados de todos os usuários de uma vez
+    const userIds = [...new Set(data.map(convite => convite.convidado_por))];
+    const usersData = await this.getMultipleUsersData(userIds);
+
+    // Mapear convites com dados dos usuários
+    const convitesComUsuario = data.map((convite) => ({
+      ...convite,
+      convidado_por_usuario: usersData[convite.convidado_por] || { nome: 'Usuário', email: '' }
+    }));
+
+    return convitesComUsuario;
+  }
+
+  // Buscar convites por organização e status
+  static async getConvitesByStatus(
+    organizacaoId: string,
+    status: string
+  ): Promise<Convite[]> {
+    const { data, error } = await supabase
+      .from("convites")
+      .select(
+        `*, organizacao:organizacoes(nome), perfil:perfis(nome, descricao)`
+      )
+      .eq("organizacao_id", organizacaoId)
+      .eq("status", status)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Erro ao buscar convites por status:", error);
+      throw new Error("Erro ao buscar convites");
+    }
+
+    return data || [];
+  }
+
+  // Aceitar convite por id
+  static async aceitarConvite(conviteId: string, userId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from("convites")
+      .update({ status: "aceito", aceito_em: new Date().toISOString(), aceito_por: userId })
+      .eq("id", conviteId);
+
+    if (error) {
+      console.error("Erro ao aceitar convite:", error);
+      return false;
+    }
+
+    return true;
+  }
+
+  // Rejeitar convite por id
+  static async rejeitarConvite(conviteId: string, userId?: string): Promise<boolean> {
+    const { error } = await supabase
+      .from("convites")
+      .update({ status: "rejeitado", rejeitado_em: new Date().toISOString(), rejeitado_por: userId || null })
+      .eq("id", conviteId);
+
+    if (error) {
+      console.error("Erro ao rejeitar convite:", error);
+      return false;
+    }
+
+    return true;
+  }
+
+  // Cancelar convite por id
+  static async cancelarConvite(conviteId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from("convites")
+      .update({ status: "cancelado", cancelado_em: new Date().toISOString() })
+      .eq("id", conviteId);
+
+    if (error) {
+      console.error("Erro ao cancelar convite:", error);
+      return false;
+    }
+
+    return true;
+  }
+
+  // Mapear informações de status para label/variant/color
+  static getStatusInfo(status: string) {
+    switch (status) {
+      case "aceito":
+        return { label: "Aceito", variant: "default", color: "text-green-600" };
+      case "rejeitado":
+        return { label: "Rejeitado", variant: "destructive", color: "text-red-600" };
+      case "expirado":
+        return { label: "Expirado", variant: "secondary", color: "text-gray-600" };
+      case "cancelado":
+        return { label: "Cancelado", variant: "secondary", color: "text-orange-600" };
+      case "pendente":
+      default:
+        return { label: "Pendente", variant: "outline", color: "text-yellow-600" };
+    }
   }
 }

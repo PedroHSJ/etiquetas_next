@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Plus, Mail, X, Users, ChefHat, Package, CheckCircle } from "lucide-react";
 import { InviteService } from "@/lib/services/inviteService";
-import { PerfilUsuario } from "@/types/onboarding";
+import { Perfil } from "@/types/onboarding";
 import { toast } from "sonner";
 
 interface InviteEmployeesProps {
@@ -19,6 +19,7 @@ interface InviteEmployeesProps {
   userId: string;
   onComplete: () => void;
   onSkip: () => void;
+  onBack?: () => void;
 }
 
 interface NewInvite {
@@ -32,19 +33,20 @@ export function InviteEmployees({
   userId,
   onComplete,
   onSkip,
+  onBack,
 }: InviteEmployeesProps) {
   const [invites, setInvites] = useState<NewInvite[]>([]);
   const [currentEmail, setCurrentEmail] = useState("");
   const [currentPerfil, setCurrentPerfil] = useState<string>("");
   const [sending, setSending] = useState(false);
-  const [perfis, setPerfis] = useState<PerfilUsuario[]>([]);
+  const [perfis, setPerfis] = useState<Perfil[]>([]);
 
   // Carregar perfis de funcionários (excluir gestor)
   useEffect(() => {
     const loadPerfis = async () => {
       try {
         const allPerfis = await InviteService.getPerfis();
-        const funcionarioPerfis = allPerfis.filter(p => p.nome !== 'gestor');
+        const funcionarioPerfis = allPerfis.filter(p => p.nome.toLowerCase() !== 'gestor');
         setPerfis(funcionarioPerfis);
       } catch (error) {
         console.error("Erro ao carregar perfis:", error);
@@ -110,11 +112,6 @@ export function InviteEmployees({
     }
   };
 
-  const getPerfilName = (perfilId: string) => {
-    const perfil = perfis.find(p => p.id === perfilId);
-    return perfil?.nome === 'cozinheiro' ? 'Cozinheiro' : 'Estoquista';
-  };
-
   const getPerfilIcon = (perfilId: string) => {
     const perfil = perfis.find(p => p.id === perfilId);
     return perfil?.nome === 'cozinheiro' ? ChefHat : Package;
@@ -122,6 +119,16 @@ export function InviteEmployees({
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
+      {onBack && (
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          className="mb-4"
+        >
+          ← Voltar
+        </Button>
+      )}
+      
       <div className="text-center mb-6 sm:mb-8">
         <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center">
           <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
@@ -178,12 +185,14 @@ export function InviteEmployees({
                       {perfis.map((perfil) => (
                         <SelectItem key={perfil.id} value={perfil.id}>
                           <div className="flex items-center gap-2">
-                            {perfil.nome === 'cozinheiro' ? (
+                            {perfil.nome.toLowerCase() === 'cozinheiro' ? (
                               <ChefHat className="h-4 w-4" />
-                            ) : (
+                            ) : perfil.nome.toLowerCase() === 'estoquista' ? (
                               <Package className="h-4 w-4" />
+                            ) : (
+                              <Users className="h-4 w-4" />
                             )}
-                            {perfil.nome === 'cozinheiro' ? 'Cozinheiro' : 'Estoquista'}
+                            {perfil.nome}
                           </div>
                         </SelectItem>
                       ))}
@@ -223,7 +232,7 @@ export function InviteEmployees({
                             <div className="min-w-0 flex-1">
                               <p className="font-medium truncate">{invite.email}</p>
                               <Badge variant="outline" className="text-xs">
-                                {getPerfilName(invite.perfil)}
+                                {perfis.find(p => p.id === invite.perfil)?.nome || 'Perfil Desconhecido'}
                               </Badge>
                             </div>
                           </div>

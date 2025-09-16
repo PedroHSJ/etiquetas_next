@@ -1,6 +1,6 @@
-export interface PerfilUsuario {
+export interface Perfil {
   id: string;
-  nome: 'gestor' | 'cozinheiro' | 'estoquista';
+  nome: string;
   descricao: string;
   created_at: string;
 }
@@ -22,8 +22,9 @@ export interface Convite {
     nome: string;
     tipo: string;
   };
-  perfil?: PerfilUsuario;
+  perfil?: Perfil;
   convidado_por_usuario?: {
+    id: string;
     nome: string;
     email: string;
   };
@@ -43,7 +44,7 @@ export interface UsuarioOrganizacao {
     nome: string;
     tipo: string;
   };
-  perfil?: PerfilUsuario;
+  perfil?: Perfil;
 }
 
 export interface OnboardingChoice {

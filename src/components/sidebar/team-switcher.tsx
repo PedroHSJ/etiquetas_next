@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
 import {
   DropdownMenu,
@@ -15,7 +15,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronsUpDown, Building2, User } from "lucide-react";
 
 export function TeamSwitcher() {
-  const { activeProfile, userProfiles, loading, setActiveProfile } = useProfile();
+  const { activeProfile, userProfiles, loading, setActiveProfile } =
+    useProfile();
   const [open, setOpen] = useState(false);
 
   if (loading) {
@@ -33,7 +34,9 @@ export function TeamSwitcher() {
         <div className="h-8 w-8 rounded-md bg-muted">
           <User className="h-4 w-4 m-2 text-muted-foreground" />
         </div>
-        <span className="text-sm text-muted-foreground">Nenhum perfil disponível</span>
+        <span className="text-sm text-muted-foreground">
+          Nenhum perfil disponível
+        </span>
       </div>
     );
   }
@@ -42,7 +45,6 @@ export function TeamSwitcher() {
     setActiveProfile(profile);
     setOpen(false);
   };
-
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
@@ -56,15 +58,15 @@ export function TeamSwitcher() {
           <div className="flex items-center space-x-2">
             <Avatar className="h-6 w-6">
               <AvatarFallback className="text-xs">
-                {activeProfile.perfil.charAt(0).toUpperCase()}
+                {activeProfile.perfil.nome.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col items-start text-left">
               <span className="text-sm font-medium leading-none">
-                {activeProfile.perfil}
+                {activeProfile.perfil.nome}
               </span>
               <span className="text-xs leading-none text-muted-foreground">
-                {activeProfile.organizacao_nome}
+                {activeProfile.organizacao.nome}
               </span>
             </div>
           </div>
@@ -92,15 +94,15 @@ export function TeamSwitcher() {
             <div className="flex items-center space-x-2">
               <Avatar className="h-6 w-6">
                 <AvatarFallback className="text-xs">
-                  {profile.perfil.charAt(0).toUpperCase()}
+                  {profile.perfil.nome.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
                 <span className="text-sm font-medium leading-none">
-                  {profile.perfil}
+                  {profile.perfil.nome}
                 </span>
                 <span className="text-xs leading-none text-muted-foreground">
-                  {profile.organizacao_nome}
+                  {profile.organizacao.nome}
                 </span>
               </div>
             </div>

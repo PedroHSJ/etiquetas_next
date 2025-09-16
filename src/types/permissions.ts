@@ -2,17 +2,16 @@ export interface Funcionalidade {
   id: string;
   nome: string;
   descricao: string;
-  categoria: 'gestao' | 'operacional' | 'relatorios';
+  categoria: "gestao" | "operacional" | "relatorios";
   rota: string;
   ativo: boolean;
   created_at: string;
 }
 
-export interface PerfilUsuario {
+export interface Perfil {
   id: string;
   nome: string;
   descricao: string;
-  nivel_acesso: 1 | 2 | 3 | 4; // 1=basico, 2=operacional, 3=gestao, 4=master
   ativo: boolean;
   created_at: string;
 }
@@ -21,11 +20,11 @@ export interface Permissao {
   id: string;
   funcionalidade_id: string;
   perfil_usuario_id: string;
-  acao: 'visualizar' | 'criar' | 'editar' | 'excluir' | 'gerenciar';
+  acao: "visualizar" | "criar" | "editar" | "excluir" | "gerenciar";
   ativo: boolean;
   created_at: string;
   funcionalidade?: Funcionalidade;
-  perfil_usuario?: PerfilUsuario;
+  perfil_usuario?: Perfil;
 }
 
 export interface UsuarioPerfil {
@@ -35,14 +34,14 @@ export interface UsuarioPerfil {
   ativo: boolean;
   data_inicio: string;
   created_at: string;
-  perfil_usuario?: PerfilUsuario;
+  perfil_usuario?: Perfil;
 }
 
 export interface UsuarioPermissoes {
   usuario_id: string;
   organizacao_id: string;
   permissoes: Permissao[];
-  perfis: PerfilUsuario[];
+  perfis: Perfil[];
 }
 
 export interface PermissaoUsuario {
@@ -62,7 +61,6 @@ export interface ConfiguracaoPerfil {
   perfil_id: string;
   nome: string;
   descricao: string;
-  nivel_acesso: number;
   permissoes: {
     funcionalidade_id: string;
     funcionalidade_nome: string;

@@ -5,30 +5,41 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Package, CheckCircle, Clock } from "lucide-react";
+import { Building2, Users, Package, CheckCircle, Clock, Info } from "lucide-react";
 import { OrganizationWizard } from "@/components/wizard/OrganizationWizard";
 import { InviteEmployees } from "@/components/onboarding/InviteEmployees";
+import { ConvidadoPor } from "@/components/onboarding/ConvidadoPor";
 import { InviteService } from "@/lib/services/inviteService";
 import { Convite, OnboardingChoice } from "@/types/onboarding";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { toast } from "sonner";
 
 export default function OnboardingPage() {
-  const [choice, setChoice] = useState<OnboardingChoice | null>(null);
   const [acceptingInvite, setAcceptingInvite] = useState<string | null>(null);
-  const [showInviteStep, setShowInviteStep] = useState(false);
-  const [organizationData, setOrganizationData] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
   const { user } = useAuth();
   const { invites, loading, hasOrganization } = useOnboarding();
+  const { state, setChoice, setWizardComplete, setInvitesComplete, addAcceptedInvite, resetToChoice, resetToWizard, clearOnboardingState } = useOnboardingState();
   const router = useRouter();
+
+  // Função para formatar nome do perfil
+  const formatProfileName = (profileName?: string) => {
+    if (!profileName) return "Perfil";
+    
+    const profileMap: Record<string, string> = {
+      'gestor': 'Gestor',
+      'cozinheiro': 'Cozinheiro',
+      'estoquista': 'Estoquista',
+      'master': 'Master'
+    };
+    
+    return profileMap[profileName.toLowerCase()] || profileName;
+  };
 
   // Redirecionamento automático para dashboard se não houver convites
   useEffect(() => {
-    if (!loading && invites.length === 0 && choice?.tipo === 'funcionario') {
+    if (!loading && invites.length === 0 && state.choice?.tipo === 'funcionario') {
       console.log("Redirecionamento automático em 5 segundos...");
       const timer = setTimeout(() => {
         console.log("Redirecionando para dashboard...");
@@ -40,7 +51,7 @@ export default function OnboardingPage() {
         clearTimeout(timer);
       };
     }
-  }, [loading, invites.length, choice?.tipo, router]);
+  }, [loading, invites.length, state.choice?.tipo, router]);
 
   const handleChoice = (tipo: 'gestor' | 'funcionario', perfil?: 'cozinheiro' | 'estoquista') => {
     setChoice({ tipo, perfil });
@@ -54,7 +65,8 @@ export default function OnboardingPage() {
       await InviteService.acceptInvite(convite.token_invite, user.id);
       toast.success("Convite aceito com sucesso!");
       
-      // Remover convite da lista (o hook fará isso automaticamente)
+      // Adicionar convite aceito ao estado
+      addAcceptedInvite(convite.id);
       
       // Redirecionar para dashboard
       router.push("/dashboard");
@@ -67,39 +79,46 @@ export default function OnboardingPage() {
   };
 
   const handleWizardComplete = (orgId: string, orgName: string) => {
-    setOrganizationData({ id: orgId, name: orgName });
-    setShowInviteStep(true);
+    setWizardComplete(orgId, orgName);
   };
 
   const handleInvitesComplete = () => {
+    clearOnboardingState();
     router.push("/dashboard");
   };
 
   const handleSkipInvites = () => {
+    clearOnboardingState();
     router.push("/dashboard");
   };
 
   const handleBack = () => {
-    setChoice(null);
+    if (state.step === 'invites') {
+      resetToWizard();
+    } else {
+      resetToChoice();
+    }
   };
 
-  if (choice?.tipo === 'gestor') {
-    if (showInviteStep && organizationData) {
-      return (
-        <div className="min-h-screen bg-background">
-          <div className="container mx-auto py-6">
-            <InviteEmployees
-              organizationId={organizationData.id}
-              organizationName={organizationData.name}
-              userId={user?.id || ""}
-              onComplete={handleInvitesComplete}
-              onSkip={handleSkipInvites}
-            />
-          </div>
+  // Renderização baseada no step atual
+  if (state.step === 'invites' && state.organizationData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto py-6">
+          <InviteEmployees
+            organizationId={state.organizationData.id}
+            organizationName={state.organizationData.name}
+            userId={user?.id || ""}
+            onComplete={handleInvitesComplete}
+            onSkip={handleSkipInvites}
+            onBack={handleBack}
+          />
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
+  if (state.step === 'wizard' && state.choice?.tipo === 'gestor') {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto py-6">
@@ -119,7 +138,7 @@ export default function OnboardingPage() {
     );
   }
 
-  if (choice?.tipo === 'funcionario') {
+  if (state.choice?.tipo === 'funcionario') {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto py-4 px-4 sm:py-6">
@@ -182,14 +201,15 @@ export default function OnboardingPage() {
                              </h3>
                            </div>
                            <Badge variant="outline" className="w-fit">
-                             {convite.perfil?.nome === 'cozinheiro' ? 'Cozinheiro' : 'Estoquista'}
+                             {formatProfileName(convite.perfil?.nome)}
                            </Badge>
                          </div>
                         
                         <div className="space-y-2 text-sm text-muted-foreground">
-                          <p>
-                            <strong>Convidado por:</strong> {convite.convidado_por_usuario?.nome || "Usuário"}
-                          </p>
+                          <ConvidadoPor 
+                            usuario={convite.convidado_por_usuario}
+                            isLoading={!convite.convidado_por_usuario}
+                          />
                           <p>
                             <strong>Data do convite:</strong>{" "}
                             {new Date(convite.created_at).toLocaleDateString('pt-BR')}

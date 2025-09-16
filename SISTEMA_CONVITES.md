@@ -134,7 +134,7 @@ interface Convite {
   
   // Relacionamentos
   organizacao?: { nome: string; tipo: string };
-  perfil?: PerfilUsuario;
+  perfil?: Perfil;
   convidado_por_usuario?: { nome: string; email: string };
 }
 ```

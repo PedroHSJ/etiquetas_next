@@ -19,7 +19,9 @@ interface UseOrganizationWizardReturn {
   nextStep: () => void;
   prevStep: () => void;
   updateWizardData: (data: Partial<WizardData>) => void;
-  submitWizard: (userId: string) => Promise<{ success: boolean; organizationId?: string }>;
+  submitWizard: (
+    userId: string
+  ) => Promise<{ success: boolean; organizationId?: string }>;
   getTotalSteps: () => number;
 }
 
@@ -36,32 +38,36 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
 
   const nextStep = useCallback(() => {
     setCurrentStep((prev) => {
-      const totalSteps = wizardData.template && 
-        Object.keys(wizardData.template.especializacoes).length > 0 ? 4 : 3;
-      
+      const totalSteps =
+        wizardData.template &&
+        Object.keys(wizardData.template.especializacoes).length > 0
+          ? 4
+          : 3;
+
       let nextStep = prev + 1;
-      
+
       // Se estamos no passo 2 e não há especializações, pular para o passo 4 (resumo)
       if (prev === 2 && totalSteps === 3) {
         nextStep = 4;
       }
-      
+
       return Math.min(nextStep, totalSteps === 3 ? 4 : 4);
     });
   }, [wizardData.template]);
 
   const prevStep = useCallback(() => {
     setCurrentStep((prev) => {
-      const hasSpecializations = wizardData.template && 
+      const hasSpecializations =
+        wizardData.template &&
         Object.keys(wizardData.template.especializacoes).length > 0;
-      
+
       let prevStep = prev - 1;
-      
+
       // Se estamos no passo 4 (resumo) e não há especializações, voltar para o passo 2
       if (prev === 4 && !hasSpecializations) {
         prevStep = 2;
       }
-      
+
       return Math.max(prevStep, 1);
     });
   }, [wizardData.template]);
@@ -70,10 +76,10 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
     setWizardData((prev) => ({ ...prev, ...data }));
   }, []);
 
-
-
   const submitWizard = useCallback(
-    async (userId: string): Promise<{ success: boolean; organizationId?: string }> => {
+    async (
+      userId: string
+    ): Promise<{ success: boolean; organizationId?: string }> => {
       setIsLoading(true);
       try {
         console.log("Iniciando criação da organização...", {
@@ -82,7 +88,7 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
           user_id: userId,
         });
 
- // 1. Criar organização (UUID será gerado automaticamente)
+        // 1. Criar organização (UUID será gerado automaticamente)
         const { data: orgData, error: orgError } = await supabase
           .from("organizacoes")
           .insert({
@@ -132,9 +138,9 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
 
         // 3. Buscar ID do perfil gestor
         const { data: gestorPerfil, error: perfilError } = await supabase
-          .from("perfis_usuario")
+          .from("perfis")
           .select("id")
-          .eq("nome", "gestor")
+          .ilike("nome", "gestor")
           .single();
 
         if (perfilError || !gestorPerfil) {
@@ -149,11 +155,14 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
             usuario_id: userId,
             organizacao_id: orgData.id,
             perfil_id: gestorPerfil.id,
-            ativo: true
+            ativo: true,
           });
 
         if (userOrgError) {
-          console.error("Erro ao adicionar usuário à organização:", userOrgError);
+          console.error(
+            "Erro ao adicionar usuário à organização:",
+            userOrgError
+          );
           throw new Error(
             `Erro ao adicionar usuário à organização: ${userOrgError.message}`
           );
