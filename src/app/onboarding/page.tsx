@@ -16,6 +16,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useNavigation } from "@/contexts/NavigationContext";
 
 export default function OnboardingPage() {
   const [acceptingInvite, setAcceptingInvite] = useState<string | null>(null);
@@ -23,6 +24,7 @@ export default function OnboardingPage() {
   const { invites, loading, hasOrganization } = useOnboarding();
   const { state, setChoice, setWizardComplete, setInvitesComplete, addAcceptedInvite, resetToChoice, resetToWizard, clearOnboardingState } = useOnboardingState();
   const router = useRouter();
+  const { isNavigating } = useNavigation();
   const { refreshAll } = useProfile();
 
   // Função para formatar nome do perfil
@@ -111,14 +113,24 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto py-6">
-          <InviteEmployees
-            organizationId={state.organizationData.id}
-            organizationName={state.organizationData.name}
-            userId={user?.id || ""}
-            onComplete={handleInvitesComplete}
-            onSkip={handleSkipInvites}
-            onBack={handleBack}
-          />
+          {!isNavigating && (
+            <InviteEmployees
+              organizationId={state.organizationData.id}
+              organizationName={state.organizationData.name}
+              userId={user?.id || ""}
+              onComplete={handleInvitesComplete}
+              onSkip={handleSkipInvites}
+              onBack={handleBack}
+            />
+          )}
+
+          {isNavigating && (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-muted-foreground">Redirecionando...</p>
+            </div>
+          )}
+
         </div>
       </div>
     );
