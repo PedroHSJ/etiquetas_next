@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Bell } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { Button } from '../ui/button';
@@ -8,15 +8,16 @@ import { Badge } from '../ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
+import { Dialog, DialogContent } from '../ui/dialog';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ConviteManager } from './ConviteManager';
-import { ConviteWithDetails } from '../../types';
+import { ConvidadoPor } from '../onboarding/ConvidadoPor';
 
 export const NotificationBell: React.FC = () => {
   const { convitesPendentes, contagemConvites, isLoading } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedConvite, setSelectedConvite] = useState<ConviteWithDetails | null>(null);
+  const [selectedConvite, setSelectedConvite] = useState<any | null>(null);
 
   const formatDate = (dateString: string) => {
     try {
@@ -29,8 +30,9 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
-  const handleConviteClick = (convite: ConviteWithDetails) => {
+  const handleConviteClick = (convite: any) => {
     setSelectedConvite(convite);
+    setIsOpen(false); // Fechar o popover de notificações
   };
 
   const handleCloseConviteManager = () => {
@@ -84,27 +86,61 @@ export const NotificationBell: React.FC = () => {
                       className="p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
                       onClick={() => handleConviteClick(convite)}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {convite.email}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Perfil: {convite.perfil_nome || 'N/A'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Convidado por: {convite.convidado_por_nome || 'N/A'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(convite.created_at)}
-                          </p>
+                      {convite.email.length > 25 ? (
+                        // Layout para emails longos - badge na parte inferior
+                        <div className="space-y-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground break-all">
+                              {convite.email}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Perfil: {convite.perfil?.nome || 'N/A'}
+                            </p>
+                            <div className="mt-1">
+                              <ConvidadoPor 
+                                usuario={convite.convidado_por_usuario}
+                                isLoading={isLoading}
+                                compact={true}
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(convite.created_at)}
+                            </p>
+                          </div>
+                          <div className="flex justify-end">
+                            <Badge variant="outline" className="text-xs">
+                              {convite.status}
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="ml-2 text-right">
-                          <Badge variant="outline" className="text-xs">
-                            {convite.status}
-                          </Badge>
+                      ) : (
+                        // Layout padrão para emails normais - badge à direita
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {convite.email}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Perfil: {convite.perfil?.nome || 'N/A'}
+                            </p>
+                            <div className="mt-1">
+                              <ConvidadoPor 
+                                usuario={convite.convidado_por_usuario}
+                                isLoading={isLoading}
+                                compact={true}
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(convite.created_at)}
+                            </p>
+                          </div>
+                          <div className="ml-2 text-right">
+                            <Badge variant="outline" className="text-xs">
+                              {convite.status}
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                     {index < convitesPendentes.length - 1 && (
                       <Separator className="my-2" />
@@ -126,16 +162,16 @@ export const NotificationBell: React.FC = () => {
       </Popover>
 
       {/* Modal para gerenciar convite */}
-      {selectedConvite && (
-        <Popover open={!!selectedConvite} onOpenChange={() => setSelectedConvite(null)}>
-          <PopoverContent className="w-96 p-0" align="center">
+      <Dialog open={!!selectedConvite} onOpenChange={() => setSelectedConvite(null)}>
+        <DialogContent className="" showCloseButton={false}>
+          {selectedConvite && (
             <ConviteManager 
               convite={selectedConvite} 
               onClose={handleCloseConviteManager} 
             />
-          </PopoverContent>
-        </Popover>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { Convite } from '../types/onboarding';
 import { useOrganization } from './OrganizationContext';
 import { InviteService } from "@/lib/services/inviteService";
+import { useAuth } from './AuthContext';
 
 interface NotificationContextType {
   convitesPendentes: Convite[];
@@ -11,7 +12,7 @@ interface NotificationContextType {
   isLoading: boolean;
   refreshConvites: () => Promise<void>;
   aceitarConvite: (tokenInvite: string, aceitoPor: string) => Promise<boolean>;
-  cancelarConvite: (conviteId: string) => Promise<boolean>;
+  rejeitarConvite: (conviteId: string) => Promise<boolean>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -33,13 +34,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [convitesPendentes, setConvitesPendentes] = useState<Convite[]>([]);
   const [contagemConvites, setContagemConvites] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   const fetchConvites = async () => {
-    if (!selectedOrganization?.id) return;
-
+      if (!user?.email) return;
     setIsLoading(true);
     try {
-      const convites = await InviteService.getConvitesByStatus(selectedOrganization.id, 'pendente');
+      const convites = await InviteService.getConvitesByStatus('pendente', user?.email);
       setConvitesPendentes(convites);
       setContagemConvites(convites.length);
     } catch (error) {
@@ -66,9 +67,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   };
 
-  const cancelarConvite = async (conviteId: string): Promise<boolean> => {
+  const rejeitarConvite = async (conviteId: string): Promise<boolean> => {
     try {
-      const success = await InviteService.cancelarConvite(conviteId);
+      const success = await InviteService.rejeitarConvite(conviteId);
       if (success) {
         await refreshConvites();
       }
@@ -94,13 +95,17 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     return () => clearInterval(interval);
   }, [selectedOrganization?.id]);
 
+  useEffect(() => {
+      fetchConvites();
+  }, [user?.email]);
+
   const value: NotificationContextType = {
     convitesPendentes,
     contagemConvites,
     isLoading,
     refreshConvites,
     aceitarConvite,
-    cancelarConvite,
+    rejeitarConvite,
   };
 
   return (

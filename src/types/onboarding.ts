@@ -10,13 +10,15 @@ export interface Convite {
   email: string;
   organizacao_id: string;
   perfil_id: string;
-  status: 'pendente' | 'aceito' | 'expirado';
+  status: 'pendente' | 'aceito' | 'expirado' | 'rejeitado' | 'cancelado';
   token_invite: string;
   expira_em: string;
   convidado_por: string;
   created_at: string;
   aceito_em?: string;
   aceito_por?: string;
+  rejeitado_em?: string;
+  rejeitado_por?: string;
   // Campos relacionados
   organizacao?: {
     nome: string;

@@ -237,16 +237,16 @@ export class InviteService {
 
   // Buscar convites por organização e status
   static async getConvitesByStatus(
-    organizacaoId: string,
-    status: string
+    status: string,
+    userEmail: string
   ): Promise<Convite[]> {
     const { data, error } = await supabase
       .from("convites")
       .select(
         `*, organizacao:organizacoes(nome), perfil:perfis(nome, descricao)`
       )
-      .eq("organizacao_id", organizacaoId)
       .eq("status", status)
+      .eq("email", userEmail)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -254,7 +254,19 @@ export class InviteService {
       throw new Error("Erro ao buscar convites");
     }
 
-    return data || [];
+    if (!data || data.length === 0) return [];
+
+    // Buscar dados de todos os usuários de uma vez
+    const userIds = [...new Set(data.map(convite => convite.convidado_por))];
+    const usersData = await this.getMultipleUsersData(userIds);
+
+    // Mapear convites com dados dos usuários
+    const convitesComUsuario = data.map((convite) => ({
+      ...convite,
+      convidado_por_usuario: usersData[convite.convidado_por] || { nome: 'Usuário', email: '' }
+    }));
+
+    return convitesComUsuario;
   }
 
   // Aceitar convite por id

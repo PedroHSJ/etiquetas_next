@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { ConviteWithDetails } from '../../types';
+import { Convite } from '../../types/onboarding';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -10,17 +10,16 @@ import { Separator } from '../ui/separator';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Check, X, Clock, User, Mail, Shield } from 'lucide-react';
-import { useToast } from '../../hooks/use-toast';
+import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ConviteManagerProps {
-  convite: ConviteWithDetails;
+  convite: Convite;
   onClose: () => void;
 }
 
 export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose }) => {
-  const { aceitarConvite, cancelarConvite } = useNotifications();
-  const { toast } = useToast();
+  const { aceitarConvite, rejeitarConvite } = useNotifications();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -72,15 +71,15 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
     }
   };
 
-  const handleCancelarConvite = async () => {
+  const handleRejeitarConvite = async () => {
     setIsLoading(true);
     try {
-      const success = await cancelarConvite(convite.id);
+      const success = await rejeitarConvite(convite.id);
       if (success) {
-        toast.success("Convite cancelado com sucesso!");
+        toast.success("Convite rejeitado com sucesso!");
         onClose();
       } else {
-        toast.error("Não foi possível cancelar o convite");
+        toast.error("Não foi possível rejeitar o convite");
       }
     } catch (error) {
       toast.error("Erro ao cancelar convite");
@@ -92,15 +91,15 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
   const isExpired = new Date(convite.expira_em) < new Date();
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
+    <div className="w-full max-w-md">
+      <div className="pb-3">
+        <div className="flex items-center gap-2 text-lg">
           <Mail className="h-5 w-5" />
           Gerenciar Convite
-        </CardTitle>
-      </CardHeader>
+        </div>
+      </div>
       
-      <CardContent className="space-y-4">
+      <div className="space-y-4">
         {/* Informações do convite */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -111,7 +110,7 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              Perfil: {convite.perfil_nome || 'N/A'}
+              Perfil: {convite.perfil?.nome || 'N/A'}
             </span>
           </div>
           
@@ -160,14 +159,14 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
           </Button>
           
           <Button
-            onClick={handleCancelarConvite}
+            onClick={handleRejeitarConvite}
             disabled={isLoading}
             variant="outline"
             className="flex-1"
             size="sm"
           >
             <X className="h-4 w-4 mr-2" />
-            Cancelar
+            Rejeitar
           </Button>
         </div>
 
@@ -176,7 +175,7 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
             Este convite expirou e não pode mais ser aceito
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

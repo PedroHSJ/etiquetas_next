@@ -194,7 +194,7 @@ export default function ConvitesPage() {
   const getStatusBadge = (status: Convite["status"]) => {
     const statusInfo = InviteService.getStatusInfo(status);
     return (
-      <Badge variant={statusInfo.variant} className={statusInfo.color}>
+      <Badge variant={statusInfo.variant as any} className={statusInfo.color}>
         {statusInfo.label}
       </Badge>
     );
@@ -266,21 +266,9 @@ export default function ConvitesPage() {
                   {convite.convidado_por_usuario && (
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        {convite.convidado_por_usuario.picture ||
-                        convite.convidado_por_usuario.avatar_url ? (
-                          <img
-                            src={
-                              convite.convidado_por_usuario.picture ||
-                              convite.convidado_por_usuario.avatar_url!
-                            }
-                            alt={convite.convidado_por_usuario.nome}
-                            className="h-8 w-8 rounded-full"
-                          />
-                        ) : (
-                          <AvatarFallback className="h-8 w-8 text-xs bg-gray-100 text-gray-600">
-                            {getInitials(convite.convidado_por_usuario.nome)}
-                          </AvatarFallback>
-                        )}
+                        <AvatarFallback className="h-8 w-8 text-xs bg-gray-100 text-gray-600">
+                          {getInitials(convite.convidado_por_usuario.nome)}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-muted-foreground">
@@ -352,21 +340,9 @@ export default function ConvitesPage() {
                     {convite.convidado_por_usuario ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          {convite.convidado_por_usuario.picture ||
-                          convite.convidado_por_usuario.avatar_url ? (
-                            <img
-                              src={
-                                convite.convidado_por_usuario.picture ||
-                                convite.convidado_por_usuario.avatar_url!
-                              }
-                              alt={convite.convidado_por_usuario.nome}
-                              className="h-6 w-6 rounded-full"
-                            />
-                          ) : (
                             <AvatarFallback className="h-6 w-6 text-xs bg-gray-100 text-gray-600">
                               {getInitials(convite.convidado_por_usuario.nome)}
                             </AvatarFallback>
-                          )}
                         </Avatar>
                         <div>
                           <div className="text-sm font-medium">
@@ -785,31 +761,12 @@ export default function ConvitesPage() {
                       {actionDialog.convite.convidado_por_usuario && (
                         <div className="flex items-center gap-2 mt-1">
                           <Avatar className="h-4 w-4">
-                            {actionDialog.convite.convidado_por_usuario
-                              .picture ||
-                            actionDialog.convite.convidado_por_usuario
-                              .avatar_url ? (
-                              <img
-                                src={
-                                  actionDialog.convite.convidado_por_usuario
-                                    .picture ||
-                                  actionDialog.convite.convidado_por_usuario
-                                    .avatar_url!
-                                }
-                                alt={
-                                  actionDialog.convite.convidado_por_usuario
-                                    .nome
-                                }
-                                className="h-4 w-4 rounded-full"
-                              />
-                            ) : (
                               <AvatarFallback className="h-4 w-4 text-xs bg-gray-100 text-gray-600">
                                 {getInitials(
                                   actionDialog.convite.convidado_por_usuario
                                     .nome
                                 )}
                               </AvatarFallback>
-                            )}
                           </Avatar>
                           <span className="text-xs text-muted-foreground">
                             Convidado por{" "}
