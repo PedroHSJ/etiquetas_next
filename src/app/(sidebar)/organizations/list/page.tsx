@@ -108,6 +108,7 @@ export default function Page() {
 
     setLoading(true);
     try {
+      // Buscar organizações através da relação usuarios_organizacoes
       const { data, error } = await supabase
         .from("organizacoes")
         .select("*")
@@ -143,106 +144,6 @@ export default function Page() {
       setDepartments(data);
     }
   };
-
-  // const fetchAllMembers = async () => {
-  //   setLoading(true);
-
-  //   const { data, error } = await supabase
-  //     .from('integrantes')
-  //     .select(`
-  //       *,
-  //       departamentos (
-  //         nome,
-  //         tipo_departamento,
-  //         organizacoes (
-  //           nome,
-  //           tipo
-  //         )
-  //       ),
-  //       integrante_especializacoes (
-  //         especializacoes (
-  //           id,
-  //           nome
-  //         ),
-  //         nivel
-  //       )
-  //     `)
-  //     .order('nome');
-
-  //   if (!error && data) {
-  //     const membersWithDetails = data.map(member => ({
-  //       ...member,
-  //       departamento: {
-  //         nome: member.departamentos?.nome,
-  //         tipo_departamento: member.departamentos?.tipo_departamento,
-  //         organizacao: {
-  //           nome: member.departamentos?.organizacoes?.nome,
-  //           tipo: member.departamentos?.organizacoes?.tipo
-  //         }
-  //       },
-  //       especializacoes: member.integrante_especializacoes?.map((ie: any) => ({
-  //         id: ie.especializacoes.id,
-  //         nome: ie.especializacoes.nome,
-  //         nivel: ie.nivel
-  //       })) || []
-  //     }));
-  //     setMembers(membersWithDetails);
-  //     setfilteredOrganizations(membersWithDetails);
-  //   }
-
-  //   setLoading(false);
-  // };
-
-  // const fetchMembersByOrganization = async (organizationId: string) => {
-  //   setLoading(true);
-
-  //   const { data, error } = await supabase
-  //     .from('integrantes')
-  //     .select(`
-  //       *,
-  //       departamentos!inner (
-  //         nome,
-  //         tipo_departamento,
-  //         organizacao_id,
-  //         organizacoes!inner (
-  //           nome,
-  //           tipo
-  //         )
-  //       ),
-  //       integrante_especializacoes (
-  //         especializacoes (
-  //           id,
-  //           nome
-  //         ),
-  //         nivel
-  //       )
-  //     `)
-  //     .eq('departamentos.organizacao_id', organizationId)
-  //     .order('nome');
-
-  //   if (!error && data) {
-  //     const membersWithDetails = data.map(member => ({
-  //       ...member,
-  //       departamento: {
-  //         nome: member.departamentos?.nome,
-  //         tipo_departamento: member.departamentos?.tipo_departamento,
-  //         organizacao: {
-  //           nome: member.departamentos?.organizacoes?.nome,
-  //           tipo: member.departamentos?.organizacoes?.tipo
-  //         }
-  //       },
-  //       especializacoes: member.integrante_especializacoes?.map((ie: any) => ({
-  //         id: ie.especializacoes.id,
-  //         nome: ie.especializacoes.nome,
-  //         nivel: ie.nivel
-  //       })) || []
-  //     }));
-  //     setMembers(membersWithDetails);
-  //     setfilteredOrganizations(membersWithDetails);
-  //   }
-
-  //   setLoading(false);
-  // };
 
   useEffect(() => {
     console.log("User ID changed:", userId);

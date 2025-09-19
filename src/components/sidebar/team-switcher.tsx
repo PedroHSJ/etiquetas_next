@@ -45,6 +45,7 @@ export function TeamSwitcher() {
     setActiveProfile(profile);
     setOpen(false);
   };
+  
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>

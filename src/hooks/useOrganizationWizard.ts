@@ -149,22 +149,43 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
         }
 
         // 4. Adicionar usuário como gestor da organização
-        const { error: userOrgError } = await supabase
+        const { data: userOrgData, error: userOrgError } = await supabase
           .from("usuarios_organizacoes")
           .insert({
             usuario_id: userId,
             organizacao_id: orgData.id,
             perfil_id: gestorPerfil.id,
             ativo: true,
-          });
+          })
+          .select()
+          .single();
 
-        if (userOrgError) {
+        if (userOrgError || !userOrgData) {
           console.error(
             "Erro ao adicionar usuário à organização:",
             userOrgError
           );
           throw new Error(
-            `Erro ao adicionar usuário à organização: ${userOrgError.message}`
+            `Erro ao adicionar usuário à organização: ${userOrgError?.message}`
+          );
+        }
+
+        // 5. Criar registro em usuarios_perfis
+        const { error: userPerfilError } = await supabase
+          .from("usuarios_perfis")
+          .insert({
+            usuario_organizacao_id: userOrgData.id,
+            perfil_usuario_id: gestorPerfil.id,
+            ativo: true,
+          });
+
+        if (userPerfilError) {
+          console.error(
+            "Erro ao criar perfil do usuário:",
+            userPerfilError
+          );
+          throw new Error(
+            `Erro ao criar perfil do usuário: ${userPerfilError.message}`
           );
         }
 

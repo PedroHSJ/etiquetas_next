@@ -3,7 +3,12 @@ export interface OrganizationType {
     nome: string;
     tipo: 'uan';
     created_at: string;
-    user_id: string;
+    // Removido user_id pois agora usamos usuarios_organizacoes
+    user_perfil?: {
+      nome: string;
+      descricao: string;
+    };
+    data_entrada?: string;
   }
 
 export interface OrganizationTemplate {

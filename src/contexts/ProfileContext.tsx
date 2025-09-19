@@ -20,6 +20,7 @@ interface ProfileContextType {
   setActiveProfile: (profile: UserProfile | null) => void;
   refreshProfiles: () => Promise<void>;
   refreshPermissoes: () => Promise<void>;
+  refreshAll: () => void;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -100,6 +101,11 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     }
   };
 
+  const refreshAll = () => {
+    refreshProfiles();
+    refreshPermissoes();
+  };
+
   // Carregar perfis quando o usuário autenticado mudar (ou na montagem)
   useEffect(() => {
     loadProfiles();
@@ -136,6 +142,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     setActiveProfile,
     refreshProfiles,
     refreshPermissoes,
+    refreshAll,
   };
 
   return (

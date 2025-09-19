@@ -21,11 +21,12 @@ export default function AuthCallback() {
       if (data?.session?.user) {
         console.log("Usuário autenticado:", data.session.user);
         
-        // Verificar se o usuário já tem uma organização
+        // Verificar se o usuário já tem uma organização através de usuarios_organizacoes
         const { data: organizations, error: orgError } = await supabase
-          .from('organizacoes')
+          .from('usuarios_organizacoes')
           .select('id')
-          .eq('user_id', data.session.user.id)
+          .eq('usuario_id', data.session.user.id)
+          .eq('ativo', true)
           .limit(1);
         
         if (orgError) {

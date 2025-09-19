@@ -46,8 +46,8 @@ export function InviteEmployees({
     const loadPerfis = async () => {
       try {
         const allPerfis = await InviteService.getPerfis();
-        const funcionarioPerfis = allPerfis.filter(p => p.nome.toLowerCase() !== 'gestor');
-        setPerfis(funcionarioPerfis);
+        //const funcionarioPerfis = allPerfis.filter(p => p.nome.toLowerCase() !== 'gestor');
+        setPerfis(allPerfis);
       } catch (error) {
         console.error("Erro ao carregar perfis:", error);
       }
@@ -69,7 +69,7 @@ export function InviteEmployees({
     }
 
     // Verificar se email já foi adicionado
-    if (invites.some(inv => inv.email === currentEmail)) {
+    if (invites.some(inv => inv.email === currentEmail && inv.perfil === currentPerfil)) {
       toast.error("Este email já foi adicionado");
       return;
     }
@@ -173,11 +173,13 @@ export function InviteEmployees({
                         addInvite();
                       }
                     }}
+                    className="mt-2"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="perfil">Perfil</Label>
-                  <Select value={currentPerfil} onValueChange={setCurrentPerfil}>
+                  <Label htmlFor="perfil" className="mb-2">Perfil</Label>
+                  <Select value={currentPerfil} 
+                    onValueChange={setCurrentPerfil}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o perfil" />
                     </SelectTrigger>
@@ -263,12 +265,10 @@ export function InviteEmployees({
                 Pular por Agora
               </Button>
               
-              <div className="flex gap-3">
                 {invites.length > 0 && (
                   <Button
                     onClick={sendInvites}
                     disabled={sending}
-                    className="min-w-[150px]"
                   >
                     {sending ? (
                       <>
@@ -283,7 +283,6 @@ export function InviteEmployees({
                     )}
                   </Button>
                 )}
-              </div>
             </div>
 
             {/* Informação adicional */}

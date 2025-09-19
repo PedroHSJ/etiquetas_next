@@ -67,7 +67,7 @@ export default function EditDepartmentPage() {
           .select(
             `
             *,
-            organizacao:organizacoes(nome, user_id)
+            organizacao:organizacoes(id, nome)
           `
           )
           .eq("id", departmentId)
@@ -81,8 +81,16 @@ export default function EditDepartmentPage() {
         }
 
         if (data) {
-          // Verificar se o usuário é dono da organização
-          if (data.organizacao?.user_id !== userId) {
+          // Verificar se o usuário tem acesso à organização
+          const { data: userOrg, error: userOrgError } = await supabase
+            .from("usuarios_organizacoes")
+            .select("id")
+            .eq("usuario_id", userId)
+            .eq("organizacao_id", data.organizacao?.id)
+            .eq("ativo", true)
+            .single();
+
+          if (userOrgError || !userOrg) {
             toast.error("Você não tem permissão para editar este departamento");
             router.push("/departments/list");
             return;

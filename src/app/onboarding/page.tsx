@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { toast } from "sonner";
+import { useProfile } from "@/contexts/ProfileContext";
 
 export default function OnboardingPage() {
   const [acceptingInvite, setAcceptingInvite] = useState<string | null>(null);
@@ -22,6 +23,7 @@ export default function OnboardingPage() {
   const { invites, loading, hasOrganization } = useOnboarding();
   const { state, setChoice, setWizardComplete, setInvitesComplete, addAcceptedInvite, resetToChoice, resetToWizard, clearOnboardingState } = useOnboardingState();
   const router = useRouter();
+  const { refreshAll } = useProfile();
 
   // Função para formatar nome do perfil
   const formatProfileName = (profileName?: string) => {
@@ -43,6 +45,7 @@ export default function OnboardingPage() {
       console.log("Redirecionamento automático em 5 segundos...");
       const timer = setTimeout(() => {
         console.log("Redirecionando para dashboard...");
+        refreshAll();
         router.push("/dashboard");
       }, 5000);
 
@@ -69,6 +72,7 @@ export default function OnboardingPage() {
       addAcceptedInvite(convite.id);
       
       // Redirecionar para dashboard
+      refreshAll();
       router.push("/dashboard");
     } catch (error) {
       console.error("Erro ao aceitar convite:", error);
@@ -84,11 +88,13 @@ export default function OnboardingPage() {
 
   const handleInvitesComplete = () => {
     clearOnboardingState();
+    refreshAll();
     router.push("/dashboard");
   };
 
   const handleSkipInvites = () => {
     clearOnboardingState();
+    refreshAll();
     router.push("/dashboard");
   };
 
@@ -176,7 +182,10 @@ export default function OnboardingPage() {
                   </p>
                   <div className="space-y-3">
                                       <Button 
-                    onClick={() => router.push("/dashboard")}
+                    onClick={() => {
+                      refreshAll();
+                      router.push("/dashboard")
+                    }}
                     className="w-full sm:w-auto"
                   >
                     Ir para Dashboard

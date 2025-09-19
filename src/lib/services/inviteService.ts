@@ -93,18 +93,34 @@ export class InviteService {
     }
 
     // Adicionar usuário à organização
-    const { error: insertError } = await supabase
+    const { data: userOrgData, error: insertError } = await supabase
       .from('usuarios_organizacoes')
       .insert({
         usuario_id: userId,
         organizacao_id: convite.organizacao_id,
         perfil_id: convite.perfil_id,
         ativo: true
-      });
+      })
+      .select()
+      .single();
 
-    if (insertError) {
+    if (insertError || !userOrgData) {
       console.error('Erro ao adicionar usuário à organização:', insertError);
       throw new Error('Erro ao adicionar usuário à organização');
+    }
+
+    // Criar registro em usuarios_perfis
+    const { error: userPerfilError } = await supabase
+      .from('usuarios_perfis')
+      .insert({
+        usuario_organizacao_id: userOrgData.id,
+        perfil_usuario_id: convite.perfil_id,
+        ativo: true
+      });
+
+    if (userPerfilError) {
+      console.error('Erro ao criar perfil do usuário:', userPerfilError);
+      throw new Error('Erro ao criar perfil do usuário');
     }
 
     return true;
