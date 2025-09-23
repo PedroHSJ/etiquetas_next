@@ -3,6 +3,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { OrganizationDetails } from "@/components/organization";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { 
   Building2, 
   Users, 
@@ -10,11 +12,14 @@ import {
   ChefHat, 
   BarChart3, 
   Calendar,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
+  const { activeOrganizationDetails, detailsLoading } = useOrganization();
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -25,56 +30,111 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Informações da Organização Ativa */}
+      {detailsLoading ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm text-muted-foreground">
+                Carregando informações da organização...
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : activeOrganizationDetails ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Organização Ativa
+            </CardTitle>
+            <CardDescription>
+              Informações da organização atualmente selecionada
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OrganizationDetails 
+              organization={activeOrganizationDetails}
+              variant="compact"
+              showAllDetails={false}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-2">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Nenhuma organização selecionada
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Cards de Resumo */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Setores</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">7</div>
-            <p className="text-xs text-muted-foreground">
-              Setores ativos
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Funcionários</CardTitle>
+            <CardTitle className="text-sm font-medium">Capacidade</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">
+              {activeOrganizationDetails?.capacidade_atendimento || "--"}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +2 este mês
+              refeições/dia
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produtos</CardTitle>
+            <CardTitle className="text-sm font-medium">Telefone</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">
+              {activeOrganizationDetails?.telefone_principal || "--"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Contato principal
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Localização</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
+            <div className="text-sm font-bold">
+              {activeOrganizationDetails?.cidade && activeOrganizationDetails?.estado 
+                ? `${activeOrganizationDetails.cidade}/${activeOrganizationDetails.estado}`
+                : "--"
+              }
+            </div>
             <p className="text-xs text-muted-foreground">
-              +5 esta semana
+              Cidade/Estado
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Etiquetas</CardTitle>
+            <CardTitle className="text-sm font-medium">CNPJ</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">128</div>
+            <div className="text-sm font-bold">
+              {activeOrganizationDetails?.cnpj || "--"}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +12 hoje
+              Identificação
             </p>
           </CardContent>
         </Card>
@@ -85,20 +145,40 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ChefHat className="h-5 w-5" />
-              Gerenciar Setores
+              <Building2 className="h-5 w-5" />
+              Configurações
             </CardTitle>
             <CardDescription>
-              Configure e organize os setores da sua UAN
+              Gerencie informações da organização
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full">
-              <Link href="/departments">
-                Gerenciar Setores
+            <Link href="/configuracoes">
+              <Button className="w-full">
+                Abrir Configurações
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ChefHat className="h-5 w-5" />
+              Etiquetas
+            </CardTitle>
+            <CardDescription>
+              Gerencie etiquetas de alimentos
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/etiquetas">
+              <Button variant="outline" className="w-full">
+                Ver Etiquetas
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -106,151 +186,22 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Funcionários
+              Membros
             </CardTitle>
             <CardDescription>
-              Gerencie a equipe e envie convites
+              Gerencie membros da equipe
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/organizations">
-                Ver Organização
+            <Link href="/members">
+              <Button variant="outline" className="w-full">
+                Ver Membros
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Produtos
-            </CardTitle>
-            <CardDescription>
-              Cadastre e gerencie produtos da UAN
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/produtos">
-                Gerenciar Produtos
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Etiquetas
-            </CardTitle>
-            <CardDescription>
-              Crie e imprima etiquetas personalizadas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/etiquetas">
-                Criar Etiquetas
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Relatórios
-            </CardTitle>
-            <CardDescription>
-              Visualize relatórios e análises
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/relatorios">
-                Ver Relatórios
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Configurações
-            </CardTitle>
-            <CardDescription>
-              Configure preferências da UAN
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/configuracoes">
-                Configurar
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
-
-      {/* Status da Organização */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Status da Organização</CardTitle>
-          <CardDescription>
-            Visão geral da sua UAN
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3">
-              <h4 className="font-medium">Informações Gerais</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Nome da UAN:</span>
-                  <span>UAN Hospital Central</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tipo:</span>
-                  <span>Unidade de Alimentação e Nutrição</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status:</span>
-                  <Badge variant="default">Ativa</Badge>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <h4 className="font-medium">Estatísticas</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Setores configurados:</span>
-                  <span>7/7</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Funcionários ativos:</span>
-                  <span>12</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Última atividade:</span>
-                  <span>Hoje</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

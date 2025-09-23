@@ -1,3 +1,6 @@
+// Re-export tipos de localidade
+export * from './localidade'
+
 export interface UserProfile {
   ativo: boolean;
   created_at: string;

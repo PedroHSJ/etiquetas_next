@@ -49,6 +49,12 @@ export async function updateSession(request: NextRequest) {
 
   // Para todas as outras rotas, verificar autenticação
   try {
+    // No desenvolvimento, considerar sempre autenticado
+    if (process.env.NODE_ENV === "development") {
+      console.log("Development mode: skipping authentication check");
+      return supabaseResponse;
+    }
+
     const {
       data: { user },
       error,
@@ -60,7 +66,7 @@ export async function updateSession(request: NextRequest) {
         error: error?.message,
       });
       const loginUrl = new URL("/login", request.url);
-      //return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(loginUrl);
     }
 
     // Se há usuário autenticado mas está tentando acessar /login, redirecionar para dashboard
@@ -69,7 +75,7 @@ export async function updateSession(request: NextRequest) {
         "Authenticated user accessing login, redirecting to dashboard"
       );
       const dashboardUrl = new URL("/dashboard", request.url);
-      //return NextResponse.redirect(dashboardUrl);
+      return NextResponse.redirect(dashboardUrl);
     }
 
     return supabaseResponse;
