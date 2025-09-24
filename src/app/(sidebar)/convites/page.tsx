@@ -194,7 +194,7 @@ export default function ConvitesPage() {
   const getStatusBadge = (status: Convite["status"]) => {
     const statusInfo = InviteService.getStatusInfo(status);
     return (
-      <Badge variant={statusInfo.variant as any} className={statusInfo.color}>
+      <Badge variant={statusInfo.variant as "default" | "secondary" | "destructive" | "outline"} className={statusInfo.color}>
         {statusInfo.label}
       </Badge>
     );

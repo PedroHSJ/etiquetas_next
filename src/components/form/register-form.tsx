@@ -95,13 +95,14 @@ export function RegisterForm() {
       setTimeout(() => {
         router.push('/login')
       }, 3000)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro no cadastro:', error)
-      if (error.message?.includes('already registered')) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
+      if (errorMessage?.includes('already registered')) {
         setError('email', { 
           message: 'Este email já está cadastrado. Tente fazer login.' 
         })
-      } else if (error.message?.includes('Password should be')) {
+      } else if (errorMessage?.includes('Password should be')) {
         setError('password', { 
           message: 'Senha não atende aos requisitos de segurança.' 
         })

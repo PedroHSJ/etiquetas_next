@@ -13,11 +13,12 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ConviteManager } from './ConviteManager';
 import { ConvidadoPor } from '../onboarding/ConvidadoPor';
+import { Convite } from '@/types/onboarding';
 
 export const NotificationBell: React.FC = () => {
   const { convitesPendentes, contagemConvites, isLoading } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedConvite, setSelectedConvite] = useState<any | null>(null);
+  const [selectedConvite, setSelectedConvite] = useState<Convite | null>(null);
 
   const formatDate = (dateString: string) => {
     try {
@@ -30,7 +31,7 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
-  const handleConviteClick = (convite: any) => {
+  const handleConviteClick = (convite: Convite) => {
     setSelectedConvite(convite);
     setIsOpen(false); // Fechar o popover de notificações
   };

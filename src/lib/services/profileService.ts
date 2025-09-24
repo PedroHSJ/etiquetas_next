@@ -1,6 +1,17 @@
 import { supabase } from "@/lib/supabaseClient";
 import { UserProfile } from "@/types";
 
+interface ProfileData {
+  id: string;
+  usuario_id: string;
+  organizacao_id: string;
+  perfil_id: string;
+  ativo: boolean;
+  created_at: string;
+  organizacao: unknown;
+  perfil: unknown;
+}
+
 /**
  * Busca todos os perfis disponíveis para o usuário informado
  * @param userId id do usuário (auth.users)
@@ -40,7 +51,7 @@ export const getAvailableProfiles = async (userId: string): Promise<UserProfile[
 
     if (!data) return [];
     // normalize possible array/object shapes returned by supabase
-    return data.map((item: any) => ({
+    return data.map((item: ProfileData) => ({
       id: item.id,
       usuario_id: item.usuario_id,
       organizacao_id: item.organizacao_id,

@@ -8,9 +8,9 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { toast } from "sonner";
 
 interface EditOrganizationPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditOrganizationPage({ params }: EditOrganizationPageProps) {

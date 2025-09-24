@@ -1,5 +1,5 @@
-import { supabase } from "../supabaseClient";
-import { Label, LabelTemplate, LabelType } from "@/lib/types/labels";
+import { supabase } from "@/lib/supabaseClient";
+import { Label, LabelTemplate, LabelType } from "@/types/etiquetas";
 
 export class LabelService {
   // Templates
@@ -322,7 +322,7 @@ export class LabelService {
       createdToday: 0,
     };
 
-    labels?.forEach((label: any) => {
+    labels?.forEach((label: { label_type: LabelType; expiry_date: string; created_at: string }) => {
       // Contagem por tipo
       stats.byType[label.label_type as LabelType] =
         (stats.byType[label.label_type as LabelType] || 0) + 1;

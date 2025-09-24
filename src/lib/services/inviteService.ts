@@ -1,5 +1,12 @@
 import { supabase } from '../supabaseClient';
-import { Convite, Perfil } from '@/types/onboarding';
+import { Convite } from '@/types/onboarding';
+import { Perfil } from '@/types/permissions';
+
+interface User {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+}
 
 export class InviteService {
   // Buscar dados de múltiplos usuários via RPC (mais eficiente)
@@ -16,8 +23,8 @@ export class InviteService {
       }
       
       // Converter array para objeto indexado por ID
-      const usersMap: Record<string, any> = {};
-      (data || []).forEach((user: any) => {
+      const usersMap: Record<string, User> = {};
+      (data || []).forEach((user: User) => {
         usersMap[user.id] = user;
       });
       

@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { LocalidadeSelector } from "@/components/localidade/LocalidadeSelector";
-import { TIPOS_UAN } from "@/types/uan";
+import { TIPOS_UAN, TipoUAN } from "@/types/uan";
 import { formatCNPJ, formatTelefone, formatCEP, unformatCNPJ, unformatTelefone } from "@/utils/masks";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -178,7 +178,7 @@ export function OrganizationWizard({
                         updateWizardData({
                           uanData: {
                             ...wizardData.uanData,
-                            tipo_uan: value as any
+                            tipo_uan: value as TipoUAN
                           }
                         })
                       }

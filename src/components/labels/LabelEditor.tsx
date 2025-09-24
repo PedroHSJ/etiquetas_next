@@ -13,8 +13,8 @@ import {
   LabelTemplate,
   LabelField,
   LABEL_TYPES_CONFIG,
-} from "@/lib/types/labels";
-import { Product } from "@/lib/types/products";
+} from "@/types/etiquetas";
+import { Product } from "@/types/products";
 import { FieldPalette } from "./FieldPalette";
 import { LabelCanvas } from "./LabelCanvas";
 import { Button } from "@/components/ui/button";

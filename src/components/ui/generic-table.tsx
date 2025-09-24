@@ -34,17 +34,17 @@ export interface BulkAction {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
 }
 
-export interface GenericTableColumn extends Column {
-  accessor: string | ((row: any) => any)
+export interface GenericTableColumn<T = unknown> extends Column {
+  accessor: string | ((row: T) => unknown)
   sortable?: boolean
   filterable?: boolean
-  render?: (value: any, row: any, index: number) => React.ReactNode
+  render?: (value: unknown, row: T, index: number) => React.ReactNode
 }
 
-interface GenericTableProps<T = any> {
+interface GenericTableProps<T = Record<string, unknown>> {
   title?: string
   description?: string
-  columns: GenericTableColumn[]
+  columns: GenericTableColumn<T>[]
   data: T[]
   loading?: boolean
   searchable?: boolean
@@ -65,7 +65,7 @@ interface GenericTableProps<T = any> {
   className?: string
 }
 
-export function GenericTable<T extends Record<string, any>>({
+export function GenericTable<T extends Record<string, unknown>>({
   title,
   description,
   columns: initialColumns,
@@ -82,13 +82,26 @@ export function GenericTable<T extends Record<string, any>>({
   selectable = false,
   selectedRows = new Set(),
   onSelectionChange,
-  getRowId = (row, index) => row.id || index,
+  getRowId = (row, index) => {
+    if (typeof row === 'object' && row !== null) {
+      return (row as { id?: string | number }).id
+        || (row as { key?: string | number }).key
+        || (row as { _id?: string | number })._id
+        || (row as { uuid?: string | number }).uuid
+        || (row as { codigo?: string | number }).codigo
+        || (row as { codigo_ibge?: string | number }).codigo_ibge
+        || (row as { email?: string | number }).email
+        || (row as { nome?: string | number }).nome
+        || index;
+    }
+    return index;
+  },
   bulkActions,
   onRowClick,
   rowActions,
   className,
 }: GenericTableProps<T>) {
-  const [columns, setColumns] = useState<GenericTableColumn[]>(initialColumns)
+  const [columns, setColumns] = useState<GenericTableColumn<T>[]>(initialColumns)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage)
@@ -111,7 +124,7 @@ export function GenericTable<T extends Record<string, any>>({
 
     return data.filter(row => {
       return visibleColumns.some(column => {
-        let value: any
+        let value: unknown
         if (typeof column.accessor === 'function') {
           value = column.accessor(row)
         } else {
@@ -144,12 +157,12 @@ export function GenericTable<T extends Record<string, any>>({
     setColumns(newColumns)
   }
 
-  const getCellValue = (row: T, column: GenericTableColumn, index: number) => {
-    let value: any
+  const getCellValue = (row: T, column: GenericTableColumn<T>, index: number) => {
+    let value: unknown
     if (typeof column.accessor === 'function') {
       value = column.accessor(row)
     } else {
-      value = row[column.accessor]
+      value = (row as Record<string, unknown>)[column.accessor]
     }
 
     if (column.render) {
@@ -348,7 +361,7 @@ export function GenericTable<T extends Record<string, any>>({
                           key={column.id}
                           className={column.fixed ? 'bg-muted/10' : ''}
                         >
-                          {getCellValue(row, column, startIndex + index)}
+                          {getCellValue(row, column, startIndex + index) as React.ReactNode}
                         </TableCell>
                       ))}
                       {rowActions && (

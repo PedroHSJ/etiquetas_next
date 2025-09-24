@@ -644,7 +644,7 @@ export function OrganizationSettings({
                 <Label className="font-medium">{label}</Label>
                 <FormField
                   control={form.control}
-                  name={`${key}_abertura` as any}
+                  name={`${key}_abertura` as keyof OrganizationFormData}
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
@@ -660,7 +660,7 @@ export function OrganizationSettings({
                 />
                 <FormField
                   control={form.control}
-                  name={`${key}_fechamento` as any}
+                  name={`${key}_fechamento` as keyof OrganizationFormData}
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>

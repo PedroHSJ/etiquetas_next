@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import { Search, MapPin, RefreshCw } from 'lucide-react'
 import { LocalidadeSelector } from '@/components/localidade'
 import { useLocalidade } from '@/hooks/useLocalidade'
+import { MunicipioResponse, ViaCEPResponse } from '@/types/localidade'
 
 export function LocalidadeExample() {
   const {
@@ -21,7 +22,10 @@ export function LocalidadeExample() {
   } = useLocalidade()
 
   const [cepTeste, setCepTeste] = useState('')
-  const [resultadoCEP, setResultadoCEP] = useState<any>(null)
+  const [resultadoCEP, setResultadoCEP] = useState<{ 
+    municipio?: MunicipioResponse; 
+    dadosCEP?: ViaCEPResponse | null; 
+  } | null>(null)
   const [localidadeSelecionada, setLocalidadeSelecionada] = useState({})
 
   const testarCEP = async () => {

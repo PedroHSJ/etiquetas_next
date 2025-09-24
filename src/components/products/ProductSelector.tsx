@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Product } from "@/lib/types/products";
+import { Product } from "@/types/products";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,7 +36,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       product.is_active &&
       (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+        product.category?.name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleProductSelect = (product: Product) => {
@@ -107,10 +107,10 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
                           <span className="font-medium">{product.brand}</span>
                         )}
                         <Badge variant="secondary" className="text-xs">
-                          {product.category}
+                          {product.category?.name || 'Sem categoria'}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {product.unit_of_measure}
+                          {product.unit_of_measure || 'un'}
                         </Badge>
                       </div>
 

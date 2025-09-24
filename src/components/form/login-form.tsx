@@ -53,9 +53,10 @@ export function LoginForm() {
     try {
       await signInWithEmail(data.email, data.password)
       router.push('/dashboard')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro no login:', error)
-      if (error.message?.includes('Invalid login credentials')) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
+      if (errorMessage?.includes('Invalid login credentials')) {
         setError('root', { 
           message: 'Email ou senha incorretos. Verifique seus dados e tente novamente.' 
         })

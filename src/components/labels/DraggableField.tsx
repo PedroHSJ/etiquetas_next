@@ -1,8 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { LabelField } from "@/lib/types/labels";
-import { Product } from "@/lib/types/products";
-import { LABEL_TYPES_CONFIG } from "@/lib/types/labels";
+import { LabelField, LABEL_TYPES_CONFIG } from "@/types/etiquetas";
+import { Product } from "@/types/products";
 import { ProductSelector } from "@/components/products/ProductSelector";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";

@@ -4,17 +4,17 @@ import { useState, useMemo, useCallback } from 'react'
 import { GenericTableColumn } from '@/types/table'
 
 interface UseGenericTableProps<T> {
-  initialColumns: GenericTableColumn[]
+  initialColumns: GenericTableColumn<T>[]
   data: T[]
   itemsPerPage?: number
 }
 
-export function useGenericTable<T extends Record<string, any>>({
+export function useGenericTable<T extends Record<string, unknown>>({
   initialColumns,
   data,
   itemsPerPage = 10,
 }: UseGenericTableProps<T>) {
-  const [columns, setColumns] = useState<GenericTableColumn[]>(initialColumns)
+  const [columns, setColumns] = useState<GenericTableColumn<T>[]>(initialColumns)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -36,7 +36,7 @@ export function useGenericTable<T extends Record<string, any>>({
 
     return data.filter(row => {
       return visibleColumns.some(column => {
-        let value: any
+        let value: unknown
         if (typeof column.accessor === 'function') {
           value = column.accessor(row)
         } else {

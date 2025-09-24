@@ -7,11 +7,11 @@ export interface Column {
   width?: number
 }
 
-export interface GenericTableColumn extends Column {
-  accessor: string | ((row: any) => any)
+export interface GenericTableColumn<T = unknown> extends Column {
+  accessor: string | ((row: T) => unknown)
   sortable?: boolean
   filterable?: boolean
-  render?: (value: any, row: any, index: number) => React.ReactNode
+  render?: (value: unknown, row: T, index: number) => React.ReactNode
 }
 
 export interface TableConfig {

@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TIPOS_UAN } from "@/types/uan"
 import { Badge } from "@/components/ui/badge"
 import { ChevronsUpDown, Building2, User, MapPin, Phone } from "lucide-react";
+import { UserProfile } from "@/types/index";
 
 export function TeamSwitcher() {
   const { activeProfile, userProfiles, loading, setActiveProfile } = useProfile();
@@ -44,7 +45,7 @@ export function TeamSwitcher() {
     );
   }
 
-  const handleProfileChange = (profile: any) => {
+  const handleProfileChange = (profile: UserProfile) => {
     setActiveProfile(profile);
     setOpen(false);
   };

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
@@ -57,9 +57,9 @@ export default function Page() {
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   // Buscar etiquetas
-  const fetchEtiquetas = async () => {
+  const fetchEtiquetas = useCallback(async () => {
     setLoading(true);
-    let query = supabase
+    const query = supabase
       .from("etiquetas")
       .select("*, produto:produtos(nome)")
       .order("created_at", { ascending: false });
@@ -71,11 +71,11 @@ export default function Page() {
       setFilteredEtiquetas(data);
     }
     setLoading(false);
-  };
+  }, [supabase]);
 
   useEffect(() => {
     fetchEtiquetas();
-  }, []);
+  }, [fetchEtiquetas]);
 
   // Filtro por termo de busca
   useEffect(() => {

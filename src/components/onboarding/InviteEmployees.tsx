@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Plus, Mail, X, Users, ChefHat, Package, CheckCircle } from "lucide-react";
 import { InviteService } from "@/lib/services/inviteService";
-import { Perfil } from "@/types/onboarding";
+import { Perfil } from "@/types/permissions";
 import { toast } from "sonner";
 
 interface InviteEmployeesProps {
