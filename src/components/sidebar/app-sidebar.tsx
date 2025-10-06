@@ -79,11 +79,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: Mail,
         isActive: pathname.startsWith("/convites"),
       },
-      {
-        title: "Etiquetas",
-        url: "/etiquetas",
-        icon: Tags,
-        isActive: pathname.startsWith("/etiquetas"),
+      // {
+      //   title: "Etiquetas",
+      //   url: "/etiquetas",
+      //   icon: Tags,
+      //   isActive: pathname.startsWith("/etiquetas"),
+      // },
+      { 
+        title: "Ficha Técnica",
+        url: "/ficha-tecnica",
+        icon: Package,
+        isActive: pathname.startsWith("/ficha-tecnica"),
       },
     ],
   };
