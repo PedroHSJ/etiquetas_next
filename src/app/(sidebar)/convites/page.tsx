@@ -403,19 +403,6 @@ export default function ConvitesPage() {
     );
   };
 
-  if (!organizacaoId) {
-    return (
-      <div className="flex flex-1 flex-col gap-6">
-        <div className="text-center py-8">
-          <h1 className="text-2xl font-bold">Convites</h1>
-          <p className="text-muted-foreground">
-            Você precisa ter uma organização ativa para gerenciar convites.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <Suspense
       fallback={

@@ -120,19 +120,6 @@ export default function CreateConvitePage() {
     }
   };
 
-  if (!selectedOrganization) {
-    return (
-      <div className="flex flex-1 flex-col gap-6">
-        <div className="text-center py-8">
-          <h1 className="text-2xl font-bold">Criar Convite</h1>
-          <p className="text-muted-foreground">
-            Você precisa ter uma organização ativa para criar convites.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <PermissionGuard funcionalidade="Convites" acao="criar">
       <div className="flex flex-1 flex-col gap-6">

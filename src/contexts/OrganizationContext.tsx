@@ -35,6 +35,8 @@ export function OrganizationProvider({
     useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Função para buscar organizações do usuário
+
   const fetchOrganizations = async () => {
     if (!userId) return;
 

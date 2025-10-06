@@ -22,7 +22,10 @@ export const getAvailableProfiles = async (userId: string): Promise<UserProfile[
           ativo,
           created_at,
           organizacao:organizacoes (
-            nome
+            id,
+            nome,
+            tipo,
+            created_at
           ),
           perfil:perfis (
             nome,
