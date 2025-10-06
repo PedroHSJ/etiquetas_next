@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAIProvider } from '@/lib/ai-providers';
-import { TechnicalSheetRequest } from '@/lib/types/technical-sheet';
+import { TechnicalSheetRequest } from '@/types/technical-sheet';
 
 export async function POST(request: NextRequest) {
   try {

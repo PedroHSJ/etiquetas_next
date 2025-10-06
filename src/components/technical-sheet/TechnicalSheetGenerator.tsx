@@ -24,7 +24,7 @@ import {
   TechnicalSheetRequest,
   TechnicalSheetResponse,
   EditableIngredient 
-} from "@/lib/types/technical-sheet";
+} from "@/types/technical-sheet";
 import { EditableIngredientList } from "./EditableIngredientList";
 
 interface TechnicalSheetGeneratorProps {
@@ -303,7 +303,7 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
                   Modo de Preparo
                 </h3>
                 <div className="space-y-2">
-                  {technicalSheet.preparationSteps.map((step, index) => (
+                  {technicalSheet.preparationSteps.map((step: string, index: number) => (
                     <div key={index} className="flex gap-3 items-start">
                       <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
                         {index + 1}
@@ -363,7 +363,7 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm">Destaques Nutricionais:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {technicalSheet.nutritionalInsights.highlights.map((highlight, index) => (
+                      {technicalSheet.nutritionalInsights.highlights.map((highlight: string, index: number) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {highlight}
                         </Badge>

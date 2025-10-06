@@ -141,7 +141,7 @@ export default function CreateConvitePage() {
             <div>
               <h1 className="text-3xl font-bold">Criar Convite</h1>
               <p className="text-muted-foreground">
-                Convide novos usuários para {selectedOrganization.nome}
+                Convide novos usuários para {selectedOrganization?.nome}
               </p>
             </div>
           </div>

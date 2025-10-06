@@ -19,8 +19,8 @@ import {
   Search,
   Package
 } from "lucide-react";
-import { EditableIngredient } from "@/lib/types/technical-sheet";
-import { UNIT_OF_MEASURE_OPTIONS } from "@/lib/types/products";
+import { EditableIngredient } from "@/types/technical-sheet";
+import { UNIT_OF_MEASURE_OPTIONS } from "@/types/products";
 import { TechnicalSheetService } from "@/lib/services/technicalSheetService";
 import { cn } from "@/lib/utils";
 
@@ -202,7 +202,7 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {UNIT_OF_MEASURE_OPTIONS.map((option) => (
+                  {UNIT_OF_MEASURE_OPTIONS.map((option: { value: string; label: string }) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.value}
                     </SelectItem>

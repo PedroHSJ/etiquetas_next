@@ -4,7 +4,7 @@ import {
   TechnicalSheetResponse, 
   IngredientSuggestion,
   EditableIngredient 
-} from "@/lib/types/technical-sheet";
+} from "@/types/technical-sheet";
 
 interface SimpleProduct {
   id: string;
