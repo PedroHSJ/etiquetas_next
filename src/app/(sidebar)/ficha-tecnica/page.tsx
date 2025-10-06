@@ -5,6 +5,7 @@ import { TechnicalSheetGenerator } from "@/components/technical-sheet/TechnicalS
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChefHat, Users, Clock, Calculator } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { TechnicalSheetResponse, EditableIngredient } from "@/types/technical-sheet";
 
 export default function TechnicalSheetPage() {
   const { user } = useAuth();
@@ -30,7 +31,7 @@ export default function TechnicalSheetPage() {
     );
   }
 
-  const handleSave = (sheet: any) => {
+  const handleSave = (sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }) => {
     // Aqui você pode implementar a lógica de salvamento
     // Por exemplo, salvar no banco de dados local ou enviar para uma API
     console.log("Ficha técnica para salvar:", sheet);

@@ -5,6 +5,7 @@ import {
   IngredientSuggestion,
   EditableIngredient 
 } from "@/types/technical-sheet";
+import { SupabaseProdutoSearch } from "@/types/supabase";
 
 interface SimpleProduct {
   id: string;
@@ -153,12 +154,15 @@ export class TechnicalSheetService {
         return [];
       }
 
-      // Converter para o formato SimpleProduct
-      return produtos?.map((produto: any) => ({
-        id: produto.id.toString(),
-        name: produto.nome,
-        category: produto.grupos?.nome || 'Sem categoria'
-      })) || [];
+      // Converter para o formato SimpleProduct  
+      return produtos?.map((produto: { id: unknown; nome: unknown; grupos?: unknown }) => {
+        const grupos = produto.grupos as { nome?: string } | null | undefined;
+        return {
+          id: String(produto.id),
+          name: String(produto.nome),
+          category: grupos?.nome || 'Sem categoria'
+        };
+      }) || [];
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       return [];

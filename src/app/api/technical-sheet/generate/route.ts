@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAIProvider } from '@/lib/ai-providers';
 import { TechnicalSheetRequest } from '@/types/technical-sheet';
+import { ParseError, RawIngredientData, IngredientResponse } from '@/types/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -152,7 +153,7 @@ Forneça a ficha técnica no formato JSON especificado.`;
           console.log('Parse direto bem-sucedido!');
         } catch (parseError) {
           console.log('Erro no parse direto:', parseError);
-          console.log('Posição do erro:', (parseError as any).message);
+          console.log('Posição do erro:', (parseError as ParseError).message);
           
           try {
             // Se falhar o parse, tentar extrair e corrigir JSON da resposta
@@ -234,7 +235,7 @@ Forneça a ficha técnica no formato JSON especificado.`;
             
           } catch (secondParseError) {
             console.log('❌ Erro no segundo parse:', secondParseError);
-            console.log('Detalhes do erro:', (secondParseError as any).message);
+            console.log('Detalhes do erro:', (secondParseError as ParseError).message);
             throw new Error(`Erro ao processar resposta da IA: ${secondParseError instanceof Error ? secondParseError.message : 'Erro desconhecido'}`);
           }
         }
@@ -267,13 +268,13 @@ Forneça a ficha técnica no formato JSON especificado.`;
 
     // Garantir que todos os ingredientes têm as propriedades necessárias
     parsedResponse.ingredients = parsedResponse.ingredients
-      .filter((ingredient: any) => ingredient && ingredient.name) // Remove ingredientes inválidos
-      .map((ingredient: any) => ({
+      .filter((ingredient: RawIngredientData) => ingredient && ingredient.name) // Remove ingredientes inválidos
+      .map((ingredient: RawIngredientData): IngredientResponse => ({
         name: String(ingredient.name || '').trim(),
         quantity: String(ingredient.quantity || '0').replace(/[^\d.,]/g, ''), // Remove caracteres não numéricos
         unit: String(ingredient.unit || 'un').toLowerCase()
       }))
-      .filter((ingredient: any) => ingredient.name); // Remove ingredientes vazios
+      .filter((ingredient: IngredientResponse) => ingredient.name); // Remove ingredientes vazios
 
     // Se não houver ingredientes válidos, criar uma lista básica
     if (parsedResponse.ingredients.length === 0) {
