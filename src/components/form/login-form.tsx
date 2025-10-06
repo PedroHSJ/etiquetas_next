@@ -1,24 +1,154 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { EyeIcon, EyeOffIcon } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useState } from 'react'
+
+// Schema de validação
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email é obrigatório')
+    .email('Email inválido'),
+  password: z
+    .string()
+    .min(1, 'Senha é obrigatória')
+    .min(6, 'Senha deve ter pelo menos 6 caracteres'),
+})
+
+type LoginFormData = z.infer<typeof loginSchema>
 
 export function LoginForm() {
-  const { signInWithGoogle, loading } = useAuth()
+  const { signInWithGoogle, signInWithEmail, loading } = useAuth()
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting }
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  })
+
+  const onSubmit = async (data: LoginFormData) => {
+    setIsLoading(true)
+
+    try {
+      await signInWithEmail(data.email, data.password)
+      router.push('/dashboard')
+    } catch (error: unknown) {
+      console.error('Erro no login:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
+      if (errorMessage?.includes('Invalid login credentials')) {
+        setError('root', { 
+          message: 'Email ou senha incorretos. Verifique seus dados e tente novamente.' 
+        })
+      } else {
+        setError('root', { 
+          message: 'Erro ao fazer login. Tente novamente mais tarde.' 
+        })
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle>Fazer Login</CardTitle>
         <CardDescription>
-          Entre com sua conta Google para continuar
+          Entre com sua conta para continuar
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              {...register('email')}
+              disabled={isLoading || isSubmitting}
+              className={errors.email ? 'border-red-500' : ''}
+            />
+            {errors.email && (
+              <p className="text-sm text-red-600">{errors.email.message}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="password">Senha</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                {...register('password')}
+                disabled={isLoading || isSubmitting}
+                className={`pr-10 ${errors.password ? 'border-red-500' : ''}`}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading || isSubmitting}
+              >
+                {showPassword ? (
+                  <EyeOffIcon className="h-4 w-4" />
+                ) : (
+                  <EyeIcon className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            {errors.password && (
+              <p className="text-sm text-red-600">{errors.password.message}</p>
+            )}
+          </div>
+
+          {errors.root && (
+            <div className="text-sm text-red-600 text-center bg-red-50 p-3 rounded-md border border-red-200">
+              {errors.root.message}
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" disabled={isLoading || isSubmitting}>
+            {isLoading || isSubmitting ? 'Entrando...' : 'Entrar'}
+          </Button>
+        </form>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <Separator className="w-full" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">ou</span>
+          </div>
+        </div>
+
         <Button 
           onClick={signInWithGoogle}
-          disabled={loading}
+          disabled={loading || isLoading || isSubmitting}
           className="w-full"
           variant="outline"
         >
@@ -30,6 +160,13 @@ export function LoginForm() {
           </svg>
           {loading ? 'Carregando...' : 'Continuar com Google'}
         </Button>
+
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">Não tem uma conta? </span>
+          <Link href="/register" className="text-primary underline-offset-4 hover:underline">
+            Cadastre-se
+          </Link>
+        </div>
       </CardContent>
     </Card>
   )

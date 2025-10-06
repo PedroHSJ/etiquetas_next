@@ -26,9 +26,7 @@ import {
 export function PermissionExample() {
   const { 
     temPermissao, 
-    isMaster, 
-    getNivelAcesso,
-    getPermissoesFuncionalidade 
+    isMaster
   } = usePermissions();
 
   return (
@@ -48,7 +46,7 @@ export function PermissionExample() {
             <div className="space-y-2">
               <h4 className="font-medium">Nível de Acesso</h4>
               <Badge variant="outline" className="text-lg px-3 py-1">
-                {getNivelAcesso()}
+                {isMaster() ? "Master" : "Usuário"}
               </Badge>
             </div>
             <div className="space-y-2">
@@ -158,35 +156,35 @@ export function PermissionExample() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <ViewGuard funcionalidade="dashboard" showLoading={false}>
+            <ViewGuard funcionalidade="dashboard">
               <Button variant="outline" className="w-full justify-start">
                 <Eye className="h-4 w-4 mr-2" />
                 Visualizar Dashboard
               </Button>
             </ViewGuard>
 
-            <CreateGuard funcionalidade="produtos" showLoading={false}>
+            <CreateGuard funcionalidade="produtos">
               <Button variant="outline" className="w-full justify-start">
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Produto
               </Button>
             </CreateGuard>
 
-            <EditGuard funcionalidade="etiquetas" showLoading={false}>
+            <EditGuard funcionalidade="etiquetas">
               <Button variant="outline" className="w-full justify-start">
                 <Edit className="h-4 w-4 mr-2" />
                 Editar Etiquetas
               </Button>
             </EditGuard>
 
-            <DeleteGuard funcionalidade="usuarios" showLoading={false}>
+            <DeleteGuard funcionalidade="usuarios">
               <Button variant="destructive" className="w-full justify-start">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir Usuário
               </Button>
             </DeleteGuard>
 
-            <ManageGuard funcionalidade="departamentos" showLoading={false}>
+            <ManageGuard funcionalidade="departamentos">
               <Button variant="outline" className="w-full justify-start">
                 <Settings className="h-4 w-4 mr-2" />
                 Gerenciar Departamentos

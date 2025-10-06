@@ -10,16 +10,32 @@ interface FilterBarProps {
   setSelectedOrganization?: (org: string) => void;
   selectedDepartment?: string;
   setSelectedDepartment?: (dept: string) => void;
-  organizations?: any[];
-  departments?: any[];
+  organizations?: Organization[];
+  departments?: Department[];
   searchPlaceholder?: string;
   showDepartmentFilter?: boolean;
   onClearFilters?: () => void;
   loading?: boolean;
   onSearch?: (query: string) => void;
-  onFilter?: (filters: any) => void;
+  onFilter?: (filters: FilterOptions) => void;
   placeholder?: string;
   className?: string;
+}
+
+interface Organization {
+  id: string;
+  nome: string;
+}
+
+interface Department {
+  id: string;
+  nome: string;
+}
+
+interface FilterOptions {
+  organization?: string;
+  department?: string;
+  search?: string;
 }
 
 export default function FilterBar({

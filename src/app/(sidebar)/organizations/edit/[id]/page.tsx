@@ -3,14 +3,14 @@
 import { OrganizationWizard } from "@/components/wizard/OrganizationWizard";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { toast } from "sonner";
 
 interface EditOrganizationPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditOrganizationPage({ params }: EditOrganizationPageProps) {

@@ -1,9 +1,4 @@
-export interface Perfil {
-  id: string;
-  nome: string;
-  descricao: string;
-  created_at: string;
-}
+import { Perfil } from './permissions';
 
 export interface Convite {
   id: string;

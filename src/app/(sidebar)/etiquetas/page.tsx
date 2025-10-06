@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
+import { Grupo, Produto } from "@/types/etiquetas";
 import { createClient } from "@supabase/supabase-js";
 import { useMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,14 +26,14 @@ export default function Page() {
   const [responsavelAmostra, setResponsavelAmostra] = useState("");
   const [obsAmostra, setObsAmostra] = useState("");
   const { user } = useAuth();
-  const [grupos, setGrupos] = useState<any[]>([]);
-  const [produtos, setProdutos] = useState<any[]>([]);
-  const [grupoSelecionado, setGrupoSelecionado] = useState<string | null>(null);
+  const [grupos, setGrupos] = useState<Grupo[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [grupoSelecionado, setGrupoSelecionado] = useState<number | null>(null);
   const [filtroGrupo, setFiltroGrupo] = useState("");
   const [filtroProduto, setFiltroProduto] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
-  const [produtoSelecionado, setProdutoSelecionado] = useState<any | null>(
+  const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(
     null
   );
   const [quantidade, setQuantidade] = useState(1);
@@ -92,7 +93,7 @@ export default function Page() {
   );
 
   // Função para abrir modal ao clicar no produto
-  function handleProdutoClick(produto: any) {
+  function handleProdutoClick(produto: Produto) {
     setProdutoSelecionado(produto);
     setQuantidade(1);
     setObservacoes("");
@@ -104,10 +105,17 @@ export default function Page() {
   async function handleSalvarEtiqueta() {
     setSalvando(true);
     setErro(null);
+    
+    if (!produtoSelecionado) {
+      setErro("Selecione um produto");
+      setSalvando(false);
+      return;
+    }
+    
     // TODO: obter usuario_id e organizacao_id do contexto/auth
     const usuario_id = null;
     const organizacao_id = null;
-    const etiquetaData: any = {
+    const etiquetaData: Record<string, unknown> = {
       produto_id: produtoSelecionado.id,
       quantidade,
       observacoes,

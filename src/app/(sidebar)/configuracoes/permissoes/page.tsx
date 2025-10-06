@@ -121,7 +121,7 @@ export default function PermissoesPage() {
             <CardTitle className="text-red-600">Acesso Negado</CardTitle>
             <CardDescription>
               Você não tem permissão para acessar esta página. Apenas usuários
-              com perfil "Master" podem configurar permissões.
+              com perfil &quot;Master&quot; podem configurar permissões.
             </CardDescription>
           </CardHeader>
           <CardContent>

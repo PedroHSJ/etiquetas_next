@@ -8,6 +8,12 @@ export interface Feriado {
   folgasAdicionais?: number; // Quantas folgas adicionais conceder
 }
 
+interface Member {
+  id: string;
+  nome: string;
+  ativo: boolean;
+}
+
 // Feriados nacionais fixos
 export const FERIADOS_NACIONAIS_FIXOS: Omit<Feriado, "data">[] = [
   {
@@ -209,7 +215,7 @@ export function isFeriado(data: Date, feriados: Feriado[]): Feriado | null {
 // Aplicar regras de feriado na escala preta e vermelha
 export function aplicarRegrasFeriado(
   data: Date,
-  membrosAtivos: any[],
+  membrosAtivos: Member[],
   feriado: Feriado | null
 ): { folgasExtras: number; ajusteEspecial: boolean } {
   if (!feriado || !feriado.afetaEscala) {
@@ -249,7 +255,7 @@ export function useFeriados(ano: number) {
   return {
     feriados: obterTodosFeriados(ano),
     isFeriado: (data: Date) => isFeriado(data, obterTodosFeriados(ano)),
-    aplicarRegras: (data: Date, membros: any[]) => {
+    aplicarRegras: (data: Date, membros: Member[]) => {
       const feriado = isFeriado(data, obterTodosFeriados(ano));
       return aplicarRegrasFeriado(data, membros, feriado);
     },
@@ -359,7 +365,7 @@ export default class FeriadoManager {
   // Aplicar regras de feriado para escala
   applyHolidayRules(
     data: Date,
-    membrosAtivos: any[]
+    membrosAtivos: Member[]
   ): { folgasExtras: number; ajusteEspecial: boolean } {
     const feriado = this.getHolidayInfo(data);
     return aplicarRegrasFeriado(data, membrosAtivos, feriado);

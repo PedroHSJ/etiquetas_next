@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { LabelTemplate, LabelField } from "@/lib/types/labels";
+import { LabelTemplate, LabelField } from "@/types/etiquetas";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
 import { toast } from "sonner";

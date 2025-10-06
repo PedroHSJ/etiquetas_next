@@ -3,6 +3,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "./AuthContext";
+import { useProfile } from "./ProfileContext";
+import { UANService } from "@/lib/services/UANService";
+import { OrganizacaoExpandida } from "@/types/uan";
 
 interface Organization {
   id: string;
@@ -14,9 +17,12 @@ interface Organization {
 interface OrganizationContextType {
   organizations: Organization[];
   selectedOrganization: Organization | null;
+  activeOrganizationDetails: OrganizacaoExpandida | null;
   setSelectedOrganization: (org: Organization) => void;
   loading: boolean;
+  detailsLoading: boolean;
   refetchOrganizations: () => Promise<void>;
+  refreshActiveOrganization: () => Promise<void>;
   onOrganizationCreated: (newOrganization: Organization) => void;
 }
 
@@ -30,10 +36,12 @@ export function OrganizationProvider({
   children: React.ReactNode;
 }) {
   const { userId } = useAuth();
+  const { activeProfile } = useProfile();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [selectedOrganization, setSelectedOrganization] =
-    useState<Organization | null>(null);
+  const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
+  const [activeOrganizationDetails, setActiveOrganizationDetails] = useState<OrganizacaoExpandida | null>(null);
   const [loading, setLoading] = useState(true);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   // Função para buscar organizações do usuário
 
@@ -71,6 +79,27 @@ export function OrganizationProvider({
     }
   };
 
+  // Carregar detalhes completos da organização ativa
+  const loadActiveOrganizationDetails = async (organizacaoId: string) => {
+    try {
+      setDetailsLoading(true);
+      const details = await UANService.getOrganizacaoById(organizacaoId);
+      setActiveOrganizationDetails(details);
+    } catch (error) {
+      console.error("Erro ao carregar detalhes da organização:", error);
+      setActiveOrganizationDetails(null);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const refreshActiveOrganization = async () => {
+    const orgId = selectedOrganization?.id;
+    if (orgId) {
+      await loadActiveOrganizationDetails(orgId);
+    }
+  };
+
   const refetchOrganizations = async () => {
     await fetchOrganizations();
   };
@@ -82,6 +111,8 @@ export function OrganizationProvider({
     setSelectedOrganization(newOrganization);
     // Salvar no localStorage
     localStorage.setItem("selectedOrganizationId", newOrganization.id);
+    // Carregar detalhes da nova organização
+    loadActiveOrganizationDetails(newOrganization.id);
   };
 
   useEffect(() => {
@@ -114,6 +145,25 @@ export function OrganizationProvider({
     }
   }, [userId]);
 
+  // Efeito para carregar detalhes quando a organização selecionada mudar
+  useEffect(() => {
+    if (selectedOrganization?.id) {
+      loadActiveOrganizationDetails(selectedOrganization.id);
+    }
+  }, [selectedOrganization?.id]);
+
+  // Efeito para carregar detalhes quando o perfil ativo mudar
+  useEffect(() => {
+    if (activeProfile?.organizacao?.nome && selectedOrganization) {
+      // Se o perfil ativo tem uma organização diferente da selecionada
+      // Procurar a organização correspondente na lista
+      const profileOrg = organizations.find(org => org.nome === activeProfile.organizacao.nome);
+      if (profileOrg && profileOrg.id !== selectedOrganization.id) {
+        setSelectedOrganization(profileOrg);
+      }
+    }
+  }, [activeProfile?.organizacao?.nome, selectedOrganization, organizations]);
+
   // Salvar organização selecionada no localStorage
   useEffect(() => {
     if (selectedOrganization) {
@@ -141,9 +191,12 @@ export function OrganizationProvider({
   const value = {
     organizations,
     selectedOrganization,
+    activeOrganizationDetails,
     setSelectedOrganization,
     loading,
+    detailsLoading,
     refetchOrganizations,
+    refreshActiveOrganization,
     onOrganizationCreated,
   };
 

@@ -4,12 +4,39 @@ import { getTemplate } from "@/config/organization-templates";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 
+interface UANData {
+  // Informações Básicas
+  cnpj?: string;
+  tipo_uan?: 'restaurante_comercial' | 'restaurante_institucional' | 'lanchonete' | 'padaria' | 'cozinha_industrial' | 'catering' | 'outro';
+  capacidade_atendimento?: number;
+  data_inauguracao?: string;
+  descricao?: string;
+  
+  // Localização
+  estado_id?: number;
+  municipio_id?: number;
+  cep?: string;
+  endereco?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  endereco_completo?: string;
+  latitude?: number;
+  longitude?: number;
+  
+  // Contato
+  telefone_principal?: string;
+  telefone_secundario?: string;
+  email?: string;
+}
+
 interface WizardData {
   organizationName: string;
   organizationType: string;
   selectedDepartments: Array<{ nome: string; tipo: string }>;
   customDepartments: Array<{ nome: string; tipo: string }>;
   template: OrganizationTemplate | null;
+  uanData: UANData;
 }
 
 interface UseOrganizationWizardReturn {
@@ -34,43 +61,16 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
     selectedDepartments: [],
     customDepartments: [],
     template: getTemplate("uan"),
+    uanData: {},
   });
 
   const nextStep = useCallback(() => {
-    setCurrentStep((prev) => {
-      const totalSteps =
-        wizardData.template &&
-        Object.keys(wizardData.template.especializacoes).length > 0
-          ? 4
-          : 3;
-
-      let nextStep = prev + 1;
-
-      // Se estamos no passo 2 e não há especializações, pular para o passo 4 (resumo)
-      if (prev === 2 && totalSteps === 3) {
-        nextStep = 4;
-      }
-
-      return Math.min(nextStep, totalSteps === 3 ? 4 : 4);
-    });
-  }, [wizardData.template]);
+    setCurrentStep((prev) => Math.min(prev + 1, 4));
+  }, []);
 
   const prevStep = useCallback(() => {
-    setCurrentStep((prev) => {
-      const hasSpecializations =
-        wizardData.template &&
-        Object.keys(wizardData.template.especializacoes).length > 0;
-
-      let prevStep = prev - 1;
-
-      // Se estamos no passo 4 (resumo) e não há especializações, voltar para o passo 2
-      if (prev === 4 && !hasSpecializations) {
-        prevStep = 2;
-      }
-
-      return Math.max(prevStep, 1);
-    });
-  }, [wizardData.template]);
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  }, []);
 
   const updateWizardData = useCallback((data: Partial<WizardData>) => {
     setWizardData((prev) => ({ ...prev, ...data }));
@@ -95,6 +95,8 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
             nome: wizardData.organizationName,
             tipo: wizardData.organizationType,
             user_id: userId,
+            // Dados UAN
+            ...wizardData.uanData,
           })
           .select()
           .single();
@@ -209,7 +211,9 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
   );
 
   const getTotalSteps = useCallback(() => {
-    // Sempre 3 passos para UANs (sem especializações)
+    // Passo 1: Nome da UAN + Dados UAN completos
+    // Passo 2: Departamentos
+    // Passo 3: Resumo
     return 3;
   }, []);
 

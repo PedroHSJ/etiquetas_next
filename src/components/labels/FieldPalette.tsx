@@ -1,6 +1,6 @@
 import React from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { LabelType, LABEL_TYPES_CONFIG } from "@/lib/types/labels";
+import { LabelType, LABEL_TYPES_CONFIG } from "@/types/etiquetas";
 import {
   Type,
   Calendar,

@@ -1,5 +1,5 @@
-import { supabase } from "../supabaseClient";
-import { Product, ProductCategory } from "@/lib/types/products";
+import { supabase } from "@/lib/supabaseClient";
+import { Product, ProductCategory } from "@/types/products";
 
 export class ProductService {
   // Produtos
@@ -181,10 +181,10 @@ export class ProductService {
     const totalCategories = categories?.length || 0;
 
     const productsByCategory =
-      categories?.map((category: any) => ({
+      categories?.map((category: { id: string; name: string }) => ({
         category: category.name,
         count:
-          products?.filter((p: any) => p.category_id === category.id).length ||
+          products?.filter((p: { category_id: string }) => p.category_id === category.id).length ||
           0,
       })) || [];
 

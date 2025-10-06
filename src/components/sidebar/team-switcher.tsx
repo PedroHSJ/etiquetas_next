@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,13 +13,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronsUpDown, Building2, User } from "lucide-react";
-import { useOrganization } from "@/contexts/OrganizationContext";
+import { ChevronsUpDown, Building2, User, MapPin, Phone } from "lucide-react";
+import { Badge } from "../ui/badge";
+import { UserProfile } from "@/types";
 
 export function TeamSwitcher() {
   const { activeProfile, userProfiles, loading, setActiveProfile } =
     useProfile();
   const { setSelectedOrganization, selectedOrganization } = useOrganization();
+  const { activeOrganizationDetails, detailsLoading } = useOrganization();
   const [open, setOpen] = useState(false);
 
   // Selecionar automaticamente se houver apenas um perfil
@@ -67,7 +70,7 @@ export function TeamSwitcher() {
     );
   }
 
-  const handleProfileChange = (profile: any) => {
+  const handleProfileChange = (profile: UserProfile) => {
     setActiveProfile(profile);
     setOpen(false);
   };
@@ -111,6 +114,42 @@ export function TeamSwitcher() {
             </p>
           </div>
         </DropdownMenuLabel>
+        
+        {/* Informações detalhadas da organização atual */}
+        {activeOrganizationDetails && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-2">
+              <div className="text-xs font-medium text-muted-foreground mb-2">
+                Organização Atual
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs">
+                  <Building2 className="h-3 w-3" />
+                  <span className="font-medium">{activeOrganizationDetails.nome}</span>
+                </div>
+                {activeOrganizationDetails.cidade && activeOrganizationDetails.estado && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3" />
+                    <span>{activeOrganizationDetails.cidade}/{activeOrganizationDetails.estado}</span>
+                  </div>
+                )}
+                {activeOrganizationDetails.telefone_principal && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Phone className="h-3 w-3" />
+                    <span>{activeOrganizationDetails.telefone_principal}</span>
+                  </div>
+                )}
+                {activeOrganizationDetails.capacidade_atendimento && (
+                  <div className="text-xs text-muted-foreground">
+                    Capacidade: {activeOrganizationDetails.capacidade_atendimento} refeições/dia
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+        
         <DropdownMenuSeparator />
         {userProfiles.map((profile) => (
           <DropdownMenuItem
@@ -135,6 +174,11 @@ export function TeamSwitcher() {
                   {profile.organizacao.nome}
                 </span>
               </div>
+              {profile.id === activeProfile.id && (
+                <Badge variant="default" className="text-xs">
+                  Ativo
+                </Badge>
+              )}
             </div>
           </DropdownMenuItem>
         ))}

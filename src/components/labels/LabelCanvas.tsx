@@ -1,7 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { LabelField, LabelTemplate } from "@/lib/types/labels";
-import { Product } from "@/lib/types/products";
+import { LabelField, LabelTemplate } from "@/types/etiquetas";
+import { Product } from "@/types/products";
 import { DraggableField } from "./DraggableField";
 import { cn } from "@/lib/utils";
 

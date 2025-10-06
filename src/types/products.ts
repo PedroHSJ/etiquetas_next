@@ -1,3 +1,7 @@
+// =============================================================================
+// TIPOS DE PRODUTOS E CATEGORIAS
+// =============================================================================
+
 export interface Product {
   id: string;
   organization_id: string;
@@ -8,6 +12,7 @@ export interface Product {
   supplier?: string;
   barcode?: string;
   internal_code?: string;
+  unit_of_measure?: string; // Unidade de medida
   shelf_life_days?: number; // Validade em dias
   storage_temperature?: string;
   allergens?: string[];

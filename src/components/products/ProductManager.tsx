@@ -5,7 +5,7 @@ import {
   Product,
   ProductCategory,
   UNIT_OF_MEASURE_OPTIONS,
-} from "@/lib/types/products";
+} from "@/types/products";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,8 +147,8 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
       id: editingProduct?.id,
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
-      category: formData.category,
-      unit_of_measure: formData.unit_of_measure as any,
+      category_id: formData.category,
+      unit_of_measure: formData.unit_of_measure,
       brand: formData.brand.trim() || undefined,
       supplier: formData.supplier.trim() || undefined,
       barcode: formData.barcode.trim() || undefined,
@@ -470,12 +470,12 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
                 </div>
                 <Badge
                   style={{
-                    backgroundColor: getCategoryColor(product.category),
+                    backgroundColor: getCategoryColor(product.category?.name || ''),
                     color: "white",
                   }}
                   className="ml-2"
                 >
-                  {product.category}
+                  {product.category?.name || 'Sem categoria'}
                 </Badge>
               </div>
             </CardHeader>
@@ -493,7 +493,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
                   {
                     UNIT_OF_MEASURE_OPTIONS.find(
                       (u) => u.value === product.unit_of_measure
-                    )?.label
+                    )?.label || 'Unidade'
                   }
                 </div>
 
