@@ -9,6 +9,7 @@ import {
   Tags,
   Package,
   Mail,
+  Warehouse,
 } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -78,6 +79,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/convites",
         icon: Mail,
         isActive: pathname.startsWith("/convites"),
+      },
+      {
+        title: "Estoque",
+        url: "/estoque",
+        icon: Warehouse,
+        isActive: pathname.startsWith("/estoque"),
       },
       // {
       //   title: "Etiquetas",

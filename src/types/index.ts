@@ -11,6 +11,9 @@ export * from './etiquetas'
 // Tipos de produtos e categorias
 export * from './products'
 
+// Tipos de estoque e movimentações
+export * from './estoque'
+
 // Tipos de organizações e templates
 export * from './organization'
 
