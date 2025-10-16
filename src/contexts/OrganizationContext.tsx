@@ -154,15 +154,15 @@ export function OrganizationProvider({
 
   // Efeito para carregar detalhes quando o perfil ativo mudar
   useEffect(() => {
-    if (activeProfile?.organizacao?.nome && selectedOrganization) {
+    if (activeProfile?.organizacao?.nome && organizations.length > 0) {
       // Se o perfil ativo tem uma organização diferente da selecionada
       // Procurar a organização correspondente na lista
       const profileOrg = organizations.find(org => org.nome === activeProfile.organizacao.nome);
-      if (profileOrg && profileOrg.id !== selectedOrganization.id) {
+      if (profileOrg && (!selectedOrganization || profileOrg.id !== selectedOrganization.id)) {
         setSelectedOrganization(profileOrg);
       }
     }
-  }, [activeProfile?.organizacao?.nome, selectedOrganization, organizations]);
+  }, [activeProfile?.organizacao?.nome, organizations.length, selectedOrganization?.id]);
 
   // Salvar organização selecionada no localStorage
   useEffect(() => {

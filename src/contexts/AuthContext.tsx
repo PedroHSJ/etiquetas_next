@@ -37,42 +37,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchSession = async () => {
     setLoading(true);
 
-    if (process.env.NODE_ENV === "development") {
-      // No desenvolvimento, criar um usuário mock
-      const mockUser = {
-        id: "525dc029-cb71-4c31-bcaf-c28dcf5c892c",
-        email: "danielle.deoliveirape@gmail.com",
-        user_metadata: {
-          full_name: "Usuário Desenvolvimento",
-          avatar_url: "",
-        },
-        app_metadata: {},
-        aud: "authenticated",
-        created_at: new Date().toISOString(),
-        confirmed_at: new Date().toISOString(),
-        email_confirmed_at: new Date().toISOString(),
-        last_sign_in_at: new Date().toISOString(),
-        role: "authenticated",
-        updated_at: new Date().toISOString(),
-      } as User;
+    // if (process.env.NODE_ENV === "development") {
+    //   // No desenvolvimento, criar um usuário mock
+    //   const mockUser = {
+    //     id: "525dc029-cb71-4c31-bcaf-c28dcf5c892c",
+    //     email: "danielle.deoliveirape@gmail.com",
+    //     user_metadata: {
+    //       full_name: "Usuário Desenvolvimento",
+    //       avatar_url: "",
+    //     },
+    //     app_metadata: {},
+    //     aud: "authenticated",
+    //     created_at: new Date().toISOString(),
+    //     confirmed_at: new Date().toISOString(),
+    //     email_confirmed_at: new Date().toISOString(),
+    //     last_sign_in_at: new Date().toISOString(),
+    //     role: "authenticated",
+    //     updated_at: new Date().toISOString(),
+    //   } as User;
 
-      console.log("Mock user for development:", mockUser);
+    //   console.log("Mock user for development:", mockUser);
 
-      const mockSession = {
-        user: mockUser,
-        access_token: "mock-token",
-        token_type: "bearer",
-        expires_in: 3600,
-        expires_at: Date.now() + 3600000,
-        refresh_token: "mock-refresh",
-      } as Session;
+    //   const mockSession = {
+    //     user: mockUser,
+    //     access_token: "mock-token",
+    //     token_type: "bearer",
+    //     expires_in: 3600,
+    //     expires_at: Date.now() + 3600000,
+    //     refresh_token: "mock-refresh",
+    //   } as Session;
 
-      setUser(mockUser);
-      setSession(mockSession);
-      setUserId(mockUser.id);
-      setLoading(false);
-      return;
-    }
+    //   setUser(mockUser);
+    //   setSession(mockSession);
+    //   setUserId(mockUser.id);
+    //   setLoading(false);
+    //   return;
+    // }
 
     try {
       const { data, error } = await supabase.auth.getSession();
@@ -111,7 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       setUserId(session?.user?.id ?? "");

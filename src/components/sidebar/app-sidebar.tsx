@@ -86,10 +86,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       //   isActive: pathname.startsWith("/etiquetas"),
       // },
       { 
-        title: "Ficha Técnica",
-        url: "/ficha-tecnica",
+        title: "Fichas Técnicas",
+        url: "/fichas-tecnicas",
         icon: Package,
-        isActive: pathname.startsWith("/ficha-tecnica"),
+        isActive: pathname.startsWith("/ficha"),
+        items: [
+          {
+            title: "Listar Fichas",
+            url: "/fichas-tecnicas",
+          },
+          {
+            title: "Nova Ficha",
+            url: "/ficha-tecnica",
+          },
+        ],
       },
     ],
   };
