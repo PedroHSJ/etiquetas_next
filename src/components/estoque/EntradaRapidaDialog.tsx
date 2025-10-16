@@ -121,7 +121,9 @@ export function EntradaRapidaDialog({
         observacao: data.observacao,
       };
 
-      const response = await fetch("/api/estoque/entrada-rapida", {
+      // Utiliza fetchWithAuth para enviar o token JWT e cookies
+      const { fetchWithAuth } = await import("@/lib/fetchWithAuth");
+      const response = await fetchWithAuth("/api/estoque/entrada-rapida", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -13,38 +13,45 @@ import {
   TrendingUp 
 } from "lucide-react";
 
-import { EstoqueTable } from "@/components/estoque/EstoqueTable";
+import { GenericTable, GenericTableColumn } from "@/components/ui/generic-table";
 import { EstoqueStats } from "@/components/estoque/EstoqueStats";
 import { EntradaRapidaDialog } from "@/components/estoque/EntradaRapidaDialog";
-import { MovimentacoesDialog } from "@/components/estoque/MovimentacoesDialog";
 
-import { EstoqueEstatisticas } from "@/types/estoque";
+import { EstoqueEstatisticas, Estoque, EstoqueMovimentacao } from "@/types/estoque";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function EstoquePage() {
   const [estatisticas, setEstatisticas] = useState<EstoqueEstatisticas | null>(null);
   const [carregandoStats, setCarregandoStats] = useState(true);
-  const [movimentacoesDialog, setMovimentacoesDialog] = useState({
-    open: false,
-    produtoId: undefined as number | undefined,
-    produtoNome: undefined as string | undefined,
-  });
+  
+  // Estoque
+  const [estoqueData, setEstoqueData] = useState<Estoque[]>([]);
+  const [carregandoEstoque, setCarregandoEstoque] = useState(true);
+  const [paginaEstoque, setPaginaEstoque] = useState(1);
+  const [itemsPerPageEstoque, setItemsPerPageEstoque] = useState(10);
+  
+  // Movimentações
+  const [movimentacoesData, setMovimentacoesData] = useState<EstoqueMovimentacao[]>([]);
+  const [carregandoMovimentacoes, setCarregandoMovimentacoes] = useState(true);
+  const [paginaMovimentacoes, setPaginaMovimentacoes] = useState(1);
+  const [itemsPerPageMovimentacoes, setItemsPerPageMovimentacoes] = useState(10);
 
   const carregarEstatisticas = async () => {
     setCarregandoStats(true);
     try {
-      // Por enquanto, vamos simular as estatísticas
-      // Em uma implementação real, você criaria um endpoint específico
       const response = await fetch('/api/estoque?page=1&pageSize=1');
       const data = await response.json();
       
       if (response.ok) {
-        // Estatísticas simuladas baseadas nos dados retornados
         const stats: EstoqueEstatisticas = {
           total_produtos: data.total || 0,
-          produtos_em_estoque: Math.floor((data.total || 0) * 0.8), // 80% simulado
-          produtos_zerados: Math.floor((data.total || 0) * 0.1), // 10% simulado
-          produtos_baixo_estoque: Math.floor((data.total || 0) * 0.1), // 10% simulado
+          produtos_em_estoque: Math.floor((data.total || 0) * 0.8),
+          produtos_zerados: Math.floor((data.total || 0) * 0.1),
+          produtos_baixo_estoque: Math.floor((data.total || 0) * 0.1),
           ultima_atualizacao: new Date().toISOString(),
         };
         setEstatisticas(stats);
@@ -57,21 +64,221 @@ export default function EstoquePage() {
     }
   };
 
+  const carregarEstoque = async () => {
+    setCarregandoEstoque(true);
+    try {
+      const params = new URLSearchParams({
+        page: paginaEstoque.toString(),
+        pageSize: itemsPerPageEstoque.toString(),
+      });
+      
+      const response = await fetch(`/api/estoque?${params}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setEstoqueData(data.data || []);
+      } else {
+        toast.error(data.error || "Erro ao carregar estoque");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar estoque:", error);
+      toast.error("Erro ao carregar dados do estoque");
+    } finally {
+      setCarregandoEstoque(false);
+    }
+  };
+
+  const carregarMovimentacoes = async () => {
+    setCarregandoMovimentacoes(true);
+    try {
+      const params = new URLSearchParams({
+        page: paginaMovimentacoes.toString(),
+        pageSize: itemsPerPageMovimentacoes.toString(),
+      });
+      
+      const response = await fetch(`/api/estoque/movimentacoes?${params}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setMovimentacoesData(data.data || []);
+      } else {
+        toast.error(data.error || "Erro ao carregar movimentações");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar movimentações:", error);
+      toast.error("Erro ao carregar movimentações");
+    } finally {
+      setCarregandoMovimentacoes(false);
+    }
+  };
+
   useEffect(() => {
     carregarEstatisticas();
   }, []);
 
-  const handleViewMovimentacoes = (produtoId: number, produtoNome: string) => {
-    setMovimentacoesDialog({
-      open: true,
-      produtoId,
-      produtoNome,
-    });
+  useEffect(() => {
+    carregarEstoque();
+  }, [paginaEstoque, itemsPerPageEstoque]);
+
+  useEffect(() => {
+    carregarMovimentacoes();
+  }, [paginaMovimentacoes, itemsPerPageMovimentacoes]);
+
+  const formatarQuantidade = (quantidade: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 3,
+    }).format(quantidade);
   };
 
+  const getStatusBadge = (quantidade: number) => {
+    if (quantidade === 0) {
+      return <Badge variant="destructive">Zerado</Badge>;
+    }
+    if (quantidade < 10) {
+      return <Badge variant="secondary">Baixo</Badge>;
+    }
+    return <Badge variant="default">Normal</Badge>;
+  };
+
+  const formatarData = (data: string) => {
+    try {
+      const date = new Date(data);
+      return date.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+    } catch {
+      return "Data inválida";
+    }
+  };
+
+  // Colunas da tabela de estoque
+  const estoqueColumns: GenericTableColumn<Estoque>[] = [
+    {
+      id: "produto_nome",
+      key: "produto_nome",
+      label: "Produto",
+      accessor: (row) => (row.produto as any)?.nome || "N/A",
+      visible: true,
+      width: 300,
+    },
+    {
+      id: "quantidade",
+      key: "quantidade",
+      label: "Quantidade",
+      accessor: (row) => row.quantidade_atual,
+      visible: true,
+      render: (value) => (
+        <div className="font-mono text-foreground">
+          {formatarQuantidade(value as number)}
+        </div>
+      ),
+    },
+    {
+      id: "status",
+      key: "status",
+      label: "Status",
+      accessor: (row) => row.quantidade_atual,
+      visible: true,
+      render: (value) => (
+        <div className="">
+          {getStatusBadge(value as number)}
+        </div>
+      ),
+    },
+    {
+      id: "ultima_atualizacao",
+      key: "ultima_atualizacao",
+      label: "Última Atualização",
+      accessor: (row) => row.updated_at,
+      visible: true,
+      render: (value) => (
+        <div className="text-sm">
+          {formatarData(value as string)}
+        </div>
+      ),
+    },
+  ];
+
+  // Colunas da tabela de movimentações
+  const movimentacoesColumns: GenericTableColumn<EstoqueMovimentacao>[] = [
+    {
+      id: "tipo",
+      key: "tipo",
+      label: "Tipo",
+      accessor: (row) => row.tipo_movimentacao,
+      visible: true,
+      render: (value) => (
+        <div className="flex justify-center">
+          <Badge variant={value === 'ENTRADA' ? 'default' : 'destructive'}>
+            {value === 'ENTRADA' ? 'Entrada' : 'Saída'}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      id: "produto_nome",
+      key: "produto_nome",
+      label: "Produto",
+      accessor: (row) => (row.produto as any)?.nome || "N/A",
+      visible: true,
+      width: 300,
+    },
+    {
+      id: "quantidade",
+      key: "quantidade",
+      label: "Quantidade",
+      accessor: (row) => row.quantidade,
+      visible: true,
+      render: (value) => (
+        <div className="font-mono text-center">
+          {formatarQuantidade(value as number)}
+        </div>
+      ),
+    },
+    {
+      id: "observacao",
+      key: "observacao",
+      label: "Observação",
+      accessor: (row) => row.observacao || "-",
+      visible: true,
+      width: 250,
+    },
+    {
+      id: "usuario",
+      key: "usuario",
+      label: "Usuário",
+      accessor: (row) => row.usuario?.user_metadata?.full_name || "N/A",
+      visible: true,
+      render: (value) => (
+        <div className="text-center text-sm">
+          {value as string}
+        </div>
+      ),
+    },
+    {
+      id: "data",
+      key: "data",
+      label: "Data",
+      accessor: (row) => row.created_at,
+      visible: true,
+      render: (value) => (
+        <div className="text-sm text-center">
+          {formatarData(value as string)}
+        </div>
+      ),
+    },
+  ];
+
   const handleSuccessEntrada = () => {
-    // Recarregar estatísticas após uma entrada bem-sucedida
     carregarEstatisticas();
+    carregarEstoque();
+    carregarMovimentacoes();
   };
 
   return (
@@ -84,26 +291,15 @@ export default function EstoquePage() {
             Gerencie o estoque de produtos e acompanhe movimentações
           </p>
         </div>
-        <div className="flex gap-2">
-          <EntradaRapidaDialog 
-            onSuccess={handleSuccessEntrada}
-            trigger={
-              <Button size="sm" className="gap-2">
-                <PlusCircle className="h-4 w-4" />
-                Entrada Rápida
-              </Button>
-            }
-          />
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2"
-            onClick={() => setMovimentacoesDialog({ open: true, produtoId: undefined, produtoNome: undefined })}
-          >
-            <History className="h-4 w-4" />
-            Ver Todas as Movimentações
-          </Button>
-        </div>
+        <EntradaRapidaDialog 
+          onSuccess={handleSuccessEntrada}
+          trigger={
+            <Button size="sm" className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Entrada Rápida
+            </Button>
+          }
+        />
       </div>
 
       {/* Estatísticas */}
@@ -130,54 +326,33 @@ export default function EstoquePage() {
         </TabsList>
 
         <TabsContent value="estoque" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Estoque de Produtos
-              </CardTitle>
-              <CardDescription>
-                Visualize e gerencie o estoque atual de todos os produtos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EstoqueTable onViewMovimentacoes={handleViewMovimentacoes} />
-            </CardContent>
-          </Card>
+          <GenericTable
+            title="Estoque de Produtos"
+            description="Visualize e gerencie o estoque atual de todos os produtos"
+            columns={estoqueColumns}
+            data={estoqueData as any[]}
+            loading={carregandoEstoque}
+            searchable={true}
+            searchPlaceholder="Buscar produto..."
+            itemsPerPage={itemsPerPageEstoque}
+            onItemsPerPageChange={setItemsPerPageEstoque}
+            showAdvancedPagination={true}
+          />
         </TabsContent>
 
         <TabsContent value="movimentacoes" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Histórico de Movimentações
-              </CardTitle>
-              <CardDescription>
-                Acompanhe todas as entradas e saídas de estoque
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Visualizar Movimentações</h3>
-                <p className="text-muted-foreground mb-4">
-                  Clique no botão abaixo para ver o histórico completo de movimentações
-                </p>
-                <Button 
-                  onClick={() => setMovimentacoesDialog({ 
-                    open: true, 
-                    produtoId: undefined, 
-                    produtoNome: undefined 
-                  })}
-                  className="gap-2"
-                >
-                  <History className="h-4 w-4" />
-                  Abrir Histórico
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <GenericTable
+            title="Histórico de Movimentações"
+            description="Acompanhe todas as entradas e saídas de estoque"
+            columns={movimentacoesColumns}
+            data={movimentacoesData as any[]}
+            loading={carregandoMovimentacoes}
+            searchable={true}
+            searchPlaceholder="Buscar movimentação..."
+            itemsPerPage={itemsPerPageMovimentacoes}
+            onItemsPerPageChange={setItemsPerPageMovimentacoes}
+            showAdvancedPagination={true}
+          />
         </TabsContent>
 
         <TabsContent value="alertas" className="space-y-4">
@@ -206,7 +381,6 @@ export default function EstoquePage() {
                       size="sm" 
                       className="mt-3"
                       onClick={() => {
-                        // Implementar navegação para filtro de produtos zerados
                         toast.info("Funcionalidade em desenvolvimento");
                       }}
                     >
@@ -241,7 +415,6 @@ export default function EstoquePage() {
                       size="sm" 
                       className="mt-3"
                       onClick={() => {
-                        // Implementar navegação para filtro de estoque baixo
                         toast.info("Funcionalidade em desenvolvimento");
                       }}
                     >
@@ -254,14 +427,6 @@ export default function EstoquePage() {
           </div>
         </TabsContent>
       </Tabs>
-
-      {/* Dialog de Movimentações */}
-      <MovimentacoesDialog
-        open={movimentacoesDialog.open}
-        onOpenChange={(open) => setMovimentacoesDialog(prev => ({ ...prev, open }))}
-        produtoId={movimentacoesDialog.produtoId}
-        produtoNome={movimentacoesDialog.produtoNome}
-      />
     </div>
   );
 }

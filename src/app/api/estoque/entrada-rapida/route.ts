@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import { EntradaRapidaRequest, EntradaRapidaResponse, ESTOQUE_MESSAGES } from '@/types/estoque';
 
 export async function POST(request: NextRequest) {
@@ -28,9 +28,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obter usuário autenticado
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
+  // Obter usuário autenticado usando client server-side
+  const supabase = getSupabaseServerClient(request);
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log('Usuário autenticado:', user);
+    console.log('Erro ao obter usuário:', userError);
     if (userError || !user) {
       return NextResponse.json(
         { 

@@ -215,7 +215,7 @@ export function GenericTable<T extends Record<string, unknown>>({
   const hasSelectedRows = selectedRows.size > 0
 
   return (
-    <Card className={className}>
+    <Card className={`${className} min-h-[500px] flex flex-col`}>
       {(title || description) && (
         <CardHeader>
           {title && <CardTitle>{title}</CardTitle>}
@@ -223,7 +223,7 @@ export function GenericTable<T extends Record<string, unknown>>({
         </CardHeader>
       )}
       
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col">
         {/* Barra de ferramentas */}
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-4 flex-1">
