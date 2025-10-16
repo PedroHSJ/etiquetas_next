@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { Convite } from '../types/onboarding';
 import { useOrganization } from './OrganizationContext';
 import { InviteService } from "@/lib/services/inviteService";
@@ -36,8 +36,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  const fetchConvites = async () => {
-      if (!user?.email) return;
+  const fetchConvites = useCallback(async () => {
+    if (!user?.email) return;
     setIsLoading(true);
     try {
       const convites = await InviteService.getConvitesByStatus('pendente', user?.email);
@@ -48,13 +48,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.email]);
 
-  const refreshConvites = async () => {
+  const refreshConvites = useCallback(async () => {
     await fetchConvites();
-  };
+  }, [fetchConvites]);
 
-  const aceitarConvite = async (tokenInvite: string, aceitoPor: string): Promise<boolean> => {
+  const aceitarConvite = useCallback(async (tokenInvite: string, aceitoPor: string): Promise<boolean> => {
     try {
       const success = await InviteService.acceptInvite(tokenInvite, aceitoPor);
       if (success) {
@@ -65,9 +65,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       console.error('Erro ao aceitar convite:', error);
       return false;
     }
-  };
+  }, [refreshConvites]);
 
-  const rejeitarConvite = async (conviteId: string): Promise<boolean> => {
+  const rejeitarConvite = useCallback(async (conviteId: string): Promise<boolean> => {
     try {
       const success = await InviteService.rejeitarConvite(conviteId);
       if (success) {
@@ -78,26 +78,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       console.error('Erro ao cancelar convite:', error);
       return false;
     }
-  };
+  }, [refreshConvites]);
 
-  // Buscar convites quando a organização mudar
+  // Buscar convites quando a organização ou usuário mudar
   useEffect(() => {
-    if (selectedOrganization?.id) {
+    if (user?.email) {
       fetchConvites();
     }
-  }, [selectedOrganization?.id]);
+  }, [selectedOrganization?.id, user?.email, fetchConvites]);
 
   // Atualizar a cada 5 minutos
   useEffect(() => {
-    if (!selectedOrganization?.id) return;
+    if (!user?.email) return;
 
     const interval = setInterval(fetchConvites, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [selectedOrganization?.id]);
-
-  useEffect(() => {
-      fetchConvites();
-  }, [user?.email]);
+  }, [user?.email, fetchConvites]);
 
   const value: NotificationContextType = {
     convitesPendentes,

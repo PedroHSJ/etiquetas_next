@@ -1,20 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { TechnicalSheetGenerator } from "@/components/technical-sheet/TechnicalSheetGenerator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChefHat, Users, Clock, Calculator } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { TechnicalSheetResponse, EditableIngredient } from "@/types/technical-sheet";
+import { TechnicalSheetService, SaveTechnicalSheetData } from "@/lib/services/technicalSheetService";
+import { toast } from "sonner";
 
 export default function TechnicalSheetPage() {
   const { user } = useAuth();
-
-  // Para desenvolvimento, usar um organizationId fixo
-  // Em produção, isso viria do contexto da organização do usuário
-  const organizationId = process.env.NODE_ENV === "development" 
-    ? "development-org-id"
-    : ""; // Aqui você implementaria a lógica para obter o organizationId real
+  const { selectedOrganization } = useOrganization();
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!user) {
     return (
@@ -31,10 +30,67 @@ export default function TechnicalSheetPage() {
     );
   }
 
-  const handleSave = (sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }) => {
-    // Aqui você pode implementar a lógica de salvamento
-    // Por exemplo, salvar no banco de dados local ou enviar para uma API
-    console.log("Ficha técnica para salvar:", sheet);
+  if (!selectedOrganization) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-muted-foreground mb-2">
+            Nenhuma organização selecionada
+          </h2>
+          <p className="text-muted-foreground">
+            Selecione uma organização para criar fichas técnicas.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSave = async (sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }) => {
+    if (!selectedOrganization) {
+      toast.error("Nenhuma organização selecionada");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Preparar dados para salvamento
+      const saveData: SaveTechnicalSheetData = {
+        nome_prato: sheet.dishName,
+        numero_porcoes: sheet.servings,
+        tempo_preparo: sheet.preparationTime,
+        tempo_cozimento: sheet.cookingTime,
+        dificuldade: sheet.difficulty,
+        etapas_preparo: sheet.preparationSteps,
+        informacoes_nutricionais: sheet.nutritionalInsights,
+        organizacao_id: selectedOrganization.id,
+        ingredientes: sheet.ingredients.map((ingredient, index) => ({
+          nome_ingrediente: ingredient.name,
+          quantidade: ingredient.quantity,
+          unidade: ingredient.unit,
+          quantidade_original: (ingredient as EditableIngredient).originalQuantity || ingredient.quantity,
+          produto_id: (ingredient as EditableIngredient).productId ? parseInt((ingredient as EditableIngredient).productId!) : undefined,
+          ordem: index
+        }))
+      };
+
+      // Salvar no banco de dados
+      const result = await TechnicalSheetService.saveTechnicalSheet(saveData);
+
+      if (result.success) {
+        toast.success("Ficha técnica salva com sucesso!");
+        console.log("Ficha técnica salva:", result.data);
+      } else {
+        toast.error(result.error || "Erro ao salvar ficha técnica");
+        console.error("Erro ao salvar ficha técnica:", result.error);
+      }
+
+    } catch (error) {
+      console.error("Erro inesperado ao salvar ficha técnica:", error);
+      toast.error("Erro inesperado ao salvar ficha técnica");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -154,7 +210,7 @@ export default function TechnicalSheetPage() {
 
       {/* Componente principal */}
       <TechnicalSheetGenerator
-        organizationId={organizationId}
+        organizationId={selectedOrganization.id}
         onSave={handleSave}
       />
     </div>
