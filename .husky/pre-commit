@@ -1,0 +1,42 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# ==========================
+# 🎯 Husky Hook - pre-commit
+# ==========================
+
+# Ativa o modo de log detalhado (exibe comandos executados)
+set -e
+
+echo ""
+echo "🦊 [Husky] Iniciando pre-commit hook..."
+echo "-----------------------------------------"
+
+# Verifica se há arquivos no stage
+if git diff --cached --quiet; then
+  echo "⚠️  Nenhum arquivo adicionado para commit. Pulando lint-staged."
+  exit 0
+fi
+
+# Mostra arquivos que serão verificados
+echo "📂 Arquivos no stage:"
+git diff --cached --name-only
+echo ""
+
+# Executa lint-staged
+echo "🚀 Executando lint-staged..."
+npx lint-staged
+
+# Captura o código de saída
+STATUS=$?
+
+if [ $STATUS -eq 0 ]; then
+  echo "✅ lint-staged finalizado com sucesso!"
+else
+  echo "❌ Erro ao rodar lint-staged. Abortando commit."
+  exit 1
+fi
+
+echo "-----------------------------------------"
+echo "🦊 [Husky] Pre-commit concluído!"
+echo ""
