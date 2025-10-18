@@ -15,7 +15,7 @@ export interface TechnicalSheetResponse {
   ingredients: IngredientSuggestion[];
   preparationTime?: string;
   cookingTime?: string;
-  difficulty?: 'fácil' | 'médio' | 'difícil';
+  difficulty?: "fácil" | "médio" | "difícil";
   preparationSteps?: string[];
   nutritionalInsights?: {
     calories: string;
@@ -41,7 +41,7 @@ export interface TechnicalSheet {
   ingredients: EditableIngredient[];
   preparationTime?: string;
   cookingTime?: string;
-  difficulty?: 'fácil' | 'médio' | 'difícil';
+  difficulty?: "fácil" | "médio" | "difícil";
   preparationSteps?: string[];
   nutritionalInsights?: {
     calories: string;

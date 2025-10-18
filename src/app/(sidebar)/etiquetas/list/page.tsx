@@ -3,13 +3,7 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -115,140 +109,151 @@ export default function Page() {
 
   return (
     <Suspense fallback={<div>Carregando etiquetas...</div>}>
-        <div className="flex flex-1 flex-col gap-6">
-          {/* Cabeçalho */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Lista de etiquetas</h1>
-              <p className="text-muted-foreground">Visualize todas as etiquetas geradas</p>
-            </div>
+      <div className="flex flex-1 flex-col gap-6">
+        {/* Cabeçalho */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+            <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
+            </svg>
           </div>
+          <div>
+            <h1 className="text-3xl font-bold">Lista de etiquetas</h1>
+            <p className="text-muted-foreground">Visualize todas as etiquetas geradas</p>
+          </div>
+        </div>
 
-          {/* Filtros */}
-          <FilterBar
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            searchPlaceholder="Produto, status, observações..."
-            showDepartmentFilter={false}
-            onClearFilters={clearFilters}
-            loading={loading}
-          />
+        {/* Filtros */}
+        <FilterBar
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchPlaceholder="Produto, status, observações..."
+          showDepartmentFilter={false}
+          onClearFilters={clearFilters}
+          loading={loading}
+        />
 
-          {/* Lista/Tabela de Etiquetas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Etiquetas ({totalItems})
-              </CardTitle>
-              <CardDescription>
-                {loading
-                  ? "Carregando..."
-                  : totalPages > 1
+        {/* Lista/Tabela de Etiquetas */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">Etiquetas ({totalItems})</CardTitle>
+            <CardDescription>
+              {loading
+                ? "Carregando..."
+                : totalPages > 1
                   ? `Mostrando ${startIndex + 1}-${Math.min(
                       endIndex,
                       totalItems
                     )} de ${totalItems} etiquetas`
                   : `${totalItems} etiqueta(s) encontrada(s)`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-muted-foreground">Carregando etiquetas...</p>
-                </div>
-              ) : totalItems === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchTerm
-                    ? "Nenhuma etiqueta encontrada com os filtros aplicados"
-                    : "Nenhuma etiqueta cadastrada"}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Visualização em Cards para mobile */}
-                  <div className="block md:hidden space-y-4">
-                    {paginatedEtiquetas.map((etq) => (
-                      <Card key={etq.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback className="bg-emerald-100 text-emerald-600">
-                                {getInitials(etq.product?.name || etq.produto?.nome || "?")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-medium">{etq.product?.name || etq.produto?.nome || "Produto desconhecido"}</h3>
-                              <p className="text-xs text-muted-foreground">Status: {etq.status}</p>
-                              <p className="text-xs text-muted-foreground">Qtd: {etq.quantidade}</p>
-                              <p className="text-xs text-muted-foreground">Impressa em: {format(new Date(etq.data_impressao), "dd/MM/yyyy", { locale: ptBR })}</p>
-                            </div>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="py-8 text-center">
+                <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
+                <p className="text-muted-foreground mt-2">Carregando etiquetas...</p>
+              </div>
+            ) : totalItems === 0 ? (
+              <div className="text-muted-foreground py-8 text-center">
+                {searchTerm
+                  ? "Nenhuma etiqueta encontrada com os filtros aplicados"
+                  : "Nenhuma etiqueta cadastrada"}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Visualização em Cards para mobile */}
+                <div className="block space-y-4 md:hidden">
+                  {paginatedEtiquetas.map((etq) => (
+                    <Card key={etq.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarFallback className="bg-emerald-100 text-emerald-600">
+                              {getInitials(etq.product?.name || etq.produto?.nome || "?")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-medium">
+                              {etq.product?.name || etq.produto?.nome || "Produto desconhecido"}
+                            </h3>
+                            <p className="text-muted-foreground text-xs">Status: {etq.status}</p>
+                            <p className="text-muted-foreground text-xs">Qtd: {etq.quantidade}</p>
+                            <p className="text-muted-foreground text-xs">
+                              Impressa em:{" "}
+                              {format(new Date(etq.data_impressao), "dd/MM/yyyy", { locale: ptBR })}
+                            </p>
                           </div>
-                          {etq.observacoes && (
-                            <div className="mt-2 text-xs text-muted-foreground">Obs: {etq.observacoes}</div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* Visualização em Tabela para desktop */}
-                  <div className="hidden md:block">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Produto</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Qtd</TableHead>
-                          <TableHead>Impressa em</TableHead>
-                          <TableHead>Observações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedEtiquetas.map((etq) => (
-                          <TableRow key={etq.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarFallback className="bg-emerald-100 text-emerald-600 text-xs">
-                                    {getInitials(etq.product?.name || etq.produto?.nome || "?")}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium">{etq.product?.name || etq.produto?.nome || "Produto desconhecido"}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary" className="text-xs capitalize">{etq.status}</Badge>
-                            </TableCell>
-                            <TableCell>{etq.quantidade}</TableCell>
-                            <TableCell>{format(new Date(etq.data_impressao), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
-                            <TableCell className="max-w-xs truncate">{etq.observacoes}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {/* Paginação */}
-                  {totalPages > 1 && (
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      totalItems={totalItems}
-                      itemsPerPage={itemsPerPage}
-                      onPageChange={setCurrentPage}
-                      onItemsPerPageChange={setItemsPerPage}
-                    />
-                  )}
+                        </div>
+                        {etq.observacoes && (
+                          <div className="text-muted-foreground mt-2 text-xs">
+                            Obs: {etq.observacoes}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+
+                {/* Visualização em Tabela para desktop */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produto</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Qtd</TableHead>
+                        <TableHead>Impressa em</TableHead>
+                        <TableHead>Observações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedEtiquetas.map((etq) => (
+                        <TableRow key={etq.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="bg-emerald-100 text-xs text-emerald-600">
+                                  {getInitials(etq.product?.name || etq.produto?.nome || "?")}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">
+                                {etq.product?.name || etq.produto?.nome || "Produto desconhecido"}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-xs capitalize">
+                              {etq.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{etq.quantidade}</TableCell>
+                          <TableCell>
+                            {format(new Date(etq.data_impressao), "dd/MM/yyyy", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">{etq.observacoes}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Paginação */}
+                {totalPages > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                  />
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </Suspense>
   );
 }

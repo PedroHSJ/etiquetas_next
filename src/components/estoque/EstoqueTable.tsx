@@ -27,12 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Estoque, 
-  EstoqueFiltros, 
-  EstoqueListResponse,
-  ESTOQUE_PAGINATION 
-} from "@/types/estoque";
+import { Estoque, EstoqueFiltros, EstoqueListResponse, ESTOQUE_PAGINATION } from "@/types/estoque";
 import { EntradaRapidaDialog } from "./EntradaRapidaDialog";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -89,7 +84,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (termoBusca !== filtros.produto_nome) {
-        setFiltros(prev => ({ ...prev, produto_nome: termoBusca }));
+        setFiltros((prev) => ({ ...prev, produto_nome: termoBusca }));
         setPaginaAtual(1);
       }
     }, 500);
@@ -97,13 +92,16 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
     return () => clearTimeout(timer);
   }, [termoBusca, filtros.produto_nome]);
 
-  const handleFiltroChange = (key: keyof EstoqueFiltros, value: string | boolean | number | undefined) => {
-    setFiltros(prev => ({ ...prev, [key]: value }));
+  const handleFiltroChange = (
+    key: keyof EstoqueFiltros,
+    value: string | boolean | number | undefined
+  ) => {
+    setFiltros((prev) => ({ ...prev, [key]: value }));
     setPaginaAtual(1);
   };
 
   const formatarQuantidade = (quantidade: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 3,
     }).format(quantidade);
@@ -113,7 +111,8 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
     if (quantidade === 0) {
       return <Badge variant="destructive">Zerado</Badge>;
     }
-    if (quantidade < 10) { // Critério simples para estoque baixo
+    if (quantidade < 10) {
+      // Critério simples para estoque baixo
       return <Badge variant="secondary">Baixo</Badge>;
     }
     return <Badge variant="default">Normal</Badge>;
@@ -137,7 +136,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
           <Skeleton className="h-10 flex-1" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="border rounded-md">
+        <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -151,11 +150,21 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
             <TableBody>
               {Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-40" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8 w-8" />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -168,9 +177,9 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
           <Input
             placeholder="Buscar produto..."
             value={termoBusca}
@@ -178,7 +187,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
             className="pl-10"
           />
         </div>
-        
+
         <Select
           value={filtros.estoque_zerado ? "zerado" : filtros.estoque_baixo ? "baixo" : "todos"}
           onValueChange={(value) => {
@@ -207,7 +216,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
       </div>
 
       {/* Tabela */}
-      <div className="border rounded-md">
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -221,9 +230,9 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
           <TableBody>
             {dados?.data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={5} className="py-8 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <Package className="h-8 w-8 text-muted-foreground" />
+                    <Package className="text-muted-foreground h-8 w-8" />
                     <p className="text-muted-foreground">
                       {termoBusca ? "Nenhum produto encontrado" : "Nenhum produto em estoque"}
                     </p>
@@ -235,15 +244,17 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                 <TableRow key={item.id}>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{item.produto?.name || "Produto não encontrado"}</div>
+                      <div className="font-medium">
+                        {item.produto?.name || "Produto não encontrado"}
+                      </div>
                       {item.produto?.category?.name && (
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-muted-foreground text-sm">
                           Categoria: {item.produto.category.name}
                         </div>
                       )}
                     </div>
                   </TableCell>
-                  
+
                   <TableCell className="text-center font-mono">
                     {formatarQuantidade(item.quantidade_atual)}
                     {item.produto?.unit_of_measure && (
@@ -252,11 +263,11 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                       </span>
                     )}
                   </TableCell>
-                  
+
                   <TableCell className="text-center">
                     {getStatusBadge(item.quantidade_atual)}
                   </TableCell>
-                  
+
                   <TableCell>
                     <div className="text-sm">
                       {formatarDataUltimaAtualizacao(item.updated_at)}
@@ -267,7 +278,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                       )}
                     </div>
                   </TableCell>
-                  
+
                   <TableCell className="text-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -287,10 +298,9 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                           }
                         />
                         <DropdownMenuItem
-                          onClick={() => onViewMovimentacoes?.(
-                            item.produto_id, 
-                            item.produto?.name || "Produto"
-                          )}
+                          onClick={() =>
+                            onViewMovimentacoes?.(item.produto_id, item.produto?.name || "Produto")
+                          }
                         >
                           <TrendingDown className="mr-2 h-4 w-4" />
                           Ver Movimentações
@@ -308,17 +318,16 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
       {/* Paginação */}
       {dados && dados.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Mostrando {((dados.page - 1) * dados.pageSize) + 1} a{" "}
-            {Math.min(dados.page * dados.pageSize, dados.total)} de{" "}
-            {dados.total} produtos
+          <div className="text-muted-foreground text-sm">
+            Mostrando {(dados.page - 1) * dados.pageSize + 1} a{" "}
+            {Math.min(dados.page * dados.pageSize, dados.total)} de {dados.total} produtos
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               disabled={dados.page <= 1}
-              onClick={() => setPaginaAtual(prev => prev - 1)}
+              onClick={() => setPaginaAtual((prev) => prev - 1)}
             >
               Anterior
             </Button>
@@ -326,7 +335,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
               variant="outline"
               size="sm"
               disabled={dados.page >= dados.totalPages}
-              onClick={() => setPaginaAtual(prev => prev + 1)}
+              onClick={() => setPaginaAtual((prev) => prev + 1)}
             >
               Próxima
             </Button>

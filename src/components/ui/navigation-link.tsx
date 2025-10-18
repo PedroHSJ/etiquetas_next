@@ -11,12 +11,7 @@ interface NavigationLinkProps extends React.ComponentProps<typeof Link> {
   children: React.ReactNode;
 }
 
-export function NavigationLink({
-  href,
-  onClick,
-  children,
-  ...props
-}: NavigationLinkProps) {
+export function NavigationLink({ href, onClick, children, ...props }: NavigationLinkProps) {
   const { isNavigating } = useNavigation();
   const { navigateTo } = useNavigationWithLoading();
 

@@ -12,10 +12,10 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex h-screen items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-2 text-muted-foreground">Redirecionando para o dashboard...</p>
+        <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
+        <p className="text-muted-foreground mt-2">Redirecionando para o dashboard...</p>
       </div>
     </div>
   );

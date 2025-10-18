@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { EtiquetaService } from '@/lib/services/etiquetaService';
-import { Grupo, Produto, Etiqueta, EtiquetaCreate } from '@/types/etiquetas';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect, useCallback } from "react";
+import { EtiquetaService } from "@/lib/services/etiquetaService";
+import { Grupo, Produto, Etiqueta, EtiquetaCreate } from "@/types/etiquetas";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useEtiquetas() {
   const { userId } = useAuth();
@@ -19,8 +19,8 @@ export function useEtiquetas() {
       const gruposData = await EtiquetaService.getGrupos();
       setGrupos(gruposData);
     } catch (err) {
-      setError('Erro ao carregar grupos');
-      console.error('Erro ao carregar grupos:', err);
+      setError("Erro ao carregar grupos");
+      console.error("Erro ao carregar grupos:", err);
     } finally {
       setLoading(false);
     }
@@ -34,32 +34,35 @@ export function useEtiquetas() {
       const produtosData = await EtiquetaService.getProdutosByGrupo(grupoId);
       setProdutos(produtosData);
     } catch (err) {
-      setError('Erro ao carregar produtos do grupo');
-      console.error('Erro ao carregar produtos:', err);
+      setError("Erro ao carregar produtos do grupo");
+      console.error("Erro ao carregar produtos:", err);
     } finally {
       setLoading(false);
     }
   }, []);
 
   // Criar etiqueta
-  const createEtiqueta = useCallback(async (etiquetaData: EtiquetaCreate): Promise<Etiqueta> => {
-    try {
-      setLoading(true);
-      setError(null);
-      const novaEtiqueta = await EtiquetaService.createEtiqueta(etiquetaData, userId);
-      
-      // Adicionar à lista de etiquetas
-      setEtiquetas(prev => [novaEtiqueta, ...prev]);
-      
-      return novaEtiqueta;
-    } catch (err) {
-      setError('Erro ao criar etiqueta');
-      console.error('Erro ao criar etiqueta:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
+  const createEtiqueta = useCallback(
+    async (etiquetaData: EtiquetaCreate): Promise<Etiqueta> => {
+      try {
+        setLoading(true);
+        setError(null);
+        const novaEtiqueta = await EtiquetaService.createEtiqueta(etiquetaData, userId);
+
+        // Adicionar à lista de etiquetas
+        setEtiquetas((prev) => [novaEtiqueta, ...prev]);
+
+        return novaEtiqueta;
+      } catch (err) {
+        setError("Erro ao criar etiqueta");
+        console.error("Erro ao criar etiqueta:", err);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [userId]
+  );
 
   // Carregar etiquetas do usuário
   const loadEtiquetas = useCallback(async () => {
@@ -69,8 +72,8 @@ export function useEtiquetas() {
       const etiquetasData = await EtiquetaService.getEtiquetas(userId);
       setEtiquetas(etiquetasData);
     } catch (err) {
-      setError('Erro ao carregar etiquetas');
-      console.error('Erro ao carregar etiquetas:', err);
+      setError("Erro ao carregar etiquetas");
+      console.error("Erro ao carregar etiquetas:", err);
     } finally {
       setLoading(false);
     }

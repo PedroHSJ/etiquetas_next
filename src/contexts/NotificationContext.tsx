@@ -1,10 +1,17 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { Convite } from '../types/onboarding';
-import { useOrganization } from './OrganizationContext';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+  useCallback,
+} from "react";
+import { Convite } from "../types/onboarding";
+import { useOrganization } from "./OrganizationContext";
 import { InviteService } from "@/lib/services/inviteService";
-import { useAuth } from './AuthContext';
+import { useAuth } from "./AuthContext";
 
 interface NotificationContextType {
   convitesPendentes: Convite[];
@@ -20,7 +27,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotifications deve ser usado dentro de um NotificationProvider');
+    throw new Error("useNotifications deve ser usado dentro de um NotificationProvider");
   }
   return context;
 };
@@ -40,11 +47,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     if (!user?.email) return;
     setIsLoading(true);
     try {
-      const convites = await InviteService.getConvitesByStatus('pendente', user?.email);
+      const convites = await InviteService.getConvitesByStatus("pendente", user?.email);
       setConvitesPendentes(convites);
       setContagemConvites(convites.length);
     } catch (error) {
-      console.error('Erro ao buscar convites:', error);
+      console.error("Erro ao buscar convites:", error);
     } finally {
       setIsLoading(false);
     }
@@ -54,31 +61,37 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     await fetchConvites();
   }, [fetchConvites]);
 
-  const aceitarConvite = useCallback(async (tokenInvite: string, aceitoPor: string): Promise<boolean> => {
-    try {
-      const success = await InviteService.acceptInvite(tokenInvite, aceitoPor);
-      if (success) {
-        await refreshConvites();
+  const aceitarConvite = useCallback(
+    async (tokenInvite: string, aceitoPor: string): Promise<boolean> => {
+      try {
+        const success = await InviteService.acceptInvite(tokenInvite, aceitoPor);
+        if (success) {
+          await refreshConvites();
+        }
+        return success;
+      } catch (error) {
+        console.error("Erro ao aceitar convite:", error);
+        return false;
       }
-      return success;
-    } catch (error) {
-      console.error('Erro ao aceitar convite:', error);
-      return false;
-    }
-  }, [refreshConvites]);
+    },
+    [refreshConvites]
+  );
 
-  const rejeitarConvite = useCallback(async (conviteId: string): Promise<boolean> => {
-    try {
-      const success = await InviteService.rejeitarConvite(conviteId);
-      if (success) {
-        await refreshConvites();
+  const rejeitarConvite = useCallback(
+    async (conviteId: string): Promise<boolean> => {
+      try {
+        const success = await InviteService.rejeitarConvite(conviteId);
+        if (success) {
+          await refreshConvites();
+        }
+        return success;
+      } catch (error) {
+        console.error("Erro ao cancelar convite:", error);
+        return false;
       }
-      return success;
-    } catch (error) {
-      console.error('Erro ao cancelar convite:', error);
-      return false;
-    }
-  }, [refreshConvites]);
+    },
+    [refreshConvites]
+  );
 
   // Buscar convites quando a organização ou usuário mudar
   useEffect(() => {
@@ -104,9 +117,5 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     rejeitarConvite,
   };
 
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
+  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 };

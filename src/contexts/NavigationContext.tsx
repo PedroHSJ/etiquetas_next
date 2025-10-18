@@ -22,11 +22,7 @@ export const useNavigation = () => {
   return context;
 };
 
-export function NavigationProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function NavigationProvider({ children }: { children: React.ReactNode }) {
   const [isNavigating, setIsNavigating] = useState(false);
   const pathname = usePathname();
 

@@ -3,13 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -76,15 +70,9 @@ export default function Page() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
-  const [filteredOrganizations, setfilteredOrganizations] = useState<
-    Organization[]
-  >([]);
-  const [selectedOrganization, setSelectedOrganization] = useState<
-    string | undefined
-  >();
-  const [selectedDepartment, setSelectedDepartment] = useState<
-    string | undefined
-  >();
+  const [filteredOrganizations, setfilteredOrganizations] = useState<Organization[]>([]);
+  const [selectedOrganization, setSelectedOrganization] = useState<string | undefined>();
+  const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>();
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -195,10 +183,7 @@ export default function Page() {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedOrganizations = filteredOrganizations.slice(
-    startIndex,
-    endIndex
-  );
+  const paginatedOrganizations = filteredOrganizations.slice(startIndex, endIndex);
 
   const openDeleteDialog = (member: Member) => {
     setDeleteDialog({
@@ -276,9 +261,9 @@ export default function Page() {
           {/* Cabeçalho */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+                <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
                 </svg>
               </div>
               <div>
@@ -321,23 +306,21 @@ export default function Page() {
                 {loading
                   ? "Carregando..."
                   : totalPages > 1
-                  ? `Mostrando ${startIndex + 1}-${Math.min(
-                      endIndex,
-                      totalItems
-                    )} de ${totalItems} organizações`
-                  : `${totalItems} organização(s) encontrada(s)`}
+                    ? `Mostrando ${startIndex + 1}-${Math.min(
+                        endIndex,
+                        totalItems
+                      )} de ${totalItems} organizações`
+                    : `${totalItems} organização(s) encontrada(s)`}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-muted-foreground">
-                    Carregando integrantes...
-                  </p>
+                <div className="py-8 text-center">
+                  <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
+                  <p className="text-muted-foreground mt-2">Carregando integrantes...</p>
                 </div>
               ) : totalItems === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-muted-foreground py-8 text-center">
                   {searchTerm || selectedOrganization || selectedDepartment
                     ? "Nenhum integrante encontrado com os filtros aplicados"
                     : "Nenhum integrante cadastrado"}
@@ -345,7 +328,7 @@ export default function Page() {
               ) : (
                 <div className="space-y-4">
                   {/* Visualização em Cards para mobile */}
-                  <div className="block md:hidden space-y-4">
+                  <div className="block space-y-4 md:hidden">
                     {paginatedOrganizations.map((org) => (
                       <Card key={org.id}>
                         <CardContent className="p-4">
@@ -377,9 +360,7 @@ export default function Page() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() =>
-                                  console.log("Delete organization:", org.id)
-                                }
+                                onClick={() => console.log("Delete organization:", org.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -416,7 +397,7 @@ export default function Page() {
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
-                                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                                  <AvatarFallback className="bg-blue-100 text-xs text-blue-600">
                                     {getInitials(org.nome)}
                                   </AvatarFallback>
                                 </Avatar>
@@ -427,8 +408,7 @@ export default function Page() {
                               <div>
                                 {org.tipo && (
                                   <Badge variant="secondary" className="text-xs">
-                                    {org.tipo.slice(0, 1).toUpperCase() +
-                                      org.tipo.slice(1)}
+                                    {org.tipo.slice(0, 1).toUpperCase() + org.tipo.slice(1)}
                                   </Badge>
                                 )}
                               </div>
@@ -436,16 +416,12 @@ export default function Page() {
                             <TableCell>
                               <div>
                                 <div className="text-sm">
-                                  {format(
-                                    new Date(org.created_at),
-                                    "dd/MM/yyyy",
-                                    { locale: ptBR }
-                                  )}
+                                  {format(new Date(org.created_at), "dd/MM/yyyy", { locale: ptBR })}
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex gap-1 justify-end">
+                              <div className="flex justify-end gap-1">
                                 <NavigationButton
                                   href={`/organizations/edit/${org.id}`}
                                   variant="outline"
@@ -543,14 +519,14 @@ export default function Page() {
                   Confirmar Exclusão
                 </DialogTitle>
                 <DialogDescription>
-                  Esta ação não pode ser desfeita. O integrante será removido
-                  permanentemente do sistema.
+                  Esta ação não pode ser desfeita. O integrante será removido permanentemente do
+                  sistema.
                 </DialogDescription>
               </DialogHeader>
 
               {deleteDialog.member && (
                 <div className="py-4">
-                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                  <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-red-100 text-red-600">
                         {getInitials(deleteDialog.member.nome)}
@@ -558,7 +534,7 @@ export default function Page() {
                     </Avatar>
                     <div>
                       <p className="font-medium">{deleteDialog.member.nome}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {deleteDialog.member.departamento?.organizacao?.nome} •{" "}
                         {deleteDialog.member.departamento?.nome}
                       </p>
@@ -582,12 +558,12 @@ export default function Page() {
                 >
                   {deleteDialog.isDeleting ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
                       Excluindo...
                     </>
                   ) : (
                     <>
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 className="mr-2 h-4 w-4" />
                       Excluir Integrante
                     </>
                   )}

@@ -119,9 +119,7 @@ export function SaidaRapidaDialog({
     setEnviando(true);
     try {
       // Validar quantidade
-      const produtoSelecionado = produtos.find(
-        (p) => p.id === parseInt(data.produto_id)
-      );
+      const produtoSelecionado = produtos.find((p) => p.id === parseInt(data.produto_id));
       const estoqueAtual = produtoSelecionado?.estoque_atual || 0;
 
       const validacao = MovimentacaoEstoqueService.validarQuantidade(
@@ -153,8 +151,7 @@ export function SaidaRapidaDialog({
       }
     } catch (error) {
       console.error("Erro ao registrar saída:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Erro ao registrar saída";
+      const errorMessage = error instanceof Error ? error.message : "Erro ao registrar saída";
       toast.error(errorMessage);
     } finally {
       setEnviando(false);
@@ -203,9 +200,8 @@ export function SaidaRapidaDialog({
                           <div className="flex items-center gap-2">
                             <span>{produto.nome}</span>
                             {produto.estoque_atual !== undefined && (
-                              <span className="text-xs text-muted-foreground">
-                                (Est: {produto.estoque_atual}{" "}
-                                {produto.unidade_medida || ""})
+                              <span className="text-muted-foreground text-xs">
+                                (Est: {produto.estoque_atual} {produto.unidade_medida || ""})
                               </span>
                             )}
                           </div>
@@ -267,12 +263,7 @@ export function SaidaRapidaDialog({
               >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                disabled={enviando}
-                variant="destructive"
-                className="gap-2"
-              >
+              <Button type="submit" disabled={enviando} variant="destructive" className="gap-2">
                 {enviando ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />

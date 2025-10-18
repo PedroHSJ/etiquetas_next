@@ -1,23 +1,35 @@
-'use client'
+"use client";
 
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal } from 'lucide-react'
-import { useState } from 'react'
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  MoreHorizontal,
+} from "lucide-react";
+import { useState } from "react";
 
 interface AdvancedPaginationProps {
-  currentPage: number
-  totalPages: number
-  totalItems: number
-  itemsPerPage: number
-  onPageChange: (page: number) => void
-  onItemsPerPageChange?: (itemsPerPage: number) => void
-  showItemsPerPage?: boolean
-  showQuickJump?: boolean
-  showPageInfo?: boolean
-  pageRangeDisplayed?: number
-  className?: string
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  onItemsPerPageChange?: (itemsPerPage: number) => void;
+  showItemsPerPage?: boolean;
+  showQuickJump?: boolean;
+  showPageInfo?: boolean;
+  pageRangeDisplayed?: number;
+  className?: string;
 }
 
 export function AdvancedPagination({
@@ -31,78 +43,81 @@ export function AdvancedPagination({
   showQuickJump = true,
   showPageInfo = true,
   pageRangeDisplayed = 5,
-  className = ''
+  className = "",
 }: AdvancedPaginationProps) {
-  const [jumpPage, setJumpPage] = useState('')
+  const [jumpPage, setJumpPage] = useState("");
 
-  if (totalPages <= 1) return null
+  if (totalPages <= 1) return null;
 
-  const startItem = (currentPage - 1) * itemsPerPage + 1
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems)
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   // Calcular range de páginas para mostrar
   const getPageNumbers = () => {
-    const pages: (number | string)[] = []
-    
+    const pages: (number | string)[] = [];
+
     if (totalPages <= pageRangeDisplayed + 2) {
       // Mostrar todas as páginas se não houver muitas
       for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
+        pages.push(i);
       }
     } else {
       // Lógica mais complexa para páginas com ellipsis
-      const leftSiblingIndex = Math.max(currentPage - Math.floor(pageRangeDisplayed / 2), 1)
-      const rightSiblingIndex = Math.min(currentPage + Math.floor(pageRangeDisplayed / 2), totalPages)
+      const leftSiblingIndex = Math.max(currentPage - Math.floor(pageRangeDisplayed / 2), 1);
+      const rightSiblingIndex = Math.min(
+        currentPage + Math.floor(pageRangeDisplayed / 2),
+        totalPages
+      );
 
-      const shouldShowLeftDots = leftSiblingIndex > 2
-      const shouldShowRightDots = rightSiblingIndex < totalPages - 1
+      const shouldShowLeftDots = leftSiblingIndex > 2;
+      const shouldShowRightDots = rightSiblingIndex < totalPages - 1;
 
       // Sempre mostrar primeira página
-      pages.push(1)
+      pages.push(1);
 
       // Mostrar dots à esquerda se necessário
       if (shouldShowLeftDots) {
-        pages.push('leftDots')
+        pages.push("leftDots");
       }
 
       // Mostrar páginas do range atual
       for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
         if (i !== 1 && i !== totalPages) {
-          pages.push(i)
+          pages.push(i);
         }
       }
 
       // Mostrar dots à direita se necessário
       if (shouldShowRightDots) {
-        pages.push('rightDots')
+        pages.push("rightDots");
       }
 
       // Sempre mostrar última página
       if (totalPages !== 1) {
-        pages.push(totalPages)
+        pages.push(totalPages);
       }
     }
 
-    return pages
-  }
+    return pages;
+  };
 
   const handleQuickJump = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const page = parseInt(jumpPage)
+    if (e.key === "Enter") {
+      const page = parseInt(jumpPage);
       if (page >= 1 && page <= totalPages) {
-        onPageChange(page)
-        setJumpPage('')
+        onPageChange(page);
+        setJumpPage("");
       }
     }
-  }
+  };
 
-  const pageNumbers = getPageNumbers()
+  const pageNumbers = getPageNumbers();
 
   return (
-    <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
+    <div className={`flex flex-col items-center justify-between gap-4 sm:flex-row ${className}`}>
       {/* Informações da página */}
       {showPageInfo && (
-        <div className="text-sm text-muted-foreground">
+        <div className="text-muted-foreground text-sm">
           Mostrando {startItem}-{endItem} de {totalItems} resultados
         </div>
       )}
@@ -136,21 +151,15 @@ export function AdvancedPagination({
         {/* Números das páginas */}
         <div className="flex items-center gap-1">
           {pageNumbers.map((pageNumber, index) => {
-            if (pageNumber === 'leftDots' || pageNumber === 'rightDots') {
+            if (pageNumber === "leftDots" || pageNumber === "rightDots") {
               return (
-                <Button
-                  key={index}
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  disabled
-                >
+                <Button key={index} variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
-              )
+              );
             }
 
-            const isCurrentPage = pageNumber === currentPage
+            const isCurrentPage = pageNumber === currentPage;
 
             return (
               <Button
@@ -162,7 +171,7 @@ export function AdvancedPagination({
               >
                 {pageNumber}
               </Button>
-            )
+            );
           })}
         </div>
 
@@ -196,14 +205,14 @@ export function AdvancedPagination({
         {/* Seletor de itens por página */}
         {showItemsPerPage && onItemsPerPageChange && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
+            <span className="text-muted-foreground text-sm whitespace-nowrap">
               Itens por página:
             </span>
             <Select
               value={itemsPerPage.toString()}
               onValueChange={(value) => onItemsPerPageChange(parseInt(value))}
             >
-              <SelectTrigger className="w-16 h-8">
+              <SelectTrigger className="h-8 w-16">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -220,9 +229,7 @@ export function AdvancedPagination({
         {/* Jump para página específica */}
         {showQuickJump && totalPages > 10 && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
-              Ir para:
-            </span>
+            <span className="text-muted-foreground text-sm whitespace-nowrap">Ir para:</span>
             <Input
               type="number"
               min={1}
@@ -231,13 +238,13 @@ export function AdvancedPagination({
               onChange={(e) => setJumpPage(e.target.value)}
               onKeyDown={handleQuickJump}
               placeholder="Página"
-              className="w-16 h-8"
+              className="h-8 w-16"
             />
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export default AdvancedPagination
+export default AdvancedPagination;

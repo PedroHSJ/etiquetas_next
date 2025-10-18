@@ -33,12 +33,15 @@ export default function EditOrganizationPage({ params }: EditOrganizationPagePro
       router.push("/dashboard");
     }
   };
-  
+
   return (
-          <PermissionGuard funcionalidade="Organizações" acao="editar">
-      <OrganizationWizard userId={userId} onComplete={() => {
-        handleWizardComplete();
-      }} />
+    <PermissionGuard funcionalidade="Organizações" acao="editar">
+      <OrganizationWizard
+        userId={userId}
+        onComplete={() => {
+          handleWizardComplete();
+        }}
+      />
     </PermissionGuard>
   );
 }

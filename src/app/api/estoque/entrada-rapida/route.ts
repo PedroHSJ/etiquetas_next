@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseServerClient } from '@/lib/supabaseServer';
-import { QuickEntryRequest, QuickEntryResponse, STOCK_MESSAGES } from '@/types/stock';
+import { NextRequest, NextResponse } from "next/server";
+import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { QuickEntryRequest, QuickEntryResponse, STOCK_MESSAGES } from "@/types/stock";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,9 +10,9 @@ export async function POST(request: NextRequest) {
     // Validações básicas
     if (!product_id || !quantity) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Produto e quantidade são obrigatórios' 
+        {
+          success: false,
+          message: "Produto e quantidade são obrigatórios",
         } as QuickEntryResponse,
         { status: 400 }
       );
@@ -20,24 +20,27 @@ export async function POST(request: NextRequest) {
 
     if (quantity <= 0) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: STOCK_MESSAGES.ERROR_INVALID_QUANTITY 
+        {
+          success: false,
+          message: STOCK_MESSAGES.ERROR_INVALID_QUANTITY,
         } as QuickEntryResponse,
         { status: 400 }
       );
     }
 
-  // Obter usuário autenticado usando client server-side
-  const supabase = getSupabaseServerClient(request);
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log('Usuário autenticado:', user);
-    console.log('Erro ao obter usuário:', userError);
+    // Obter usuário autenticado usando client server-side
+    const supabase = getSupabaseServerClient(request);
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    console.log("Usuário autenticado:", user);
+    console.log("Erro ao obter usuário:", userError);
     if (userError || !user) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: STOCK_MESSAGES.ERROR_USER_NOT_AUTHORIZED 
+        {
+          success: false,
+          message: STOCK_MESSAGES.ERROR_USER_NOT_AUTHORIZED,
         } as QuickEntryResponse,
         { status: 401 }
       );
@@ -45,16 +48,16 @@ export async function POST(request: NextRequest) {
 
     // Verificar se o produto existe
     const { data: produto, error: produtoError } = await supabase
-      .from('products')
-      .select('id, name')
-      .eq('id', product_id)
+      .from("products")
+      .select("id, name")
+      .eq("id", product_id)
       .single();
 
     if (produtoError || !produto) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND 
+        {
+          success: false,
+          message: STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND,
         } as QuickEntryResponse,
         { status: 404 }
       );
@@ -62,26 +65,28 @@ export async function POST(request: NextRequest) {
 
     // Usar transação para garantir consistência
     const { data: movimentacao, error: movimentacaoError } = await supabase
-      .from('stock_movements')
+      .from("stock_movements")
       .insert({
         product_id,
         user_id: user.id,
-        movement_type: 'ENTRADA',
+        movement_type: "ENTRADA",
         quantity,
         observation: observation || `Entrada rápida - ${produto.name}`,
       })
-      .select(`
+      .select(
+        `
         *,
         product:products(*)
-      `)
+      `
+      )
       .single();
 
     if (movimentacaoError) {
-      console.error('Erro ao criar movimentação:', movimentacaoError);
+      console.error("Erro ao criar movimentação:", movimentacaoError);
       return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Erro ao registrar movimentação de estoque' 
+        {
+          success: false,
+          message: "Erro ao registrar movimentação de estoque",
         } as QuickEntryResponse,
         { status: 500 }
       );
@@ -89,16 +94,18 @@ export async function POST(request: NextRequest) {
 
     // Buscar estoque atualizado
     const { data: estoqueAtualizado, error: estoqueError } = await supabase
-      .from('stock')
-      .select(`
+      .from("stock")
+      .select(
+        `
         *,
         product:products(*)
-      `)
-      .eq('product_id', product_id)
+      `
+      )
+      .eq("product_id", product_id)
       .single();
 
     if (estoqueError) {
-      console.warn('Erro ao buscar estoque atualizado:', estoqueError);
+      console.warn("Erro ao buscar estoque atualizado:", estoqueError);
     }
 
     const response: QuickEntryResponse = {
@@ -109,13 +116,12 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json(response);
-
   } catch (error) {
-    console.error('Erro na API de entrada rápida:', error);
+    console.error("Erro na API de entrada rápida:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Erro interno do servidor' 
+      {
+        success: false,
+        message: "Erro interno do servidor",
       } as QuickEntryResponse,
       { status: 500 }
     );

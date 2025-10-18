@@ -2,10 +2,10 @@
 // STOCK AND MOVEMENTS TYPES
 // =============================================================================
 
-import { Product } from './products';
+import { Product } from "./products";
 
 // Movement type
-export type MovementType = 'ENTRADA' | 'SAIDA';
+export type MovementType = "ENTRADA" | "SAIDA";
 
 // Main stock interface
 export interface Stock {
@@ -128,15 +128,15 @@ export interface ProductSelect {
   group: {
     id: number;
     name: string;
-  }
+  };
   unit_of_measure?: string;
   current_stock?: number;
 }
 
 // Constants for movement types
 export const MOVEMENT_TYPES = [
-  { value: 'ENTRADA', label: 'Entrada' },
-  { value: 'SAIDA', label: 'Saída' },
+  { value: "ENTRADA", label: "Entrada" },
+  { value: "SAIDA", label: "Saída" },
 ] as const;
 
 // Quantity validation
@@ -148,12 +148,12 @@ export const QUANTITY_VALIDATION = {
 
 // Default messages
 export const STOCK_MESSAGES = {
-  ENTRY_SUCCESS: '✅ Entry registered successfully!',
-  EXIT_SUCCESS: '✅ Exit registered successfully!',
-  ERROR_INSUFFICIENT_QUANTITY: 'Insufficient quantity in stock',
-  ERROR_PRODUCT_NOT_FOUND: 'Product not found',
-  ERROR_INVALID_QUANTITY: 'Quantity must be greater than zero',
-  ERROR_USER_NOT_AUTHORIZED: 'User not authorized',
+  ENTRY_SUCCESS: "✅ Entry registered successfully!",
+  EXIT_SUCCESS: "✅ Exit registered successfully!",
+  ERROR_INSUFFICIENT_QUANTITY: "Insufficient quantity in stock",
+  ERROR_PRODUCT_NOT_FOUND: "Product not found",
+  ERROR_INVALID_QUANTITY: "Quantity must be greater than zero",
+  ERROR_USER_NOT_AUTHORIZED: "User not authorized",
 } as const;
 
 // Default pagination settings

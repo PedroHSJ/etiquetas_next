@@ -72,10 +72,10 @@ interface EntradaRapidaDialogProps {
   produtoIdSelecionado?: number;
 }
 
-export function EntradaRapidaDialog({ 
-  onSuccess, 
+export function EntradaRapidaDialog({
+  onSuccess,
   trigger,
-  produtoIdSelecionado 
+  produtoIdSelecionado,
 }: EntradaRapidaDialogProps) {
   const [open, setOpen] = useState(false); // Dialog
   const [comboOpen, setComboOpen] = useState(false); // Popover do combobox
@@ -99,8 +99,8 @@ export function EntradaRapidaDialog({
     setCarregandoProdutos(true);
     try {
       const params = new URLSearchParams();
-      if (termo) params.append('q', termo);
-      params.append('limit', '50');
+      if (termo) params.append("q", termo);
+      params.append("limit", "50");
 
       const response = await fetch(`/api/estoque/produtos?${params}`);
       const data = await response.json();
@@ -174,15 +174,12 @@ export function EntradaRapidaDialog({
       Entrada Rápida
     </Button>
   );
-  
-  const triggerRef = useRef<HTMLButtonElement>(null);
 
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || defaultTrigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Entrada Rápida de Estoque</DialogTitle>
@@ -193,9 +190,7 @@ export function EntradaRapidaDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-           
-
-           <FormField
+            <FormField
               control={form.control}
               name="produto_id"
               render={({ field }) => (
@@ -238,7 +233,7 @@ export function EntradaRapidaDialog({
                     <PopoverContent
                       align="start"
                       sideOffset={4}
-                      className="p-0 min-w-[var(--radix-popover-trigger-width)]"
+                      className="min-w-[var(--radix-popover-trigger-width)] p-0"
                       onWheel={(e) => e.stopPropagation()}
                     >
                       <Command className="w-full">
@@ -277,7 +272,6 @@ export function EntradaRapidaDialog({
                                     const idStr = p.id.toString();
                                     const isSelected = (field.value ?? "") === idStr;
 
-                      
                                     return (
                                       <CommandItem
                                         key={p.id}
@@ -313,10 +307,6 @@ export function EntradaRapidaDialog({
                 </FormItem>
               )}
             />
-
-
-
-
 
             <FormField
               control={form.control}

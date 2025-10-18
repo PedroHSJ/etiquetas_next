@@ -40,9 +40,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
   const handleFieldDelete = () => {
     if (!selectedField) return;
 
-    const updatedFields = template.fields.filter(
-      (field) => field.id !== selectedField.id
-    );
+    const updatedFields = template.fields.filter((field) => field.id !== selectedField.id);
     onTemplateUpdate({
       ...template,
       fields: updatedFields,
@@ -61,7 +59,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
       <div
         ref={setNodeRef}
         className={cn(
-          "relative border-2 border-dashed bg-white overflow-hidden",
+          "relative overflow-hidden border-2 border-dashed bg-white",
           isOver ? "border-blue-500 bg-blue-50" : "border-gray-300",
           showGrid && "bg-grid-pattern"
         )}
@@ -79,8 +77,8 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
         {/* Canvas guidelines */}
         {showGrid && (
           <>
-            <div className="absolute top-0 left-1/2 w-px h-full bg-blue-200 opacity-50 pointer-events-none" />
-            <div className="absolute left-0 top-1/2 w-full h-px bg-blue-200 opacity-50 pointer-events-none" />
+            <div className="pointer-events-none absolute top-0 left-1/2 h-full w-px bg-blue-200 opacity-50" />
+            <div className="pointer-events-none absolute top-1/2 left-0 h-px w-full bg-blue-200 opacity-50" />
           </>
         )}
 
@@ -100,8 +98,8 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
 
         {/* Drop indicator */}
         {isOver && (
-          <div className="absolute inset-0 bg-blue-100 bg-opacity-50 flex items-center justify-center pointer-events-none">
-            <div className="bg-blue-500 text-white px-4 py-2 rounded-md">
+          <div className="bg-opacity-50 pointer-events-none absolute inset-0 flex items-center justify-center bg-blue-100">
+            <div className="rounded-md bg-blue-500 px-4 py-2 text-white">
               Solte aqui para adicionar campo
             </div>
           </div>
@@ -110,8 +108,8 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
 
       {/* Selected field info */}
       {selectedField && (
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-medium text-sm mb-2">Campo Selecionado</h3>
+        <div className="mt-4 rounded-lg bg-gray-50 p-4">
+          <h3 className="mb-2 text-sm font-medium">Campo Selecionado</h3>
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
               <label className="block text-gray-600">Posição X:</label>
@@ -127,7 +125,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
                     },
                   })
                 }
-                className="w-full px-2 py-1 border rounded"
+                className="w-full rounded border px-2 py-1"
               />
             </div>
             <div>
@@ -144,7 +142,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
                     },
                   })
                 }
-                className="w-full px-2 py-1 border rounded"
+                className="w-full rounded border px-2 py-1"
               />
             </div>
             <div>
@@ -161,7 +159,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
                     },
                   })
                 }
-                className="w-full px-2 py-1 border rounded"
+                className="w-full rounded border px-2 py-1"
               />
             </div>
             <div>
@@ -178,7 +176,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
                     },
                   })
                 }
-                className="w-full px-2 py-1 border rounded"
+                className="w-full rounded border px-2 py-1"
               />
             </div>
             <div>
@@ -195,7 +193,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
                     },
                   })
                 }
-                className="w-full px-2 py-1 border rounded"
+                className="w-full rounded border px-2 py-1"
               />
             </div>
             <div>
@@ -209,13 +207,13 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
                     style: { ...selectedField.style, color: e.target.value },
                   })
                 }
-                className="w-full px-2 py-1 border rounded"
+                className="w-full rounded border px-2 py-1"
               />
             </div>
           </div>
           <button
             onClick={handleFieldDelete}
-            className="mt-2 px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+            className="mt-2 rounded bg-red-500 px-3 py-1 text-xs text-white hover:bg-red-600"
           >
             Excluir Campo
           </button>

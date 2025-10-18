@@ -31,10 +31,7 @@ export class PermissionService {
         .single();
 
       if (usuarioOrgError || !usuarioOrg) {
-        console.error(
-          "Erro ao buscar usuário na organização:",
-          usuarioOrgError
-        );
+        console.error("Erro ao buscar usuário na organização:", usuarioOrgError);
         return false;
       }
 
@@ -63,12 +60,7 @@ export class PermissionService {
       // Usuários master têm acesso total
       for (const item of data) {
         const perfil = item.perfil_usuario;
-        if (
-          perfil &&
-          Array.isArray(perfil) &&
-          perfil.length > 0 &&
-          perfil[0].nome === "master"
-        ) {
+        if (perfil && Array.isArray(perfil) && perfil.length > 0 && perfil[0].nome === "master") {
           return true;
         }
       }
@@ -80,11 +72,10 @@ export class PermissionService {
           const perfilId = perfil[0].id;
 
           // Buscar permissões para este perfil
-          const { data: permissoesData, error: permissoesError } =
-            await supabase
-              .from("permissoes")
-              .select(
-                `
+          const { data: permissoesData, error: permissoesError } = await supabase
+            .from("permissoes")
+            .select(
+              `
               id,
               acao,
               funcionalidade:funcionalidades (
@@ -92,9 +83,9 @@ export class PermissionService {
                 nome
               )
             `
-              )
-              .eq("perfil_usuario_id", perfilId)
-              .eq("ativo", true);
+            )
+            .eq("perfil_usuario_id", perfilId)
+            .eq("ativo", true);
 
           if (!permissoesError && permissoesData) {
             for (const perm of permissoesData) {
@@ -134,10 +125,7 @@ export class PermissionService {
         .single();
 
       if (usuarioOrgError || !usuarioOrg) {
-        console.error(
-          "Erro ao buscar usuário na organização:",
-          usuarioOrgError
-        );
+        console.error("Erro ao buscar usuário na organização:", usuarioOrgError);
         return null;
       }
 
@@ -183,11 +171,10 @@ export class PermissionService {
           });
 
           // Buscar permissões para este perfil
-          const { data: permissoesData, error: permissoesError } =
-            await supabase
-              .from("permissoes")
-              .select(
-                `
+          const { data: permissoesData, error: permissoesError } = await supabase
+            .from("permissoes")
+            .select(
+              `
               id,
               acao,
               funcionalidade_id,
@@ -201,9 +188,9 @@ export class PermissionService {
                 created_at
               )
             `
-              )
-              .eq("perfil_usuario_id", p.id)
-              .eq("ativo", true);
+            )
+            .eq("perfil_usuario_id", p.id)
+            .eq("ativo", true);
 
           if (!permissoesError && permissoesData) {
             for (const perm of permissoesData) {
@@ -212,12 +199,7 @@ export class PermissionService {
                 id: perm.id,
                 funcionalidade_id: perm.funcionalidade_id || "",
                 perfil_usuario_id: p.id,
-                acao: perm.acao as
-                  | "visualizar"
-                  | "criar"
-                  | "editar"
-                  | "excluir"
-                  | "gerenciar",
+                acao: perm.acao as "visualizar" | "criar" | "editar" | "excluir" | "gerenciar",
                 ativo: true,
                 created_at: new Date().toISOString(),
                 funcionalidade:
@@ -226,10 +208,7 @@ export class PermissionService {
                         id: func[0].id,
                         nome: func[0].nome,
                         descricao: func[0].descricao,
-                        categoria: func[0].categoria as
-                          | "gestao"
-                          | "operacional"
-                          | "relatorios",
+                        categoria: func[0].categoria as "gestao" | "operacional" | "relatorios",
                         rota: func[0].rota,
                         ativo: func[0].ativo,
                         created_at: func[0].created_at,
@@ -257,10 +236,7 @@ export class PermissionService {
    * Busca todos os perfis de usuário disponíveis
    */
   static async getPerfisUsuario(): Promise<Perfil[]> {
-    const { data, error } = await supabase
-      .from("perfis")
-      .select("*")
-      .eq("ativo", true);
+    const { data, error } = await supabase.from("perfis").select("*").eq("ativo", true);
 
     if (error) {
       console.error("Erro ao buscar perfis de usuário:", error);
@@ -326,9 +302,7 @@ export class PermissionService {
   /**
    * Busca configuração completa de um perfil
    */
-  static async getConfiguracaoPerfil(
-    perfil_id: string
-  ): Promise<ConfiguracaoPerfil | null> {
+  static async getConfiguracaoPerfil(perfil_id: string): Promise<ConfiguracaoPerfil | null> {
     try {
       const { data: perfil, error: perfilError } = await supabase
         .from("perfis")
@@ -370,10 +344,7 @@ export class PermissionService {
           const func = p.funcionalidade;
           return {
             funcionalidade_id: p.funcionalidade_id || "",
-            funcionalidade_nome:
-              func && Array.isArray(func) && func.length > 0
-                ? func[0].nome
-                : "",
+            funcionalidade_nome: func && Array.isArray(func) && func.length > 0 ? func[0].nome : "",
             acao: p.acao || "",
             ativo: true,
           };
@@ -424,10 +395,7 @@ export class PermissionService {
 
           if (existingData) {
             // Reativar permissão existente
-            await supabase
-              .from("permissoes")
-              .update({ ativo: true })
-              .eq("id", existingData.id);
+            await supabase.from("permissoes").update({ ativo: true }).eq("id", existingData.id);
           } else {
             // Criar nova permissão
             await supabase.from("permissoes").insert({

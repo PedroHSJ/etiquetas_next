@@ -7,11 +7,7 @@ import { ProfileProvider } from "@/contexts/ProfileContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
@@ -22,9 +18,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <ProfileProvider>
-              {children}
-            </ProfileProvider>
+            <ProfileProvider>{children}</ProfileProvider>
           </AuthProvider>
           <Toaster />
         </ThemeProvider>

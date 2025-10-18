@@ -42,17 +42,12 @@ export function usePermissions() {
     if (!permissoes) return false;
 
     // Usuários master têm acesso total
-    const temPerfilMaster = permissoes.perfis.some(
-      (perfil) => perfil.nome === "master"
-    );
+    const temPerfilMaster = permissoes.perfis.some((perfil) => perfil.nome === "master");
     if (temPerfilMaster) return true;
 
     // Verificar permissão específica
     return permissoes.permissoes.some((permissao) => {
-      if (
-        permissao.funcionalidade?.nome === funcionalidade &&
-        permissao.acao === acao
-      ) {
+      if (permissao.funcionalidade?.nome === funcionalidade && permissao.acao === acao) {
         return permissao.ativo;
       }
       return false;
@@ -86,9 +81,7 @@ export function usePermissions() {
 
   const isGestor = (): boolean => {
     if (!permissoes) return false;
-    return permissoes.perfis.some(
-      (perfil) => perfil.nome === "gestor" || perfil.nome === "master"
-    );
+    return permissoes.perfis.some((perfil) => perfil.nome === "gestor" || perfil.nome === "master");
   };
 
   const getPerfis = () => {

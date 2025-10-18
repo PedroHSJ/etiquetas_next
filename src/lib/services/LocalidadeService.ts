@@ -1,5 +1,11 @@
-import { supabase } from '../supabaseClient';
-import { ViaCEPResponse, DadosMunicipio, MunicipioResponse, Estado, Municipio } from '../../types/localidade';
+import { supabase } from "../supabaseClient";
+import {
+  ViaCEPResponse,
+  DadosMunicipio,
+  MunicipioResponse,
+  Estado,
+  Municipio,
+} from "../../types/localidade";
 
 export class LocalidadeService {
   // Cache para evitar múltiplas consultas à API
@@ -11,11 +17,11 @@ export class LocalidadeService {
   static async buscarCEP(cep: string): Promise<ViaCEPResponse | null> {
     try {
       // Remove caracteres não numéricos
-      const cepLimpo = cep.replace(/\D/g, '');
-      
+      const cepLimpo = cep.replace(/\D/g, "");
+
       // Valida formato do CEP
       if (cepLimpo.length !== 8) {
-        throw new Error('CEP deve ter 8 dígitos');
+        throw new Error("CEP deve ter 8 dígitos");
       }
 
       // Verifica cache
@@ -24,9 +30,9 @@ export class LocalidadeService {
       }
 
       const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-      
+
       if (!response.ok) {
-        throw new Error('Erro ao consultar CEP');
+        throw new Error("Erro ao consultar CEP");
       }
 
       const data: ViaCEPResponse = await response.json();
@@ -38,11 +44,11 @@ export class LocalidadeService {
 
       // Adiciona ao cache
       this.cepCache.set(cepLimpo, data);
-      
+
       return data;
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
-      throw new Error('Erro ao consultar CEP');
+      console.error("Erro ao buscar CEP:", error);
+      throw new Error("Erro ao consultar CEP");
     }
   }
 
@@ -52,30 +58,30 @@ export class LocalidadeService {
   static async buscarOuCriarMunicipio(cep: string): Promise<MunicipioResponse | null> {
     try {
       const dadosCEP = await this.buscarCEP(cep);
-      
+
       if (!dadosCEP) {
         return null;
       }
 
       // Chama a função do banco de dados para buscar ou criar o município
-      const { data, error } = await supabase.rpc('buscar_ou_criar_municipio', {
+      const { data, error } = await supabase.rpc("buscar_ou_criar_municipio", {
         p_nome: dadosCEP.localidade,
         p_uf: dadosCEP.uf,
         p_codigo_ibge: dadosCEP.ibge || null,
-        p_cep: cep.replace(/\D/g, ''),
+        p_cep: cep.replace(/\D/g, ""),
         p_latitude: null, // ViaCEP não fornece coordenadas
-        p_longitude: null
+        p_longitude: null,
       });
 
       if (error) {
-        console.error('Erro ao buscar/criar município:', error);
-        throw new Error('Erro ao processar município');
+        console.error("Erro ao buscar/criar município:", error);
+        throw new Error("Erro ao processar município");
       }
 
       // A função agora retorna JSON com os dados completos
       return data as MunicipioResponse;
     } catch (error) {
-      console.error('Erro ao buscar ou criar município:', error);
+      console.error("Erro ao buscar ou criar município:", error);
       throw error;
     }
   }
@@ -85,25 +91,22 @@ export class LocalidadeService {
    */
   static async listarEstados(): Promise<Estado[]> {
     try {
-      console.log('🔍 LocalidadeService: Iniciando busca por estados...');
-      
-      const { data, error } = await supabase
-        .from('estados')
-        .select('*')
-        .order('nome');
+      console.log("🔍 LocalidadeService: Iniciando busca por estados...");
 
-      console.log('🔍 LocalidadeService: Resposta da consulta:', { data, error });
+      const { data, error } = await supabase.from("estados").select("*").order("nome");
+
+      console.log("🔍 LocalidadeService: Resposta da consulta:", { data, error });
 
       if (error) {
-        console.error('❌ LocalidadeService: Erro na consulta:', error);
+        console.error("❌ LocalidadeService: Erro na consulta:", error);
         throw error;
       }
 
       console.log(`✅ LocalidadeService: ${data?.length || 0} estados encontrados`);
       return data || [];
     } catch (error) {
-      console.error('❌ LocalidadeService: Erro ao listar estados:', error);
-      throw new Error('Erro ao carregar estados');
+      console.error("❌ LocalidadeService: Erro ao listar estados:", error);
+      throw new Error("Erro ao carregar estados");
     }
   }
 
@@ -113,13 +116,15 @@ export class LocalidadeService {
   static async listarMunicipiosPorEstado(estadoId: number): Promise<Municipio[]> {
     try {
       const { data, error } = await supabase
-        .from('municipios')
-        .select(`
+        .from("municipios")
+        .select(
+          `
           *,
           estado:estados(*)
-        `)
-        .eq('estado_id', estadoId)
-        .order('nome');
+        `
+        )
+        .eq("estado_id", estadoId)
+        .order("nome");
 
       if (error) {
         throw error;
@@ -127,8 +132,8 @@ export class LocalidadeService {
 
       return data || [];
     } catch (error) {
-      console.error('Erro ao listar municípios:', error);
-      throw new Error('Erro ao carregar municípios');
+      console.error("Erro ao listar municípios:", error);
+      throw new Error("Erro ao carregar municípios");
     }
   }
 
@@ -138,16 +143,18 @@ export class LocalidadeService {
   static async buscarMunicipioPorId(municipioId: number): Promise<Municipio | null> {
     try {
       const { data, error } = await supabase
-        .from('municipios')
-        .select(`
+        .from("municipios")
+        .select(
+          `
           *,
           estado:estados(*)
-        `)
-        .eq('id', municipioId)
+        `
+        )
+        .eq("id", municipioId)
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        if (error.code === "PGRST116") {
           return null; // Município não encontrado
         }
         throw error;
@@ -155,8 +162,8 @@ export class LocalidadeService {
 
       return data;
     } catch (error) {
-      console.error('Erro ao buscar município:', error);
-      throw new Error('Erro ao carregar município');
+      console.error("Erro ao buscar município:", error);
+      throw new Error("Erro ao carregar município");
     }
   }
 
@@ -166,17 +173,19 @@ export class LocalidadeService {
   static async buscarMunicipiosPorNome(nome: string, estadoId?: number): Promise<Municipio[]> {
     try {
       let query = supabase
-        .from('municipios')
-        .select(`
+        .from("municipios")
+        .select(
+          `
           *,
           estado:estados(*)
-        `)
-        .ilike('nome', `%${nome}%`)
+        `
+        )
+        .ilike("nome", `%${nome}%`)
         .limit(20)
-        .order('nome');
+        .order("nome");
 
       if (estadoId) {
-        query = query.eq('estado_id', estadoId);
+        query = query.eq("estado_id", estadoId);
       }
 
       const { data, error } = await query;
@@ -187,8 +196,8 @@ export class LocalidadeService {
 
       return data || [];
     } catch (error) {
-      console.error('Erro ao buscar municípios por nome:', error);
-      throw new Error('Erro ao buscar municípios');
+      console.error("Erro ao buscar municípios por nome:", error);
+      throw new Error("Erro ao buscar municípios");
     }
   }
 
@@ -196,7 +205,7 @@ export class LocalidadeService {
    * Valida formato do CEP
    */
   static validarCEP(cep: string): boolean {
-    const cepLimpo = cep.replace(/\D/g, '');
+    const cepLimpo = cep.replace(/\D/g, "");
     return cepLimpo.length === 8;
   }
 
@@ -204,7 +213,7 @@ export class LocalidadeService {
    * Formata CEP para exibição
    */
   static formatarCEP(cep: string): string {
-    const cepLimpo = cep.replace(/\D/g, '');
+    const cepLimpo = cep.replace(/\D/g, "");
     if (cepLimpo.length === 8) {
       return `${cepLimpo.slice(0, 5)}-${cepLimpo.slice(5)}`;
     }

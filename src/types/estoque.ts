@@ -2,10 +2,10 @@
 // TIPOS DE ESTOQUE E MOVIMENTAÇÕES
 // =============================================================================
 
-import { Product } from './products';
+import { Product } from "./products";
 
 // Tipo para movimentação de estoque
-export type TipoMovimentacao = 'ENTRADA' | 'SAIDA';
+export type TipoMovimentacao = "ENTRADA" | "SAIDA";
 
 // Interface principal do estoque
 export interface Estoque {
@@ -137,8 +137,8 @@ export interface ProdutoSelect {
 
 // Constantes para tipos de movimentação
 export const TIPOS_MOVIMENTACAO = [
-  { value: 'ENTRADA', label: 'Entrada' },
-  { value: 'SAIDA', label: 'Saída' },
+  { value: "ENTRADA", label: "Entrada" },
+  { value: "SAIDA", label: "Saída" },
 ] as const;
 
 // Validação de quantidade
@@ -150,12 +150,12 @@ export const QUANTIDADE_VALIDATION = {
 
 // Mensagens padrão
 export const ESTOQUE_MESSAGES = {
-  ENTRADA_SUCESSO: '✅ Entrada registrada com sucesso!',
-  SAIDA_SUCESSO: '✅ Saída registrada com sucesso!',
-  ERRO_QUANTIDADE_INSUFICIENTE: 'Quantidade insuficiente em estoque',
-  ERRO_PRODUTO_NAO_ENCONTRADO: 'Produto não encontrado',
-  ERRO_QUANTIDADE_INVALIDA: 'Quantidade deve ser maior que zero',
-  ERRO_USUARIO_NAO_AUTORIZADO: 'Usuário não autorizado',
+  ENTRADA_SUCESSO: "✅ Entrada registrada com sucesso!",
+  SAIDA_SUCESSO: "✅ Saída registrada com sucesso!",
+  ERRO_QUANTIDADE_INSUFICIENTE: "Quantidade insuficiente em estoque",
+  ERRO_PRODUTO_NAO_ENCONTRADO: "Produto não encontrado",
+  ERRO_QUANTIDADE_INVALIDA: "Quantidade deve ser maior que zero",
+  ERRO_USUARIO_NAO_AUTORIZADO: "Usuário não autorizado",
 } as const;
 
 // Configurações de paginação padrão

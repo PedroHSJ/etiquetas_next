@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import {
-  LabelType,
-  LabelTemplate,
-  LABEL_TYPES_CONFIG,
-} from "@/types/etiquetas";
+import { LabelType, LabelTemplate, LABEL_TYPES_CONFIG } from "@/types/etiquetas";
 import { Product } from "@/types/products";
 import { LabelEditor } from "@/components/labels/LabelEditor";
 import { Button } from "@/components/ui/button";
@@ -16,17 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import {
-  Plus,
-  Edit,
-  Copy,
-  Trash2,
-  Download,
-  Eye,
-  Calendar,
-  User,
-  Printer,
-} from "lucide-react";
+import { Plus, Edit, Copy, Trash2, Download, Eye, Calendar, User, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -44,12 +30,9 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
   onDeleteTemplate,
 }) => {
   const router = useRouter();
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<LabelTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<LabelTemplate | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [selectedLabelType, setSelectedLabelType] = useState<LabelType | null>(
-    null
-  );
+  const [selectedLabelType, setSelectedLabelType] = useState<LabelType | null>(null);
   const [isNewTemplateDialogOpen, setIsNewTemplateDialogOpen] = useState(false);
 
   const createNewTemplate = (labelType: LabelType) => {
@@ -73,7 +56,14 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
       fields:
         config.defaultFields?.map((field, index) => ({
           id: `default_${index}`,
-          type: field.type as "text" | "date" | "temperature" | "qrcode" | "barcode" | "product" | "quantity",
+          type: field.type as
+            | "text"
+            | "date"
+            | "temperature"
+            | "qrcode"
+            | "barcode"
+            | "product"
+            | "quantity",
           label: field.label,
           position: { x: 20 + index * 30, y: 20 + index * 35 },
           size: { width: 120, height: 25 },
@@ -152,24 +142,18 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          Gerenciar Templates de Etiquetas
-        </h1>
+        <h1 className="mb-2 text-3xl font-bold">Gerenciar Templates de Etiquetas</h1>
         <p className="text-gray-600">
-          Crie e gerencie templates personalizados para diferentes tipos de
-          etiquetas alimentícias
+          Crie e gerencie templates personalizados para diferentes tipos de etiquetas alimentícias
         </p>
       </div>
 
       {/* Create New Template */}
       <div className="mb-8 flex items-center gap-4">
-        <Dialog
-          open={isNewTemplateDialogOpen}
-          onOpenChange={setIsNewTemplateDialogOpen}
-        >
+        <Dialog open={isNewTemplateDialogOpen} onOpenChange={setIsNewTemplateDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Criar Novo Template
             </Button>
           </DialogTrigger>
@@ -177,22 +161,22 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
             <DialogHeader>
               <DialogTitle>Escolha o Tipo de Etiqueta</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               {Object.entries(LABEL_TYPES_CONFIG).map(([key, config]) => (
                 <Card
                   key={key}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="cursor-pointer transition-shadow hover:shadow-md"
                   onClick={() => createNewTemplate(key as LabelType)}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="mb-2 flex items-center gap-3">
                       <div
-                        className="w-4 h-4 rounded-full"
+                        className="h-4 w-4 rounded-full"
                         style={{ backgroundColor: config.color }}
                       />
                       <h3 className="font-medium">{config.name}</h3>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="mb-3 text-sm text-gray-600">
                       Template para etiquetas de {config.name.toLowerCase()}
                     </p>
                     <div className="text-xs text-gray-500">
@@ -210,7 +194,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
           onClick={() => router.push("/etiquetas/imprimir")}
           className="flex items-center gap-2"
         >
-          <Printer className="w-4 h-4" />
+          <Printer className="h-4 w-4" />
           Imprimir Etiquetas
         </Button>
       </div>
@@ -222,21 +206,16 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
 
           return (
             <div key={labelType}>
-              <div className="flex items-center gap-3 mb-4">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: config.color }}
-                />
+              <div className="mb-4 flex items-center gap-3">
+                <div className="h-3 w-3 rounded-full" style={{ backgroundColor: config.color }} />
                 <h2 className="text-xl font-semibold">{config.name}</h2>
-                <Badge variant="outline">
-                  {typeTemplates.length} templates
-                </Badge>
+                <Badge variant="outline">{typeTemplates.length} templates</Badge>
               </div>
 
               {typeTemplates.length === 0 ? (
                 <Card className="border-dashed">
                   <CardContent className="p-8 text-center">
-                    <div className="text-gray-400 mb-2">
+                    <div className="mb-2 text-gray-400">
                       Nenhum template encontrado para {config.name}
                     </div>
                     <Button
@@ -248,17 +227,12 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {typeTemplates.map((template) => (
-                    <Card
-                      key={template.id}
-                      className="hover:shadow-md transition-shadow"
-                    >
+                    <Card key={template.id} className="transition-shadow hover:shadow-md">
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
-                          <CardTitle className="text-lg">
-                            {template.name}
-                          </CardTitle>
+                          <CardTitle className="text-lg">{template.name}</CardTitle>
                           <Badge
                             style={{
                               backgroundColor: config.color,
@@ -270,21 +244,18 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-2 text-sm text-gray-600 mb-4">
+                        <div className="mb-4 space-y-2 text-sm text-gray-600">
                           <div className="flex items-center gap-2">
-                            <Eye className="w-4 h-4" />
+                            <Eye className="h-4 w-4" />
                             {template.label_width}x{template.label_height} px
                           </div>
                           <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="h-4 w-4" />
                             {template.fields.length} campos
                           </div>
                           <div className="flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            Criado em{" "}
-                            {new Date(template.created_at).toLocaleDateString(
-                              "pt-BR"
-                            )}
+                            <User className="h-4 w-4" />
+                            Criado em {new Date(template.created_at).toLocaleDateString("pt-BR")}
                           </div>
                         </div>
 
@@ -294,7 +265,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                             variant="outline"
                             onClick={() => handleEditTemplate(template)}
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="h-4 w-4" />
                           </Button>
 
                           <Button
@@ -302,11 +273,11 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                             variant="outline"
                             onClick={() => handleDuplicateTemplate(template)}
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="h-4 w-4" />
                           </Button>
 
                           <Button size="sm" variant="outline">
-                            <Download className="w-4 h-4" />
+                            <Download className="h-4 w-4" />
                           </Button>
 
                           <Button
@@ -315,7 +286,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                             onClick={() => handleDeleteTemplate(template.id)}
                             className="text-red-600 hover:text-red-700"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </CardContent>

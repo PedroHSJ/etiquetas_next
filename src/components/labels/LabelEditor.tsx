@@ -8,12 +8,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import {
-  LabelType,
-  LabelTemplate,
-  LabelField,
-  LABEL_TYPES_CONFIG,
-} from "@/types/etiquetas";
+import { LabelType, LabelTemplate, LabelField, LABEL_TYPES_CONFIG } from "@/types/etiquetas";
 import { Product } from "@/types/products";
 import { FieldPalette } from "./FieldPalette";
 import { LabelCanvas } from "./LabelCanvas";
@@ -150,14 +145,14 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="flex h-screen flex-col bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4">
+      <div className="border-b border-gray-200 bg-white p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">Editor de Etiquetas</h1>
             <div
-              className="px-3 py-1 rounded-full text-xs font-medium text-white"
+              className="rounded-full px-3 py-1 text-xs font-medium text-white"
               style={{
                 backgroundColor: LABEL_TYPES_CONFIG[template.label_type].color,
               }}
@@ -167,39 +162,28 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowGrid(!showGrid)}
-            >
-              <Grid className="w-4 h-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={() => setShowGrid(!showGrid)}>
+              <Grid className="mr-2 h-4 w-4" />
               Grade: {showGrid ? "ON" : "OFF"}
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsPreviewMode(!isPreviewMode)}
-            >
-              <Eye className="w-4 h-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={() => setIsPreviewMode(!isPreviewMode)}>
+              <Eye className="mr-2 h-4 w-4" />
               {isPreviewMode ? "Editar" : "Visualizar"}
             </Button>
 
             <Button variant="outline" size="sm" onClick={clearTemplate}>
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Limpar
             </Button>
 
             <Button variant="outline" size="sm" onClick={handleExportPDF}>
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="mr-2 h-4 w-4" />
               Exportar PDF
             </Button>
 
-            <Button
-              onClick={handleSave}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Save className="w-4 h-4 mr-2" />
+            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+              <Save className="mr-2 h-4 w-4" />
               Salvar Template
             </Button>
 
@@ -213,23 +197,19 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Field Palette */}
         {!isPreviewMode && <FieldPalette labelType={template.label_type} />}
 
         {/* Center - Canvas and Settings */}
-        <div className="flex-1 flex flex-col">
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="flex-1 flex flex-col"
-          >
+        <div className="flex flex-1 flex-col">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-1 flex-col">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="design">Design</TabsTrigger>
               <TabsTrigger value="settings">Configurações</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="design" className="flex-1 p-6 overflow-auto">
+            <TabsContent value="design" className="flex-1 overflow-auto p-6">
               <div className="flex justify-center">
                 <DndContext
                   sensors={sensors}
@@ -247,8 +227,8 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
               </div>
             </TabsContent>
 
-            <TabsContent value="settings" className="flex-1 p-6 overflow-auto">
-              <div className="max-w-2xl mx-auto space-y-6">
+            <TabsContent value="settings" className="flex-1 overflow-auto p-6">
+              <div className="mx-auto max-w-2xl space-y-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>Informações do Template</CardTitle>
@@ -284,13 +264,11 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(LABEL_TYPES_CONFIG).map(
-                            ([key, config]) => (
-                              <SelectItem key={key} value={key}>
-                                {config.name}
-                              </SelectItem>
-                            )
-                          )}
+                          {Object.entries(LABEL_TYPES_CONFIG).map(([key, config]) => (
+                            <SelectItem key={key} value={key}>
+                              {config.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -363,9 +341,7 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="labels-per-row">
-                          Etiquetas por Linha
-                        </Label>
+                        <Label htmlFor="labels-per-row">Etiquetas por Linha</Label>
                         <Input
                           id="labels-per-row"
                           type="number"
@@ -380,9 +356,7 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
                         />
                       </div>
                       <div>
-                        <Label htmlFor="labels-per-column">
-                          Etiquetas por Coluna
-                        </Label>
+                        <Label htmlFor="labels-per-column">Etiquetas por Coluna</Label>
                         <Input
                           id="labels-per-column"
                           type="number"

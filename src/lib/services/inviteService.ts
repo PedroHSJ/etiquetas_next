@@ -1,6 +1,6 @@
-import { supabase } from '../supabaseClient';
-import { Convite } from '@/types/onboarding';
-import { Perfil } from '@/types/permissions';
+import { supabase } from "../supabaseClient";
+import { Convite } from "@/types/onboarding";
+import { Perfil } from "@/types/permissions";
 
 interface User {
   id: string;
@@ -14,23 +14,22 @@ export class InviteService {
     if (userIds.length === 0) return {};
 
     try {
-      const { data, error } = await supabase
-        .rpc('get_multiple_users_data', { user_ids: userIds });
-      
+      const { data, error } = await supabase.rpc("get_multiple_users_data", { user_ids: userIds });
+
       if (error) {
-        console.error('Erro ao buscar dados dos usuários:', error);
+        console.error("Erro ao buscar dados dos usuários:", error);
         return {};
       }
-      
+
       // Converter array para objeto indexado por ID
       const usersMap: Record<string, User> = {};
       (data || []).forEach((user: User) => {
         usersMap[user.id] = user;
       });
-      
+
       return usersMap;
     } catch (error) {
-      console.error('Erro ao buscar dados dos usuários:', error);
+      console.error("Erro ao buscar dados dos usuários:", error);
       return {};
     }
   }
@@ -38,32 +37,34 @@ export class InviteService {
   // Buscar convites pendentes para um email
   static async getPendingInvites(email: string): Promise<Convite[]> {
     const { data, error } = await supabase
-      .from('convites')
-      .select(`
+      .from("convites")
+      .select(
+        `
         *,
         organizacao:organizacoes(nome, tipo),
         perfil:perfis(nome, descricao)
-      `)
-      .eq('email', email)
-      .eq('status', 'pendente')
-      .gt('expira_em', new Date().toISOString())
-      .order('created_at', { ascending: false });
+      `
+      )
+      .eq("email", email)
+      .eq("status", "pendente")
+      .gt("expira_em", new Date().toISOString())
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Erro ao buscar convites:', error);
-      throw new Error('Erro ao buscar convites');
+      console.error("Erro ao buscar convites:", error);
+      throw new Error("Erro ao buscar convites");
     }
 
     if (!data || data.length === 0) return [];
 
     // Buscar dados de todos os usuários de uma vez
-    const userIds = [...new Set(data.map(convite => convite.convidado_por))];
+    const userIds = [...new Set(data.map((convite) => convite.convidado_por))];
     const usersData = await this.getMultipleUsersData(userIds);
 
     // Mapear convites com dados dos usuários
     const convitesComUsuario = data.map((convite) => ({
       ...convite,
-      convidado_por_usuario: usersData[convite.convidado_por] || { nome: 'Usuário', email: '' }
+      convidado_por_usuario: usersData[convite.convidado_por] || { nome: "Usuário", email: "" },
     }));
 
     return convitesComUsuario;
@@ -73,61 +74,59 @@ export class InviteService {
   static async acceptInvite(tokenInvite: string, userId: string): Promise<boolean> {
     // Primeiro, buscar o convite
     const { data: convite, error: fetchError } = await supabase
-      .from('convites')
-      .select('*')
-      .eq('token_invite', tokenInvite)
-      .eq('status', 'pendente')
-      .gt('expira_em', new Date().toISOString())
+      .from("convites")
+      .select("*")
+      .eq("token_invite", tokenInvite)
+      .eq("status", "pendente")
+      .gt("expira_em", new Date().toISOString())
       .single();
 
     if (fetchError || !convite) {
-      throw new Error('Convite não encontrado ou expirado');
+      throw new Error("Convite não encontrado ou expirado");
     }
 
     // Atualizar o convite para aceito
     const { error: updateError } = await supabase
-      .from('convites')
+      .from("convites")
       .update({
-        status: 'aceito',
+        status: "aceito",
         aceito_em: new Date().toISOString(),
-        aceito_por: userId
+        aceito_por: userId,
       })
-      .eq('id', convite.id);
+      .eq("id", convite.id);
 
     if (updateError) {
-      console.error('Erro ao aceitar convite:', updateError);
-      throw new Error('Erro ao aceitar convite');
+      console.error("Erro ao aceitar convite:", updateError);
+      throw new Error("Erro ao aceitar convite");
     }
 
     // Adicionar usuário à organização
     const { data: userOrgData, error: insertError } = await supabase
-      .from('usuarios_organizacoes')
+      .from("usuarios_organizacoes")
       .insert({
         usuario_id: userId,
         organizacao_id: convite.organizacao_id,
         perfil_id: convite.perfil_id,
-        ativo: true
+        ativo: true,
       })
       .select()
       .single();
 
     if (insertError || !userOrgData) {
-      console.error('Erro ao adicionar usuário à organização:', insertError);
-      throw new Error('Erro ao adicionar usuário à organização');
+      console.error("Erro ao adicionar usuário à organização:", insertError);
+      throw new Error("Erro ao adicionar usuário à organização");
     }
 
     // Criar registro em usuarios_perfis
-    const { error: userPerfilError } = await supabase
-      .from('usuarios_perfis')
-      .insert({
-        usuario_organizacao_id: userOrgData.id,
-        perfil_usuario_id: convite.perfil_id,
-        ativo: true
-      });
+    const { error: userPerfilError } = await supabase.from("usuarios_perfis").insert({
+      usuario_organizacao_id: userOrgData.id,
+      perfil_usuario_id: convite.perfil_id,
+      ativo: true,
+    });
 
     if (userPerfilError) {
-      console.error('Erro ao criar perfil do usuário:', userPerfilError);
-      throw new Error('Erro ao criar perfil do usuário');
+      console.error("Erro ao criar perfil do usuário:", userPerfilError);
+      throw new Error("Erro ao criar perfil do usuário");
     }
 
     return true;
@@ -140,37 +139,37 @@ export class InviteService {
     perfilId: string,
     convidadoPor: string
   ): Promise<Convite> {
-    const tokenInvite = self.crypto?.randomUUID?.() || 
-      Math.random().toString(36).substring(2, 15) + 
-      Math.random().toString(36).substring(2, 15);
+    const tokenInvite =
+      self.crypto?.randomUUID?.() ||
+      Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const expiraEm = new Date();
     expiraEm.setDate(expiraEm.getDate() + 7); // 7 dias
 
-    console.log('Tentando criar convite:', {
+    console.log("Tentando criar convite:", {
       email,
       organizacao_id: organizacaoId,
       perfil_id: perfilId,
       token_invite: tokenInvite,
       expira_em: expiraEm.toISOString(),
-      convidado_por: convidadoPor
+      convidado_por: convidadoPor,
     });
 
     const { data, error } = await supabase
-      .from('convites')
+      .from("convites")
       .insert({
         email,
         organizacao_id: organizacaoId,
         perfil_id: perfilId,
         token_invite: tokenInvite,
         expira_em: expiraEm.toISOString(),
-        convidado_por: convidadoPor
+        convidado_por: convidadoPor,
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Erro ao criar convite:', error);
-      throw new Error('Erro ao criar convite');
+      console.error("Erro ao criar convite:", error);
+      throw new Error("Erro ao criar convite");
     }
 
     return data;
@@ -178,14 +177,11 @@ export class InviteService {
 
   // Buscar perfis disponíveis
   static async getPerfis(): Promise<Perfil[]> {
-    const { data, error } = await supabase
-      .from('perfis')
-      .select('*')
-      .order('nome');
+    const { data, error } = await supabase.from("perfis").select("*").order("nome");
 
     if (error) {
-      console.error('Erro ao buscar perfis:', error);
-      throw new Error('Erro ao buscar perfis');
+      console.error("Erro ao buscar perfis:", error);
+      throw new Error("Erro ao buscar perfis");
     }
 
     return data || [];
@@ -194,14 +190,14 @@ export class InviteService {
   // Verificar se usuário já está em uma organização
   static async checkUserOrganization(userId: string): Promise<boolean> {
     const { data, error } = await supabase
-      .from('usuarios_organizacoes')
-      .select('id')
-      .eq('usuario_id', userId)
-      .eq('ativo', true)
+      .from("usuarios_organizacoes")
+      .select("id")
+      .eq("usuario_id", userId)
+      .eq("ativo", true)
       .limit(1);
 
     if (error) {
-      console.error('Erro ao verificar organização do usuário:', error);
+      console.error("Erro ao verificar organização do usuário:", error);
       return false;
     }
 
@@ -230,28 +226,23 @@ export class InviteService {
     if (!data || data.length === 0) return [];
 
     // Buscar dados de todos os usuários de uma vez
-    const userIds = [...new Set(data.map(convite => convite.convidado_por))];
+    const userIds = [...new Set(data.map((convite) => convite.convidado_por))];
     const usersData = await this.getMultipleUsersData(userIds);
 
     // Mapear convites com dados dos usuários
     const convitesComUsuario = data.map((convite) => ({
       ...convite,
-      convidado_por_usuario: usersData[convite.convidado_por] || { nome: 'Usuário', email: '' }
+      convidado_por_usuario: usersData[convite.convidado_por] || { nome: "Usuário", email: "" },
     }));
 
     return convitesComUsuario;
   }
 
   // Buscar convites por organização e status
-  static async getConvitesByStatus(
-    status: string,
-    userEmail: string
-  ): Promise<Convite[]> {
+  static async getConvitesByStatus(status: string, userEmail: string): Promise<Convite[]> {
     const { data, error } = await supabase
       .from("convites")
-      .select(
-        `*, organizacao:organizacoes(nome), perfil:perfis(nome, descricao)`
-      )
+      .select(`*, organizacao:organizacoes(nome), perfil:perfis(nome, descricao)`)
       .eq("status", status)
       .eq("email", userEmail)
       .order("created_at", { ascending: false });
@@ -264,13 +255,13 @@ export class InviteService {
     if (!data || data.length === 0) return [];
 
     // Buscar dados de todos os usuários de uma vez
-    const userIds = [...new Set(data.map(convite => convite.convidado_por))];
+    const userIds = [...new Set(data.map((convite) => convite.convidado_por))];
     const usersData = await this.getMultipleUsersData(userIds);
 
     // Mapear convites com dados dos usuários
     const convitesComUsuario = data.map((convite) => ({
       ...convite,
-      convidado_por_usuario: usersData[convite.convidado_por] || { nome: 'Usuário', email: '' }
+      convidado_por_usuario: usersData[convite.convidado_por] || { nome: "Usuário", email: "" },
     }));
 
     return convitesComUsuario;
@@ -295,7 +286,11 @@ export class InviteService {
   static async rejeitarConvite(conviteId: string, userId?: string): Promise<boolean> {
     const { error } = await supabase
       .from("convites")
-      .update({ status: "rejeitado", rejeitado_em: new Date().toISOString(), rejeitado_por: userId || null })
+      .update({
+        status: "rejeitado",
+        rejeitado_em: new Date().toISOString(),
+        rejeitado_por: userId || null,
+      })
       .eq("id", conviteId);
 
     if (error) {

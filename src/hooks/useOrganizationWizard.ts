@@ -7,11 +7,18 @@ import { toast } from "sonner";
 interface UANData {
   // Informações Básicas
   cnpj?: string;
-  tipo_uan?: 'restaurante_comercial' | 'restaurante_institucional' | 'lanchonete' | 'padaria' | 'cozinha_industrial' | 'catering' | 'outro';
+  tipo_uan?:
+    | "restaurante_comercial"
+    | "restaurante_institucional"
+    | "lanchonete"
+    | "padaria"
+    | "cozinha_industrial"
+    | "catering"
+    | "outro";
   capacidade_atendimento?: number;
   data_inauguracao?: string;
   descricao?: string;
-  
+
   // Localização
   estado_id?: number;
   municipio_id?: number;
@@ -23,7 +30,7 @@ interface UANData {
   endereco_completo?: string;
   latitude?: number;
   longitude?: number;
-  
+
   // Contato
   telefone_principal?: string;
   telefone_secundario?: string;
@@ -46,9 +53,7 @@ interface UseOrganizationWizardReturn {
   nextStep: () => void;
   prevStep: () => void;
   updateWizardData: (data: Partial<WizardData>) => void;
-  submitWizard: (
-    userId: string
-  ) => Promise<{ success: boolean; organizationId?: string }>;
+  submitWizard: (userId: string) => Promise<{ success: boolean; organizationId?: string }>;
   getTotalSteps: () => number;
 }
 
@@ -77,9 +82,7 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
   }, []);
 
   const submitWizard = useCallback(
-    async (
-      userId: string
-    ): Promise<{ success: boolean; organizationId?: string }> => {
+    async (userId: string): Promise<{ success: boolean; organizationId?: string }> => {
       setIsLoading(true);
       try {
         console.log("Iniciando criação da organização...", {
@@ -109,10 +112,7 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
         console.log("Organização criada:", orgData);
 
         // 2. Criar departamentos
-        const allDepartments = [
-          ...wizardData.selectedDepartments,
-          ...wizardData.customDepartments,
-        ];
+        const allDepartments = [...wizardData.selectedDepartments, ...wizardData.customDepartments];
 
         if (allDepartments.length > 0) {
           const departmentInserts = allDepartments.map((dept) => ({
@@ -130,9 +130,7 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
 
           if (deptError) {
             console.error("Erro ao criar departamentos:", deptError);
-            throw new Error(
-              `Erro ao criar departamentos: ${deptError.message}`
-            );
+            throw new Error(`Erro ao criar departamentos: ${deptError.message}`);
           }
 
           console.log("Departamentos criados:", deptData);
@@ -163,32 +161,20 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
           .single();
 
         if (userOrgError || !userOrgData) {
-          console.error(
-            "Erro ao adicionar usuário à organização:",
-            userOrgError
-          );
-          throw new Error(
-            `Erro ao adicionar usuário à organização: ${userOrgError?.message}`
-          );
+          console.error("Erro ao adicionar usuário à organização:", userOrgError);
+          throw new Error(`Erro ao adicionar usuário à organização: ${userOrgError?.message}`);
         }
 
         // 5. Criar registro em usuarios_perfis
-        const { error: userPerfilError } = await supabase
-          .from("usuarios_perfis")
-          .insert({
-            usuario_organizacao_id: userOrgData.id,
-            perfil_usuario_id: gestorPerfil.id,
-            ativo: true,
-          });
+        const { error: userPerfilError } = await supabase.from("usuarios_perfis").insert({
+          usuario_organizacao_id: userOrgData.id,
+          perfil_usuario_id: gestorPerfil.id,
+          ativo: true,
+        });
 
         if (userPerfilError) {
-          console.error(
-            "Erro ao criar perfil do usuário:",
-            userPerfilError
-          );
-          throw new Error(
-            `Erro ao criar perfil do usuário: ${userPerfilError.message}`
-          );
+          console.error("Erro ao criar perfil do usuário:", userPerfilError);
+          throw new Error(`Erro ao criar perfil do usuário: ${userPerfilError.message}`);
         }
 
         console.log("Usuário adicionado como gestor da organização");

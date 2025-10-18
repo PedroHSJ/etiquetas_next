@@ -1,10 +1,10 @@
 import { supabase } from "@/lib/supabaseClient";
-import { 
-  TechnicalSheetRequest, 
-  TechnicalSheetResponse, 
+import {
+  TechnicalSheetRequest,
+  TechnicalSheetResponse,
   IngredientSuggestion,
   EditableIngredient,
-  TechnicalSheet 
+  TechnicalSheet,
 } from "@/types/technical-sheet";
 import { SupabaseProdutoSearch } from "@/types/supabase";
 
@@ -20,7 +20,7 @@ export interface SaveTechnicalSheetData {
   numero_porcoes: number;
   tempo_preparo?: string;
   tempo_cozimento?: string;
-  dificuldade?: 'fácil' | 'médio' | 'difícil';
+  dificuldade?: "fácil" | "médio" | "difícil";
   etapas_preparo?: string[];
   informacoes_nutricionais?: Record<string, any>;
   organizacao_id: string;
@@ -60,7 +60,6 @@ export interface DatabaseTechnicalSheet {
 }
 
 export class TechnicalSheetService {
-
   /**
    * Salva uma nova ficha técnica no banco de dados
    */
@@ -69,14 +68,17 @@ export class TechnicalSheetService {
   ): Promise<{ success: boolean; data?: TechnicalSheet; error?: string }> {
     try {
       // Verificar se o usuário está autenticado
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (authError || !user) {
-        throw new Error('Usuário não autenticado');
+        throw new Error("Usuário não autenticado");
       }
 
       // Iniciar transação: salvar a ficha técnica principal
       const { data: fichaData, error: fichaError } = await supabase
-        .from('fichas_tecnicas')
+        .from("fichas_tecnicas")
         .insert({
           nome_prato: data.nome_prato,
           numero_porcoes: data.numero_porcoes,
@@ -86,35 +88,32 @@ export class TechnicalSheetService {
           etapas_preparo: data.etapas_preparo,
           informacoes_nutricionais: data.informacoes_nutricionais,
           organizacao_id: data.organizacao_id,
-          criado_por: user.id
+          criado_por: user.id,
         })
         .select()
         .single();
 
       if (fichaError) {
-        console.error('Erro ao salvar ficha técnica:', fichaError);
+        console.error("Erro ao salvar ficha técnica:", fichaError);
         throw new Error(fichaError.message);
       }
 
       // Salvar ingredientes
       if (data.ingredientes && data.ingredientes.length > 0) {
-        const ingredientesData = data.ingredientes.map(ing => ({
+        const ingredientesData = data.ingredientes.map((ing) => ({
           ...ing,
-          ficha_tecnica_id: fichaData.id
+          ficha_tecnica_id: fichaData.id,
         }));
 
         const { error: ingredientesError } = await supabase
-          .from('fichas_tecnicas_ingredientes')
+          .from("fichas_tecnicas_ingredientes")
           .insert(ingredientesData);
 
         if (ingredientesError) {
-          console.error('Erro ao salvar ingredientes:', ingredientesError);
+          console.error("Erro ao salvar ingredientes:", ingredientesError);
           // Tentar remover a ficha técnica criada em caso de erro
-          await supabase
-            .from('fichas_tecnicas')
-            .delete()
-            .eq('id', fichaData.id);
-          
+          await supabase.from("fichas_tecnicas").delete().eq("id", fichaData.id);
+
           throw new Error(ingredientesError.message);
         }
       }
@@ -122,19 +121,18 @@ export class TechnicalSheetService {
       // Buscar a ficha completa para retornar
       const savedSheet = await this.getTechnicalSheetById(fichaData.id);
       if (!savedSheet.success || !savedSheet.data) {
-        throw new Error('Erro ao recuperar ficha técnica salva');
+        throw new Error("Erro ao recuperar ficha técnica salva");
       }
 
       return {
         success: true,
-        data: savedSheet.data
+        data: savedSheet.data,
       };
-
     } catch (error) {
-      console.error('Erro ao salvar ficha técnica:', error);
+      console.error("Erro ao salvar ficha técnica:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: error instanceof Error ? error.message : "Erro desconhecido",
       };
     }
   }
@@ -147,8 +145,9 @@ export class TechnicalSheetService {
   ): Promise<{ success: boolean; data?: TechnicalSheet; error?: string }> {
     try {
       const { data, error } = await supabase
-        .from('fichas_tecnicas')
-        .select(`
+        .from("fichas_tecnicas")
+        .select(
+          `
           *,
           fichas_tecnicas_ingredientes (
             id,
@@ -159,8 +158,9 @@ export class TechnicalSheetService {
             product_id,
             ordem
           )
-        `)
-        .eq('id', id)
+        `
+        )
+        .eq("id", id)
         .single();
 
       if (error) {
@@ -168,17 +168,16 @@ export class TechnicalSheetService {
       }
 
       const technicalSheet = this.mapDatabaseToTechnicalSheet(data as DatabaseTechnicalSheet);
-      
+
       return {
         success: true,
-        data: technicalSheet
+        data: technicalSheet,
       };
-
     } catch (error) {
-      console.error('Erro ao buscar ficha técnica:', error);
+      console.error("Erro ao buscar ficha técnica:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: error instanceof Error ? error.message : "Erro desconhecido",
       };
     }
   }
@@ -196,9 +195,9 @@ export class TechnicalSheetService {
 
       // Buscar total de registros
       const { count, error: countError } = await supabase
-        .from('fichas_tecnicas')
-        .select('*', { count: 'exact', head: true })
-        .eq('organizacao_id', organizationId);
+        .from("fichas_tecnicas")
+        .select("*", { count: "exact", head: true })
+        .eq("organizacao_id", organizationId);
 
       if (countError) {
         throw new Error(countError.message);
@@ -206,8 +205,9 @@ export class TechnicalSheetService {
 
       // Buscar fichas técnicas com paginação
       const { data, error } = await supabase
-        .from('fichas_tecnicas')
-        .select(`
+        .from("fichas_tecnicas")
+        .select(
+          `
           *,
           fichas_tecnicas_ingredientes (
             id,
@@ -218,30 +218,30 @@ export class TechnicalSheetService {
             product_id,
             ordem
           )
-        `)
-        .eq('organizacao_id', organizationId)
-        .order('created_at', { ascending: false })
+        `
+        )
+        .eq("organizacao_id", organizationId)
+        .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
 
       if (error) {
         throw new Error(error.message);
       }
 
-      const technicalSheets = data.map(item => 
+      const technicalSheets = data.map((item) =>
         this.mapDatabaseToTechnicalSheet(item as DatabaseTechnicalSheet)
       );
 
       return {
         success: true,
         data: technicalSheets,
-        total: count || 0
+        total: count || 0,
       };
-
     } catch (error) {
-      console.error('Erro ao buscar fichas técnicas:', error);
+      console.error("Erro ao buscar fichas técnicas:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: error instanceof Error ? error.message : "Erro desconhecido",
       };
     }
   }
@@ -262,12 +262,13 @@ export class TechnicalSheetService {
       if (data.tempo_cozimento !== undefined) updateData.tempo_cozimento = data.tempo_cozimento;
       if (data.dificuldade !== undefined) updateData.dificuldade = data.dificuldade;
       if (data.etapas_preparo !== undefined) updateData.etapas_preparo = data.etapas_preparo;
-      if (data.informacoes_nutricionais !== undefined) updateData.informacoes_nutricionais = data.informacoes_nutricionais;
+      if (data.informacoes_nutricionais !== undefined)
+        updateData.informacoes_nutricionais = data.informacoes_nutricionais;
 
       const { error: fichaError } = await supabase
-        .from('fichas_tecnicas')
+        .from("fichas_tecnicas")
         .update(updateData)
-        .eq('id', id);
+        .eq("id", id);
 
       if (fichaError) {
         throw new Error(fichaError.message);
@@ -277,9 +278,9 @@ export class TechnicalSheetService {
       if (data.ingredientes) {
         // Remover ingredientes existentes
         const { error: deleteError } = await supabase
-          .from('fichas_tecnicas_ingredientes')
+          .from("fichas_tecnicas_ingredientes")
           .delete()
-          .eq('ficha_tecnica_id', id);
+          .eq("ficha_tecnica_id", id);
 
         if (deleteError) {
           throw new Error(deleteError.message);
@@ -287,13 +288,13 @@ export class TechnicalSheetService {
 
         // Inserir novos ingredientes
         if (data.ingredientes.length > 0) {
-          const ingredientesData = data.ingredientes.map(ing => ({
+          const ingredientesData = data.ingredientes.map((ing) => ({
             ...ing,
-            ficha_tecnica_id: id
+            ficha_tecnica_id: id,
           }));
 
           const { error: insertError } = await supabase
-            .from('fichas_tecnicas_ingredientes')
+            .from("fichas_tecnicas_ingredientes")
             .insert(ingredientesData);
 
           if (insertError) {
@@ -305,19 +306,18 @@ export class TechnicalSheetService {
       // Buscar a ficha atualizada
       const updatedSheet = await this.getTechnicalSheetById(id);
       if (!updatedSheet.success || !updatedSheet.data) {
-        throw new Error('Erro ao recuperar ficha técnica atualizada');
+        throw new Error("Erro ao recuperar ficha técnica atualizada");
       }
 
       return {
         success: true,
-        data: updatedSheet.data
+        data: updatedSheet.data,
       };
-
     } catch (error) {
-      console.error('Erro ao atualizar ficha técnica:', error);
+      console.error("Erro ao atualizar ficha técnica:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: error instanceof Error ? error.message : "Erro desconhecido",
       };
     }
   }
@@ -325,26 +325,20 @@ export class TechnicalSheetService {
   /**
    * Remove uma ficha técnica
    */
-  static async deleteTechnicalSheet(
-    id: string
-  ): Promise<{ success: boolean; error?: string }> {
+  static async deleteTechnicalSheet(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
-        .from('fichas_tecnicas')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("fichas_tecnicas").delete().eq("id", id);
 
       if (error) {
         throw new Error(error.message);
       }
 
       return { success: true };
-
     } catch (error) {
-      console.error('Erro ao deletar ficha técnica:', error);
+      console.error("Erro ao deletar ficha técnica:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: error instanceof Error ? error.message : "Erro desconhecido",
       };
     }
   }
@@ -359,15 +353,15 @@ export class TechnicalSheetService {
       servings: data.numero_porcoes,
       preparationTime: data.tempo_preparo,
       cookingTime: data.tempo_cozimento,
-      difficulty: data.dificuldade as 'fácil' | 'médio' | 'difícil',
+      difficulty: data.dificuldade as "fácil" | "médio" | "difícil",
       preparationSteps: data.etapas_preparo || [],
       nutritionalInsights: {
-        calories: data.informacoes_nutricionais?.calories || '0',
-        protein: data.informacoes_nutricionais?.protein || '0',
-        carbs: data.informacoes_nutricionais?.carbs || '0',
-        fat: data.informacoes_nutricionais?.fat || '0',
-        fiber: data.informacoes_nutricionais?.fiber || '0',
-        highlights: data.informacoes_nutricionais?.highlights || []
+        calories: data.informacoes_nutricionais?.calories || "0",
+        protein: data.informacoes_nutricionais?.protein || "0",
+        carbs: data.informacoes_nutricionais?.carbs || "0",
+        fat: data.informacoes_nutricionais?.fat || "0",
+        fiber: data.informacoes_nutricionais?.fiber || "0",
+        highlights: data.informacoes_nutricionais?.highlights || [],
       },
       organizationId: data.organizacao_id,
       createdBy: data.criado_por,
@@ -382,8 +376,8 @@ export class TechnicalSheetService {
           unit: ing.unidade,
           originalQuantity: ing.quantidade_original,
           productId: ing.product_id?.toString(),
-          isEditing: false
-        }))
+          isEditing: false,
+        })),
     };
   }
 
@@ -394,50 +388,49 @@ export class TechnicalSheetService {
     request: TechnicalSheetRequest
   ): Promise<TechnicalSheetResponse> {
     try {
-      console.log('Enviando requisição para API:', request);
-      
-      const response = await fetch('/api/technical-sheet/generate', {
-        method: 'POST',
+      console.log("Enviando requisição para API:", request);
+
+      const response = await fetch("/api/technical-sheet/generate", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(request)
+        body: JSON.stringify(request),
       });
 
-      console.log('Status da resposta:', response.status);
-      console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
+      console.log("Status da resposta:", response.status);
+      console.log("Headers da resposta:", Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         let errorMessage = `Erro HTTP: ${response.status}`;
         try {
           const errorData = await response.json();
-          console.log('Dados de erro:', errorData);
+          console.log("Dados de erro:", errorData);
           errorMessage = errorData.error || errorMessage;
         } catch {
-          console.log('Não foi possível ler JSON de erro');
+          console.log("Não foi possível ler JSON de erro");
           // Se não conseguir ler o JSON de erro, usar mensagem padrão
         }
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      console.log('Dados recebidos da API:', data);
-      
+      console.log("Dados recebidos da API:", data);
+
       // Validar a estrutura da resposta
       if (!data.ingredients || !Array.isArray(data.ingredients)) {
-        throw new Error('Resposta inválida da API: lista de ingredientes não encontrada');
+        throw new Error("Resposta inválida da API: lista de ingredientes não encontrada");
       }
 
       return data;
-
     } catch (error) {
-      console.error('Erro ao gerar sugestões de ingredientes:', error);
-      
+      console.error("Erro ao gerar sugestões de ingredientes:", error);
+
       if (error instanceof Error) {
         throw error; // Re-throw the original error with its message
       }
-      
-      throw new Error('Falha ao gerar sugestões de ingredientes. Tente novamente.');
+
+      throw new Error("Falha ao gerar sugestões de ingredientes. Tente novamente.");
     }
   }
 
@@ -455,16 +448,18 @@ export class TechnicalSheetService {
       try {
         // Buscar na tabela produtos usando busca simples por nome
         const { data: matchingProducts, error } = await supabase
-          .from('products')
-          .select(`
+          .from("products")
+          .select(
+            `
             id,
             name,
             groups:group_id (
               id,
               name
             )
-          `)
-          .ilike('name', `%${ingredient.name}%`)
+          `
+          )
+          .ilike("name", `%${ingredient.name}%`)
           .limit(5);
 
         if (error) {
@@ -478,13 +473,16 @@ export class TechnicalSheetService {
           unit: ingredient.unit,
           originalQuantity: ingredient.quantity,
           isEditing: false,
-          productId: matchingProducts && matchingProducts.length > 0 ? matchingProducts[0].id?.toString() : undefined
+          productId:
+            matchingProducts && matchingProducts.length > 0
+              ? matchingProducts[0].id?.toString()
+              : undefined,
         };
 
         editableIngredients.push(editableIngredient);
       } catch (error) {
         console.error(`Erro ao buscar produto para ${ingredient.name}:`, error);
-        
+
         // Adicionar ingrediente mesmo sem correspondência
         editableIngredients.push({
           id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -492,7 +490,7 @@ export class TechnicalSheetService {
           quantity: ingredient.quantity,
           unit: ingredient.unit,
           originalQuantity: ingredient.quantity,
-          isEditing: false
+          isEditing: false,
         });
       }
     }
@@ -510,33 +508,37 @@ export class TechnicalSheetService {
   ): Promise<SimpleProduct[]> {
     try {
       const { data: produtos, error } = await supabase
-        .from('products')
-        .select(`
+        .from("products")
+        .select(
+          `
           id,
           name,
           groups:group_id (
             name
           )
-        `)
-        .ilike('name', `%${query}%`)
+        `
+        )
+        .ilike("name", `%${query}%`)
         .limit(20);
 
       if (error) {
-        console.error('Erro ao buscar produtos:', error);
+        console.error("Erro ao buscar produtos:", error);
         return [];
       }
 
-      // Converter para o formato SimpleProduct  
-      return produtos?.map((produto: { id: unknown; name: unknown; groups?: unknown }) => {
-        const groups = produto.groups as { name?: string } | null | undefined;
-        return {
-          id: String(produto.id),
-          name: String(produto.name),
-          category: groups?.name || 'Sem categoria'
-        };
-      }) || [];
+      // Converter para o formato SimpleProduct
+      return (
+        produtos?.map((produto: { id: unknown; name: unknown; groups?: unknown }) => {
+          const groups = produto.groups as { name?: string } | null | undefined;
+          return {
+            id: String(produto.id),
+            name: String(produto.name),
+            category: groups?.name || "Sem categoria",
+          };
+        }) || []
+      );
     } catch (error) {
-      console.error('Erro ao buscar produtos:', error);
+      console.error("Erro ao buscar produtos:", error);
       return [];
     }
   }
@@ -551,15 +553,15 @@ export class TechnicalSheetService {
   ): EditableIngredient[] {
     const ratio = newServings / originalServings;
 
-    return ingredients.map(ingredient => {
+    return ingredients.map((ingredient) => {
       const numericQuantity = parseFloat(ingredient.originalQuantity);
-      const newQuantity = isNaN(numericQuantity) 
-        ? ingredient.originalQuantity 
+      const newQuantity = isNaN(numericQuantity)
+        ? ingredient.originalQuantity
         : (numericQuantity * ratio).toFixed(2);
 
       return {
         ...ingredient,
-        quantity: newQuantity
+        quantity: newQuantity,
       };
     });
   }
@@ -578,12 +580,13 @@ export class TechnicalSheetService {
   static formatQuantity(quantity: string, unit: string): string {
     const numericValue = parseFloat(quantity);
     if (isNaN(numericValue)) return `${quantity} ${unit}`;
-    
+
     // Remover casas decimais desnecessárias
-    const formattedValue = numericValue % 1 === 0 
-      ? numericValue.toString() 
-      : numericValue.toFixed(2).replace(/\.?0+$/, '');
-    
+    const formattedValue =
+      numericValue % 1 === 0
+        ? numericValue.toString()
+        : numericValue.toFixed(2).replace(/\.?0+$/, "");
+
     return `${formattedValue} ${unit}`;
   }
 }

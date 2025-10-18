@@ -33,9 +33,7 @@ export default function Page() {
   const [filtroProduto, setFiltroProduto] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
-  const [produtoSelecionado, setProdutoSelecionado] = useState<Product | null>(
-    null
-  );
+  const [produtoSelecionado, setProdutoSelecionado] = useState<Product | null>(null);
   const [quantidade, setQuantidade] = useState(1);
   const [observacoes, setObservacoes] = useState("");
   const [dataAbertura, setDataAbertura] = useState("");
@@ -86,10 +84,10 @@ export default function Page() {
 
   // Filtragem
   const gruposFiltrados = grupos.filter((g) =>
-    (g.name || '').toLowerCase().includes(filtroGrupo.toLowerCase())
+    (g.name || "").toLowerCase().includes(filtroGrupo.toLowerCase())
   );
   const produtosFiltrados = produtos.filter((p) =>
-    (p.name || '').toLowerCase().includes(filtroProduto.toLowerCase())
+    (p.name || "").toLowerCase().includes(filtroProduto.toLowerCase())
   );
 
   // Função para abrir modal ao clicar no produto
@@ -105,13 +103,13 @@ export default function Page() {
   async function handleSalvarEtiqueta() {
     setSalvando(true);
     setErro(null);
-    
+
     if (!produtoSelecionado) {
       setErro("Selecione um produto");
       setSalvando(false);
       return;
     }
-    
+
     // TODO: obter usuario_id e organizacao_id do contexto/auth
     const usuario_id = null;
     const organizacao_id = null;
@@ -151,12 +149,8 @@ export default function Page() {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-            <svg
-              className="w-7 h-7 text-white"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+            <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
             </svg>
           </div>
@@ -181,7 +175,7 @@ export default function Page() {
               <input
                 type="text"
                 placeholder="Filtrar grupos..."
-                className="input input-bordered w-full mb-2 px-3 py-2 border rounded"
+                className="input input-bordered mb-2 w-full rounded border px-3 py-2"
                 value={filtroGrupo}
                 onChange={(e) => setFiltroGrupo(e.target.value)}
               />
@@ -189,23 +183,21 @@ export default function Page() {
                 {gruposFiltrados.map((grupo) => (
                   <li
                     key={grupo.id}
-                    className="py-2 cursor-pointer hover:bg-emerald-50 px-2 rounded"
+                    className="cursor-pointer rounded px-2 py-2 hover:bg-emerald-50"
                     onClick={() => setGrupoSelecionado(grupo.id)}
                   >
                     {grupo.name}
                   </li>
                 ))}
                 {gruposFiltrados.length === 0 && (
-                  <li className="text-gray-400 py-2">
-                    Nenhum grupo encontrado.
-                  </li>
+                  <li className="py-2 text-gray-400">Nenhum grupo encontrado.</li>
                 )}
               </ul>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
               <button
-                className="text-sm text-emerald-700 underline w-fit mb-2"
+                className="mb-2 w-fit text-sm text-emerald-700 underline"
                 onClick={() => setGrupoSelecionado(null)}
               >
                 ← Voltar para grupos
@@ -213,7 +205,7 @@ export default function Page() {
               <input
                 type="text"
                 placeholder="Filtrar produtos..."
-                className="input input-bordered w-full mb-2 px-3 py-2 border rounded"
+                className="input input-bordered mb-2 w-full rounded border px-3 py-2"
                 value={filtroProduto}
                 onChange={(e) => setFiltroProduto(e.target.value)}
               />
@@ -221,16 +213,14 @@ export default function Page() {
                 {produtosFiltrados.map((produto) => (
                   <li
                     key={produto.id}
-                    className="py-2 px-2 cursor-pointer hover:bg-emerald-50 rounded"
+                    className="cursor-pointer rounded px-2 py-2 hover:bg-emerald-50"
                     onClick={() => handleProdutoClick(produto)}
                   >
                     {produto.name}
                   </li>
                 ))}
                 {produtosFiltrados.length === 0 && (
-                  <li className="text-gray-400 py-2">
-                    Nenhum produto encontrado.
-                  </li>
+                  <li className="py-2 text-gray-400">Nenhum produto encontrado.</li>
                 )}
               </ul>
             </div>
@@ -241,7 +231,7 @@ export default function Page() {
       {/* Modal de criação de etiqueta */}
       {modalAberto && produtoSelecionado && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+          <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
             <button
               className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
               onClick={() => setModalAberto(false)}
@@ -249,9 +239,8 @@ export default function Page() {
             >
               ×
             </button>
-            <h2 className="text-xl font-semibold mb-4">
-              Nova etiqueta para:{" "}
-              <span className="font-bold">{produtoSelecionado.name}</span>
+            <h2 className="mb-4 text-xl font-semibold">
+              Nova etiqueta para: <span className="font-bold">{produtoSelecionado.name}</span>
             </h2>
             <form
               onSubmit={(e) => {
@@ -261,23 +250,16 @@ export default function Page() {
               className="flex flex-col gap-4"
             >
               <div>
-                <label
-                  className="block text-sm font-medium mb-1"
-                  htmlFor="tipoEtiqueta"
-                >
+                <label className="mb-1 block text-sm font-medium" htmlFor="tipoEtiqueta">
                   Tipo de etiqueta
                 </label>
-                <Select
-                  value={tipoEtiqueta}
-                  onValueChange={setTipoEtiqueta}
-                  required
-                >
+                <Select value={tipoEtiqueta} onValueChange={setTipoEtiqueta} required>
                   <SelectTrigger
                     id="tipoEtiqueta"
                     className={
                       isMobile
-                        ? "w-full px-3 py-3 border rounded text-lg"
-                        : "w-full px-3 py-2 border rounded"
+                        ? "w-full rounded border px-3 py-3 text-lg"
+                        : "w-full rounded border px-3 py-2"
                     }
                   >
                     <SelectValue placeholder="Selecione o tipo" />
@@ -285,9 +267,7 @@ export default function Page() {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Tipos</SelectLabel>
-                      <SelectItem value="produto_aberto">
-                        Produto Aberto
-                      </SelectItem>
+                      <SelectItem value="produto_aberto">Produto Aberto</SelectItem>
                       <SelectItem value="amostra">Amostra</SelectItem>
                       <SelectItem value="descongelo">Descongelo</SelectItem>
                     </SelectGroup>
@@ -297,10 +277,7 @@ export default function Page() {
               {tipoEtiqueta === "amostra" && (
                 <>
                   <div>
-                    <Label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="horario"
-                    >
+                    <Label className="mb-1 block text-sm font-medium" htmlFor="horario">
                       Horário
                     </Label>
                     <Input
@@ -312,10 +289,7 @@ export default function Page() {
                     />
                   </div>
                   <div>
-                    <Label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="dataColeta"
-                    >
+                    <Label className="mb-1 block text-sm font-medium" htmlFor="dataColeta">
                       Data da coleta
                     </Label>
                     <Input
@@ -327,10 +301,7 @@ export default function Page() {
                     />
                   </div>
                   <div>
-                    <Label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="dataDescarte"
-                    >
+                    <Label className="mb-1 block text-sm font-medium" htmlFor="dataDescarte">
                       Data do descarte
                     </Label>
                     <Input
@@ -342,29 +313,19 @@ export default function Page() {
                     />
                   </div>
                   <div>
-                    <Label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="responsavelAmostra"
-                    >
+                    <Label className="mb-1 block text-sm font-medium" htmlFor="responsavelAmostra">
                       Responsável
                     </Label>
                     <Input
                       type="text"
                       id="responsavelAmostra"
-                      value={
-                        user?.user_metadata?.full_name ||
-                        user?.email ||
-                        responsavelAmostra
-                      }
+                      value={user?.user_metadata?.full_name || user?.email || responsavelAmostra}
                       onChange={(e) => setResponsavelAmostra(e.target.value)}
                       readOnly
                     />
                   </div>
                   <div>
-                    <Label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="obsAmostra"
-                    >
+                    <Label className="mb-1 block text-sm font-medium" htmlFor="obsAmostra">
                       Observações
                     </Label>
                     <Textarea
@@ -379,10 +340,7 @@ export default function Page() {
               {tipoEtiqueta === "produto_aberto" && (
                 <>
                   <div>
-                    <label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="dataAbertura"
-                    >
+                    <label className="mb-1 block text-sm font-medium" htmlFor="dataAbertura">
                       Data de abertura
                     </label>
                     <Input
@@ -394,10 +352,7 @@ export default function Page() {
                     />
                   </div>
                   <div>
-                    <label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="dataValidade"
-                    >
+                    <label className="mb-1 block text-sm font-medium" htmlFor="dataValidade">
                       Data de validade
                     </label>
                     <Input
@@ -409,30 +364,23 @@ export default function Page() {
                     />
                   </div>
                   <div>
-                    <Label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="responsavel"
-                    >
+                    <Label className="mb-1 block text-sm font-medium" htmlFor="responsavel">
                       Responsável
                     </Label>
                     <Input
                       type="text"
                       id="responsavel"
-                      value={
-                        user?.user_metadata?.full_name ||
-                        user?.email ||
-                        responsavel
-                      }
+                      value={user?.user_metadata?.full_name || user?.email || responsavel}
                       onChange={(e) => setResponsavel(e.target.value)}
                       readOnly
                     />
                   </div>
                 </>
               )}
-              {erro && <div className="text-red-600 text-sm">{erro}</div>}
+              {erro && <div className="text-sm text-red-600">{erro}</div>}
               <button
                 type="submit"
-                className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 disabled:opacity-60"
+                className="rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700 disabled:opacity-60"
                 disabled={salvando}
               >
                 {salvando ? "Salvando..." : "Salvar etiqueta"}

@@ -4,11 +4,7 @@ import { ChevronRight, type LucideIcon } from "lucide-react";
 import { NavigationLink } from "@/components/ui/navigation-link";
 import { useNavigation } from "@/contexts/NavigationContext";
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -46,17 +42,10 @@ export function NavMain({
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
             {item.items && item.items.length > 0 ? (
-              <Collapsible
-                asChild
-                defaultOpen={item.isActive}
-                className="group/collapsible"
-              >
+              <Collapsible asChild defaultOpen={item.isActive} className="group/collapsible">
                 <>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      tooltip={item.title}
-                      isActive={item.isActive}
-                    >
+                    <SidebarMenuButton tooltip={item.title} isActive={item.isActive}>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
                       <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -83,9 +72,7 @@ export function NavMain({
                                 <CollapsibleContent>
                                   <SidebarMenuSub>
                                     {subItem.items.map((nestedItem) => (
-                                      <SidebarMenuSubItem
-                                        key={nestedItem.title}
-                                      >
+                                      <SidebarMenuSubItem key={nestedItem.title}>
                                         <SidebarMenuSubButton
                                           asChild
                                           isActive={nestedItem.isActive}
@@ -100,13 +87,8 @@ export function NavMain({
                                 </CollapsibleContent>
                               </>
                             ) : (
-                              <SidebarMenuSubButton
-                                asChild
-                                isActive={subItem.isActive}
-                              >
-                                <NavigationLink href={subItem.url}>
-                                  {subItem.title}
-                                </NavigationLink>
+                              <SidebarMenuSubButton asChild isActive={subItem.isActive}>
+                                <NavigationLink href={subItem.url}>{subItem.title}</NavigationLink>
                               </SidebarMenuSubButton>
                             )}
                           </SidebarMenuSubItem>

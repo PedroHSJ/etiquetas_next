@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +9,13 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { LocalidadeSelector } from "@/components/localidade/LocalidadeSelector";
 import { TIPOS_UAN, TipoUAN } from "@/types/uan";
-import { formatCNPJ, formatTelefone, formatCEP, unformatCNPJ, unformatTelefone } from "@/utils/masks";
+import {
+  formatCNPJ,
+  formatTelefone,
+  formatCEP,
+  unformatCNPJ,
+  unformatTelefone,
+} from "@/utils/masks";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -24,13 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  CheckCircle,
-  Circle,
-  Building2,
-  Users,
-  X,
-} from "lucide-react";
+import { CheckCircle, Circle, Building2, Users, X } from "lucide-react";
 import { useOrganizationWizard } from "@/hooks/useOrganizationWizard";
 import { organizationTemplates } from "@/config/organization-templates";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,10 +34,7 @@ interface OrganizationWizardProps {
   onComplete: (organizationId: string, organizationName: string) => void;
 }
 
-export function OrganizationWizard({
-  userId,
-  onComplete,
-}: OrganizationWizardProps) {
+export function OrganizationWizard({ userId, onComplete }: OrganizationWizardProps) {
   const {
     currentStep,
     wizardData,
@@ -69,10 +60,7 @@ export function OrganizationWizard({
       case 1:
         return wizardData.organizationName.trim().length >= 3;
       case 2:
-        return (
-          wizardData.selectedDepartments.length > 0 ||
-          wizardData.customDepartments.length > 0
-        );
+        return wizardData.selectedDepartments.length > 0 || wizardData.customDepartments.length > 0;
       case 3:
         return true; // Review sempre pode ser enviado
       default:
@@ -103,14 +91,10 @@ export function OrganizationWizard({
   };
 
   const toggleDepartment = (dept: { nome: string; tipo: string }) => {
-    const isSelected = wizardData.selectedDepartments.some(
-      (d) => d.tipo === dept.tipo
-    );
+    const isSelected = wizardData.selectedDepartments.some((d) => d.tipo === dept.tipo);
     if (isSelected) {
       updateWizardData({
-        selectedDepartments: wizardData.selectedDepartments.filter(
-          (d) => d.tipo !== dept.tipo
-        ),
+        selectedDepartments: wizardData.selectedDepartments.filter((d) => d.tipo !== dept.tipo),
       });
     } else {
       updateWizardData({
@@ -119,40 +103,38 @@ export function OrganizationWizard({
     }
   };
 
-
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
           <div className="space-y-6">
             <div>
-              <Label htmlFor="orgName" className="mb-2">Nome da UAN</Label>
+              <Label htmlFor="orgName" className="mb-2">
+                Nome da UAN
+              </Label>
               <Input
                 id="orgName"
                 placeholder="Ex: UAN Hospital Central, UAN Escola Municipal"
                 value={wizardData.organizationName}
-                onChange={(e) =>
-                  updateWizardData({ organizationName: e.target.value })
-                }
+                onChange={(e) => updateWizardData({ organizationName: e.target.value })}
                 className="mt-2"
               />
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-muted-foreground mt-2 text-sm">
                 Digite o nome da sua Unidade de Alimentação e Nutrição
               </p>
             </div>
 
             {/* Informações da UAN */}
             <div className="border-t pt-6">
-              <h4 className="text-lg font-medium mb-4">
-                Dados da UAN
-              </h4>
+              <h4 className="mb-4 text-lg font-medium">Dados da UAN</h4>
 
-              <Card className="p-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="space-y-4 p-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {/* CNPJ */}
                   <div>
-                    <Label htmlFor="cnpj" className="mb-2">CNPJ</Label>
+                    <Label htmlFor="cnpj" className="mb-2">
+                      CNPJ
+                    </Label>
                     <Input
                       id="cnpj"
                       placeholder="00.000.000/0000-00"
@@ -162,8 +144,8 @@ export function OrganizationWizard({
                         updateWizardData({
                           uanData: {
                             ...wizardData.uanData,
-                            cnpj: unformatted
-                          }
+                            cnpj: unformatted,
+                          },
                         });
                       }}
                     />
@@ -178,8 +160,8 @@ export function OrganizationWizard({
                         updateWizardData({
                           uanData: {
                             ...wizardData.uanData,
-                            tipo_uan: value as TipoUAN
-                          }
+                            tipo_uan: value as TipoUAN,
+                          },
                         })
                       }
                     >
@@ -198,7 +180,9 @@ export function OrganizationWizard({
 
                   {/* Capacidade de Atendimento */}
                   <div>
-                    <Label htmlFor="capacidade" className="mb-2">Capacidade de Atendimento</Label>
+                    <Label htmlFor="capacidade" className="mb-2">
+                      Capacidade de Atendimento
+                    </Label>
                     <Input
                       id="capacidade"
                       type="number"
@@ -208,8 +192,8 @@ export function OrganizationWizard({
                         updateWizardData({
                           uanData: {
                             ...wizardData.uanData,
-                            capacidade_atendimento: parseInt(e.target.value) || undefined
-                          }
+                            capacidade_atendimento: parseInt(e.target.value) || undefined,
+                          },
                         })
                       }
                     />
@@ -217,7 +201,9 @@ export function OrganizationWizard({
 
                   {/* Telefone Principal */}
                   <div>
-                    <Label htmlFor="telefone" className="mb-2">Telefone Principal</Label>
+                    <Label htmlFor="telefone" className="mb-2">
+                      Telefone Principal
+                    </Label>
                     <Input
                       id="telefone"
                       placeholder="(11) 99999-9999"
@@ -227,8 +213,8 @@ export function OrganizationWizard({
                         updateWizardData({
                           uanData: {
                             ...wizardData.uanData,
-                            telefone_principal: unformatted
-                          }
+                            telefone_principal: unformatted,
+                          },
                         });
                       }}
                     />
@@ -237,7 +223,9 @@ export function OrganizationWizard({
 
                 {/* Descrição */}
                 <div>
-                  <Label htmlFor="descricao" className="mb-2">Descrição</Label>
+                  <Label htmlFor="descricao" className="mb-2">
+                    Descrição
+                  </Label>
                   <Textarea
                     id="descricao"
                     placeholder="Descreva brevemente sua UAN..."
@@ -246,8 +234,8 @@ export function OrganizationWizard({
                       updateWizardData({
                         uanData: {
                           ...wizardData.uanData,
-                          descricao: e.target.value
-                        }
+                          descricao: e.target.value,
+                        },
                       })
                     }
                   />
@@ -255,7 +243,7 @@ export function OrganizationWizard({
 
                 {/* Localização */}
                 <div>
-                  <Label className="text-base font-medium mb-2">Localização</Label>
+                  <Label className="mb-2 text-base font-medium">Localização</Label>
                   <div className="mt-2">
                     <LocalidadeSelector
                       value={{
@@ -265,7 +253,7 @@ export function OrganizationWizard({
                         endereco: wizardData.uanData.endereco,
                         numero: wizardData.uanData.numero,
                         complemento: wizardData.uanData.complemento,
-                        bairro: wizardData.uanData.bairro
+                        bairro: wizardData.uanData.bairro,
                       }}
                       onChange={(localidade: {
                         estado_id?: number;
@@ -279,8 +267,8 @@ export function OrganizationWizard({
                         updateWizardData({
                           uanData: {
                             ...wizardData.uanData,
-                            ...localidade
-                          }
+                            ...localidade,
+                          },
                         })
                       }
                       showAddressFields={true}
@@ -296,24 +284,17 @@ export function OrganizationWizard({
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium mb-4">
-                Selecione os{" "}
-                {wizardData.template?.terminologia.departamento ||
-                  "Departamentos"}
+              <h3 className="mb-4 text-lg font-medium">
+                Selecione os {wizardData.template?.terminologia.departamento || "Departamentos"}
               </h3>
 
               {wizardData.template?.departamentos && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2">
                   {wizardData.template.departamentos.map((dept: { nome: string; tipo: string }) => (
-                    <div
-                      key={dept.tipo}
-                      className="flex items-center space-x-2"
-                    >
+                    <div key={dept.tipo} className="flex items-center space-x-2">
                       <Checkbox
                         id={dept.tipo}
-                        checked={wizardData.selectedDepartments.some(
-                          (d) => d.tipo === dept.tipo
-                        )}
+                        checked={wizardData.selectedDepartments.some((d) => d.tipo === dept.tipo)}
                         onCheckedChange={() => toggleDepartment(dept)}
                       />
                       <Label htmlFor={dept.tipo} className="flex-1">
@@ -326,12 +307,10 @@ export function OrganizationWizard({
 
               <div className="border-t pt-4">
                 <Label htmlFor="customDept" className="mb-2">
-                  Adicionar{" "}
-                  {wizardData.template?.terminologia.departamento ||
-                    "Departamento"}{" "}
+                  Adicionar {wizardData.template?.terminologia.departamento || "Departamento"}{" "}
                   Personalizado
                 </Label>
-                <div className="flex gap-2 mt-2">
+                <div className="mt-2 flex gap-2">
                   <Input
                     id="customDept"
                     placeholder="Nome do departamento"
@@ -351,13 +330,9 @@ export function OrganizationWizard({
 
               {wizardData.customDepartments.length > 0 && (
                 <div className="mt-4">
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {wizardData.customDepartments.map((dept, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
                         {dept.nome}
                         <button
                           onClick={() => removeCustomDepartment(index)}
@@ -378,12 +353,10 @@ export function OrganizationWizard({
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium mb-4">
-                Resumo da Configuração
-              </h3>
+              <h3 className="mb-4 text-lg font-medium">Resumo da Configuração</h3>
 
-              <Card className="p-4 mb-4">
-                <h4 className="font-medium mb-2">UAN</h4>
+              <Card className="mb-4 p-4">
+                <h4 className="mb-2 font-medium">UAN</h4>
                 <p>
                   <strong>Nome:</strong> {wizardData.organizationName}
                 </p>
@@ -402,12 +375,14 @@ export function OrganizationWizard({
                 )}
                 {wizardData.uanData.capacidade_atendimento && (
                   <p>
-                    <strong>Capacidade:</strong> {wizardData.uanData.capacidade_atendimento} refeições/dia
+                    <strong>Capacidade:</strong> {wizardData.uanData.capacidade_atendimento}{" "}
+                    refeições/dia
                   </p>
                 )}
                 {wizardData.uanData.telefone_principal && (
                   <p>
-                    <strong>Telefone:</strong> {formatTelefone(wizardData.uanData.telefone_principal)}
+                    <strong>Telefone:</strong>{" "}
+                    {formatTelefone(wizardData.uanData.telefone_principal)}
                   </p>
                 )}
                 {wizardData.uanData.cep && (
@@ -422,42 +397,33 @@ export function OrganizationWizard({
                 )}
               </Card>
 
-              <Card className="p-4 mb-4">
-                <h4 className="font-medium mb-2">
-                  {[
-                    ...wizardData.selectedDepartments,
-                    ...wizardData.customDepartments,
-                  ].length === 1 
-                    ? wizardData.template?.terminologia.departamento 
+              <Card className="mb-4 p-4">
+                <h4 className="mb-2 font-medium">
+                  {[...wizardData.selectedDepartments, ...wizardData.customDepartments].length === 1
+                    ? wizardData.template?.terminologia.departamento
                     : `${wizardData.template?.terminologia.departamento}s`}
                 </h4>
                 <div className="space-y-3">
-                  {[
-                    ...wizardData.selectedDepartments,
-                    ...wizardData.customDepartments,
-                  ].map((dept, index) => (
-                    <div key={index} className="border-l-2 border-primary pl-3">
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="font-medium">{dept.nome}</span>
+                  {[...wizardData.selectedDepartments, ...wizardData.customDepartments].map(
+                    (dept, index) => (
+                      <div key={index} className="border-primary border-l-2 pl-3">
+                        <div className="mb-1 flex items-start justify-between">
+                          <span className="font-medium">{dept.nome}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </Card>
 
-              <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="rounded-lg bg-blue-50 p-4">
                 <p className="text-sm text-blue-800">
                   ✨ Sua UAN será criada com{" "}
-                  {
-                    [
-                      ...wizardData.selectedDepartments,
-                      ...wizardData.customDepartments,
-                    ].length
-                  }{" "}
-                  {[
-                    ...wizardData.selectedDepartments,
-                    ...wizardData.customDepartments,
-                  ].length === 1 ? "setor configurado" : "setores configurados"}.
+                  {[...wizardData.selectedDepartments, ...wizardData.customDepartments].length}{" "}
+                  {[...wizardData.selectedDepartments, ...wizardData.customDepartments].length === 1
+                    ? "setor configurado"
+                    : "setores configurados"}
+                  .
                 </p>
               </div>
             </div>
@@ -477,22 +443,17 @@ export function OrganizationWizard({
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-4">
-          Configuração da UAN
-        </h1>
-        <p className="text-sm sm:text-base text-center text-muted-foreground mb-6">
+        <h1 className="mb-4 text-center text-2xl font-bold sm:text-3xl">Configuração da UAN</h1>
+        <p className="text-muted-foreground mb-6 text-center text-sm sm:text-base">
           Vamos configurar sua Unidade de Alimentação e Nutrição para começar a gerenciar os setores
         </p>
 
-        <Progress
-          value={(currentStep / getTotalSteps()) * 100}
-          className="mb-4"
-        />
+        <Progress value={(currentStep / getTotalSteps()) * 100} className="mb-4" />
 
         <div className="flex justify-center overflow-x-auto">
-          <div className="flex items-center space-x-2 sm:space-x-4 px-4 sm:px-0">
+          <div className="flex items-center space-x-2 px-4 sm:space-x-4 sm:px-0">
             {steps.map((step, index) => {
               const Icon = step.icon;
               const isCompleted = currentStep > step.number;
@@ -501,37 +462,34 @@ export function OrganizationWizard({
               return (
                 <div key={step.number} className="flex items-center">
                   <div
-                    className={`
-                    flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2
-                    ${
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 sm:h-10 sm:w-10 ${
                       isCompleted
                         ? "bg-primary border-primary text-primary-foreground"
                         : isCurrent
-                        ? "border-primary text-primary"
-                        : "border-muted text-muted-foreground"
-                    }
-                  `}
+                          ? "border-primary text-primary"
+                          : "border-muted text-muted-foreground"
+                    } `}
                   >
                     {isCompleted ? (
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                     ) : (
-                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     )}
                   </div>
                   <span
-                    className={`ml-1 sm:ml-2 text-xs sm:text-sm font-medium whitespace-nowrap ${
+                    className={`ml-1 text-xs font-medium whitespace-nowrap sm:ml-2 sm:text-sm ${
                       isCurrent
                         ? "text-primary"
                         : isCompleted
-                        ? "text-primary"
-                        : "text-muted-foreground"
+                          ? "text-primary"
+                          : "text-muted-foreground"
                     }`}
                   >
                     {step.title}
                   </span>
                   {index < steps.length - 1 && (
                     <div
-                      className={`w-4 sm:w-8 h-0.5 mx-2 sm:mx-4 ${
+                      className={`mx-2 h-0.5 w-4 sm:mx-4 sm:w-8 ${
                         isCompleted ? "bg-primary" : "bg-muted"
                       }`}
                     />
@@ -550,17 +508,15 @@ export function OrganizationWizard({
           </CardTitle>
           <CardDescription>
             {currentStep === 1 && "Informe o nome da sua Unidade de Alimentação e Nutrição"}
-            {currentStep === 2 &&
-              "Selecione os setores que sua UAN possui"}
-            {currentStep === 3 &&
-              "Configure as especializações para cada setor"}
+            {currentStep === 2 && "Selecione os setores que sua UAN possui"}
+            {currentStep === 3 && "Configure as especializações para cada setor"}
             {currentStep === 4 && "Revise as configurações antes de finalizar"}
           </CardDescription>
         </CardHeader>
         <CardContent>{renderStepContent()}</CardContent>
       </Card>
 
-      <div className="flex flex-col sm:flex-row justify-between gap-4 mt-6">
+      <div className="mt-6 flex flex-col justify-between gap-4 sm:flex-row">
         <Button
           variant="outline"
           onClick={prevStep}
@@ -570,7 +526,7 @@ export function OrganizationWizard({
           Anterior
         </Button>
 
-        <div className="flex gap-2 order-1 sm:order-2">
+        <div className="order-1 flex gap-2 sm:order-2">
           {currentStep < getTotalSteps() ? (
             <Button onClick={nextStep} disabled={!canProceed()} className="w-full sm:w-auto">
               Próximo

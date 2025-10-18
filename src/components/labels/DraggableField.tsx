@@ -30,11 +30,10 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
   const qrRef = useRef<HTMLCanvasElement>(null);
   const barcodeRef = useRef<SVGSVGElement>(null);
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: field.id,
-      data: field,
-    });
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: field.id,
+    data: field,
+  });
 
   const style = transform
     ? {
@@ -78,13 +77,13 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
     switch (field.type) {
       case "text":
         return (
-          <div className="w-full h-full flex items-center">
+          <div className="flex h-full w-full items-center">
             {isEditing ? (
               <input
                 type="text"
                 value={field.value || field.label}
                 onChange={(e) => handleFieldChange({ value: e.target.value })}
-                className="w-full h-full bg-transparent border-none outline-none text-inherit"
+                className="h-full w-full border-none bg-transparent text-inherit outline-none"
                 style={{
                   fontSize: field.style.fontSize,
                   fontWeight: field.style.fontWeight,
@@ -99,13 +98,13 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
         );
       case "date":
         return (
-          <div className="w-full h-full flex items-center">
+          <div className="flex h-full w-full items-center">
             {isEditing ? (
               <input
                 type="date"
                 value={field.value || ""}
                 onChange={(e) => handleFieldChange({ value: e.target.value })}
-                className="w-full h-full bg-transparent border-none outline-none text-inherit"
+                className="h-full w-full border-none bg-transparent text-inherit outline-none"
                 style={{
                   fontSize: field.style.fontSize,
                   fontWeight: field.style.fontWeight,
@@ -115,25 +114,21 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
               />
             ) : (
               <span>
-                {field.value
-                  ? new Date(field.value).toLocaleDateString("pt-BR")
-                  : field.label}
+                {field.value ? new Date(field.value).toLocaleDateString("pt-BR") : field.label}
               </span>
             )}
           </div>
         );
       case "temperature":
         return (
-          <div className="w-full h-full flex items-center">
+          <div className="flex h-full w-full items-center">
             {isEditing ? (
               <div className="flex w-full">
                 <input
                   type="number"
                   value={field.value?.replace("°C", "") || ""}
-                  onChange={(e) =>
-                    handleFieldChange({ value: `${e.target.value}°C` })
-                  }
-                  className="flex-1 bg-transparent border-none outline-none text-inherit"
+                  onChange={(e) => handleFieldChange({ value: `${e.target.value}°C` })}
+                  className="flex-1 border-none bg-transparent text-inherit outline-none"
                   style={{
                     fontSize: field.style.fontSize,
                     fontWeight: field.style.fontWeight,
@@ -150,37 +145,29 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
         );
       case "product":
         return (
-          <div className="w-full h-full flex items-center">
+          <div className="flex h-full w-full items-center">
             {isEditing ? (
               <ProductSelector
                 products={products}
-                selectedProduct={
-                  products.find((p) => p.id === field.value) || null
-                }
-                onProductSelect={(product) =>
-                  handleFieldChange({ value: product.id })
-                }
+                selectedProduct={products.find((p) => p.id === field.value) || null}
+                onProductSelect={(product) => handleFieldChange({ value: product.id })}
                 trigger={
-                  <div className="w-full h-full border border-gray-300 rounded flex items-center px-2 cursor-pointer hover:bg-gray-50">
-                    <span className="text-sm truncate">
-                      {products.find((p) => p.id === field.value)?.name ||
-                        "Selecionar produto"}
+                  <div className="flex h-full w-full cursor-pointer items-center rounded border border-gray-300 px-2 hover:bg-gray-50">
+                    <span className="truncate text-sm">
+                      {products.find((p) => p.id === field.value)?.name || "Selecionar produto"}
                     </span>
                   </div>
                 }
                 placeholder="Selecionar produto"
               />
             ) : (
-              <span>
-                {products.find((p) => p.id === field.value)?.name ||
-                  field.label}
-              </span>
+              <span>{products.find((p) => p.id === field.value)?.name || field.label}</span>
             )}
           </div>
         );
       case "quantity":
         return (
-          <div className="w-full h-full flex items-center gap-2">
+          <div className="flex h-full w-full items-center gap-2">
             {isEditing ? (
               <>
                 <input
@@ -192,7 +179,7 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
                       value: `${e.target.value} ${unit}`.trim(),
                     });
                   }}
-                  className="flex-1 bg-transparent border-none outline-none text-inherit"
+                  className="flex-1 border-none bg-transparent text-inherit outline-none"
                   style={{
                     fontSize: field.style.fontSize,
                     fontWeight: field.style.fontWeight,
@@ -210,7 +197,7 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
                       value: `${quantity} ${e.target.value}`.trim(),
                     });
                   }}
-                  className="w-16 bg-transparent border-none outline-none text-inherit"
+                  className="w-16 border-none bg-transparent text-inherit outline-none"
                   style={{
                     fontSize: field.style.fontSize,
                     fontWeight: field.style.fontWeight,
@@ -226,29 +213,27 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
         );
       case "label-type":
         return (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="flex h-full w-full items-center justify-center">
             <div
-              className="px-3 py-1 rounded-full text-white font-bold text-center"
+              className="rounded-full px-3 py-1 text-center font-bold text-white"
               style={{
                 backgroundColor: labelType
-                  ? LABEL_TYPES_CONFIG[
-                      labelType as keyof typeof LABEL_TYPES_CONFIG
-                    ]?.color || "#6b7280"
+                  ? LABEL_TYPES_CONFIG[labelType as keyof typeof LABEL_TYPES_CONFIG]?.color ||
+                    "#6b7280"
                   : "#6b7280",
                 fontSize: field.style.fontSize,
               }}
             >
               {labelType
-                ? LABEL_TYPES_CONFIG[
-                    labelType as keyof typeof LABEL_TYPES_CONFIG
-                  ]?.name || "Tipo da Etiqueta"
+                ? LABEL_TYPES_CONFIG[labelType as keyof typeof LABEL_TYPES_CONFIG]?.name ||
+                  "Tipo da Etiqueta"
                 : "Tipo da Etiqueta"}
             </div>
           </div>
         );
       case "qrcode":
         return (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="flex h-full w-full items-center justify-center">
             {isEditing ? (
               <div className="flex flex-col items-center gap-1">
                 <input
@@ -256,18 +241,16 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
                   value={field.value || ""}
                   onChange={(e) => handleFieldChange({ value: e.target.value })}
                   placeholder="Dados do QR Code"
-                  className="w-full text-xs bg-transparent border border-gray-300 rounded px-1"
+                  className="w-full rounded border border-gray-300 bg-transparent px-1 text-xs"
                 />
-                {field.value && (
-                  <canvas ref={qrRef} className="max-w-full max-h-full" />
-                )}
+                {field.value && <canvas ref={qrRef} className="max-h-full max-w-full" />}
               </div>
             ) : (
               <>
                 {field.value ? (
-                  <canvas ref={qrRef} className="max-w-full max-h-full" />
+                  <canvas ref={qrRef} className="max-h-full max-w-full" />
                 ) : (
-                  <div className="border-2 border-dashed border-gray-300 w-full h-full flex items-center justify-center">
+                  <div className="flex h-full w-full items-center justify-center border-2 border-dashed border-gray-300">
                     <span className="text-xs text-gray-500">QR Code</span>
                   </div>
                 )}
@@ -277,29 +260,25 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
         );
       case "barcode":
         return (
-          <div className="w-full h-full flex flex-col items-center justify-center">
+          <div className="flex h-full w-full flex-col items-center justify-center">
             {isEditing ? (
-              <div className="flex flex-col items-center gap-1 w-full">
+              <div className="flex w-full flex-col items-center gap-1">
                 <input
                   type="text"
                   value={field.value || ""}
                   onChange={(e) => handleFieldChange({ value: e.target.value })}
                   placeholder="Código de barras"
-                  className="w-full text-xs bg-transparent border border-gray-300 rounded px-1"
+                  className="w-full rounded border border-gray-300 bg-transparent px-1 text-xs"
                 />
-                {field.value && (
-                  <svg ref={barcodeRef} className="max-w-full max-h-full" />
-                )}
+                {field.value && <svg ref={barcodeRef} className="max-h-full max-w-full" />}
               </div>
             ) : (
               <>
                 {field.value ? (
-                  <svg ref={barcodeRef} className="max-w-full max-h-full" />
+                  <svg ref={barcodeRef} className="max-h-full max-w-full" />
                 ) : (
-                  <div className="border-2 border-dashed border-gray-300 w-full h-full flex items-center justify-center">
-                    <span className="text-xs text-gray-500">
-                      Código de Barras
-                    </span>
+                  <div className="flex h-full w-full items-center justify-center border-2 border-dashed border-gray-300">
+                    <span className="text-xs text-gray-500">Código de Barras</span>
                   </div>
                 )}
               </>
@@ -327,35 +306,31 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
         backgroundColor: field.style.backgroundColor || "transparent",
         borderStyle: field.style.borderStyle || "solid",
         borderWidth: field.style.borderWidth || 1,
-        borderColor: isSelected
-          ? "#3b82f6"
-          : field.style.borderColor || "#d1d5db",
+        borderColor: isSelected ? "#3b82f6" : field.style.borderColor || "#d1d5db",
       }}
       onClick={() => onSelect?.(field)}
       className={cn(
-        "absolute border cursor-move flex items-center group",
-        isSelected ? "border-blue-500 border-2" : "border-gray-300",
+        "group absolute flex cursor-move items-center border",
+        isSelected ? "border-2 border-blue-500" : "border-gray-300",
         isDragging ? "opacity-50" : "opacity-100"
       )}
       {...attributes}
       {...listeners}
     >
       {isSelected && (
-        <div className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-move">
-          <GripVertical className="w-2 h-2 text-white" />
+        <div className="absolute -top-1 -left-1 h-3 w-3 cursor-move rounded-full border border-white bg-blue-500">
+          <GripVertical className="h-2 w-2 text-white" />
         </div>
       )}
 
-      <div className="w-full h-full p-1 overflow-hidden">
-        {renderFieldContent()}
-      </div>
+      <div className="h-full w-full overflow-hidden p-1">{renderFieldContent()}</div>
 
       {/* Resize handles */}
       {isSelected && (
         <>
-          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-se-resize" />
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-ne-resize" />
-          <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 border border-white rounded-full cursor-sw-resize" />
+          <div className="absolute -right-1 -bottom-1 h-3 w-3 cursor-se-resize rounded-full border border-white bg-blue-500" />
+          <div className="absolute -top-1 -right-1 h-3 w-3 cursor-ne-resize rounded-full border border-white bg-blue-500" />
+          <div className="absolute -bottom-1 -left-1 h-3 w-3 cursor-sw-resize rounded-full border border-white bg-blue-500" />
         </>
       )}
     </div>

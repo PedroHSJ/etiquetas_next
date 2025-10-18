@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -23,45 +23,32 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { 
-  Building2, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Clock, 
-  Users,
-  Save,
-  Loader2
-} from "lucide-react"
-import { TIPOS_UAN } from "@/types/uan"
-import type { OrganizacaoExpandida, HorarioFuncionamento } from "@/types/uan"
-import { UANService } from "@/lib/services/UANService"
-import { useToast } from "@/hooks/use-toast"
-import { LocalidadeSelector } from "@/components/localidade/LocalidadeSelector"
+} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Building2, MapPin, Phone, Mail, Clock, Users, Save, Loader2 } from "lucide-react";
+import { TIPOS_UAN } from "@/types/uan";
+import type { OrganizacaoExpandida, HorarioFuncionamento } from "@/types/uan";
+import { UANService } from "@/lib/services/UANService";
+import { useToast } from "@/hooks/use-toast";
+import { LocalidadeSelector } from "@/components/localidade/LocalidadeSelector";
 
 // Schema de validação
 const organizationSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   descricao: z.string().optional(),
-  tipo_uan: z.enum([
-    'restaurante_comercial',
-    'restaurante_institucional', 
-    'lanchonete',
-    'padaria',
-    'cozinha_industrial',
-    'catering',
-    'outro'
-  ]).optional(),
+  tipo_uan: z
+    .enum([
+      "restaurante_comercial",
+      "restaurante_institucional",
+      "lanchonete",
+      "padaria",
+      "cozinha_industrial",
+      "catering",
+      "outro",
+    ])
+    .optional(),
   cnpj: z.string().optional(),
   // Novos campos de localidade
   estado_id: z.number().optional(),
@@ -99,23 +86,23 @@ const organizationSchema = z.object({
   sabado_fechamento: z.string().optional(),
   domingo_abertura: z.string().optional(),
   domingo_fechamento: z.string().optional(),
-})
+});
 
-type OrganizationFormData = z.infer<typeof organizationSchema>
+type OrganizationFormData = z.infer<typeof organizationSchema>;
 
 interface OrganizationSettingsProps {
-  organization: OrganizacaoExpandida
-  onUpdate?: (updatedOrganization: OrganizacaoExpandida) => void
-  readOnly?: boolean
+  organization: OrganizacaoExpandida;
+  onUpdate?: (updatedOrganization: OrganizacaoExpandida) => void;
+  readOnly?: boolean;
 }
 
-export function OrganizationSettings({ 
-  organization, 
+export function OrganizationSettings({
+  organization,
   onUpdate,
-  readOnly = false 
+  readOnly = false,
 }: OrganizationSettingsProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   // Preparar dados iniciais do formulário
   const defaultValues: OrganizationFormData = {
@@ -159,58 +146,66 @@ export function OrganizationSettings({
     sabado_fechamento: organization.horario_funcionamento?.sabado?.fechamento || "",
     domingo_abertura: organization.horario_funcionamento?.domingo?.abertura || "",
     domingo_fechamento: organization.horario_funcionamento?.domingo?.fechamento || "",
-  }
+  };
 
   const form = useForm<OrganizationFormData>({
     resolver: zodResolver(organizationSchema),
-    defaultValues
-  })
+    defaultValues,
+  });
 
   const onSubmit = async (data: OrganizationFormData) => {
-    if (readOnly) return
-    
-    setIsLoading(true)
-    
+    if (readOnly) return;
+
+    setIsLoading(true);
+
     try {
       // Construir objeto de horário de funcionamento
       const horario_funcionamento: HorarioFuncionamento = {
-        segunda: data.segunda_abertura && data.segunda_fechamento 
-          ? { abertura: data.segunda_abertura, fechamento: data.segunda_fechamento }
-          : { abertura: null, fechamento: null },
-        terca: data.terca_abertura && data.terca_fechamento 
-          ? { abertura: data.terca_abertura, fechamento: data.terca_fechamento }
-          : { abertura: null, fechamento: null },
-        quarta: data.quarta_abertura && data.quarta_fechamento 
-          ? { abertura: data.quarta_abertura, fechamento: data.quarta_fechamento }
-          : { abertura: null, fechamento: null },
-        quinta: data.quinta_abertura && data.quinta_fechamento 
-          ? { abertura: data.quinta_abertura, fechamento: data.quinta_fechamento }
-          : { abertura: null, fechamento: null },
-        sexta: data.sexta_abertura && data.sexta_fechamento 
-          ? { abertura: data.sexta_abertura, fechamento: data.sexta_fechamento }
-          : { abertura: null, fechamento: null },
-        sabado: data.sabado_abertura && data.sabado_fechamento 
-          ? { abertura: data.sabado_abertura, fechamento: data.sabado_fechamento }
-          : { abertura: null, fechamento: null },
-        domingo: data.domingo_abertura && data.domingo_fechamento 
-          ? { abertura: data.domingo_abertura, fechamento: data.domingo_fechamento }
-          : { abertura: null, fechamento: null },
-      }
+        segunda:
+          data.segunda_abertura && data.segunda_fechamento
+            ? { abertura: data.segunda_abertura, fechamento: data.segunda_fechamento }
+            : { abertura: null, fechamento: null },
+        terca:
+          data.terca_abertura && data.terca_fechamento
+            ? { abertura: data.terca_abertura, fechamento: data.terca_fechamento }
+            : { abertura: null, fechamento: null },
+        quarta:
+          data.quarta_abertura && data.quarta_fechamento
+            ? { abertura: data.quarta_abertura, fechamento: data.quarta_fechamento }
+            : { abertura: null, fechamento: null },
+        quinta:
+          data.quinta_abertura && data.quinta_fechamento
+            ? { abertura: data.quinta_abertura, fechamento: data.quinta_fechamento }
+            : { abertura: null, fechamento: null },
+        sexta:
+          data.sexta_abertura && data.sexta_fechamento
+            ? { abertura: data.sexta_abertura, fechamento: data.sexta_fechamento }
+            : { abertura: null, fechamento: null },
+        sabado:
+          data.sabado_abertura && data.sabado_fechamento
+            ? { abertura: data.sabado_abertura, fechamento: data.sabado_fechamento }
+            : { abertura: null, fechamento: null },
+        domingo:
+          data.domingo_abertura && data.domingo_fechamento
+            ? { abertura: data.domingo_abertura, fechamento: data.domingo_fechamento }
+            : { abertura: null, fechamento: null },
+      };
 
       // Construir objeto do responsável técnico
-      const responsavel_tecnico = (
-        data.responsavel_nome || 
-        data.responsavel_profissao || 
-        data.responsavel_registro || 
-        data.responsavel_telefone || 
+      const responsavel_tecnico =
+        data.responsavel_nome ||
+        data.responsavel_profissao ||
+        data.responsavel_registro ||
+        data.responsavel_telefone ||
         data.responsavel_email
-      ) ? {
-        nome: data.responsavel_nome || "",
-        profissao: data.responsavel_profissao || null,
-        registro_profissional: data.responsavel_registro || null,
-        telefone: data.responsavel_telefone || null,
-        email: data.responsavel_email || null,
-      } : null
+          ? {
+              nome: data.responsavel_nome || "",
+              profissao: data.responsavel_profissao || null,
+              registro_profissional: data.responsavel_registro || null,
+              telefone: data.responsavel_telefone || null,
+              email: data.responsavel_email || null,
+            }
+          : null;
 
       const updateData = {
         nome: data.nome,
@@ -234,25 +229,24 @@ export function OrganizationSettings({
         capacidade_atendimento: data.capacidade_atendimento || undefined,
         responsavel_tecnico,
         horario_funcionamento,
-      }
+      };
 
-      const updatedOrg = await UANService.updateOrganizacao(organization.id, updateData)
-      
+      const updatedOrg = await UANService.updateOrganizacao(organization.id, updateData);
+
       toast("Organização atualizada", {
         description: "As informações foram salvas com sucesso.",
-      })
+      });
 
-      onUpdate?.(updatedOrg)
-      
+      onUpdate?.(updatedOrg);
     } catch (error) {
-      console.error('Erro ao atualizar organização:', error)
+      console.error("Erro ao atualizar organização:", error);
       toast("Erro ao salvar", {
         description: "Não foi possível atualizar as informações da organização.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Form {...form}>
@@ -264,12 +258,10 @@ export function OrganizationSettings({
               <Building2 className="h-5 w-5" />
               Informações Básicas
             </CardTitle>
-            <CardDescription>
-              Dados principais da organização
-            </CardDescription>
+            <CardDescription>Dados principais da organização</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="nome"
@@ -290,11 +282,7 @@ export function OrganizationSettings({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de UAN</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={readOnly}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value} disabled={readOnly}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o tipo" />
@@ -321,8 +309,8 @@ export function OrganizationSettings({
                 <FormItem>
                   <FormLabel>Descrição</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      {...field} 
+                    <Textarea
+                      {...field}
                       placeholder="Descreva a organização..."
                       disabled={readOnly}
                     />
@@ -332,7 +320,7 @@ export function OrganizationSettings({
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="cnpj"
@@ -340,11 +328,7 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>CNPJ</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="00.000.000/0000-00"
-                        disabled={readOnly}
-                      />
+                      <Input {...field} placeholder="00.000.000/0000-00" disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -358,17 +342,17 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>Capacidade de Atendimento</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         type="number"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                        }
                         placeholder="Número de refeições/dia"
                         disabled={readOnly}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Número de refeições servidas por dia
-                    </FormDescription>
+                    <FormDescription>Número de refeições servidas por dia</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -386,7 +370,7 @@ export function OrganizationSettings({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="telefone_principal"
@@ -394,11 +378,7 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>Telefone Principal</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="(11) 99999-9999"
-                        disabled={readOnly}
-                      />
+                      <Input {...field} placeholder="(11) 99999-9999" disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -412,11 +392,7 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>Telefone Secundário</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="(11) 99999-9999"
-                        disabled={readOnly}
-                      />
+                      <Input {...field} placeholder="(11) 99999-9999" disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -430,8 +406,8 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
+                      <Input
+                        {...field}
                         type="email"
                         placeholder="contato@organizacao.com"
                         disabled={readOnly}
@@ -450,8 +426,8 @@ export function OrganizationSettings({
                 <FormItem>
                   <FormLabel>Endereço Completo</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      {...field} 
+                    <Textarea
+                      {...field}
                       placeholder="Rua, número, complemento, bairro..."
                       disabled={readOnly}
                     />
@@ -470,35 +446,35 @@ export function OrganizationSettings({
                 <div className="mt-2">
                   <LocalidadeSelector
                     value={{
-                      estado_id: form.watch('estado_id'),
-                      municipio_id: form.watch('municipio_id'),
-                      cep: form.watch('cep'),
-                      endereco: form.watch('endereco'),
-                      numero: form.watch('numero'),
-                      complemento: form.watch('complemento'),
-                      bairro: form.watch('bairro')
+                      estado_id: form.watch("estado_id"),
+                      municipio_id: form.watch("municipio_id"),
+                      cep: form.watch("cep"),
+                      endereco: form.watch("endereco"),
+                      numero: form.watch("numero"),
+                      complemento: form.watch("complemento"),
+                      bairro: form.watch("bairro"),
                     }}
                     onChange={(localidade) => {
                       if (localidade.estado_id !== undefined) {
-                        form.setValue('estado_id', localidade.estado_id)
+                        form.setValue("estado_id", localidade.estado_id);
                       }
                       if (localidade.municipio_id !== undefined) {
-                        form.setValue('municipio_id', localidade.municipio_id)
+                        form.setValue("municipio_id", localidade.municipio_id);
                       }
                       if (localidade.cep !== undefined) {
-                        form.setValue('cep', localidade.cep)
+                        form.setValue("cep", localidade.cep);
                       }
                       if (localidade.endereco !== undefined) {
-                        form.setValue('endereco', localidade.endereco)
+                        form.setValue("endereco", localidade.endereco);
                       }
                       if (localidade.numero !== undefined) {
-                        form.setValue('numero', localidade.numero)
+                        form.setValue("numero", localidade.numero);
                       }
                       if (localidade.complemento !== undefined) {
-                        form.setValue('complemento', localidade.complemento)
+                        form.setValue("complemento", localidade.complemento);
                       }
                       if (localidade.bairro !== undefined) {
-                        form.setValue('bairro', localidade.bairro)
+                        form.setValue("bairro", localidade.bairro);
                       }
                     }}
                     disabled={readOnly}
@@ -517,12 +493,10 @@ export function OrganizationSettings({
               <Users className="h-5 w-5" />
               Responsável Técnico
             </CardTitle>
-            <CardDescription>
-              Informações do responsável técnico da UAN
-            </CardDescription>
+            <CardDescription>Informações do responsável técnico da UAN</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="responsavel_nome"
@@ -530,11 +504,7 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="Nome completo"
-                        disabled={readOnly}
-                      />
+                      <Input {...field} placeholder="Nome completo" disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -548,11 +518,7 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>Profissão</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="Ex: Nutricionista"
-                        disabled={readOnly}
-                      />
+                      <Input {...field} placeholder="Ex: Nutricionista" disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -560,7 +526,7 @@ export function OrganizationSettings({
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="responsavel_registro"
@@ -568,11 +534,7 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>Registro Profissional</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="Ex: CRN 12345"
-                        disabled={readOnly}
-                      />
+                      <Input {...field} placeholder="Ex: CRN 12345" disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -586,11 +548,7 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>Telefone</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="(11) 99999-9999"
-                        disabled={readOnly}
-                      />
+                      <Input {...field} placeholder="(11) 99999-9999" disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -604,8 +562,8 @@ export function OrganizationSettings({
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
+                      <Input
+                        {...field}
                         type="email"
                         placeholder="email@exemplo.com"
                         disabled={readOnly}
@@ -632,15 +590,15 @@ export function OrganizationSettings({
           </CardHeader>
           <CardContent className="space-y-4">
             {[
-              { key: 'segunda', label: 'Segunda-feira' },
-              { key: 'terca', label: 'Terça-feira' },
-              { key: 'quarta', label: 'Quarta-feira' },
-              { key: 'quinta', label: 'Quinta-feira' },
-              { key: 'sexta', label: 'Sexta-feira' },
-              { key: 'sabado', label: 'Sábado' },
-              { key: 'domingo', label: 'Domingo' },
+              { key: "segunda", label: "Segunda-feira" },
+              { key: "terca", label: "Terça-feira" },
+              { key: "quarta", label: "Quarta-feira" },
+              { key: "quinta", label: "Quinta-feira" },
+              { key: "sexta", label: "Sexta-feira" },
+              { key: "sabado", label: "Sábado" },
+              { key: "domingo", label: "Domingo" },
             ].map(({ key, label }) => (
-              <div key={key} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div key={key} className="grid grid-cols-1 items-center gap-4 md:grid-cols-3">
                 <Label className="font-medium">{label}</Label>
                 <FormField
                   control={form.control}
@@ -648,11 +606,7 @@ export function OrganizationSettings({
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          type="time"
-                          disabled={readOnly}
-                        />
+                        <Input {...field} type="time" disabled={readOnly} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -664,11 +618,7 @@ export function OrganizationSettings({
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          type="time"
-                          disabled={readOnly}
-                        />
+                        <Input {...field} type="time" disabled={readOnly} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -690,5 +640,5 @@ export function OrganizationSettings({
         )}
       </form>
     </Form>
-  )
+  );
 }

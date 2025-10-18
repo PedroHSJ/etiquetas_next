@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,9 +21,7 @@ export default function PermissoesPage() {
   const [funcionalidades, setFuncionalidades] = useState<Funcionalidade[]>([]);
   const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [permissoes, setPermissoes] = useState<Permissao[]>([]);
-  const [configuracoes, setConfiguracoes] = useState<
-    Record<string, Record<string, boolean>>
-  >({});
+  const [configuracoes, setConfiguracoes] = useState<Record<string, Record<string, boolean>>>({});
 
   const loadData = async () => {
     try {
@@ -49,9 +41,7 @@ export default function PermissoesPage() {
       perfisData.forEach((perfil) => {
         config[perfil.id] = {};
         permissoesData.forEach((permissao) => {
-          config[perfil.id][
-            `${permissao.funcionalidade_id}_${permissao.acao}`
-          ] = false;
+          config[perfil.id][`${permissao.funcionalidade_id}_${permissao.acao}`] = false;
         });
       });
 
@@ -90,10 +80,7 @@ export default function PermissoesPage() {
           return { funcionalidade_id, acao, ativo: true };
         });
 
-      const success = await PermissionService.atualizarPermissoesPerfil(
-        perfilId,
-        permissoesAtivas
-      );
+      const success = await PermissionService.atualizarPermissoesPerfil(perfilId, permissoesAtivas);
 
       if (success) {
         toast.success(
@@ -120,14 +107,13 @@ export default function PermissoesPage() {
           <CardHeader>
             <CardTitle className="text-red-600">Acesso Negado</CardTitle>
             <CardDescription>
-              Você não tem permissão para acessar esta página. Apenas usuários
-              com perfil &quot;Master&quot; podem configurar permissões.
+              Você não tem permissão para acessar esta página. Apenas usuários com perfil
+              &quot;Master&quot; podem configurar permissões.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Entre em contato com um administrador do sistema para solicitar
-              acesso.
+            <p className="text-muted-foreground text-sm">
+              Entre em contato com um administrador do sistema para solicitar acesso.
             </p>
           </CardContent>
         </Card>
@@ -141,7 +127,7 @@ export default function PermissoesPage() {
         <div className="space-y-6">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-96" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Skeleton className="h-64" />
             <Skeleton className="h-64" />
           </div>
@@ -192,15 +178,11 @@ export default function PermissoesPage() {
               <CardContent>
                 <div className="space-y-6">
                   {perfis.map((perfil) => (
-                    <div key={perfil.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
+                    <div key={perfil.id} className="rounded-lg border p-4">
+                      <div className="mb-4 flex items-center justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold">
-                            {perfil.nome}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {perfil.descricao}
-                          </p>
+                          <h3 className="text-lg font-semibold">{perfil.nome}</h3>
+                          <p className="text-muted-foreground text-sm">{perfil.descricao}</p>
                         </div>
                         <Button
                           onClick={() => handleSavePerfil(perfil.id)}
@@ -213,23 +195,15 @@ export default function PermissoesPage() {
 
                       <Separator className="my-4" />
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {funcionalidades.map((funcionalidade) => (
                           <div key={funcionalidade.id} className="space-y-3">
-                            <h4 className="font-medium text-sm">
-                              {funcionalidade.nome}
-                            </h4>
+                            <h4 className="text-sm font-medium">{funcionalidade.nome}</h4>
                             <div className="space-y-2">
                               {permissoes
-                                .filter(
-                                  (p) =>
-                                    p.funcionalidade_id === funcionalidade.id
-                                )
+                                .filter((p) => p.funcionalidade_id === funcionalidade.id)
                                 .map((permissao) => (
-                                  <div
-                                    key={permissao.id}
-                                    className="flex items-center space-x-2"
-                                  >
+                                  <div key={permissao.id} className="flex items-center space-x-2">
                                     <Checkbox
                                       id={`${perfil.id}_${permissao.id}`}
                                       checked={
@@ -270,30 +244,22 @@ export default function PermissoesPage() {
               <CardHeader>
                 <CardTitle>Funcionalidades do Sistema</CardTitle>
                 <CardDescription>
-                  Lista de todas as funcionalidades disponíveis para
-                  configuração de permissões
+                  Lista de todas as funcionalidades disponíveis para configuração de permissões
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {funcionalidades.map((funcionalidade) => (
-                    <div
-                      key={funcionalidade.id}
-                      className="border rounded-lg p-4"
-                    >
-                      <h3 className="font-semibold mb-2">
-                        {funcionalidade.nome}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-3">
+                    <div key={funcionalidade.id} className="rounded-lg border p-4">
+                      <h3 className="mb-2 font-semibold">{funcionalidade.nome}</h3>
+                      <p className="text-muted-foreground mb-3 text-sm">
                         {funcionalidade.descricao}
                       </p>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                        <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-800">
                           {funcionalidade.categoria}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {funcionalidade.rota}
-                        </span>
+                        <span className="text-muted-foreground text-xs">{funcionalidade.rota}</span>
                       </div>
                     </div>
                   ))}

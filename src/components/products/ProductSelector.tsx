@@ -47,7 +47,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
 
   const defaultTrigger = (
     <Button variant="outline" className="w-full justify-start">
-      <Package className="w-4 h-4 mr-2" />
+      <Package className="mr-2 h-4 w-4" />
       {selectedProduct ? selectedProduct.name : placeholder}
     </Button>
   );
@@ -55,15 +55,15 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col">
         <DialogHeader>
           <DialogTitle>Selecionar Produto</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+        <div className="flex flex-1 flex-col space-y-4 overflow-hidden">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
             <Input
               placeholder="Buscar por nome, marca ou categoria..."
               value={searchTerm}
@@ -73,14 +73,12 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
           </div>
 
           {/* Products List */}
-          <div className="flex-1 overflow-y-auto space-y-2">
+          <div className="flex-1 space-y-2 overflow-y-auto">
             {filteredProducts.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <div className="py-8 text-center text-gray-500">
+                <Package className="mx-auto mb-4 h-12 w-12 text-gray-300" />
                 <p>Nenhum produto encontrado</p>
-                {searchTerm && (
-                  <p className="text-sm mt-1">Tente buscar com outros termos</p>
-                )}
+                {searchTerm && <p className="mt-1 text-sm">Tente buscar com outros termos</p>}
               </div>
             ) : (
               filteredProducts.map((product) => (
@@ -88,39 +86,34 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
                   key={product.id}
                   onClick={() => handleProductSelect(product)}
                   className={cn(
-                    "p-4 border rounded-lg cursor-pointer transition-all hover:bg-gray-50",
-                    selectedProduct?.id === product.id &&
-                      "border-blue-500 bg-blue-50"
+                    "cursor-pointer rounded-lg border p-4 transition-all hover:bg-gray-50",
+                    selectedProduct?.id === product.id && "border-blue-500 bg-blue-50"
                   )}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="mb-1 flex items-center gap-2">
                         <h3 className="font-medium">{product.name}</h3>
                         {selectedProduct?.id === product.id && (
-                          <Check className="w-4 h-4 text-blue-600" />
+                          <Check className="h-4 w-4 text-blue-600" />
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                        {product.brand && (
-                          <span className="font-medium">{product.brand}</span>
-                        )}
+                      <div className="mb-2 flex items-center gap-2 text-sm text-gray-600">
+                        {product.brand && <span className="font-medium">{product.brand}</span>}
                         <Badge variant="secondary" className="text-xs">
-                          {product.category?.name || 'Sem categoria'}
+                          {product.category?.name || "Sem categoria"}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {product.unit_of_measure || 'un'}
+                          {product.unit_of_measure || "un"}
                         </Badge>
                       </div>
 
                       {product.description && (
-                        <p className="text-sm text-gray-500 line-clamp-2">
-                          {product.description}
-                        </p>
+                        <p className="line-clamp-2 text-sm text-gray-500">{product.description}</p>
                       )}
 
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
                         {product.shelf_life_days && (
                           <span>Validade: {product.shelf_life_days} dias</span>
                         )}

@@ -54,10 +54,7 @@ export class ProductService {
     return data;
   }
 
-  static async updateProduct(
-    id: string,
-    updates: Partial<Product>
-  ): Promise<Product> {
+  static async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
     const { data, error } = await supabase
       .from("products")
       .update(updates)
@@ -75,18 +72,12 @@ export class ProductService {
   }
 
   static async deleteProduct(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("products")
-      .update({ is_active: false })
-      .eq("id", id);
+    const { error } = await supabase.from("products").update({ is_active: false }).eq("id", id);
 
     if (error) throw error;
   }
 
-  static async searchProducts(
-    organizationId: string,
-    query: string
-  ): Promise<Product[]> {
+  static async searchProducts(organizationId: string, query: string): Promise<Product[]> {
     const { data, error } = await supabase
       .from("products")
       .select(
@@ -97,9 +88,7 @@ export class ProductService {
       )
       .eq("organization_id", organizationId)
       .eq("is_active", true)
-      .or(
-        `name.ilike.%${query}%,description.ilike.%${query}%,brand.ilike.%${query}%`
-      )
+      .or(`name.ilike.%${query}%,description.ilike.%${query}%,brand.ilike.%${query}%`)
       .order("name")
       .limit(20);
 
@@ -108,9 +97,7 @@ export class ProductService {
   }
 
   // Categorias
-  static async getCategories(
-    organizationId: string
-  ): Promise<ProductCategory[]> {
+  static async getCategories(organizationId: string): Promise<ProductCategory[]> {
     const { data, error } = await supabase
       .from("product_categories")
       .select("*")

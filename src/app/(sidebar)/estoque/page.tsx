@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Package, 
-  PlusCircle, 
-  BarChart3, 
+import {
+  Package,
+  PlusCircle,
+  BarChart3,
   History,
   AlertTriangle,
   TrendingUp,
-  Minus 
+  Minus,
 } from "lucide-react";
 
 import { GenericTable, GenericTableColumn } from "@/components/ui/generic-table";
@@ -31,13 +31,13 @@ import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 export default function EstoquePage() {
   const [estatisticas, setEstatisticas] = useState<EstoqueEstatisticas | null>(null);
   const [carregandoStats, setCarregandoStats] = useState(true);
-  
+
   // Estoque
   const [estoqueData, setEstoqueData] = useState<Estoque[]>([]);
   const [carregandoEstoque, setCarregandoEstoque] = useState(true);
   const [paginaEstoque, setPaginaEstoque] = useState(1);
   const [itemsPerPageEstoque, setItemsPerPageEstoque] = useState(10);
-  
+
   // Movimentações
   const [movimentacoesData, setMovimentacoesData] = useState<EstoqueMovimentacao[]>([]);
   const [carregandoMovimentacoes, setCarregandoMovimentacoes] = useState(true);
@@ -47,28 +47,31 @@ export default function EstoquePage() {
   const carregarEstatisticas = async () => {
     setCarregandoStats(true);
     try {
-      const response = await fetch('/api/estoque');
+      const response = await fetch("/api/estoque");
       const data = await response.json();
       console.log("data estatisticas", data);
       if (response.ok) {
         const stats: EstoqueEstatisticas = {
           total_produtos: data.total || 0,
-          produtos_em_estoque: data.data.filter((p: unknown) => (p as any).current_quantity > 0).length || 0,
-          produtos_zerados: (data.data.filter((p: unknown) => {
-            const qty = (p as any).current_quantity;
-            return qty === 0;
-          }).length) || 0,
-          produtos_baixo_estoque: (data.data.filter((p: unknown) => {
-            const qty = (p as any).current_quantity;
-            return qty > 0 && qty < 10;
-          }).length) || 0,
+          produtos_em_estoque:
+            data.data.filter((p: unknown) => (p as any).current_quantity > 0).length || 0,
+          produtos_zerados:
+            data.data.filter((p: unknown) => {
+              const qty = (p as any).current_quantity;
+              return qty === 0;
+            }).length || 0,
+          produtos_baixo_estoque:
+            data.data.filter((p: unknown) => {
+              const qty = (p as any).current_quantity;
+              return qty > 0 && qty < 10;
+            }).length || 0,
           ultima_atualizacao: new Date().toISOString(),
         };
         setEstatisticas(stats);
       }
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
-      toast.error('Erro ao carregar estatísticas do estoque');
+      console.error("Erro ao carregar estatísticas:", error);
+      toast.error("Erro ao carregar estatísticas do estoque");
     } finally {
       setCarregandoStats(false);
     }
@@ -81,7 +84,7 @@ export default function EstoquePage() {
         page: paginaEstoque.toString(),
         pageSize: itemsPerPageEstoque.toString(),
       });
-      
+
       const response = await fetch(`/api/estoque?${params}`);
       const data = await response.json();
 
@@ -105,7 +108,7 @@ export default function EstoquePage() {
         page: paginaMovimentacoes.toString(),
         pageSize: itemsPerPageMovimentacoes.toString(),
       });
-      
+
       const response = await fetch(`/api/estoque/movimentacoes?${params}`);
       const data = await response.json();
 
@@ -135,7 +138,7 @@ export default function EstoquePage() {
   }, [paginaMovimentacoes, itemsPerPageMovimentacoes]);
 
   const formatarQuantidade = (quantidade: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 3,
     }).format(quantidade);
@@ -144,16 +147,19 @@ export default function EstoquePage() {
   const getStatusBadge = (quantidade: number) => {
     if (quantidade === 0) {
       return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <Badge variant="destructive" className="cursor-pointer">Zerado</Badge>
-        </PopoverTrigger>
-        <PopoverContent className="w-64">
-          <div className="text-sm">
-            Este produto está com o estoque zerado. Considere realizar uma entrada de estoque para repor o item.
-          </div>
-        </PopoverContent>
-      </Popover>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Badge variant="destructive" className="cursor-pointer">
+              Zerado
+            </Badge>
+          </PopoverTrigger>
+          <PopoverContent className="w-64">
+            <div className="text-sm">
+              Este produto está com o estoque zerado. Considere realizar uma entrada de estoque para
+              repor o item.
+            </div>
+          </PopoverContent>
+        </Popover>
       );
       // return <Badge variant="destructive">Zerado</Badge>;
     }
@@ -161,11 +167,14 @@ export default function EstoquePage() {
       return (
         <Popover>
           <PopoverTrigger asChild>
-            <Badge variant="default" className="cursor-pointer">Baixo</Badge>
+            <Badge variant="default" className="cursor-pointer">
+              Baixo
+            </Badge>
           </PopoverTrigger>
           <PopoverContent className="w-64">
-            <div className="text-sm"> 
-              Este produto está com o estoque abaixo de 10 unidades. Considere realizar uma entrada de estoque para repor o item.
+            <div className="text-sm">
+              Este produto está com o estoque abaixo de 10 unidades. Considere realizar uma entrada
+              de estoque para repor o item.
             </div>
           </PopoverContent>
         </Popover>
@@ -174,12 +183,12 @@ export default function EstoquePage() {
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <Badge variant="default" className="cursor-pointer">OK</Badge>
+          <Badge variant="default" className="cursor-pointer">
+            OK
+          </Badge>
         </PopoverTrigger>
         <PopoverContent className="w-64">
-          <div className="text-sm">
-            Este produto está com o estoque acima de 10 unidades.
-          </div>
+          <div className="text-sm">Este produto está com o estoque acima de 10 unidades.</div>
         </PopoverContent>
       </Popover>
     );
@@ -188,13 +197,13 @@ export default function EstoquePage() {
   const formatarData = (data: string) => {
     try {
       const date = new Date(data);
-      return date.toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
+      return date.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
       });
     } catch {
       return "Data inválida";
@@ -218,9 +227,7 @@ export default function EstoquePage() {
       accessor: (row) => row.current_quantity,
       visible: true,
       render: (value) => (
-        <div className="font-mono text-foreground">
-          {formatarQuantidade(value as number)}
-        </div>
+        <div className="text-foreground font-mono">{formatarQuantidade(value as number)}</div>
       ),
     },
     {
@@ -229,11 +236,7 @@ export default function EstoquePage() {
       label: "Status",
       accessor: (row) => row.current_quantity,
       visible: true,
-      render: (value) => (
-        <div className="">
-          {getStatusBadge(value as number)}
-        </div>
-      ),
+      render: (value) => <div className="">{getStatusBadge(value as number)}</div>,
     },
     {
       id: "ultima_atualizacao",
@@ -241,11 +244,7 @@ export default function EstoquePage() {
       label: "Última Atualização",
       accessor: (row) => row.updated_at,
       visible: true,
-      render: (value) => (
-        <div className="text-sm">
-          {formatarData(value as string)}
-        </div>
-      ),
+      render: (value) => <div className="text-sm">{formatarData(value as string)}</div>,
     },
   ];
 
@@ -259,8 +258,8 @@ export default function EstoquePage() {
       visible: true,
       render: (value) => (
         <div className="flex justify-center">
-          <Badge variant={value === 'ENTRADA' ? 'default' : 'destructive'}>
-            {value === 'ENTRADA' ? 'Entrada' : 'Saída'}
+          <Badge variant={value === "ENTRADA" ? "default" : "destructive"}>
+            {value === "ENTRADA" ? "Entrada" : "Saída"}
           </Badge>
         </div>
       ),
@@ -280,9 +279,7 @@ export default function EstoquePage() {
       accessor: (row) => row.quantity,
       visible: true,
       render: (value) => (
-        <div className="font-mono text-center">
-          {formatarQuantidade(value as number)}
-        </div>
+        <div className="text-center font-mono">{formatarQuantidade(value as number)}</div>
       ),
     },
     {
@@ -299,11 +296,7 @@ export default function EstoquePage() {
       label: "Usuário",
       accessor: (row) => row.user?.user_metadata?.full_name || "N/A",
       visible: true,
-      render: (value) => (
-        <div className="text-center text-sm">
-          {value as string}
-        </div>
-      ),
+      render: (value) => <div className="text-center text-sm">{value as string}</div>,
     },
     {
       id: "data",
@@ -311,11 +304,7 @@ export default function EstoquePage() {
       label: "Data",
       accessor: (row) => row.created_at,
       visible: true,
-      render: (value) => (
-        <div className="text-sm text-center">
-          {formatarData(value as string)}
-        </div>
-      ),
+      render: (value) => <div className="text-center text-sm">{formatarData(value as string)}</div>,
     },
   ];
 
@@ -342,7 +331,7 @@ export default function EstoquePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <EntradaRapidaDialog 
+          <EntradaRapidaDialog
             onSuccess={handleSuccessEntrada}
             trigger={
               <Button size="sm" className="gap-2">
@@ -351,7 +340,7 @@ export default function EstoquePage() {
               </Button>
             }
           />
-          <SaidaRapidaDialog 
+          <SaidaRapidaDialog
             onSuccess={handleSuccessSaida}
             trigger={
               <Button size="sm" variant="destructive" className="gap-2">
@@ -364,10 +353,7 @@ export default function EstoquePage() {
       </div>
 
       {/* Estatísticas */}
-      <EstoqueStats 
-        estatisticas={estatisticas} 
-        carregando={carregandoStats} 
-      />
+      <EstoqueStats estatisticas={estatisticas} carregando={carregandoStats} />
 
       {/* Conteúdo Principal */}
       <Tabs defaultValue="estoque" className="space-y-4">
@@ -429,17 +415,15 @@ export default function EstoquePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-4">
+                <div className="py-4 text-center">
                   <div className="text-2xl font-bold text-red-600">
                     {estatisticas?.produtos_zerados || 0}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    produtos em falta
-                  </p>
+                  <p className="text-muted-foreground mt-1 text-sm">produtos em falta</p>
                   {(estatisticas?.produtos_zerados || 0) > 0 && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="mt-3"
                       onClick={() => {
                         toast.info("Funcionalidade em desenvolvimento");
@@ -463,17 +447,15 @@ export default function EstoquePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-4">
+                <div className="py-4 text-center">
                   <div className="text-2xl font-bold text-yellow-600">
                     {estatisticas?.produtos_baixo_estoque || 0}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    produtos com estoque baixo
-                  </p>
+                  <p className="text-muted-foreground mt-1 text-sm">produtos com estoque baixo</p>
                   {(estatisticas?.produtos_baixo_estoque || 0) > 0 && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="mt-3"
                       onClick={() => {
                         toast.info("Funcionalidade em desenvolvimento");

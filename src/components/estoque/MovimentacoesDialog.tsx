@@ -20,14 +20,14 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Search, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Search,
+  TrendingUp,
+  TrendingDown,
   Calendar,
   User,
   FileText,
-  ArrowLeft 
+  ArrowLeft,
 } from "lucide-react";
 import {
   Dialog,
@@ -36,12 +36,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  EstoqueMovimentacao, 
-  MovimentacoesFiltros, 
+import {
+  EstoqueMovimentacao,
+  MovimentacoesFiltros,
   MovimentacoesListResponse,
   ESTOQUE_PAGINATION,
-  TipoMovimentacao 
+  TipoMovimentacao,
 } from "@/types/estoque";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -54,11 +54,11 @@ interface MovimentacoesDialogProps {
   produtoNome?: string;
 }
 
-export function MovimentacoesDialog({ 
-  open, 
-  onOpenChange, 
-  produtoId, 
-  produtoNome 
+export function MovimentacoesDialog({
+  open,
+  onOpenChange,
+  produtoId,
+  produtoNome,
 }: MovimentacoesDialogProps) {
   const [dados, setDados] = useState<MovimentacoesListResponse | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -68,7 +68,7 @@ export function MovimentacoesDialog({
 
   const carregarDados = async () => {
     if (!open) return;
-    
+
     setCarregando(true);
     try {
       const params = new URLSearchParams({
@@ -119,10 +119,10 @@ export function MovimentacoesDialog({
   // Busca com debounce (só se não tiver produto específico)
   useEffect(() => {
     if (produtoId) return; // Não buscar por nome se já temos um produto específico
-    
+
     const timer = setTimeout(() => {
       if (termoBusca !== filtros.produto_nome) {
-        setFiltros(prev => ({ ...prev, produto_nome: termoBusca }));
+        setFiltros((prev) => ({ ...prev, produto_nome: termoBusca }));
         setPaginaAtual(1);
       }
     }, 500);
@@ -131,12 +131,12 @@ export function MovimentacoesDialog({
   }, [termoBusca, filtros.produto_nome, produtoId]);
 
   const handleFiltroChange = (key: keyof MovimentacoesFiltros, value: string | undefined) => {
-    setFiltros(prev => ({ ...prev, [key]: value }));
+    setFiltros((prev) => ({ ...prev, [key]: value }));
     setPaginaAtual(1);
   };
 
   const formatarQuantidade = (quantidade: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 3,
     }).format(quantidade);
@@ -151,7 +151,7 @@ export function MovimentacoesDialog({
   };
 
   const getTipoIcon = (tipo: TipoMovimentacao) => {
-    return tipo === 'ENTRADA' ? (
+    return tipo === "ENTRADA" ? (
       <TrendingUp className="h-4 w-4 text-green-600" />
     ) : (
       <TrendingDown className="h-4 w-4 text-red-600" />
@@ -159,12 +159,12 @@ export function MovimentacoesDialog({
   };
 
   const getTipoBadge = (tipo: TipoMovimentacao) => {
-    return tipo === 'ENTRADA' ? (
-      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+    return tipo === "ENTRADA" ? (
+      <Badge variant="default" className="border-green-200 bg-green-100 text-green-800">
         Entrada
       </Badge>
     ) : (
-      <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200">
+      <Badge variant="destructive" className="border-red-200 bg-red-100 text-red-800">
         Saída
       </Badge>
     );
@@ -172,26 +172,24 @@ export function MovimentacoesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="flex max-h-[80vh] max-w-6xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Histórico de Movimentações
-            {produtoNome && (
-              <span className="text-muted-foreground">- {produtoNome}</span>
-            )}
+            {produtoNome && <span className="text-muted-foreground">- {produtoNome}</span>}
           </DialogTitle>
           <DialogDescription>
             Visualize o histórico completo de entradas e saídas de estoque.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col gap-4 overflow-hidden">
           {/* Filtros */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
             {!produtoId && (
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
                 <Input
                   placeholder="Buscar produto..."
                   value={termoBusca}
@@ -200,10 +198,10 @@ export function MovimentacoesDialog({
                 />
               </div>
             )}
-            
+
             <Select
               value={filtros.tipo_movimentacao || "todos"}
-              onValueChange={(value) => 
+              onValueChange={(value) =>
                 handleFiltroChange("tipo_movimentacao", value === "todos" ? undefined : value)
               }
             >
@@ -235,7 +233,7 @@ export function MovimentacoesDialog({
           </div>
 
           {/* Tabela */}
-          <div className="border rounded-md flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto rounded-md border">
             {carregando && !dados ? (
               <Table>
                 <TableHeader>
@@ -251,12 +249,24 @@ export function MovimentacoesDialog({
                 <TableBody>
                   {Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-40" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -276,12 +286,10 @@ export function MovimentacoesDialog({
                 <TableBody>
                   {dados?.data.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={produtoId ? 5 : 6} className="text-center py-8">
+                      <TableCell colSpan={produtoId ? 5 : 6} className="py-8 text-center">
                         <div className="flex flex-col items-center gap-2">
-                          <Calendar className="h-8 w-8 text-muted-foreground" />
-                          <p className="text-muted-foreground">
-                            Nenhuma movimentação encontrada
-                          </p>
+                          <Calendar className="text-muted-foreground h-8 w-8" />
+                          <p className="text-muted-foreground">Nenhuma movimentação encontrada</p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -295,40 +303,40 @@ export function MovimentacoesDialog({
                             </div>
                           </TableCell>
                         )}
-                        
+
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {getTipoIcon(movimentacao.movement_type)}
                             {getTipoBadge(movimentacao.movement_type)}
                           </div>
                         </TableCell>
-                        
+
                         <TableCell className="text-center font-mono">
                           {formatarQuantidade(movimentacao.quantity)}
                         </TableCell>
-                        
+
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <Calendar className="text-muted-foreground h-4 w-4" />
                             <span className="text-sm">
                               {formatarData(movimentacao.movement_date)}
                             </span>
                           </div>
                         </TableCell>
-                        
+
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
+                            <User className="text-muted-foreground h-4 w-4" />
                             <span className="text-sm">
                               {movimentacao.user?.user_metadata?.full_name ||
-                               movimentacao.user?.email ||
-                               "Usuário não identificado"}
+                                movimentacao.user?.email ||
+                                "Usuário não identificado"}
                             </span>
                           </div>
                         </TableCell>
-                        
+
                         <TableCell>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-muted-foreground text-sm">
                             {movimentacao.observation || "-"}
                           </span>
                         </TableCell>
@@ -343,17 +351,16 @@ export function MovimentacoesDialog({
           {/* Paginação */}
           {dados && dados.totalPages > 1 && (
             <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Mostrando {((dados.page - 1) * dados.pageSize) + 1} a{" "}
-                {Math.min(dados.page * dados.pageSize, dados.total)} de{" "}
-                {dados.total} movimentações
+              <div className="text-muted-foreground text-sm">
+                Mostrando {(dados.page - 1) * dados.pageSize + 1} a{" "}
+                {Math.min(dados.page * dados.pageSize, dados.total)} de {dados.total} movimentações
               </div>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={dados.page <= 1}
-                  onClick={() => setPaginaAtual(prev => prev - 1)}
+                  onClick={() => setPaginaAtual((prev) => prev - 1)}
                 >
                   Anterior
                 </Button>
@@ -361,7 +368,7 @@ export function MovimentacoesDialog({
                   variant="outline"
                   size="sm"
                   disabled={dados.page >= dados.totalPages}
-                  onClick={() => setPaginaAtual(prev => prev + 1)}
+                  onClick={() => setPaginaAtual((prev) => prev + 1)}
                 >
                   Próxima
                 </Button>

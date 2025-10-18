@@ -54,10 +54,7 @@ export class LabelService {
     return data;
   }
 
-  static async updateTemplate(
-    id: string,
-    updates: Partial<LabelTemplate>
-  ): Promise<LabelTemplate> {
+  static async updateTemplate(id: string, updates: Partial<LabelTemplate>): Promise<LabelTemplate> {
     const { data, error } = await supabase
       .from("label_templates")
       .update(updates)
@@ -70,10 +67,7 @@ export class LabelService {
   }
 
   static async deleteTemplate(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("label_templates")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("label_templates").delete().eq("id", id);
 
     if (error) throw error;
   }
@@ -170,9 +164,7 @@ export class LabelService {
     label: Omit<Label, "id" | "created_at" | "updated_at" | "print_count">
   ): Promise<Label> {
     // Gerar QR code único
-    const qrCode = `ETQ-${Date.now()}-${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
+    const qrCode = `ETQ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const labelData = {
       ...label,
@@ -196,10 +188,7 @@ export class LabelService {
     return data;
   }
 
-  static async updateLabel(
-    id: string,
-    updates: Partial<Label>
-  ): Promise<Label> {
+  static async updateLabel(id: string, updates: Partial<Label>): Promise<Label> {
     const { data, error } = await supabase
       .from("labels")
       .update(updates)
@@ -251,10 +240,7 @@ export class LabelService {
   }
 
   // Dashboard e Relatórios
-  static async getExpiringLabels(
-    organizationId: string,
-    days: number = 3
-  ): Promise<Label[]> {
+  static async getExpiringLabels(organizationId: string, days: number = 3): Promise<Label[]> {
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + days);
 

@@ -38,9 +38,7 @@ export async function updateSession(request: NextRequest) {
 
   // Definir rotas públicas que não necessitam autenticação
   const publicRoutes = ["/login", "/auth"];
-  const isPublicRoute = publicRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  );
+  const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route));
 
   // Se for uma rota pública, permitir acesso
   if (isPublicRoute) {
@@ -71,9 +69,7 @@ export async function updateSession(request: NextRequest) {
 
     // Se há usuário autenticado mas está tentando acessar /login, redirecionar para dashboard
     if (user && request.nextUrl.pathname === "/login") {
-      console.log(
-        "Authenticated user accessing login, redirecting to dashboard"
-      );
+      console.log("Authenticated user accessing login, redirecting to dashboard");
       const dashboardUrl = new URL("/dashboard", request.url);
       return NextResponse.redirect(dashboardUrl);
     }

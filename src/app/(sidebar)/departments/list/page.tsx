@@ -4,13 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -37,10 +31,7 @@ import FilterBar from "@/components/filters/FilterBar";
 import Pagination from "@/components/pagination/Pagination";
 import { useAuth } from "@/contexts/AuthContext";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
-import {
-  OrganizationContext,
-  useOrganization,
-} from "@/contexts/OrganizationContext";
+import { OrganizationContext, useOrganization } from "@/contexts/OrganizationContext";
 import { toast } from "sonner";
 interface Department {
   id: string;
@@ -59,8 +50,7 @@ export default function DepartmentsListPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingDepartment, setDeletingDepartment] =
-    useState<Department | null>(null);
+  const [deletingDepartment, setDeletingDepartment] = useState<Department | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -91,10 +81,7 @@ export default function DepartmentsListPage() {
           organizacao:organizacoes(nome)
         `
         )
-        .in(
-          "organizacao_id",
-          selectedOrganization ? [selectedOrganization.id] : []
-        )
+        .in("organizacao_id", selectedOrganization ? [selectedOrganization.id] : [])
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -150,9 +137,9 @@ export default function DepartmentsListPage() {
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg">
+              <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
             <div>
@@ -165,8 +152,8 @@ export default function DepartmentsListPage() {
           {[...Array(3)].map((_, i) => (
             <Card key={i} className="p-6">
               <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                <div className="mb-2 h-4 w-1/4 rounded bg-gray-200"></div>
+                <div className="h-3 w-1/2 rounded bg-gray-200"></div>
               </div>
             </Card>
           ))}
@@ -180,20 +167,18 @@ export default function DepartmentsListPage() {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg">
+            <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>
           <div>
             <h1 className="text-3xl font-bold">Departamentos</h1>
-            <p className="text-muted-foreground">
-              Gerencie os departamentos das suas organizações
-            </p>
+            <p className="text-muted-foreground">Gerencie os departamentos das suas organizações</p>
           </div>
         </div>
         <NavigationButton href="/departments/create">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Novo Departamento
         </NavigationButton>
       </div>
@@ -202,15 +187,11 @@ export default function DepartmentsListPage() {
       {departments.length === 0 ? (
         <Card className="p-12">
           <div className="text-center">
-            <Building2 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium mb-2">
-              Nenhum departamento cadastrado
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Comece criando seu primeiro departamento
-            </p>
+            <Building2 className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+            <h3 className="mb-2 text-lg font-medium">Nenhum departamento cadastrado</h3>
+            <p className="text-muted-foreground mb-4">Comece criando seu primeiro departamento</p>
             <NavigationButton href="/departments/create">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Criar Departamento
             </NavigationButton>
           </div>
@@ -218,17 +199,15 @@ export default function DepartmentsListPage() {
       ) : (
         <>
           {/* Visualização em Cards para mobile */}
-          <div className="block md:hidden space-y-4">
+          <div className="block space-y-4 md:hidden">
             {departments.map((dept) => (
               <Card key={dept.id}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-medium">{dept.nome}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {dept.organizacao?.nome}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">{dept.organizacao?.nome}</p>
+                      <p className="text-muted-foreground text-xs">
                         Criado em{" "}
                         {format(new Date(dept.created_at), "dd/MM/yyyy", {
                           locale: ptBR,
@@ -277,9 +256,7 @@ export default function DepartmentsListPage() {
                     <TableRow key={dept.id}>
                       <TableCell className="font-medium">{dept.nome}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">
-                          {dept.tipo_departamento}
-                        </Badge>
+                        <Badge variant="secondary">{dept.tipo_departamento}</Badge>
                       </TableCell>
                       <TableCell>
                         {format(new Date(dept.created_at), "dd/MM/yyyy", {
@@ -318,7 +295,7 @@ export default function DepartmentsListPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <AlertTriangle className="text-destructive h-5 w-5" />
               Confirmar Exclusão
             </DialogTitle>
             <DialogDescription>
@@ -326,8 +303,8 @@ export default function DepartmentsListPage() {
               <strong>{deletingDepartment?.nome}</strong>?
               <br />
               <br />
-              Esta ação não pode ser desfeita e todos os integrantes e dados
-              relacionados a este departamento serão afetados.
+              Esta ação não pode ser desfeita e todos os integrantes e dados relacionados a este
+              departamento serão afetados.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -338,19 +315,15 @@ export default function DepartmentsListPage() {
             >
               Cancelar
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-            >
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
               {deleting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
                   Excluindo...
                 </>
               ) : (
                 <>
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="mr-2 h-4 w-4" />
                   Excluir Departamento
                 </>
               )}

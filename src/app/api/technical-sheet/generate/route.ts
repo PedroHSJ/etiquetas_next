@@ -1,41 +1,38 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createAIProvider } from '@/lib/ai-providers';
-import { TechnicalSheetRequest } from '@/types/technical-sheet';
-import { ParseError, RawIngredientData, IngredientResponse } from '@/types/supabase';
+import { NextRequest, NextResponse } from "next/server";
+import { createAIProvider } from "@/lib/ai-providers";
+import { TechnicalSheetRequest } from "@/types/technical-sheet";
+import { ParseError, RawIngredientData, IngredientResponse } from "@/types/supabase";
 
 export async function POST(request: NextRequest) {
   try {
     const body: TechnicalSheetRequest = await request.json();
-    
+
     if (!body.dishName || !body.servings) {
       return NextResponse.json(
-        { error: 'Nome do prato e número de porções são obrigatórios' },
+        { error: "Nome do prato e número de porções são obrigatórios" },
         { status: 400 }
       );
     }
 
     if (body.servings <= 0) {
       return NextResponse.json(
-        { error: 'Número de porções deve ser maior que zero' },
+        { error: "Número de porções deve ser maior que zero" },
         { status: 400 }
       );
     }
 
     // Verificar configuração das variáveis de ambiente
-    const aiProvider = process.env.AI_PROVIDER || 'openai';
+    const aiProvider = process.env.AI_PROVIDER || "openai";
     const openaiKey = process.env.OPENAI_API_KEY;
-    
-    console.log('=== DEBUG CONFIGURAÇÃO ===');
-    console.log('AI_PROVIDER:', aiProvider);
-    console.log('OPENAI_API_KEY existe:', !!openaiKey);
-    console.log('OPENAI_API_KEY comprimento:', openaiKey?.length || 0);
-    console.log('=========================');
+
+    console.log("=== DEBUG CONFIGURAÇÃO ===");
+    console.log("AI_PROVIDER:", aiProvider);
+    console.log("OPENAI_API_KEY existe:", !!openaiKey);
+    console.log("OPENAI_API_KEY comprimento:", openaiKey?.length || 0);
+    console.log("=========================");
 
     if (!openaiKey) {
-      return NextResponse.json(
-        { error: 'Chave da API OpenAI não configurada' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Chave da API OpenAI não configurada" }, { status: 500 });
     }
 
     const aiProviderInstance = createAIProvider();
@@ -108,153 +105,161 @@ Forneça a ficha técnica no formato JSON especificado.`;
       try {
         // Processar mensagem com IA
         const response = await aiProviderInstance.sendMessage(userMessage, systemPrompt);
-        
-        console.log('=== DEBUG RESPOSTA IA ===');
-        console.log('Resposta bruta da IA (COMPLETA):');
+
+        console.log("=== DEBUG RESPOSTA IA ===");
+        console.log("Resposta bruta da IA (COMPLETA):");
         console.log(response);
-        console.log('Tamanho da resposta:', response.length);
-        console.log('Primeira linha:', response.split('\n')[0]);
-        console.log('Última linha:', response.split('\n').slice(-1)[0]);
-        console.log('Caracteres finais (últimos 200):', response.substring(Math.max(0, response.length - 200)));
-        console.log('========================');
-        
+        console.log("Tamanho da resposta:", response.length);
+        console.log("Primeira linha:", response.split("\n")[0]);
+        console.log("Última linha:", response.split("\n").slice(-1)[0]);
+        console.log(
+          "Caracteres finais (últimos 200):",
+          response.substring(Math.max(0, response.length - 200))
+        );
+        console.log("========================");
+
         // Verificar se a resposta está truncada ou incompleta
-        console.log('=== VERIFICAÇÃO DE INTEGRIDADE ===');
-        const hasOpenBrace = response.includes('{');
-        const hasCloseBrace = response.includes('}');
+        console.log("=== VERIFICAÇÃO DE INTEGRIDADE ===");
+        const hasOpenBrace = response.includes("{");
+        const hasCloseBrace = response.includes("}");
         const openBraces = (response.match(/\{/g) || []).length;
         const closeBraces = (response.match(/\}/g) || []).length;
-        const hasIngredients = response.includes('ingredients');
-        const hasServings = response.includes('servings');
-        
-        console.log('- Tem chave de abertura {:', hasOpenBrace);
-        console.log('- Tem chave de fechamento }:', hasCloseBrace);
-        console.log('- Chaves abertas:', openBraces, 'fechadas:', closeBraces);
-        console.log('- Tem campo ingredients:', hasIngredients);
-        console.log('- Tem campo servings:', hasServings);
-        
+        const hasIngredients = response.includes("ingredients");
+        const hasServings = response.includes("servings");
+
+        console.log("- Tem chave de abertura {:", hasOpenBrace);
+        console.log("- Tem chave de fechamento }:", hasCloseBrace);
+        console.log("- Chaves abertas:", openBraces, "fechadas:", closeBraces);
+        console.log("- Tem campo ingredients:", hasIngredients);
+        console.log("- Tem campo servings:", hasServings);
+
         if (!hasOpenBrace || !hasCloseBrace || openBraces !== closeBraces || !hasIngredients) {
-          console.log('❌ Resposta claramente incompleta, forçando fallback');
-          throw new Error('Resposta da IA está claramente incompleta ou malformada');
+          console.log("❌ Resposta claramente incompleta, forçando fallback");
+          throw new Error("Resposta da IA está claramente incompleta ou malformada");
         }
-        console.log('✅ Verificação básica passou');
-        console.log('================================');
-        
+        console.log("✅ Verificação básica passou");
+        console.log("================================");
+
         if (response.length < 200) {
-          console.log('⚠️ Resposta muito curta (< 200 chars), usando fallback');
-          throw new Error('Resposta da IA muito curta');
+          console.log("⚠️ Resposta muito curta (< 200 chars), usando fallback");
+          throw new Error("Resposta da IA muito curta");
         }
-        
+
         // Tentar fazer parse da resposta JSON
         let parsedResponse;
         try {
           // Primeiro, tentar parse direto
           parsedResponse = JSON.parse(response);
-          console.log('Parse direto bem-sucedido!');
+          console.log("Parse direto bem-sucedido!");
         } catch (parseError) {
-          console.log('Erro no parse direto:', parseError);
-          console.log('Posição do erro:', (parseError as ParseError).message);
-          
+          console.log("Erro no parse direto:", parseError);
+          console.log("Posição do erro:", (parseError as ParseError).message);
+
           try {
             // Se falhar o parse, tentar extrair e corrigir JSON da resposta
             let jsonString = response.trim();
-            
-            console.log('=== TENTANDO CORRIGIR JSON ===');
-            console.log('String original:', jsonString);
-            
+
+            console.log("=== TENTANDO CORRIGIR JSON ===");
+            console.log("String original:", jsonString);
+
             // Se a resposta não começar com {, procurar o primeiro {
-            const startIndex = jsonString.indexOf('{');
+            const startIndex = jsonString.indexOf("{");
             if (startIndex > 0) {
               jsonString = jsonString.substring(startIndex);
-              console.log('Removido texto antes do {:', jsonString.substring(0, 100) + '...');
+              console.log("Removido texto antes do {:", jsonString.substring(0, 100) + "...");
             }
-            
+
             // Verificar se o JSON está incompleto
             const openBraces = (jsonString.match(/\{/g) || []).length;
             const closeBraces = (jsonString.match(/\}/g) || []).length;
             const openBrackets = (jsonString.match(/\[/g) || []).length;
             const closeBrackets = (jsonString.match(/\]/g) || []).length;
-            
-            console.log('Análise estrutural:');
-            console.log('- Chaves abertas:', openBraces, 'fechadas:', closeBraces);
-            console.log('- Colchetes abertos:', openBrackets, 'fechados:', closeBrackets);
-            
+
+            console.log("Análise estrutural:");
+            console.log("- Chaves abertas:", openBraces, "fechadas:", closeBraces);
+            console.log("- Colchetes abertos:", openBrackets, "fechados:", closeBrackets);
+
             // Se não terminar com }, tentar completar o JSON
-            if (!jsonString.endsWith('}') || openBraces !== closeBraces || openBrackets !== closeBrackets) {
-              console.log('JSON parece estar truncado, tentando completar...');
-              
+            if (
+              !jsonString.endsWith("}") ||
+              openBraces !== closeBraces ||
+              openBrackets !== closeBrackets
+            ) {
+              console.log("JSON parece estar truncado, tentando completar...");
+
               // Verificar se há string incompleta no final
               const incompleteStringMatch = jsonString.match(/"[^"]*$/);
               if (incompleteStringMatch) {
-                console.log('String incompleta detectada:', incompleteStringMatch[0]);
+                console.log("String incompleta detectada:", incompleteStringMatch[0]);
                 // Completar a string incompleta
                 jsonString = jsonString.replace(/"[^"]*$/, '""');
               }
-              
+
               // Verificar se há valor incompleto após ":"
               const incompleteValueMatch = jsonString.match(/:\s*[^",\{\[\}\]]*$/);
               if (incompleteValueMatch) {
-                console.log('Valor incompleto detectado:', incompleteValueMatch[0]);
+                console.log("Valor incompleto detectado:", incompleteValueMatch[0]);
                 // Adicionar aspas ao valor incompleto
                 jsonString = jsonString.replace(/:\s*([^",\{\[\}\]]*)$/, ':"$1"');
               }
-              
+
               // Fechar arrays primeiro
               const missingBrackets = openBrackets - closeBrackets;
               for (let i = 0; i < missingBrackets; i++) {
-                jsonString += ']';
-                console.log('Adicionado ] para fechar array');
+                jsonString += "]";
+                console.log("Adicionado ] para fechar array");
               }
-              
+
               // Depois fechar objetos
               const missingBraces = openBraces - closeBraces;
               for (let i = 0; i < missingBraces; i++) {
-                jsonString += '}';
-                console.log('Adicionado } para fechar objeto');
+                jsonString += "}";
+                console.log("Adicionado } para fechar objeto");
               }
             }
-            
-            console.log('JSON após correção de truncamento:');
+
+            console.log("JSON após correção de truncamento:");
             console.log(jsonString);
-            console.log('===============================');
-            
+            console.log("===============================");
+
             // Limpeza adicional do JSON
             jsonString = jsonString
-              .replace(/,(\s*[}\]])/g, '$1') // Remove vírgulas trailing
+              .replace(/,(\s*[}\]])/g, "$1") // Remove vírgulas trailing
               .replace(/:\s*([^",\[\{\d\s][^,\]\}]*)/g, ':"$1"') // Adiciona aspas em valores sem aspas
               .replace(/"\s*,\s*"/g, '","') // Normaliza vírgulas entre strings
-              .replace(/}\s*,\s*{/g, '},{') // Normaliza vírgulas entre objetos
-              .replace(/,+/g, ',') // Remove vírgulas duplicadas
-              .replace(/\s+/g, ' '); // Normaliza espaços
-            
-            console.log('JSON final após limpeza:');
+              .replace(/}\s*,\s*{/g, "},{") // Normaliza vírgulas entre objetos
+              .replace(/,+/g, ",") // Remove vírgulas duplicadas
+              .replace(/\s+/g, " "); // Normaliza espaços
+
+            console.log("JSON final após limpeza:");
             console.log(jsonString);
-            
+
             parsedResponse = JSON.parse(jsonString);
-            console.log('✅ Parse após correção bem-sucedido!');
-            
+            console.log("✅ Parse após correção bem-sucedido!");
           } catch (secondParseError) {
-            console.log('❌ Erro no segundo parse:', secondParseError);
-            console.log('Detalhes do erro:', (secondParseError as ParseError).message);
-            throw new Error(`Erro ao processar resposta da IA: ${secondParseError instanceof Error ? secondParseError.message : 'Erro desconhecido'}`);
+            console.log("❌ Erro no segundo parse:", secondParseError);
+            console.log("Detalhes do erro:", (secondParseError as ParseError).message);
+            throw new Error(
+              `Erro ao processar resposta da IA: ${secondParseError instanceof Error ? secondParseError.message : "Erro desconhecido"}`
+            );
           }
         }
 
         return parsedResponse;
-
       } catch (providerError: unknown) {
-        const errorMessage = providerError instanceof Error ? providerError.message : 'Erro desconhecido';
+        const errorMessage =
+          providerError instanceof Error ? providerError.message : "Erro desconhecido";
         console.error(`Erro do ${aiProviderInstance.name}:`, providerError);
-        
-        console.log('🔄 Usando dados mock como fallback devido ao erro...');
-                
+
+        console.log("🔄 Usando dados mock como fallback devido ao erro...");
+
         return {
           dishName: body.dishName,
           servings: body.servings,
           ingredients: [],
           preparationTime: "30",
           cookingTime: "45",
-          difficulty: "médio"
+          difficulty: "médio",
         };
       }
     };
@@ -263,17 +268,19 @@ Forneça a ficha técnica no formato JSON especificado.`;
 
     // Validar estrutura da resposta
     if (!parsedResponse.ingredients || !Array.isArray(parsedResponse.ingredients)) {
-      throw new Error('Resposta da IA não contém lista de ingredientes válida');
+      throw new Error("Resposta da IA não contém lista de ingredientes válida");
     }
 
     // Garantir que todos os ingredientes têm as propriedades necessárias
     parsedResponse.ingredients = parsedResponse.ingredients
       .filter((ingredient: RawIngredientData) => ingredient && ingredient.name) // Remove ingredientes inválidos
-      .map((ingredient: RawIngredientData): IngredientResponse => ({
-        name: String(ingredient.name || '').trim(),
-        quantity: String(ingredient.quantity || '0').replace(/[^\d.,]/g, ''), // Remove caracteres não numéricos
-        unit: String(ingredient.unit || 'un').toLowerCase()
-      }))
+      .map(
+        (ingredient: RawIngredientData): IngredientResponse => ({
+          name: String(ingredient.name || "").trim(),
+          quantity: String(ingredient.quantity || "0").replace(/[^\d.,]/g, ""), // Remove caracteres não numéricos
+          unit: String(ingredient.unit || "un").toLowerCase(),
+        })
+      )
       .filter((ingredient: IngredientResponse) => ingredient.name); // Remove ingredientes vazios
 
     // Se não houver ingredientes válidos, criar uma lista básica
@@ -281,7 +288,7 @@ Forneça a ficha técnica no formato JSON especificado.`;
       parsedResponse.ingredients = [
         { name: "Ingrediente principal", quantity: "500", unit: "g" },
         { name: "Sal", quantity: "5", unit: "g" },
-        { name: "Óleo", quantity: "30", unit: "mL" }
+        { name: "Óleo", quantity: "30", unit: "mL" },
       ];
     }
 
@@ -291,7 +298,7 @@ Forneça a ficha técnica no formato JSON especificado.`;
         "Prepare todos os ingredientes",
         "Tempere conforme indicado",
         "Cozinhe até o ponto desejado",
-        "Sirva imediatamente"
+        "Sirva imediatamente",
       ];
     }
 
@@ -303,11 +310,7 @@ Forneça a ficha técnica no formato JSON especificado.`;
         carbs: "45",
         fat: "12",
         fiber: "3",
-        highlights: [
-          "Fonte de energia",
-          "Contém proteínas",
-          "Carboidratos para energia"
-        ]
+        highlights: ["Fonte de energia", "Contém proteínas", "Carboidratos para energia"],
       };
     }
 
@@ -319,19 +322,16 @@ Forneça a ficha técnica no formato JSON especificado.`;
       nutritionalInsights: parsedResponse.nutritionalInsights,
       preparationTime: parsedResponse.preparationTime,
       cookingTime: parsedResponse.cookingTime,
-      difficulty: parsedResponse.difficulty || 'médio'
+      difficulty: parsedResponse.difficulty || "médio",
     };
 
     return NextResponse.json(result);
-
   } catch (error) {
-    console.error('Erro na API de geração de ficha técnica:', error);
-    
+    console.error("Erro na API de geração de ficha técnica:", error);
+
     return NextResponse.json(
-      { 
-        error: error instanceof Error 
-          ? error.message 
-          : 'Erro interno do servidor' 
+      {
+        error: error instanceof Error ? error.message : "Erro interno do servidor",
       },
       { status: 500 }
     );

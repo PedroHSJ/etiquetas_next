@@ -57,6 +57,7 @@ src/
 ## Tipos e Interfaces
 
 ### `TechnicalSheetRequest`
+
 ```typescript
 interface TechnicalSheetRequest {
   dishName: string;
@@ -65,6 +66,7 @@ interface TechnicalSheetRequest {
 ```
 
 ### `IngredientSuggestion`
+
 ```typescript
 interface IngredientSuggestion {
   name: string;
@@ -74,6 +76,7 @@ interface IngredientSuggestion {
 ```
 
 ### `EditableIngredient`
+
 ```typescript
 interface EditableIngredient extends IngredientSuggestion {
   id: string;
@@ -107,6 +110,7 @@ Componente principal que orquestra toda a funcionalidade:
 - Controles de edição e salvamento
 
 #### Props:
+
 ```typescript
 interface TechnicalSheetGeneratorProps {
   organizationId: string;
@@ -124,6 +128,7 @@ Componente para edição da lista de ingredientes:
 - Associação com produtos cadastrados
 
 #### Props:
+
 ```typescript
 interface EditableIngredientListProps {
   ingredients: EditableIngredient[];
@@ -135,6 +140,7 @@ interface EditableIngredientListProps {
 ## Integração com IA
 
 ### Prompt System
+
 O sistema utiliza um prompt estruturado que instrui a IA a:
 
 - Retornar respostas em JSON válido
@@ -144,6 +150,7 @@ O sistema utiliza um prompt estruturado que instrui a IA a:
 - Considerar temperos e condimentos
 
 ### Tratamento de Erros
+
 - Parse robusto de JSON com fallbacks
 - Validação de estrutura de resposta
 - Mensagens de erro amigáveis
@@ -152,9 +159,10 @@ O sistema utiliza um prompt estruturado que instrui a IA a:
 ## Integração com Banco de Dados
 
 ### Tabela `produtos`
+
 ```sql
 -- Estrutura utilizada
-SELECT 
+SELECT
   id,
   nome,
   grupos:grupo_id (nome)
@@ -163,6 +171,7 @@ WHERE nome ILIKE '%termo_busca%'
 ```
 
 ### Features de Busca
+
 - Busca case-insensitive por nome
 - Associação com grupos/categorias
 - Limite de resultados para performance
@@ -205,6 +214,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 ## Recursos Avançados
 
 ### Cálculo Proporcional
+
 ```typescript
 // Exemplo: de 4 para 8 porções (ratio = 2)
 const ratio = newServings / originalServings;
@@ -212,16 +222,17 @@ const newQuantity = originalQuantity * ratio;
 ```
 
 ### Validação de Quantidades
+
 ```typescript
 const isValid = !isNaN(parseFloat(quantity)) && parseFloat(quantity) > 0;
 ```
 
 ### Formatação Inteligente
+
 ```typescript
 // Remove casas decimais desnecessárias
-const formatted = numericValue % 1 === 0 
-  ? numericValue.toString() 
-  : numericValue.toFixed(2).replace(/\.?0+$/, '');
+const formatted =
+  numericValue % 1 === 0 ? numericValue.toString() : numericValue.toFixed(2).replace(/\.?0+$/, "");
 ```
 
 ## Extensibilidade
@@ -257,6 +268,7 @@ Para testar a funcionalidade:
 ### Logs
 
 O sistema registra logs detalhados para debug:
+
 - Requests para IA
 - Responses e parsing
 - Buscas no banco

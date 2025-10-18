@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Product,
-  ProductCategory,
-  UNIT_OF_MEASURE_OPTIONS,
-} from "@/types/products";
+import { Product, ProductCategory, UNIT_OF_MEASURE_OPTIONS } from "@/types/products";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,9 +149,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
       supplier: formData.supplier.trim() || undefined,
       barcode: formData.barcode.trim() || undefined,
       internal_code: formData.internal_code.trim() || undefined,
-      shelf_life_days: formData.shelf_life_days
-        ? parseInt(formData.shelf_life_days)
-        : undefined,
+      shelf_life_days: formData.shelf_life_days ? parseInt(formData.shelf_life_days) : undefined,
       storage_temperature: formData.storage_temperature.trim() || undefined,
       allergens: formData.allergens
         ? formData.allergens
@@ -200,26 +194,22 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => handleOpenDialog()}>
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Novo Produto
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
-                {editingProduct ? "Editar Produto" : "Novo Produto"}
-              </DialogTitle>
+              <DialogTitle>{editingProduct ? "Editar Produto" : "Novo Produto"}</DialogTitle>
             </DialogHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <Label htmlFor="name">Nome do Produto *</Label>
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Ex: Frango Inteiro"
                 />
               </div>
@@ -244,9 +234,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
                 <Label htmlFor="category">Categoria *</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, category: value }))
-                  }
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma categoria" />
@@ -256,7 +244,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
                       <SelectItem key={category.id} value={category.name}>
                         <div className="flex items-center gap-2">
                           <div
-                            className="w-3 h-3 rounded-full"
+                            className="h-3 w-3 rounded-full"
                             style={{ backgroundColor: category.color }}
                           />
                           {category.name}
@@ -293,9 +281,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
                 <Input
                   id="brand"
                   value={formData.brand}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, brand: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, brand: e.target.value }))}
                   placeholder="Ex: Perdigão"
                 />
               </div>
@@ -362,9 +348,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
               </div>
 
               <div>
-                <Label htmlFor="temperature">
-                  Temperatura de Armazenamento
-                </Label>
+                <Label htmlFor="temperature">Temperatura de Armazenamento</Label>
                 <Input
                   id="temperature"
                   value={formData.storage_temperature}
@@ -379,9 +363,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
               </div>
 
               <div className="md:col-span-2">
-                <Label htmlFor="allergens">
-                  Alérgenos (separados por vírgula)
-                </Label>
+                <Label htmlFor="allergens">Alérgenos (separados por vírgula)</Label>
                 <Input
                   id="allergens"
                   value={formData.allergens}
@@ -400,9 +382,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave}>
-                {editingProduct ? "Atualizar" : "Criar"} Produto
-              </Button>
+              <Button onClick={handleSave}>{editingProduct ? "Atualizar" : "Criar"} Produto</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -411,10 +391,10 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-4 md:flex-row">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <Input
                   placeholder="Buscar produtos..."
                   value={searchTerm}
@@ -425,10 +405,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
             </div>
 
             <div className="md:w-64">
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
@@ -438,7 +415,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
                     <SelectItem key={category.id} value={category.name}>
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-3 h-3 rounded-full"
+                          className="h-3 w-3 rounded-full"
                           style={{ backgroundColor: category.color }}
                         />
                         {category.name}
@@ -453,67 +430,56 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
       </Card>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredProducts.map((product) => (
-          <Card key={product.id} className="hover:shadow-lg transition-shadow">
+          <Card key={product.id} className="transition-shadow hover:shadow-lg">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-lg line-clamp-2">
-                    {product.name}
-                  </CardTitle>
-                  {product.brand && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {product.brand}
-                    </p>
-                  )}
+                  <CardTitle className="line-clamp-2 text-lg">{product.name}</CardTitle>
+                  {product.brand && <p className="mt-1 text-sm text-gray-600">{product.brand}</p>}
                 </div>
                 <Badge
                   style={{
-                    backgroundColor: getCategoryColor(product.category?.name || ''),
+                    backgroundColor: getCategoryColor(product.category?.name || ""),
                     color: "white",
                   }}
                   className="ml-2"
                 >
-                  {product.category?.name || 'Sem categoria'}
+                  {product.category?.name || "Sem categoria"}
                 </Badge>
               </div>
             </CardHeader>
 
             <CardContent className="space-y-3">
               {product.description && (
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  {product.description}
-                </p>
+                <p className="line-clamp-2 text-sm text-gray-600">{product.description}</p>
               )}
 
               <div className="flex flex-wrap gap-2 text-xs">
-                <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
-                  <Package className="w-3 h-3" />
-                  {
-                    UNIT_OF_MEASURE_OPTIONS.find(
-                      (u) => u.value === product.unit_of_measure
-                    )?.label || 'Unidade'
-                  }
+                <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1">
+                  <Package className="h-3 w-3" />
+                  {UNIT_OF_MEASURE_OPTIONS.find((u) => u.value === product.unit_of_measure)
+                    ?.label || "Unidade"}
                 </div>
 
                 {product.shelf_life_days && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
-                    <Calendar className="w-3 h-3" />
+                  <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1">
+                    <Calendar className="h-3 w-3" />
                     {product.shelf_life_days} dias
                   </div>
                 )}
 
                 {product.storage_temperature && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
-                    <Thermometer className="w-3 h-3" />
+                  <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1">
+                    <Thermometer className="h-3 w-3" />
                     {product.storage_temperature}
                   </div>
                 )}
 
                 {product.barcode && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
-                    <Barcode className="w-3 h-3" />
+                  <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1">
+                    <Barcode className="h-3 w-3" />
                     Código
                   </div>
                 )}
@@ -522,19 +488,13 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
               {product.allergens && product.allergens.length > 0 && (
                 <div className="text-xs">
                   <span className="font-medium text-red-600">Alérgenos: </span>
-                  <span className="text-red-500">
-                    {product.allergens.join(", ")}
-                  </span>
+                  <span className="text-red-500">{product.allergens.join(", ")}</span>
                 </div>
               )}
 
               <div className="flex items-center gap-2 pt-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleOpenDialog(product)}
-                >
-                  <Edit className="w-4 h-4" />
+                <Button size="sm" variant="outline" onClick={() => handleOpenDialog(product)}>
+                  <Edit className="h-4 w-4" />
                 </Button>
 
                 <Button
@@ -543,7 +503,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
                   onClick={() => handleDelete(product.id)}
                   className="text-red-600 hover:text-red-700"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </CardContent>
@@ -554,18 +514,16 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
       {filteredProducts.length === 0 && (
         <Card>
           <CardContent className="p-8 text-center">
-            <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhum produto encontrado
-            </h3>
-            <p className="text-gray-600 mb-4">
+            <Package className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+            <h3 className="mb-2 text-lg font-medium text-gray-900">Nenhum produto encontrado</h3>
+            <p className="mb-4 text-gray-600">
               {searchTerm || selectedCategory !== "all"
                 ? "Tente ajustar os filtros de busca"
                 : "Comece adicionando seu primeiro produto"}
             </p>
             {!searchTerm && selectedCategory === "all" && (
               <Button onClick={() => handleOpenDialog()}>
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 Adicionar Produto
               </Button>
             )}

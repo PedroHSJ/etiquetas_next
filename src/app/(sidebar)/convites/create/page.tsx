@@ -4,13 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,11 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -65,9 +55,7 @@ export default function CreateConvitePage() {
   // Estados do formulário
   const [email, setEmail] = useState("");
   const [perfilId, setPerfilId] = useState("");
-  const [dataExpiracao, setDataExpiracao] = useState<Date | undefined>(
-    undefined
-  );
+  const [dataExpiracao, setDataExpiracao] = useState<Date | undefined>(undefined);
   const [mensagem, setMensagem] = useState("");
 
   useEffect(() => {
@@ -103,12 +91,7 @@ export default function CreateConvitePage() {
 
     setLoading(true);
     try {
-      await InviteService.createInvite(
-        email.trim(),
-        selectedOrganization.id,
-        perfilId,
-        userId
-      );
+      await InviteService.createInvite(email.trim(), selectedOrganization.id, perfilId, userId);
 
       toast.success("Convite enviado com sucesso!");
       router.push("/convites");
@@ -129,12 +112,8 @@ export default function CreateConvitePage() {
             <ArrowLeft className="h-4 w-4" />
           </NavigationButton>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg
-                className="w-7 h-7 text-white"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg">
+              <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 4H12v8H9V2H4v10h3v8h5v-6h2l4 6z" />
               </svg>
             </div>
@@ -154,9 +133,7 @@ export default function CreateConvitePage() {
               <UserPlus className="h-5 w-5" />
               Informações do Convite
             </CardTitle>
-            <CardDescription>
-              Preencha os dados para enviar um convite por email
-            </CardDescription>
+            <CardDescription>Preencha os dados para enviar um convite por email</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -171,7 +148,7 @@ export default function CreateConvitePage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   O convite será enviado para este email
                 </p>
               </div>
@@ -188,15 +165,13 @@ export default function CreateConvitePage() {
                       <SelectItem key={perfil.id} value={perfil.id}>
                         <div className="flex flex-col">
                           <span className="font-medium">{perfil.nome}</span>
-                          <span className="text-sm text-muted-foreground">
-                            {perfil.descricao}
-                          </span>
+                          <span className="text-muted-foreground text-sm">{perfil.descricao}</span>
                         </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Define as permissões e responsabilidades do usuário
                 </p>
               </div>
@@ -232,7 +207,7 @@ export default function CreateConvitePage() {
                     />
                   </PopoverContent>
                 </Popover>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   O convite expira nesta data e não poderá mais ser aceito
                 </p>
               </div>
@@ -245,35 +220,27 @@ export default function CreateConvitePage() {
                   placeholder="Adicione uma mensagem personalizada para o convite..."
                   value={mensagem}
                   onChange={(e) => setMensagem(e.target.value)}
-                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-[100px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Mensagem que será incluída no email de convite
                 </p>
               </div>
 
               {/* Botões */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <NavigationButton
-                  href="/convites"
-                  variant="outline"
-                  className="order-2 sm:order-1"
-                >
+              <div className="flex flex-col gap-3 pt-4 sm:flex-row">
+                <NavigationButton href="/convites" variant="outline" className="order-2 sm:order-1">
                   Cancelar
                 </NavigationButton>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 order-1 sm:order-2"
-                >
+                <Button type="submit" disabled={loading} className="order-1 flex-1 sm:order-2">
                   {loading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
                       Enviando...
                     </>
                   ) : (
                     <>
-                      <Mail className="h-4 w-4 mr-2" />
+                      <Mail className="mr-2 h-4 w-4" />
                       Enviar Convite
                     </>
                   )}
@@ -289,29 +256,28 @@ export default function CreateConvitePage() {
             <CardTitle className="text-lg">Como Funciona</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <h4 className="font-medium">📧 Email de Convite</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   O usuário receberá um email com link para aceitar o convite
                 </p>
               </div>
               <div className="space-y-2">
                 <h4 className="font-medium">⏰ Expiração</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   O convite expira na data selecionada e não pode ser usado após
                 </p>
               </div>
               <div className="space-y-2">
                 <h4 className="font-medium">✅ Aceitação</h4>
-                <p className="text-sm text-muted-foreground">
-                  Ao aceitar, o usuário será adicionado automaticamente à
-                  organização
+                <p className="text-muted-foreground text-sm">
+                  Ao aceitar, o usuário será adicionado automaticamente à organização
                 </p>
               </div>
               <div className="space-y-2">
                 <h4 className="font-medium">🔐 Perfil</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   O perfil define as permissões e responsabilidades do usuário
                 </p>
               </div>

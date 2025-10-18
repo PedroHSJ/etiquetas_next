@@ -1,2 +1,2 @@
-export { TechnicalSheetGenerator } from './TechnicalSheetGenerator';
-export { EditableIngredientList } from './EditableIngredientList';
+export { TechnicalSheetGenerator } from "./TechnicalSheetGenerator";
+export { EditableIngredientList } from "./EditableIngredientList";

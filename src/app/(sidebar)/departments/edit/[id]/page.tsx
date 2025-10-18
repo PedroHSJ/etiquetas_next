@@ -13,13 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -118,11 +112,7 @@ export default function EditDepartmentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.nome.trim() ||
-      !formData.organizacao_id ||
-      !formData.tipo_departamento
-    ) {
+    if (!formData.nome.trim() || !formData.organizacao_id || !formData.tipo_departamento) {
       toast.error("Por favor, preencha todos os campos");
       return;
     }
@@ -142,9 +132,7 @@ export default function EditDepartmentPage() {
       if (error) {
         console.error("Erro ao atualizar departamento:", error);
         if (error.code === "23505") {
-          toast.error(
-            "Já existe um departamento com este nome nesta organização"
-          );
+          toast.error("Já existe um departamento com este nome nesta organização");
         } else {
           toast.error("Erro ao salvar alterações");
         }
@@ -191,17 +179,13 @@ export default function EditDepartmentPage() {
     return (
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center gap-4">
-          <NavigationButton
-            href="/departments/list"
-            variant="outline"
-            size="sm"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+          <NavigationButton href="/departments/list" variant="outline" size="sm">
+            <ArrowLeft className="mr-2 h-4 w-4" />
           </NavigationButton>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg">
+              <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
               </svg>
             </div>
             <div>
@@ -215,12 +199,12 @@ export default function EditDepartmentPage() {
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                <div className="h-10 bg-gray-200 rounded"></div>
+                <div className="mb-2 h-4 w-1/4 rounded bg-gray-200"></div>
+                <div className="h-10 rounded bg-gray-200"></div>
               </div>
               <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                <div className="h-10 bg-gray-200 rounded"></div>
+                <div className="mb-2 h-4 w-1/4 rounded bg-gray-200"></div>
+                <div className="h-10 rounded bg-gray-200"></div>
               </div>
             </div>
           </CardContent>
@@ -233,24 +217,18 @@ export default function EditDepartmentPage() {
     return (
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center gap-4">
-          <NavigationButton
-            href="/departments/list"
-            variant="outline"
-            size="sm"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+          <NavigationButton href="/departments/list" variant="outline" size="sm">
+            <ArrowLeft className="mr-2 h-4 w-4" />
           </NavigationButton>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-pink-600 shadow-lg">
+              <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
               </svg>
             </div>
             <div>
               <h1 className="text-3xl font-bold">Departamento não encontrado</h1>
-              <p className="text-muted-foreground">
-                O departamento solicitado não existe.
-              </p>
+              <p className="text-muted-foreground">O departamento solicitado não existe.</p>
             </div>
           </div>
         </div>
@@ -263,34 +241,28 @@ export default function EditDepartmentPage() {
       {/* Cabeçalho */}
       <div className="flex items-center gap-4">
         <NavigationButton href="/departments/list" variant="outline" size="sm">
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
         </NavigationButton>
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg">
+            <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
             </svg>
           </div>
           <div>
             <h1 className="text-3xl font-bold">Editar Departamento</h1>
-            <p className="text-muted-foreground">
-              Atualize as informações do departamento
-            </p>
+            <p className="text-muted-foreground">Atualize as informações do departamento</p>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-6 w-full">
+      <div className="grid w-full gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Informações do Departamento</CardTitle>
             <CardDescription>
               Criado em{" "}
-              {format(
-                new Date(department.created_at),
-                "dd 'de' MMMM 'de' yyyy",
-                { locale: ptBR }
-              )}
+              {format(new Date(department.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -299,9 +271,7 @@ export default function EditDepartmentPage() {
                 <Label htmlFor="organizacao">Organização</Label>
                 <Select
                   value={formData.organizacao_id}
-                  onValueChange={(value) =>
-                    handleInputChange("organizacao_id", value)
-                  }
+                  onValueChange={(value) => handleInputChange("organizacao_id", value)}
                   disabled={saving}
                   required
                 >
@@ -313,7 +283,7 @@ export default function EditDepartmentPage() {
                       <SelectItem key={org.id} value={org.id}>
                         <div className="flex items-center gap-2">
                           {org.id === selectedOrganization?.id && (
-                            <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                            <span className="bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs">
                               Atual
                             </span>
                           )}
@@ -324,9 +294,8 @@ export default function EditDepartmentPage() {
                   </SelectContent>
                 </Select>
                 {department?.organizacao && (
-                  <p className="text-xs text-muted-foreground">
-                    Departamento pertence à organização:{" "}
-                    {department.organizacao.nome}
+                  <p className="text-muted-foreground text-xs">
+                    Departamento pertence à organização: {department.organizacao.nome}
                   </p>
                 )}
               </div>
@@ -347,9 +316,7 @@ export default function EditDepartmentPage() {
                 <Label htmlFor="tipo">Tipo de Departamento</Label>
                 <Select
                   value={formData.tipo_departamento}
-                  onValueChange={(value) =>
-                    handleInputChange("tipo_departamento", value)
-                  }
+                  onValueChange={(value) => handleInputChange("tipo_departamento", value)}
                   disabled={saving}
                   required
                 >
@@ -367,22 +334,18 @@ export default function EditDepartmentPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
-                <NavigationButton
-                  href="/departments/list"
-                  variant="outline"
-                  disabled={saving}
-                >
+                <NavigationButton href="/departments/list" variant="outline" disabled={saving}>
                   Cancelar
                 </NavigationButton>
                 <Button type="submit" disabled={saving}>
                   {saving ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Salvando...
                     </>
                   ) : (
                     <>
-                      <Save className="h-4 w-4 mr-2" />
+                      <Save className="mr-2 h-4 w-4" />
                       Salvar Alterações
                     </>
                   )}

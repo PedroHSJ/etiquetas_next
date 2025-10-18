@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getAvailableProfiles } from "@/lib/services/profileService";
 import { PermissionService } from "@/lib/services/permissionService";
 import { UserProfile, UsuarioPermissoes } from "@/types";
@@ -41,8 +35,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const { user } = useAuth();
   const [activeProfile, setActiveProfile] = useState<UserProfile | null>(null);
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
-  const [userPermissoes, setUserPermissoes] =
-    useState<UsuarioPermissoes | null>(null);
+  const [userPermissoes, setUserPermissoes] = useState<UsuarioPermissoes | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,7 +55,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
       setUserProfiles(profiles);
 
       // Restaurar perfil ativo do localStorage se existir
-  const savedProfileId = typeof window !== 'undefined' ? localStorage.getItem("activeProfileId") : null;
+      const savedProfileId =
+        typeof window !== "undefined" ? localStorage.getItem("activeProfileId") : null;
       if (savedProfileId && profiles.length > 0) {
         const savedProfile = profiles.find((p) => p.id === savedProfileId);
         if (savedProfile) {
@@ -145,7 +139,5 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     refreshAll,
   };
 
-  return (
-    <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
-  );
+  return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
 }

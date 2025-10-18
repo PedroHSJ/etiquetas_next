@@ -162,11 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Cadastro com e-mail e senha
-  const signUpWithEmail = async (
-    email: string,
-    password: string,
-    options?: object
-  ) => {
+  const signUpWithEmail = async (email: string, password: string, options?: object) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,

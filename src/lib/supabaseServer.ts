@@ -1,6 +1,3 @@
-
-
-
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest } from "next/server";
 

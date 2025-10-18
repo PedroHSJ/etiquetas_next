@@ -157,9 +157,7 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
       default:
         return (
           <div key={field.id} style={commonStyles}>
-            <span style={{ wordBreak: "break-word" }}>
-              {value || field.label}
-            </span>
+            <span style={{ wordBreak: "break-word" }}>{value || field.label}</span>
           </div>
         );
     }
@@ -217,9 +215,7 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(
-        `etiquetas-${template.name.replace(/\s+/g, "-").toLowerCase()}.pdf`
-      );
+      pdf.save(`etiquetas-${template.name.replace(/\s+/g, "-").toLowerCase()}.pdf`);
 
       toast.success("PDF gerado com sucesso!");
     } catch (error) {
@@ -231,18 +227,14 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="flex items-center gap-4 no-print">
+      <div className="no-print flex items-center gap-4">
         <Button onClick={handlePrint} className="flex items-center gap-2">
-          <Printer className="w-4 h-4" />
+          <Printer className="h-4 w-4" />
           Imprimir
         </Button>
 
-        <Button
-          onClick={handleExportPDF}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Download className="w-4 h-4" />
+        <Button onClick={handleExportPDF} variant="outline" className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
           Exportar PDF
         </Button>
 
@@ -254,7 +246,7 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
       {/* Print Area */}
       <div
         ref={printRef}
-        className="bg-white p-8 border border-gray-200 print:border-none print:p-0"
+        className="border border-gray-200 bg-white p-8 print:border-none print:p-0"
         style={{
           paddingTop: template.margin_top,
           paddingBottom: template.margin_bottom,

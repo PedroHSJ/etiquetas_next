@@ -24,10 +24,8 @@ export function PermissionGuard({
     return (
       loadingFallback || (
         <div className="flex items-center justify-center p-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          <span className="ml-2 text-sm text-muted-foreground">
-            Verificando permissões...
-          </span>
+          <div className="border-primary h-6 w-6 animate-spin rounded-full border-b-2"></div>
+          <span className="text-muted-foreground ml-2 text-sm">Verificando permissões...</span>
         </div>
       )
     );
@@ -38,10 +36,8 @@ export function PermissionGuard({
       fallback || (
         <div className="flex items-center justify-center p-4 text-center">
           <div className="space-y-2">
-            <div className="text-lg font-semibold text-red-600">
-              Acesso Negado
-            </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-lg font-semibold text-red-600">Acesso Negado</div>
+            <div className="text-muted-foreground text-sm">
               Você não tem permissão para {acao} {funcionalidade}.
             </div>
           </div>

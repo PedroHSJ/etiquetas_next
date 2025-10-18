@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { InviteService } from '@/lib/services/inviteService';
-import { Convite } from '@/types/onboarding';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { InviteService } from "@/lib/services/inviteService";
+import { Convite } from "@/types/onboarding";
 
 export const useOnboarding = () => {
   const { user } = useAuth();
@@ -18,7 +18,7 @@ export const useOnboarding = () => {
   const checkUserStatus = async () => {
     try {
       setLoading(true);
-      
+
       // Verificar se usuário já está em uma organização
       if (user?.id) {
         const isInOrganization = await InviteService.checkUserOrganization(user.id);
@@ -29,7 +29,7 @@ export const useOnboarding = () => {
       const pendingInvites = await InviteService.getPendingInvites(user!.email!);
       setInvites(pendingInvites);
     } catch (error) {
-      console.error('Erro ao verificar status do usuário:', error);
+      console.error("Erro ao verificar status do usuário:", error);
     } finally {
       setLoading(false);
     }
@@ -41,13 +41,13 @@ export const useOnboarding = () => {
         const pendingInvites = await InviteService.getPendingInvites(user.email);
         setInvites(pendingInvites);
       } catch (error) {
-        console.error('Erro ao atualizar convites:', error);
+        console.error("Erro ao atualizar convites:", error);
       }
     }
   };
 
   const removeInvite = (inviteId: string) => {
-    setInvites(prev => prev.filter(inv => inv.id !== inviteId));
+    setInvites((prev) => prev.filter((inv) => inv.id !== inviteId));
   };
 
   return {
@@ -56,6 +56,6 @@ export const useOnboarding = () => {
     hasOrganization,
     refreshInvites,
     removeInvite,
-    checkUserStatus
+    checkUserStatus,
   };
 };

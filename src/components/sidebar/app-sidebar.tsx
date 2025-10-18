@@ -32,8 +32,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Criar dados do usuário para o NavUser
   const userData = {
-    name:
-      user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuário",
+    name: user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuário",
     email: user?.email || "usuario@exemplo.com",
     avatar: user?.user_metadata?.avatar_url || "",
   };
@@ -92,7 +91,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       //   icon: Tags,
       //   isActive: pathname.startsWith("/etiquetas"),
       // },
-      { 
+      {
         title: "Fichas Técnicas",
         url: "/fichas-tecnicas",
         icon: Package,
@@ -120,7 +119,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         {loading ? (
-          <div className="flex items-center justify-center h-16">
+          <div className="flex h-16 items-center justify-center">
             <span>Loading...</span>
           </div>
         ) : (

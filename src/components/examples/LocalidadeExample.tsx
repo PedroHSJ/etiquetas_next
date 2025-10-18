@@ -1,54 +1,49 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Search, MapPin, RefreshCw } from 'lucide-react'
-import { LocalidadeSelector } from '@/components/localidade'
-import { useLocalidade } from '@/hooks/useLocalidade'
-import { MunicipioResponse, ViaCEPResponse } from '@/types/localidade'
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Search, MapPin, RefreshCw } from "lucide-react";
+import { LocalidadeSelector } from "@/components/localidade";
+import { useLocalidade } from "@/hooks/useLocalidade";
+import { MunicipioResponse, ViaCEPResponse } from "@/types/localidade";
 
 export function LocalidadeExample() {
-  const {
-    buscarCEP,
-    buscarOuCriarMunicipioPorCEP,
-    validarCEP,
-    formatarCEP,
-    loading
-  } = useLocalidade()
+  const { buscarCEP, buscarOuCriarMunicipioPorCEP, validarCEP, formatarCEP, loading } =
+    useLocalidade();
 
-  const [cepTeste, setCepTeste] = useState('')
-  const [resultadoCEP, setResultadoCEP] = useState<{ 
-    municipio?: MunicipioResponse; 
-    dadosCEP?: ViaCEPResponse | null; 
-  } | null>(null)
-  const [localidadeSelecionada, setLocalidadeSelecionada] = useState({})
+  const [cepTeste, setCepTeste] = useState("");
+  const [resultadoCEP, setResultadoCEP] = useState<{
+    municipio?: MunicipioResponse;
+    dadosCEP?: ViaCEPResponse | null;
+  } | null>(null);
+  const [localidadeSelecionada, setLocalidadeSelecionada] = useState({});
 
   const testarCEP = async () => {
     if (!validarCEP(cepTeste)) {
-      return
+      return;
     }
 
-    const resultado = await buscarOuCriarMunicipioPorCEP(cepTeste)
-    setResultadoCEP(resultado)
-  }
+    const resultado = await buscarOuCriarMunicipioPorCEP(cepTeste);
+    setResultadoCEP(resultado);
+  };
 
   const testarBuscaCEP = async () => {
     if (!validarCEP(cepTeste)) {
-      return
+      return;
     }
 
-    const dadosCEP = await buscarCEP(cepTeste)
-    setResultadoCEP({ dadosCEP })
-  }
+    const dadosCEP = await buscarCEP(cepTeste);
+    setResultadoCEP({ dadosCEP });
+  };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="text-center space-y-2">
+    <div className="container mx-auto space-y-6 p-6">
+      <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Teste de Localidade</h1>
         <p className="text-muted-foreground">
           Sistema de integração com ViaCEP e gestão de localidades
@@ -62,9 +57,7 @@ export function LocalidadeExample() {
             <Search className="h-5 w-5" />
             Teste de Busca por CEP
           </CardTitle>
-          <CardDescription>
-            Digite um CEP para testar a integração com ViaCEP
-          </CardDescription>
+          <CardDescription>Digite um CEP para testar a integração com ViaCEP</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
@@ -79,28 +72,33 @@ export function LocalidadeExample() {
               />
             </div>
             <div className="flex items-end gap-2">
-              <Button 
+              <Button
                 onClick={testarBuscaCEP}
                 disabled={loading || !validarCEP(cepTeste)}
                 variant="outline"
               >
-                {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                {loading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
                 Buscar
               </Button>
-              <Button 
-                onClick={testarCEP}
-                disabled={loading || !validarCEP(cepTeste)}
-              >
-                {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+              <Button onClick={testarCEP} disabled={loading || !validarCEP(cepTeste)}>
+                {loading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MapPin className="h-4 w-4" />
+                )}
                 Criar Município
               </Button>
             </div>
           </div>
 
           {resultadoCEP && (
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Resultado:</h4>
-              
+            <div className="bg-muted mt-4 rounded-lg p-4">
+              <h4 className="mb-2 font-medium">Resultado:</h4>
+
               {resultadoCEP.dadosCEP && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -133,8 +131,8 @@ export function LocalidadeExample() {
               )}
 
               {resultadoCEP.municipio && (
-                <div className="mt-4 pt-4 border-t">
-                  <h5 className="font-medium mb-2">Município no Banco:</h5>
+                <div className="mt-4 border-t pt-4">
+                  <h5 className="mb-2 font-medium">Município no Banco:</h5>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Badge>ID</Badge>
@@ -146,7 +144,10 @@ export function LocalidadeExample() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge>Estado</Badge>
-                      <span>{resultadoCEP.municipio.estado.nome} ({resultadoCEP.municipio.estado.codigo})</span>
+                      <span>
+                        {resultadoCEP.municipio.estado.nome} ({resultadoCEP.municipio.estado.codigo}
+                        )
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -165,9 +166,7 @@ export function LocalidadeExample() {
             <MapPin className="h-5 w-5" />
             Seletor de Localidade Completo
           </CardTitle>
-          <CardDescription>
-            Componente integrado para seleção de localidade
-          </CardDescription>
+          <CardDescription>Componente integrado para seleção de localidade</CardDescription>
         </CardHeader>
         <CardContent>
           <LocalidadeSelector
@@ -177,9 +176,9 @@ export function LocalidadeExample() {
           />
 
           {Object.keys(localidadeSelecionada).length > 0 && (
-            <div className="mt-6 p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Dados Selecionados:</h4>
-              <pre className="text-sm bg-background p-2 rounded border overflow-auto">
+            <div className="bg-muted mt-6 rounded-lg p-4">
+              <h4 className="mb-2 font-medium">Dados Selecionados:</h4>
+              <pre className="bg-background overflow-auto rounded border p-2 text-sm">
                 {JSON.stringify(localidadeSelecionada, null, 2)}
               </pre>
             </div>
@@ -187,5 +186,5 @@ export function LocalidadeExample() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

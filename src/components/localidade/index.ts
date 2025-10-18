@@ -1,1 +1,1 @@
-export { LocalidadeSelector } from './LocalidadeSelector'
+export { LocalidadeSelector } from "./LocalidadeSelector";

@@ -4,13 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -37,14 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Mail,
-  Plus,
-  User,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, Mail, Plus, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
@@ -86,17 +73,13 @@ export default function ConvitesPage() {
 
     setLoading(true);
     try {
-      const allConvites = await InviteService.getConvitesByEmail(
-        user?.email || ""
-      );
+      const allConvites = await InviteService.getConvitesByEmail(user?.email || "");
       setConvites(allConvites);
 
       // Separar por status
       setConvitesPendentes(allConvites.filter((c) => c.status === "pendente"));
       setConvitesAceitos(allConvites.filter((c) => c.status === "aceito"));
-      setConvitesRejeitados(
-        allConvites.filter((c) => c.status === "rejeitado")
-      );
+      setConvitesRejeitados(allConvites.filter((c) => c.status === "rejeitado"));
     } catch (error) {
       console.error("Erro ao buscar convites:", error);
       toast.error("Erro ao carregar convites");
@@ -194,46 +177,42 @@ export default function ConvitesPage() {
   const getStatusBadge = (status: Convite["status"]) => {
     const statusInfo = InviteService.getStatusInfo(status);
     return (
-      <Badge variant={statusInfo.variant as "default" | "secondary" | "destructive" | "outline"} className={statusInfo.color}>
+      <Badge
+        variant={statusInfo.variant as "default" | "secondary" | "destructive" | "outline"}
+        className={statusInfo.color}
+      >
         {statusInfo.label}
       </Badge>
     );
   };
 
-  const renderConvitesTable = (
-    convitesList: Convite[],
-    showActions: boolean = false
-  ) => {
+  const renderConvitesTable = (convitesList: Convite[], showActions: boolean = false) => {
     if (convitesList.length === 0) {
       return (
-        <div className="text-center py-8 text-muted-foreground">
-          Nenhum convite encontrado
-        </div>
+        <div className="text-muted-foreground py-8 text-center">Nenhum convite encontrado</div>
       );
     }
 
     return (
       <div className="space-y-4">
         {/* Visualização em Cards para mobile */}
-        <div className="block md:hidden space-y-4">
+        <div className="block space-y-4 md:hidden">
           {convitesList.map((convite) => (
             <Card key={convite.id} className="overflow-hidden">
               <CardContent className="p-0">
                 {/* Header do Card */}
-                <div className="p-4 pb-3 border-b border-border/50">
+                <div className="border-border/50 border-b p-4 pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="mb-2 flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-blue-100 text-blue-600 text-sm">
+                          <AvatarFallback className="bg-blue-100 text-sm text-blue-600">
                             {getInitials(convite.email.split("@")[0])}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base truncate">
-                            {convite.email}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-base font-semibold">{convite.email}</h3>
+                          <p className="text-muted-foreground text-sm">
                             {convite.perfil?.nome} • {convite.organizacao?.nome}
                           </p>
                         </div>
@@ -241,13 +220,13 @@ export default function ConvitesPage() {
 
                       {/* Informações do convite */}
                       <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           Enviado em{" "}
                           {format(new Date(convite.created_at), "dd/MM/yyyy", {
                             locale: ptBR,
                           })}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           Expira em{" "}
                           {format(new Date(convite.expira_em), "dd/MM/yyyy", {
                             locale: ptBR,
@@ -262,19 +241,19 @@ export default function ConvitesPage() {
                 </div>
 
                 {/* Footer do Card com informações de quem convidou */}
-                <div className="p-4 pt-3 bg-muted/30">
+                <div className="bg-muted/30 p-4 pt-3">
                   {convite.convidado_por_usuario && (
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback className="h-8 w-8 text-xs bg-gray-100 text-gray-600">
+                        <AvatarFallback className="h-8 w-8 bg-gray-100 text-xs text-gray-600">
                           {getInitials(convite.convidado_por_usuario.nome)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-muted-foreground">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-muted-foreground text-sm font-medium">
                           Convidado por {convite.convidado_por_usuario.nome}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-muted-foreground truncate text-xs">
                           {convite.convidado_por_usuario.email}
                         </p>
                       </div>
@@ -283,22 +262,22 @@ export default function ConvitesPage() {
 
                   {/* Ações para convites pendentes */}
                   {showActions && convite.status === "pendente" && (
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
+                    <div className="border-border/50 mt-3 flex gap-2 border-t pt-3">
                       <Button
                         size="sm"
                         onClick={() => handleAceitarConvite(convite)}
-                        className="flex-1 h-10"
+                        className="h-10 flex-1"
                       >
-                        <CheckCircle className="h-4 w-4 mr-2" />
+                        <CheckCircle className="mr-2 h-4 w-4" />
                         Aceitar
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleRejeitarConvite(convite)}
-                        className="flex-1 h-10"
+                        className="h-10 flex-1"
                       >
-                        <XCircle className="h-4 w-4 mr-2" />
+                        <XCircle className="mr-2 h-4 w-4" />
                         Rejeitar
                       </Button>
                     </div>
@@ -319,9 +298,7 @@ export default function ConvitesPage() {
                 <TableHead>Convidado por</TableHead>
                 <TableHead>Enviado em</TableHead>
                 <TableHead>Expira em</TableHead>
-                {showActions && (
-                  <TableHead className="text-right">Ações</TableHead>
-                )}
+                {showActions && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -330,7 +307,7 @@ export default function ConvitesPage() {
                   <TableCell>
                     <div>
                       <div className="font-medium">{convite.perfil?.nome}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-muted-foreground text-xs">
                         {convite.perfil?.descricao}
                       </div>
                     </div>
@@ -340,21 +317,21 @@ export default function ConvitesPage() {
                     {convite.convidado_por_usuario ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                            <AvatarFallback className="h-6 w-6 text-xs bg-gray-100 text-gray-600">
-                              {getInitials(convite.convidado_por_usuario.nome)}
-                            </AvatarFallback>
+                          <AvatarFallback className="h-6 w-6 bg-gray-100 text-xs text-gray-600">
+                            {getInitials(convite.convidado_por_usuario.nome)}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="text-sm font-medium">
                             {convite.convidado_por_usuario.nome}
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-muted-foreground text-xs">
                             {convite.convidado_por_usuario.email}
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <span className="text-sm text-muted-foreground">N/A</span>
+                      <span className="text-muted-foreground text-sm">N/A</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -374,7 +351,7 @@ export default function ConvitesPage() {
                   {showActions && (
                     <TableCell className="text-right">
                       {convite.status === "pendente" && (
-                        <div className="flex gap-1 justify-end">
+                        <div className="flex justify-end gap-1">
                           <Button
                             size="sm"
                             onClick={() => handleAceitarConvite(convite)}
@@ -421,20 +398,14 @@ export default function ConvitesPage() {
           {/* Cabeçalho */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg
-                  className="w-7 h-7 text-white"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg">
+                <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
                 </svg>
               </div>
               <div>
                 <h1 className="text-3xl font-bold">Convites</h1>
-                <p className="text-muted-foreground">
-                  Gerencie convites para {organizacaoNome}
-                </p>
+                <p className="text-muted-foreground">Gerencie convites para {organizacaoNome}</p>
               </div>
             </div>
             <NavigationButton href="/convites/create">
@@ -444,17 +415,10 @@ export default function ConvitesPage() {
           </div>
 
           {/* Tabs */}
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Tabs para Desktop */}
-            <TabsList className="hidden md:grid w-full grid-cols-4">
-              <TabsTrigger
-                value="pendentes"
-                className="flex items-center gap-2"
-              >
+            <TabsList className="hidden w-full grid-cols-4 md:grid">
+              <TabsTrigger value="pendentes" className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
                 Pendentes ({convitesPendentes.length})
               </TabsTrigger>
@@ -462,10 +426,7 @@ export default function ConvitesPage() {
                 <CheckCircle className="h-4 w-4" />
                 Aceitos ({convitesAceitos.length})
               </TabsTrigger>
-              <TabsTrigger
-                value="rejeitados"
-                className="flex items-center gap-2"
-              >
+              <TabsTrigger value="rejeitados" className="flex items-center gap-2">
                 <XCircle className="h-4 w-4" />
                 Rejeitados ({convitesRejeitados.length})
               </TabsTrigger>
@@ -476,11 +437,11 @@ export default function ConvitesPage() {
             </TabsList>
 
             {/* Tabs para Mobile - Layout Vertical com Cards */}
-            <div className="md:hidden space-y-3">
+            <div className="space-y-3 md:hidden">
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setActiveTab("pendentes")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`rounded-lg border-2 p-4 transition-all ${
                     activeTab === "pendentes"
                       ? "border-primary bg-primary/5 text-primary"
                       : "border-border bg-card hover:bg-accent/50"
@@ -489,14 +450,12 @@ export default function ConvitesPage() {
                   <div className="flex flex-col items-center gap-2">
                     <Mail
                       className={`h-6 w-6 ${
-                        activeTab === "pendentes"
-                          ? "text-primary"
-                          : "text-muted-foreground"
+                        activeTab === "pendentes" ? "text-primary" : "text-muted-foreground"
                       }`}
                     />
                     <div className="text-center">
-                      <div className="font-semibold text-sm">Pendentes</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm font-semibold">Pendentes</div>
+                      <div className="text-muted-foreground text-xs">
                         {convitesPendentes.length} convite(s)
                       </div>
                     </div>
@@ -505,7 +464,7 @@ export default function ConvitesPage() {
 
                 <button
                   onClick={() => setActiveTab("aceitos")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`rounded-lg border-2 p-4 transition-all ${
                     activeTab === "aceitos"
                       ? "border-primary bg-primary/5 text-primary"
                       : "border-border bg-card hover:bg-accent/50"
@@ -514,14 +473,12 @@ export default function ConvitesPage() {
                   <div className="flex flex-col items-center gap-2">
                     <CheckCircle
                       className={`h-6 w-6 ${
-                        activeTab === "aceitos"
-                          ? "text-primary"
-                          : "text-muted-foreground"
+                        activeTab === "aceitos" ? "text-primary" : "text-muted-foreground"
                       }`}
                     />
                     <div className="text-center">
-                      <div className="font-semibold text-sm">Aceitos</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm font-semibold">Aceitos</div>
+                      <div className="text-muted-foreground text-xs">
                         {convitesAceitos.length} convite(s)
                       </div>
                     </div>
@@ -530,7 +487,7 @@ export default function ConvitesPage() {
 
                 <button
                   onClick={() => setActiveTab("rejeitados")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`rounded-lg border-2 p-4 transition-all ${
                     activeTab === "rejeitados"
                       ? "border-primary bg-primary/5 text-primary"
                       : "border-border bg-card hover:bg-accent/50"
@@ -539,14 +496,12 @@ export default function ConvitesPage() {
                   <div className="flex flex-col items-center gap-2">
                     <XCircle
                       className={`h-6 w-6 ${
-                        activeTab === "rejeitados"
-                          ? "text-primary"
-                          : "text-muted-foreground"
+                        activeTab === "rejeitados" ? "text-primary" : "text-muted-foreground"
                       }`}
                     />
                     <div className="text-center">
-                      <div className="font-semibold text-sm">Rejeitados</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm font-semibold">Rejeitados</div>
+                      <div className="text-muted-foreground text-xs">
                         {convitesRejeitados.length} convite(s)
                       </div>
                     </div>
@@ -555,7 +510,7 @@ export default function ConvitesPage() {
 
                 <button
                   onClick={() => setActiveTab("todos")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`rounded-lg border-2 p-4 transition-all ${
                     activeTab === "todos"
                       ? "border-primary bg-primary/5 text-primary"
                       : "border-border bg-card hover:bg-accent/50"
@@ -564,14 +519,12 @@ export default function ConvitesPage() {
                   <div className="flex flex-col items-center gap-2">
                     <Mail
                       className={`h-6 w-6 ${
-                        activeTab === "todos"
-                          ? "text-primary"
-                          : "text-muted-foreground"
+                        activeTab === "todos" ? "text-primary" : "text-muted-foreground"
                       }`}
                     />
                     <div className="text-center">
-                      <div className="font-semibold text-sm">Todos</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm font-semibold">Todos</div>
+                      <div className="text-muted-foreground text-xs">
                         {convites.length} convite(s)
                       </div>
                     </div>
@@ -581,9 +534,9 @@ export default function ConvitesPage() {
 
               {/* Indicador de Tab Ativa para Mobile */}
               <div className="flex justify-center">
-                <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-sm font-medium text-primary">
+                <div className="bg-primary/10 flex items-center gap-2 rounded-full px-4 py-2">
+                  <div className="bg-primary h-2 w-2 rounded-full"></div>
+                  <span className="text-primary text-sm font-medium">
                     {activeTab === "pendentes" && "Pendentes"}
                     {activeTab === "aceitos" && "Aceitos"}
                     {activeTab === "rejeitados" && "Rejeitados"}
@@ -600,17 +553,13 @@ export default function ConvitesPage() {
                     <Mail className="h-5 w-5" />
                     Convites Pendentes ({convitesPendentes.length})
                   </CardTitle>
-                  <CardDescription>
-                    Convites aguardando resposta dos usuários
-                  </CardDescription>
+                  <CardDescription>Convites aguardando resposta dos usuários</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                      <p className="mt-2 text-muted-foreground">
-                        Carregando convites...
-                      </p>
+                    <div className="py-8 text-center">
+                      <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
+                      <p className="text-muted-foreground mt-2">Carregando convites...</p>
                     </div>
                   ) : (
                     renderConvitesTable(convitesPendentes, true)
@@ -626,17 +575,13 @@ export default function ConvitesPage() {
                     <CheckCircle className="h-5 w-5" />
                     Convites Aceitos ({convitesAceitos.length})
                   </CardTitle>
-                  <CardDescription>
-                    Convites que foram aceitos pelos usuários
-                  </CardDescription>
+                  <CardDescription>Convites que foram aceitos pelos usuários</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                      <p className="mt-2 text-muted-foreground">
-                        Carregando convites...
-                      </p>
+                    <div className="py-8 text-center">
+                      <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
+                      <p className="text-muted-foreground mt-2">Carregando convites...</p>
                     </div>
                   ) : (
                     renderConvitesTable(convitesAceitos)
@@ -652,17 +597,13 @@ export default function ConvitesPage() {
                     <XCircle className="h-5 w-5" />
                     Convites Rejeitados ({convitesRejeitados.length})
                   </CardTitle>
-                  <CardDescription>
-                    Convites que foram rejeitados pelos usuários
-                  </CardDescription>
+                  <CardDescription>Convites que foram rejeitados pelos usuários</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                      <p className="mt-2 text-muted-foreground">
-                        Carregando convites...
-                      </p>
+                    <div className="py-8 text-center">
+                      <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
+                      <p className="text-muted-foreground mt-2">Carregando convites...</p>
                     </div>
                   ) : (
                     renderConvitesTable(convitesRejeitados)
@@ -678,17 +619,13 @@ export default function ConvitesPage() {
                     <Mail className="h-5 w-5" />
                     Todos os Convites ({convites.length})
                   </CardTitle>
-                  <CardDescription>
-                    Visão geral de todos os convites da organização
-                  </CardDescription>
+                  <CardDescription>Visão geral de todos os convites da organização</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                      <p className="mt-2 text-muted-foreground">
-                        Carregando convites...
-                      </p>
+                    <div className="py-8 text-center">
+                      <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
+                      <p className="text-muted-foreground mt-2">Carregando convites...</p>
                     </div>
                   ) : (
                     renderConvitesTable(convites)
@@ -716,8 +653,8 @@ export default function ConvitesPage() {
                   {actionDialog.action === "aceitar"
                     ? "Aceitação"
                     : actionDialog.action === "rejeitar"
-                    ? "Rejeição"
-                    : "Cancelamento"}
+                      ? "Rejeição"
+                      : "Cancelamento"}
                 </DialogTitle>
                 <DialogDescription>
                   {actionDialog.action === "aceitar" &&
@@ -731,33 +668,27 @@ export default function ConvitesPage() {
 
               {actionDialog.convite && (
                 <div className="py-4">
-                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                  <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-blue-100 text-blue-600">
                         {getInitials(actionDialog.convite.email.split("@")[0])}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">
-                        {actionDialog.convite.email}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium">{actionDialog.convite.email}</p>
+                      <p className="text-muted-foreground text-sm">
                         {actionDialog.convite.perfil?.nome} •{" "}
                         {actionDialog.convite.organizacao?.nome}
                       </p>
                       {actionDialog.convite.convidado_por_usuario && (
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="mt-1 flex items-center gap-2">
                           <Avatar className="h-4 w-4">
-                              <AvatarFallback className="h-4 w-4 text-xs bg-gray-100 text-gray-600">
-                                {getInitials(
-                                  actionDialog.convite.convidado_por_usuario
-                                    .nome
-                                )}
-                              </AvatarFallback>
+                            <AvatarFallback className="h-4 w-4 bg-gray-100 text-xs text-gray-600">
+                              {getInitials(actionDialog.convite.convidado_por_usuario.nome)}
+                            </AvatarFallback>
                           </Avatar>
-                          <span className="text-xs text-muted-foreground">
-                            Convidado por{" "}
-                            {actionDialog.convite.convidado_por_usuario.nome}
+                          <span className="text-muted-foreground text-xs">
+                            Convidado por {actionDialog.convite.convidado_por_usuario.nome}
                           </span>
                         </div>
                       )}
@@ -779,33 +710,31 @@ export default function ConvitesPage() {
                     actionDialog.action === "aceitar"
                       ? "default"
                       : actionDialog.action === "rejeitar"
-                      ? "destructive"
-                      : "secondary"
+                        ? "destructive"
+                        : "secondary"
                   }
                   onClick={confirmAction}
                   disabled={actionDialog.isProcessing}
                 >
                   {actionDialog.isProcessing ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
                       Processando...
                     </>
                   ) : (
                     <>
                       {actionDialog.action === "aceitar" && (
-                        <CheckCircle className="h-4 w-4 mr-2" />
+                        <CheckCircle className="mr-2 h-4 w-4" />
                       )}
-                      {actionDialog.action === "rejeitar" && (
-                        <XCircle className="h-4 w-4 mr-2" />
-                      )}
+                      {actionDialog.action === "rejeitar" && <XCircle className="mr-2 h-4 w-4" />}
                       {actionDialog.action === "cancelar" && (
-                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        <AlertTriangle className="mr-2 h-4 w-4" />
                       )}
                       {actionDialog.action === "aceitar"
                         ? "Aceitar"
                         : actionDialog.action === "rejeitar"
-                        ? "Rejeitar"
-                        : "Cancelar"}
+                          ? "Rejeitar"
+                          : "Cancelar"}
                     </>
                   )}
                 </Button>

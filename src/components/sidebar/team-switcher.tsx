@@ -16,8 +16,7 @@ import { ChevronsUpDown, Building2, User } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
 export function TeamSwitcher() {
-  const { activeProfile, userProfiles, loading, setActiveProfile } =
-    useProfile();
+  const { activeProfile, userProfiles, loading, setActiveProfile } = useProfile();
   const { setSelectedOrganization, selectedOrganization } = useOrganization();
   const [open, setOpen] = useState(false);
 
@@ -25,22 +24,31 @@ export function TeamSwitcher() {
   useEffect(() => {
     if (userProfiles.length === 1) {
       const singleProfile = userProfiles[0];
-      
+
       // Se não há perfil ativo, definir o único perfil disponível
       if (!activeProfile) {
         setActiveProfile(singleProfile);
       }
-      
+
       // Sempre garantir que a organização está selecionada quando há apenas um perfil
       if (!selectedOrganization || selectedOrganization.id !== singleProfile.organizacao.id) {
         setSelectedOrganization(singleProfile.organizacao);
       }
     }
-  }, [userProfiles, activeProfile, selectedOrganization, setActiveProfile, setSelectedOrganization]);
+  }, [
+    userProfiles,
+    activeProfile,
+    selectedOrganization,
+    setActiveProfile,
+    setSelectedOrganization,
+  ]);
 
   // Sincronizar organização quando o perfil ativo mudar
   useEffect(() => {
-    if (activeProfile && (!selectedOrganization || selectedOrganization.id !== activeProfile.organizacao.id)) {
+    if (
+      activeProfile &&
+      (!selectedOrganization || selectedOrganization.id !== activeProfile.organizacao.id)
+    ) {
       setSelectedOrganization(activeProfile.organizacao);
     }
   }, [activeProfile, selectedOrganization, setSelectedOrganization]);
@@ -48,8 +56,8 @@ export function TeamSwitcher() {
   if (loading) {
     return (
       <div className="flex items-center space-x-2 px-3 py-2">
-        <div className="h-8 w-8 rounded-md bg-muted animate-pulse" />
-        <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+        <div className="bg-muted h-8 w-8 animate-pulse rounded-md" />
+        <div className="bg-muted h-4 w-32 animate-pulse rounded" />
       </div>
     );
   }
@@ -57,12 +65,10 @@ export function TeamSwitcher() {
   if (!activeProfile || userProfiles.length === 0) {
     return (
       <div className="flex items-center space-x-2 px-3 py-2">
-        <div className="h-8 w-8 rounded-md bg-muted">
-          <User className="h-4 w-4 m-2 text-muted-foreground" />
+        <div className="bg-muted h-8 w-8 rounded-md">
+          <User className="text-muted-foreground m-2 h-4 w-4" />
         </div>
-        <span className="text-sm text-muted-foreground">
-          Nenhum perfil disponível
-        </span>
+        <span className="text-muted-foreground text-sm">Nenhum perfil disponível</span>
       </div>
     );
   }
@@ -80,19 +86,19 @@ export function TeamSwitcher() {
           role="combobox"
           aria-expanded={open}
           aria-label="Selecionar perfil"
-          className="w-full justify-between px-3 py-2 min-w-0"
+          className="w-full min-w-0 justify-between px-3 py-2"
         >
-          <div className="flex items-center space-x-2 min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 items-center space-x-2">
             <Avatar className="h-6 w-6 shrink-0">
               <AvatarFallback className="text-xs">
                 {activeProfile.perfil.nome.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col items-start text-left min-w-0 flex-1">
-              <span className="text-sm font-medium leading-none truncate max-w-full">
+            <div className="flex min-w-0 flex-1 flex-col items-start text-left">
+              <span className="max-w-full truncate text-sm leading-none font-medium">
                 {activeProfile.perfil.nome}
               </span>
-              <span className="text-xs leading-none text-muted-foreground truncate max-w-full">
+              <span className="text-muted-foreground max-w-full truncate text-xs leading-none">
                 {activeProfile.organizacao.nome}
               </span>
             </div>
@@ -103,10 +109,8 @@ export function TeamSwitcher() {
       <DropdownMenuContent className="w-56 max-w-[calc(100vw-2rem)]" align="start" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              Perfis disponíveis
-            </p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-sm leading-none font-medium">Perfis disponíveis</p>
+            <p className="text-muted-foreground text-xs leading-none">
               Selecione um perfil para alternar
             </p>
           </div>
@@ -121,17 +125,17 @@ export function TeamSwitcher() {
               handleProfileChange(profile);
             }}
           >
-            <div className="flex items-center space-x-2 min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 items-center space-x-2">
               <Avatar className="h-6 w-6 shrink-0">
                 <AvatarFallback className="text-xs">
                   {profile.perfil.nome.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-sm font-medium leading-none truncate">
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm leading-none font-medium">
                   {profile.perfil.nome}
                 </span>
-                <span className="text-xs leading-none text-muted-foreground truncate">
+                <span className="text-muted-foreground truncate text-xs leading-none">
                   {profile.organizacao.nome}
                 </span>
               </div>

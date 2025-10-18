@@ -22,7 +22,7 @@ export interface MovimentacaoEstoqueResponse {
 /**
  * Tipos de movimentação suportadas
  */
-export type TipoMovimentacaoEstoque = 'entrada' | 'saida';
+export type TipoMovimentacaoEstoque = "entrada" | "saida";
 
 /**
  * Classe para operações de estoque
@@ -99,7 +99,7 @@ export class MovimentacaoEstoqueService {
     tipo: TipoMovimentacaoEstoque,
     request: MovimentacaoEstoqueRequest
   ): Promise<MovimentacaoEstoqueResponse> {
-    if (tipo === 'entrada') {
+    if (tipo === "entrada") {
       return this.registrarEntrada(request);
     } else {
       return this.registrarSaida(request);
@@ -116,20 +116,20 @@ export class MovimentacaoEstoqueService {
   static async listarProdutos(termo = "", limit = 50, apenasComEstoque = false): Promise<any[]> {
     try {
       const params = new URLSearchParams();
-      if (termo) params.append('q', termo);
-      params.append('limit', limit.toString());
+      if (termo) params.append("q", termo);
+      params.append("limit", limit.toString());
 
       const response = await fetch(`/api/estoque/produtos?${params}`);
       const data = await response.json();
 
       if (data.success) {
         let produtos = data.data;
-        
+
         // Filtrar apenas produtos com estoque > 0 se solicitado
         if (apenasComEstoque) {
           produtos = produtos.filter((p: any) => (p.estoque_atual || 0) > 0);
         }
-        
+
         return produtos;
       }
       throw new Error(data.error || data.details || "Erro ao carregar produtos");

@@ -4,16 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  PlusCircle, 
-  ChefHat, 
-  Users, 
-  Clock, 
-  Trash2, 
-  Edit, 
-  Eye,
-  Filter 
-} from "lucide-react";
+import { PlusCircle, ChefHat, Users, Clock, Trash2, Edit, Eye, Filter } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { TechnicalSheet } from "@/types/technical-sheet";
@@ -68,12 +59,10 @@ export default function TechnicalSheetsListPage() {
 
       if (result.success && result.data) {
         let filteredSheets = result.data;
-        
+
         // Aplicar filtro de dificuldade no frontend
         if (difficultyFilter !== "all") {
-          filteredSheets = result.data.filter(sheet => 
-            sheet.difficulty === difficultyFilter
-          );
+          filteredSheets = result.data.filter((sheet) => sheet.difficulty === difficultyFilter);
         }
 
         setSheets(filteredSheets);
@@ -93,7 +82,7 @@ export default function TechnicalSheetsListPage() {
     setDeleting(id);
     try {
       const result = await TechnicalSheetService.deleteTechnicalSheet(id);
-      
+
       if (result.success) {
         toast.success("Ficha técnica removida com sucesso!");
         await loadTechnicalSheets(); // Recarregar a lista
@@ -127,9 +116,9 @@ export default function TechnicalSheetsListPage() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-muted-foreground mb-2">
+          <h2 className="text-muted-foreground mb-2 text-xl font-semibold">
             Acesso não autorizado
           </h2>
           <p className="text-muted-foreground">
@@ -142,9 +131,9 @@ export default function TechnicalSheetsListPage() {
 
   if (!selectedOrganization) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-muted-foreground mb-2">
+          <h2 className="text-muted-foreground mb-2 text-xl font-semibold">
             Nenhuma organização selecionada
           </h2>
           <p className="text-muted-foreground">
@@ -158,7 +147,7 @@ export default function TechnicalSheetsListPage() {
   return (
     <div className="container mx-auto space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex items-start justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Fichas Técnicas</h1>
           <p className="text-muted-foreground">
@@ -167,16 +156,16 @@ export default function TechnicalSheetsListPage() {
         </div>
         <Link href="/ficha-tecnica">
           <Button>
-            <PlusCircle className="h-4 w-4 mr-2" />
+            <PlusCircle className="mr-2 h-4 w-4" />
             Nova Ficha Técnica
           </Button>
         </Link>
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-4 items-center">
+      <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Filter className="text-muted-foreground h-4 w-4" />
           <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Dificuldade" />
@@ -189,44 +178,41 @@ export default function TechnicalSheetsListPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="text-sm text-muted-foreground">
-          {total} fichas técnicas encontradas
-        </div>
+        <div className="text-muted-foreground text-sm">{total} fichas técnicas encontradas</div>
       </div>
 
       {/* Loading State */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 w-3/4 rounded bg-gray-200"></div>
+                <div className="h-3 w-1/2 rounded bg-gray-200"></div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div className="h-3 bg-gray-200 rounded"></div>
-                  <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                  <div className="h-3 rounded bg-gray-200"></div>
+                  <div className="h-3 w-5/6 rounded bg-gray-200"></div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       ) : sheets.length === 0 ? (
-        <div className="text-center py-12">
-          <ChefHat className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+        <div className="py-12 text-center">
+          <ChefHat className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+          <h3 className="text-muted-foreground mb-2 text-lg font-semibold">
             Nenhuma ficha técnica encontrada
           </h3>
           <p className="text-muted-foreground mb-6">
-            {difficultyFilter !== "all" 
+            {difficultyFilter !== "all"
               ? "Não há fichas técnicas com essa dificuldade."
-              : "Crie sua primeira ficha técnica para começar."
-            }
+              : "Crie sua primeira ficha técnica para começar."}
           </p>
           <Link href="/ficha-tecnica">
             <Button>
-              <PlusCircle className="h-4 w-4 mr-2" />
+              <PlusCircle className="mr-2 h-4 w-4" />
               Criar Primeira Ficha
             </Button>
           </Link>
@@ -234,38 +220,36 @@ export default function TechnicalSheetsListPage() {
       ) : (
         <>
           {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {sheets.map((sheet) => (
-              <Card key={sheet.id} className="hover:shadow-lg transition-shadow">
+              <Card key={sheet.id} className="transition-shadow hover:shadow-lg">
                 <CardHeader>
-                  <div className="flex justify-between items-start">
+                  <div className="flex items-start justify-between">
                     <CardTitle className="text-lg">{sheet.dishName}</CardTitle>
                     <Badge className={getDifficultyColor(sheet.difficulty)}>
                       {sheet.difficulty || "N/A"}
                     </Badge>
                   </div>
-                  <CardDescription>
-                    Criado em {formatDate(sheet.createdAt)}
-                  </CardDescription>
+                  <CardDescription>Criado em {formatDate(sheet.createdAt)}</CardDescription>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-4">
                   {/* Informações básicas */}
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <Users className="text-muted-foreground h-4 w-4" />
                       <span>{sheet.servings} porções</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <Clock className="text-muted-foreground h-4 w-4" />
                       <span>{sheet.preparationTime || "N/A"}</span>
                     </div>
                   </div>
 
                   {/* Ingredientes preview */}
                   <div>
-                    <p className="text-sm font-medium mb-2">Ingredientes:</p>
-                    <div className="text-xs text-muted-foreground">
+                    <p className="mb-2 text-sm font-medium">Ingredientes:</p>
+                    <div className="text-muted-foreground text-xs">
                       {sheet.ingredients.slice(0, 3).map((ing, i) => (
                         <span key={i}>
                           {ing.name}
@@ -281,17 +265,17 @@ export default function TechnicalSheetsListPage() {
                   {/* Ações */}
                   <div className="flex gap-2 pt-2">
                     <Button variant="outline" size="sm" className="flex-1">
-                      <Eye className="h-4 w-4 mr-1" />
+                      <Eye className="mr-1 h-4 w-4" />
                       Ver
                     </Button>
                     <Button variant="outline" size="sm" className="flex-1">
-                      <Edit className="h-4 w-4 mr-1" />
+                      <Edit className="mr-1 h-4 w-4" />
                       Editar
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           className="text-destructive hover:text-destructive"
                           disabled={deleting === sheet.id}
@@ -303,8 +287,8 @@ export default function TechnicalSheetsListPage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Remover Ficha Técnica</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja remover a ficha técnica "{sheet.dishName}"? 
-                            Esta ação não pode ser desfeita.
+                            Tem certeza que deseja remover a ficha técnica "{sheet.dishName}"? Esta
+                            ação não pode ser desfeita.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -326,20 +310,20 @@ export default function TechnicalSheetsListPage() {
 
           {/* Paginação */}
           {total > pageSize && (
-            <div className="flex justify-center items-center gap-2 mt-8">
+            <div className="mt-8 flex items-center justify-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
                 Anterior
               </Button>
-              <span className="text-sm text-muted-foreground px-4">
+              <span className="text-muted-foreground px-4 text-sm">
                 Página {page} de {Math.ceil(total / pageSize)}
               </span>
               <Button
                 variant="outline"
-                onClick={() => setPage(p => p + 1)}
+                onClick={() => setPage((p) => p + 1)}
                 disabled={page >= Math.ceil(total / pageSize)}
               >
                 Próxima

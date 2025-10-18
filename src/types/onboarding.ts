@@ -1,11 +1,11 @@
-import { Perfil } from './permissions';
+import { Perfil } from "./permissions";
 
 export interface Convite {
   id: string;
   email: string;
   organizacao_id: string;
   perfil_id: string;
-  status: 'pendente' | 'aceito' | 'expirado' | 'rejeitado' | 'cancelado';
+  status: "pendente" | "aceito" | "expirado" | "rejeitado" | "cancelado";
   token_invite: string;
   expira_em: string;
   convidado_por: string;
@@ -45,6 +45,6 @@ export interface UsuarioOrganizacao {
 }
 
 export interface OnboardingChoice {
-  tipo: 'gestor' | 'funcionario';
-  perfil?: 'cozinheiro' | 'estoquista';
+  tipo: "gestor" | "funcionario";
+  perfil?: "cozinheiro" | "estoquista";
 }

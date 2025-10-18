@@ -1,29 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { NextRequest, NextResponse } from "next/server";
+import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
 // Endpoint para buscar produtos para seleção na entrada rápida
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const termo = searchParams.get('q') || '';
-    const limite = parseInt(searchParams.get('limit') || '50');
+    const termo = searchParams.get("q") || "";
+    const limite = parseInt(searchParams.get("limit") || "50");
 
     // Obter client autenticado
     const supabase = getSupabaseServerClient(request);
 
     // Verificar autenticação
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
     if (userError || !user) {
-      return NextResponse.json(
-        { error: 'Usuário não autorizado' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Usuário não autorizado" }, { status: 401 });
     }
 
     // Query para buscar produtos com informações de estoque
-    let query = supabase
-      .from('products')
-      .select(`
+    let query = supabase.from("products").select(`
         id,
         name,
         group_id,
@@ -32,31 +30,29 @@ export async function GET(request: NextRequest) {
 
     // Filtrar por nome se termo foi fornecido
     if (termo) {
-      query = query.ilike('name', `%${termo}%`);
+      query = query.ilike("name", `%${termo}%`);
     }
 
     // Aplicar limite e ordenação
-    query = query
-      .order('name', { ascending: true })
-      .limit(limite);
+    query = query.order("name", { ascending: true }).limit(limite);
 
     const { data: produtos, error } = await query;
 
     if (error) {
-      console.error('Erro ao buscar produtos:', error);
+      console.error("Erro ao buscar produtos:", error);
       return NextResponse.json(
-        { success: false, error: 'Erro ao buscar produtos', details: error.message },
+        { success: false, error: "Erro ao buscar produtos", details: error.message },
         { status: 500 }
       );
     }
 
     // Agora buscar o estoque para cada produto
     const { data: estoque, error: estoqueError } = await supabase
-      .from('stock')
-      .select('product_id, current_quantity');
+      .from("stock")
+      .select("product_id, current_quantity");
 
     if (estoqueError) {
-      console.error('Erro ao buscar estoque:', estoqueError);
+      console.error("Erro ao buscar estoque:", estoqueError);
       // Continuar mesmo se falhar no estoque
     }
 
@@ -79,12 +75,11 @@ export async function GET(request: NextRequest) {
       success: true,
       data: produtosComEstoque,
     });
-
   } catch (error) {
-    console.error('Erro na API de produtos:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    console.error("Erro na API de produtos:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
     return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor', details: errorMessage },
+      { success: false, error: "Erro interno do servidor", details: errorMessage },
       { status: 500 }
     );
   }

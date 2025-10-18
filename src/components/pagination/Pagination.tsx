@@ -1,6 +1,6 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   currentPage: number;
@@ -19,7 +19,7 @@ export default function Pagination({
   itemsPerPage,
   onPageChange,
   onItemsPerPageChange,
-  className = '',
+  className = "",
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
@@ -37,7 +37,7 @@ export default function Pagination({
     }
 
     if (currentPage - delta > 2) {
-      rangeWithDots.push(1, '...');
+      rangeWithDots.push(1, "...");
     } else {
       rangeWithDots.push(1);
     }
@@ -45,7 +45,7 @@ export default function Pagination({
     rangeWithDots.push(...range);
 
     if (currentPage + delta < totalPages - 1) {
-      rangeWithDots.push('...', totalPages);
+      rangeWithDots.push("...", totalPages);
     } else {
       rangeWithDots.push(totalPages);
     }
@@ -69,11 +69,11 @@ export default function Pagination({
 
       {visiblePages.map((page, index) => (
         <React.Fragment key={index}>
-          {page === '...' ? (
-            <span className="px-3 py-2 text-sm text-muted-foreground">...</span>
+          {page === "..." ? (
+            <span className="text-muted-foreground px-3 py-2 text-sm">...</span>
           ) : (
             <Button
-              variant={currentPage === page ? 'default' : 'outline'}
+              variant={currentPage === page ? "default" : "outline"}
               size="sm"
               onClick={() => onPageChange(page as number)}
               className="min-w-[40px]"

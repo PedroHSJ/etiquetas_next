@@ -16,17 +16,20 @@ Sistema de gestão de etiquetas para Unidades de Alimentação e Nutrição (UAN
 ### Funcionalidades Implementadas
 
 #### 1. **ProfileService com Listeners em Tempo Real**
+
 - Monitora mudanças na tabela `usuarios_organizacoes` automaticamente
 - Detecta novos convites aceitos e atualiza a lista de perfis
 - Listener também monitora a tabela `convites` para aceites
 
 #### 2. **TeamSwitcher Otimizado**
+
 - Atualização automática quando novos perfis são aceitos
 - Interface melhorada com indicadores visuais do perfil ativo
 - Suporte para múltiplos perfis com troca fácil
 - Estados de loading e erro bem definidos
 
 #### 3. **Hook useActiveProfile**
+
 Novo hook simplificado para acessar informações do perfil ativo:
 
 ```typescript
@@ -62,6 +65,7 @@ function MeuComponente() {
 ### Como Funciona
 
 #### 1. **Aceitação de Convites**
+
 1. Usuário aceita convite no onboarding
 2. Registro é inserido na tabela `usuarios_organizacoes`
 3. Listener detecta mudança automaticamente
@@ -69,12 +73,14 @@ function MeuComponente() {
 5. TeamSwitcher reflete mudanças instantaneamente
 
 #### 2. **Troca de Perfis**
+
 1. Usuário seleciona novo perfil no TeamSwitcher
 2. `activeProfile` é atualizado no context
 3. Todas as telas que usam `useActiveProfile` reagem automaticamente
 4. Permissões são recarregadas para o novo perfil
 
 #### 3. **Persistência**
+
 - Perfil ativo é salvo no `localStorage`
 - Restaurado automaticamente no próximo login
 - Se perfil salvo não existe mais, seleciona o primeiro disponível
@@ -82,14 +88,15 @@ function MeuComponente() {
 ### Exemplo Prático de Uso
 
 #### Dashboard Dinâmico
+
 ```typescript
 // src/app/(sidebar)/dashboard/page.tsx
 export default function DashboardPage() {
-  const { 
-    organizacaoNome, 
-    perfilNome, 
+  const {
+    organizacaoNome,
+    perfilNome,
     hasActiveProfile,
-    loading 
+    loading
   } = useActiveProfile();
 
   if (loading) return <Loading />;
@@ -106,10 +113,11 @@ export default function DashboardPage() {
 ```
 
 #### Componente de Header
+
 ```typescript
 function Header() {
   const { organizacaoNome, perfilNome } = useActiveProfile();
-  
+
   return (
     <header>
       <h1>{organizacaoNome}</h1>

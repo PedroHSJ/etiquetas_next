@@ -13,13 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,11 +45,7 @@ export default function CreateDepartmentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.nome.trim() ||
-      !formData.organizacao_id ||
-      !formData.tipo_departamento
-    ) {
+    if (!formData.nome.trim() || !formData.organizacao_id || !formData.tipo_departamento) {
       toast.error("Por favor, preencha todos os campos");
       return;
     }
@@ -72,9 +62,7 @@ export default function CreateDepartmentPage() {
       if (error) {
         console.error("Erro ao criar departamento:", error);
         if (error.code === "23505") {
-          toast.error(
-            "Já existe um departamento com este nome nesta organização"
-          );
+          toast.error("Já existe um departamento com este nome nesta organização");
         } else {
           toast.error("Erro ao criar departamento");
         }
@@ -122,12 +110,12 @@ export default function CreateDepartmentPage() {
       {/* Cabeçalho */}
       <div className="flex items-center gap-4">
         <NavigationButton href="/departments/list" variant="outline" size="sm">
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
         </NavigationButton>
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg">
+            <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
             </svg>
           </div>
           <div>
@@ -139,13 +127,11 @@ export default function CreateDepartmentPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 w-full">
+      <div className="grid w-full gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Informações do Departamento</CardTitle>
-            <CardDescription>
-              Preencha as informações básicas do novo departamento
-            </CardDescription>
+            <CardDescription>Preencha as informações básicas do novo departamento</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -153,9 +139,7 @@ export default function CreateDepartmentPage() {
                 <Label htmlFor="organizacao">Organização</Label>
                 <Select
                   value={formData.organizacao_id}
-                  onValueChange={(value) =>
-                    handleInputChange("organizacao_id", value)
-                  }
+                  onValueChange={(value) => handleInputChange("organizacao_id", value)}
                   disabled={saving}
                   required
                 >
@@ -167,7 +151,7 @@ export default function CreateDepartmentPage() {
                       <SelectItem key={org.id} value={org.id}>
                         <div className="flex items-center gap-2">
                           {org.id === selectedOrganization?.id && (
-                            <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                            <span className="bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs">
                               Atual
                             </span>
                           )}
@@ -178,9 +162,8 @@ export default function CreateDepartmentPage() {
                   </SelectContent>
                 </Select>
                 {selectedOrganization && (
-                  <p className="text-xs text-muted-foreground">
-                    A organização atual ({selectedOrganization.nome}) está
-                    pré-selecionada
+                  <p className="text-muted-foreground text-xs">
+                    A organização atual ({selectedOrganization.nome}) está pré-selecionada
                   </p>
                 )}
               </div>
@@ -201,9 +184,7 @@ export default function CreateDepartmentPage() {
                 <Label htmlFor="tipo">Tipo de Departamento</Label>
                 <Select
                   value={formData.tipo_departamento}
-                  onValueChange={(value) =>
-                    handleInputChange("tipo_departamento", value)
-                  }
+                  onValueChange={(value) => handleInputChange("tipo_departamento", value)}
                   disabled={saving}
                   required
                 >
@@ -221,22 +202,18 @@ export default function CreateDepartmentPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
-                <NavigationButton
-                  href="/departments/list"
-                  variant="outline"
-                  disabled={saving}
-                >
+                <NavigationButton href="/departments/list" variant="outline" disabled={saving}>
                   Cancelar
                 </NavigationButton>
                 <Button type="submit" disabled={saving}>
                   {saving ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Criando...
                     </>
                   ) : (
                     <>
-                      <Save className="h-4 w-4 mr-2" />
+                      <Save className="mr-2 h-4 w-4" />
                       Criar Departamento
                     </>
                   )}

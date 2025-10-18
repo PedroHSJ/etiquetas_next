@@ -201,9 +201,7 @@ export function obterTodosFeriados(ano: number): Feriado[] {
   const feriadosFixos = gerarFeriadosFixos(ano);
   const feriadosMoveis = calcularFeriadosMoveis(ano);
 
-  return [...feriadosFixos, ...feriadosMoveis].sort((a, b) =>
-    a.data.localeCompare(b.data)
-  );
+  return [...feriadosFixos, ...feriadosMoveis].sort((a, b) => a.data.localeCompare(b.data));
 }
 
 // Verificar se uma data é feriado
@@ -227,10 +225,7 @@ export function aplicarRegrasFeriado(
   const folgasExtras = feriado.folgasAdicionais || 0;
 
   // Em feriados importantes, mais pessoas ficam de folga
-  if (
-    feriado.nome === "Natal" ||
-    feriado.nome === "Confraternização Universal"
-  ) {
+  if (feriado.nome === "Natal" || feriado.nome === "Confraternização Universal") {
     // No Natal e Ano Novo, apenas 1 pessoa trabalha (se possível)
     return {
       folgasExtras: Math.max(0, totalMembros - 1),
@@ -329,10 +324,9 @@ export default class FeriadoManager {
       const feriadosPersonalizados = this.getFeriadosPersonalizados(ano);
 
       // Combinar e ordenar por data
-      const todosFeriados = [
-        ...feriadosNacionais,
-        ...feriadosPersonalizados,
-      ].sort((a, b) => a.data.localeCompare(b.data));
+      const todosFeriados = [...feriadosNacionais, ...feriadosPersonalizados].sort((a, b) =>
+        a.data.localeCompare(b.data)
+      );
 
       this.feriados.set(ano, todosFeriados);
     }
@@ -418,10 +412,7 @@ export default class FeriadoManager {
       erros.push("Nome do feriado é obrigatório");
     }
 
-    if (
-      !feriado.tipo ||
-      !["nacional", "regional", "organizacional"].includes(feriado.tipo)
-    ) {
+    if (!feriado.tipo || !["nacional", "regional", "organizacional"].includes(feriado.tipo)) {
       erros.push("Tipo deve ser: nacional, regional ou organizacional");
     }
 
@@ -431,8 +422,7 @@ export default class FeriadoManager {
 
     if (
       feriado.folgasAdicionais !== undefined &&
-      (typeof feriado.folgasAdicionais !== "number" ||
-        feriado.folgasAdicionais < 0)
+      (typeof feriado.folgasAdicionais !== "number" || feriado.folgasAdicionais < 0)
     ) {
       erros.push("Folgas adicionais deve ser um número positivo");
     }
