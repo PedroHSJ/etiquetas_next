@@ -2,6 +2,8 @@
 // TIPOS DE ETIQUETAS E SISTEMA DE IMPRESSÃO
 // =============================================================================
 
+import { Product } from "./products";
+
 export enum LabelType {
   PRODUTO_ABERTO = "PRODUTO_ABERTO",
   MANIPULADO = "MANIPULADO",
@@ -218,15 +220,7 @@ export interface Etiqueta {
   status: string;
   observacoes?: string;
   created_at: string;
-  products: { name: string };
-  groups: { name: string };
-  // Deprecated - backward compatibility
-  produto_id?: number;
-  usuario_id?: string;
-  product?: { name: string };
-  produto?: { nome: string };
-  produtos?: { nome: string };
-  grupos?: { nome: string };
+  product: Product;
 }
 
 export interface EtiquetaCreate {
@@ -236,22 +230,4 @@ export interface EtiquetaCreate {
   observacoes?: string;
   // Deprecated - backward compatibility
   produto_id?: number;
-}
-
-export interface Grupo {
-  id: number;
-  name: string;
-  description?: string;
-  // Deprecated - backward compatibility
-  nome?: string;
-  descricao?: string;
-}
-
-export interface Produto {
-  id: number;
-  name: string;
-  group_id: number;
-  // Deprecated - backward compatibility
-  nome?: string;
-  grupo_id?: number;
 }

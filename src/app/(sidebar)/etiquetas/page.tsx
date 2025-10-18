@@ -13,11 +13,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { Grupo, Produto } from "@/types/etiquetas";
 import { createClient } from "@supabase/supabase-js";
 import { useMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import { Label } from "@/components/ui/label";
+import { Product, ProductGroup } from "@/types";
 
 export default function Page() {
   const [horario, setHorario] = useState("");
@@ -26,14 +26,14 @@ export default function Page() {
   const [responsavelAmostra, setResponsavelAmostra] = useState("");
   const [obsAmostra, setObsAmostra] = useState("");
   const { user } = useAuth();
-  const [grupos, setGrupos] = useState<Grupo[]>([]);
-  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [grupos, setGrupos] = useState<ProductGroup[]>([]);
+  const [produtos, setProdutos] = useState<Product[]>([]);
   const [grupoSelecionado, setGrupoSelecionado] = useState<number | null>(null);
   const [filtroGrupo, setFiltroGrupo] = useState("");
   const [filtroProduto, setFiltroProduto] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
-  const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(
+  const [produtoSelecionado, setProdutoSelecionado] = useState<Product | null>(
     null
   );
   const [quantidade, setQuantidade] = useState(1);
@@ -86,14 +86,14 @@ export default function Page() {
 
   // Filtragem
   const gruposFiltrados = grupos.filter((g) =>
-    (g.name || g.nome || '').toLowerCase().includes(filtroGrupo.toLowerCase())
+    (g.name || '').toLowerCase().includes(filtroGrupo.toLowerCase())
   );
   const produtosFiltrados = produtos.filter((p) =>
-    (p.name || p.nome || '').toLowerCase().includes(filtroProduto.toLowerCase())
+    (p.name || '').toLowerCase().includes(filtroProduto.toLowerCase())
   );
 
   // Função para abrir modal ao clicar no produto
-  function handleProdutoClick(produto: Produto) {
+  function handleProdutoClick(produto: Product) {
     setProdutoSelecionado(produto);
     setQuantidade(1);
     setObservacoes("");
@@ -192,7 +192,7 @@ export default function Page() {
                     className="py-2 cursor-pointer hover:bg-emerald-50 px-2 rounded"
                     onClick={() => setGrupoSelecionado(grupo.id)}
                   >
-                    {grupo.name || grupo.nome}
+                    {grupo.name}
                   </li>
                 ))}
                 {gruposFiltrados.length === 0 && (
@@ -224,7 +224,7 @@ export default function Page() {
                     className="py-2 px-2 cursor-pointer hover:bg-emerald-50 rounded"
                     onClick={() => handleProdutoClick(produto)}
                   >
-                    {produto.name || produto.nome}
+                    {produto.name}
                   </li>
                 ))}
                 {produtosFiltrados.length === 0 && (
@@ -251,7 +251,7 @@ export default function Page() {
             </button>
             <h2 className="text-xl font-semibold mb-4">
               Nova etiqueta para:{" "}
-              <span className="font-bold">{produtoSelecionado.name || produtoSelecionado.nome}</span>
+              <span className="font-bold">{produtoSelecionado.name}</span>
             </h2>
             <form
               onSubmit={(e) => {
