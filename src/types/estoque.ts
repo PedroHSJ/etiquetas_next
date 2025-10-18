@@ -10,15 +10,15 @@ export type TipoMovimentacao = 'ENTRADA' | 'SAIDA';
 // Interface principal do estoque
 export interface Estoque {
   id: string;
-  produto_id: number;
-  quantidade_atual: number;
-  usuario_id: string;
+  product_id: number;
+  current_quantity: number;
+  user_id: string;
   created_at: string;
   updated_at: string;
 
   // Dados relacionados (joins)
-  produto?: Product;
-  usuario?: {
+  product?: Product;
+  user?: {
     id: string;
     email?: string;
     user_metadata?: {

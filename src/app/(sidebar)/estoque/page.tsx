@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Popover } from "@radix-ui/react-popover";
+import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export default function EstoquePage() {
   const [estatisticas, setEstatisticas] = useState<EstoqueEstatisticas | null>(null);
@@ -135,12 +137,46 @@ export default function EstoquePage() {
 
   const getStatusBadge = (quantidade: number) => {
     if (quantidade === 0) {
-      return <Badge variant="destructive">Zerado</Badge>;
+      return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Badge variant="destructive" className="cursor-pointer">Zerado</Badge>
+        </PopoverTrigger>
+        <PopoverContent className="w-64">
+          <div className="text-sm">
+            Este produto está com o estoque zerado. Considere realizar uma entrada de estoque para repor o item.
+          </div>
+        </PopoverContent>
+      </Popover>
+      );
+      // return <Badge variant="destructive">Zerado</Badge>;
     }
     if (quantidade < 10) {
-      return <Badge variant="secondary">Baixo</Badge>;
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Badge variant="default" className="cursor-pointer">Baixo</Badge>
+          </PopoverTrigger>
+          <PopoverContent className="w-64">
+            <div className="text-sm"> 
+              Este produto está com o estoque abaixo de 10 unidades. Considere realizar uma entrada de estoque para repor o item.
+            </div>
+          </PopoverContent>
+        </Popover>
+      );
     }
-    return <Badge variant="default">Normal</Badge>;
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Badge variant="default" className="cursor-pointer">OK</Badge>
+        </PopoverTrigger>
+        <PopoverContent className="w-64">
+          <div className="text-sm">
+            Este produto está com o estoque acima de 10 unidades.
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
   };
 
   const formatarData = (data: string) => {
@@ -162,18 +198,18 @@ export default function EstoquePage() {
   // Colunas da tabela de estoque
   const estoqueColumns: GenericTableColumn<Estoque>[] = [
     {
-      id: "produto_nome",
-      key: "produto_nome",
+      id: "product_name",
+      key: "product.name",
       label: "Produto",
-      accessor: (row) => (row.produto as any)?.nome || "N/A",
+      accessor: (row) => (row.product as any)?.name || "N/A",
       visible: true,
       width: 300,
     },
     {
-      id: "quantidade",
-      key: "quantidade",
+      id: "current_quantity",
+      key: "current_quantity",
       label: "Quantidade",
-      accessor: (row) => row.quantidade_atual,
+      accessor: (row) => row.current_quantity,
       visible: true,
       render: (value) => (
         <div className="font-mono text-foreground">
@@ -185,7 +221,7 @@ export default function EstoquePage() {
       id: "status",
       key: "status",
       label: "Status",
-      accessor: (row) => row.quantidade_atual,
+      accessor: (row) => row.current_quantity,
       visible: true,
       render: (value) => (
         <div className="">
