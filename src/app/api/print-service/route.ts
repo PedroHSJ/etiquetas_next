@@ -1,5 +1,15 @@
+import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+
+export async function isUserAuthenticated(req: NextRequest): Promise<boolean> {
+  const supabase = getSupabaseServerClient(req);
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  return !!user && !error;
+}
 
 const PrintJobSchema = z.object({
   printerName: z.string(),
@@ -37,12 +47,22 @@ function buildTSPL(data: PrintJobVariables): string {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!(await isUserAuthenticated(req))) {
+      return NextResponse.json(
+        { success: false, message: "Usuário não autenticado." },
+        { status: 401 }
+      );
+    }
     const body = await req.json();
     const parseResult = PrintJobSchema.safeParse(body);
 
     if (!parseResult.success) {
       return NextResponse.json(
-        { success: false, message: "Dados inválidos", errors: parseResult.error.issues },
+        {
+          success: false,
+          message: "Dados inválidos",
+          errors: parseResult.error.issues,
+        },
         { status: 400 }
       );
     }
@@ -50,11 +70,16 @@ export async function POST(req: NextRequest) {
     const data = parseResult.data;
     const printData = buildTSPL(data);
 
-    const printServiceUrl = process.env.PRINT_SERVICE_URL || "http://localhost:5000/api/print";
+    const printServiceUrl =
+      process.env.PRINT_SERVICE_URL || "http://localhost:5000/api/print";
     const response = await fetch(printServiceUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ printerName: data.printerName, language: data.language, printData }),
+      body: JSON.stringify({
+        printerName: data.printerName,
+        language: data.language,
+        printData,
+      }),
     });
 
     const result = await response.json();
