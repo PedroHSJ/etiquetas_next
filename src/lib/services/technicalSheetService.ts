@@ -29,7 +29,7 @@ export interface SaveTechnicalSheetData {
     quantidade: string;
     unidade: string;
     quantidade_original: string;
-    produto_id?: number;
+    product_id?: number;
     ordem: number;
   }[];
 }
@@ -54,7 +54,7 @@ export interface DatabaseTechnicalSheet {
     quantidade: string;
     unidade: string;
     quantidade_original: string;
-    produto_id?: number;
+    product_id?: number;
     ordem: number;
   }[];
 }
@@ -156,7 +156,7 @@ export class TechnicalSheetService {
             quantidade,
             unidade,
             quantidade_original,
-            produto_id,
+            product_id,
             ordem
           )
         `)
@@ -215,7 +215,7 @@ export class TechnicalSheetService {
             quantidade,
             unidade,
             quantidade_original,
-            produto_id,
+            product_id,
             ordem
           )
         `)
@@ -381,7 +381,7 @@ export class TechnicalSheetService {
           quantity: ing.quantidade,
           unit: ing.unidade,
           originalQuantity: ing.quantidade_original,
-          productId: ing.produto_id?.toString(),
+          productId: ing.product_id?.toString(),
           isEditing: false
         }))
     };
@@ -455,16 +455,16 @@ export class TechnicalSheetService {
       try {
         // Buscar na tabela produtos usando busca simples por nome
         const { data: matchingProducts, error } = await supabase
-          .from('produtos')
+          .from('products')
           .select(`
             id,
-            nome,
-            grupos:grupo_id (
+            name,
+            groups:group_id (
               id,
-              nome
+              name
             )
           `)
-          .ilike('nome', `%${ingredient.name}%`)
+          .ilike('name', `%${ingredient.name}%`)
           .limit(5);
 
         if (error) {
@@ -510,15 +510,15 @@ export class TechnicalSheetService {
   ): Promise<SimpleProduct[]> {
     try {
       const { data: produtos, error } = await supabase
-        .from('produtos')
+        .from('products')
         .select(`
           id,
-          nome,
-          grupos:grupo_id (
-            nome
+          name,
+          groups:group_id (
+            name
           )
         `)
-        .ilike('nome', `%${query}%`)
+        .ilike('name', `%${query}%`)
         .limit(20);
 
       if (error) {
@@ -527,12 +527,12 @@ export class TechnicalSheetService {
       }
 
       // Converter para o formato SimpleProduct  
-      return produtos?.map((produto: { id: unknown; nome: unknown; grupos?: unknown }) => {
-        const grupos = produto.grupos as { nome?: string } | null | undefined;
+      return produtos?.map((produto: { id: unknown; name: unknown; groups?: unknown }) => {
+        const groups = produto.groups as { name?: string } | null | undefined;
         return {
           id: String(produto.id),
-          name: String(produto.nome),
-          category: grupos?.nome || 'Sem categoria'
+          name: String(produto.name),
+          category: groups?.name || 'Sem categoria'
         };
       }) || [];
     } catch (error) {

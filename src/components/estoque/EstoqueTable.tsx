@@ -235,10 +235,10 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                 <TableRow key={item.id}>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{item.produto?.nome || "Produto não encontrado"}</div>
-                      {item.produto?.grupo_id && (
+                      <div className="font-medium">{item.produto?.name || "Produto não encontrado"}</div>
+                      {item.produto?.category?.name && (
                         <div className="text-sm text-muted-foreground">
-                          Grupo: {item.produto.grupo_id}
+                          Categoria: {item.produto.category.name}
                         </div>
                       )}
                     </div>
@@ -246,9 +246,9 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                   
                   <TableCell className="text-center font-mono">
                     {formatarQuantidade(item.quantidade_atual)}
-                    {item.produto?.unidade_medida && (
+                    {item.produto?.unit_of_measure && (
                       <span className="text-muted-foreground ml-1">
-                        {item.produto.unidade_medida}
+                        {item.produto.unit_of_measure}
                       </span>
                     )}
                   </TableCell>
@@ -289,7 +289,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                         <DropdownMenuItem
                           onClick={() => onViewMovimentacoes?.(
                             item.produto_id, 
-                            item.produto?.nome || "Produto"
+                            item.produto?.name || "Produto"
                           )}
                         >
                           <TrendingDown className="mr-2 h-4 w-4" />

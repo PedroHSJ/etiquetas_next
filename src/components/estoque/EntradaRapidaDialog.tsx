@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,13 +28,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandItem,
+  CommandGroup,
+} from "@/components/ui/command";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { PlusCircle, Loader2 } from "lucide-react";
+import { PlusCircle, Loader2, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
-import { EntradaRapidaRequest, ProdutoSelect, ESTOQUE_MESSAGES } from "@/types/estoque";
+import { QuickEntryRequest, ProductSelect, STOCK_MESSAGES } from "@/types/stock";
 import { useEffect } from "react";
+
+// Backward compatibility aliases
+import { ChevronsUpDown, Check } from "lucide-react";
+import { CommandEmpty } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+type EntradaRapidaRequest = QuickEntryRequest;
+type ProdutoSelect = ProductSelect;
+const ESTOQUE_MESSAGES = STOCK_MESSAGES;
 
 // Schema de validação
 const entradaRapidaSchema = z.object({
@@ -61,10 +77,13 @@ export function EntradaRapidaDialog({
   trigger,
   produtoIdSelecionado 
 }: EntradaRapidaDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // Dialog
+  const [comboOpen, setComboOpen] = useState(false); // Popover do combobox
   const [produtos, setProdutos] = useState<ProdutoSelect[]>([]);
   const [carregandoProdutos, setCarregandoProdutos] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  // Estado para filtro do combobox
+  const [inputValue, setInputValue] = useState("");
 
   const form = useForm<EntradaRapidaFormData>({
     resolver: zodResolver(entradaRapidaSchema),
@@ -115,10 +134,10 @@ export function EntradaRapidaDialog({
   const onSubmit = async (data: EntradaRapidaFormData) => {
     setEnviando(true);
     try {
-      const request: EntradaRapidaRequest = {
-        produto_id: parseInt(data.produto_id),
-        quantidade: parseFloat(data.quantidade),
-        observacao: data.observacao,
+      const request: QuickEntryRequest = {
+        product_id: parseInt(data.produto_id),
+        quantity: parseFloat(data.quantidade),
+        observation: data.observacao,
       };
 
       // Utiliza fetchWithAuth para enviar o token JWT e cookies
@@ -134,7 +153,7 @@ export function EntradaRapidaDialog({
       const result = await response.json();
 
       if (result.success) {
-        toast.success(result.message || ESTOQUE_MESSAGES.ENTRADA_SUCESSO);
+        toast.success(result.message || ESTOQUE_MESSAGES.ENTRY_SUCCESS);
         form.reset();
         setOpen(false);
         onSuccess?.();
@@ -155,6 +174,9 @@ export function EntradaRapidaDialog({
       Entrada Rápida
     </Button>
   );
+  
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -171,49 +193,130 @@ export function EntradaRapidaDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
+           
+
+           <FormField
               control={form.control}
               name="produto_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Produto *</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                    disabled={carregandoProdutos}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um produto" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {carregandoProdutos ? (
-                        <SelectItem value="loading" disabled>
-                          Carregando produtos...
-                        </SelectItem>
-                      ) : produtos.length === 0 ? (
-                        <SelectItem value="empty" disabled>
-                          Nenhum produto encontrado
-                        </SelectItem>
-                      ) : (
-                        produtos.map((produto) => (
-                          <SelectItem key={produto.id} value={produto.id.toString()}>
-                            {produto.nome} 
-                            {produto.estoque_atual !== undefined && (
-                              <span className="text-muted-foreground ml-2">
-                                (Estoque: {produto.estoque_atual})
+
+                  <Popover open={comboOpen} onOpenChange={setComboOpen} modal={false}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          ref={triggerRef}
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={comboOpen}
+                          className="w-full justify-between"
+                          disabled={carregandoProdutos}
+                        >
+                          {(() => {
+                            const selected = produtos.find(
+                              (p) => p.id.toString() === (field.value ?? "")
+                            );
+                            return selected ? (
+                              <span>
+                                {selected.name}
+                                {selected.current_stock !== undefined && (
+                                  <span className="text-muted-foreground ml-2">
+                                    (Estoque: {selected.current_stock})
+                                  </span>
+                                )}
                               </span>
-                            )}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                            ) : (
+                              "Selecione um produto"
+                            );
+                          })()}
+                          <ChevronsUpDown className="opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+
+                    <PopoverContent
+                      align="start"
+                      sideOffset={4}
+                      className="p-0 min-w-[var(--radix-popover-trigger-width)]"
+                      onWheel={(e) => e.stopPropagation()}
+                    >
+                      <Command className="w-full">
+                        <CommandInput
+                          placeholder="Filtrar produtos..."
+                          autoFocus
+                          className="w-full"
+                        />
+
+                        <CommandList
+                          className="max-h-72 overflow-y-auto overscroll-contain"
+                          onWheelCapture={(e) => e.stopPropagation()}
+                        >
+                          <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
+
+                          {carregandoProdutos ? (
+                            <CommandItem disabled value="loading">
+                              Carregando produtos...
+                            </CommandItem>
+                          ) : (
+                            (() => {
+                              // Agrupamento permanece — o filtro será feito pelo Shadcn
+                              const byGroup: Record<string, ProdutoSelect[]> = {};
+                              const groupNames: Record<string, string> = {};
+
+                              for (const p of produtos) {
+                                const gid = p.group_id ? String(p.group_id) : "Sem grupo";
+                                (byGroup[gid] ||= []).push(p);
+                                if (p?.group?.name) groupNames[gid] = p.group.name ?? "";
+                                else if (!groupNames[gid]) groupNames[gid] = gid;
+                              }
+
+                              return Object.entries(byGroup).map(([gid, list]) => (
+                                <CommandGroup key={gid} heading={groupNames[gid] || gid}>
+                                  {list.map((p) => {
+                                    const idStr = p.id.toString();
+                                    const isSelected = (field.value ?? "") === idStr;
+
+                      
+                                    return (
+                                      <CommandItem
+                                        key={p.id}
+                                        value={p.name.toString()}
+                                        onSelect={() => {
+                                          field.onChange(idStr);
+                                          setComboOpen(false);
+                                        }}
+                                        className={cn(
+                                          isSelected && "bg-accent text-accent-foreground"
+                                        )}
+                                      >
+                                        {p.name}
+                                        <Check
+                                          className={cn(
+                                            "ml-auto",
+                                            isSelected ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              ));
+                            })()
+                          )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+
+
+
 
             <FormField
               control={form.control}
@@ -227,6 +330,7 @@ export function EntradaRapidaDialog({
                       step="0.001"
                       min="0.001"
                       placeholder="0.000"
+                      className="w-full"
                       {...field}
                     />
                   </FormControl>

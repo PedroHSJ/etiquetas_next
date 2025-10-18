@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
     // Filtros
     const filtros: EstoqueFiltros = {
       produto_nome: searchParams.get('produto_nome') || undefined,
-      produto_id: searchParams.get('produto_id') ? parseInt(searchParams.get('produto_id')!) : undefined,
-      usuario_id: searchParams.get('usuario_id') || undefined,
+      product_id: searchParams.get('product_id') ? parseInt(searchParams.get('product_id')!) : undefined,
+      user_id: searchParams.get('user_id') || undefined,
       estoque_zerado: searchParams.get('estoque_zerado') === 'true',
       estoque_baixo: searchParams.get('estoque_baixo') === 'true',
       quantidade_minima: searchParams.get('quantidade_minima') ? parseFloat(searchParams.get('quantidade_minima')!) : undefined,
@@ -23,31 +23,31 @@ export async function GET(request: NextRequest) {
 
     // Query base para estoque com join de produtos
     let query = supabase
-      .from('estoque')
+      .from('stock')
       .select(`
         *,
-        produto:produtos(*)
+        product:products(*)
       `, { count: 'exact' });
 
     // Aplicar filtros
-    if (filtros.produto_id) {
-      query = query.eq('produto_id', filtros.produto_id);
+    if (filtros.product_id) {
+      query = query.eq('product_id', filtros.product_id);
     }
 
-    if (filtros.usuario_id) {
-      query = query.eq('usuario_id', filtros.usuario_id);
+    if (filtros.user_id) {
+      query = query.eq('user_id', filtros.user_id);
     }
 
     if (filtros.estoque_zerado) {
-      query = query.eq('quantidade_atual', 0);
+      query = query.eq('current_quantity', 0);
     } else if (filtros.estoque_baixo && filtros.quantidade_minima) {
-      query = query.lt('quantidade_atual', filtros.quantidade_minima);
-      query = query.gt('quantidade_atual', 0);
+      query = query.lt('current_quantity', filtros.quantidade_minima);
+      query = query.gt('current_quantity', 0);
     }
 
     // Filtro por nome do produto (usando inner join)
     if (filtros.produto_nome) {
-      query = query.ilike('produto.nome', `%${filtros.produto_nome}%`);
+      query = query.ilike('product.name', `%${filtros.produto_nome}%`);
     }
 
     // Aplicar paginação e ordenação

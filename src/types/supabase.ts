@@ -4,34 +4,47 @@
  */
 
 // =============================================================================
-// TIPOS PARA PRODUTOS (tabela produtos)
+// TIPOS PARA PRODUTOS (tabela products - migrada de produtos)
 // =============================================================================
 
-export interface SupabaseProduto {
+export interface SupabaseProduct {
   id: number;
-  nome: string;
-  descricao?: string;
-  grupo_id?: number;
+  name: string;
+  description?: string;
+  group_id?: number;
   created_at?: string;
   updated_at?: string;
-  // Relacionamento com grupos (pode ser objeto ou array dependendo da query)
-  grupos?: SupabaseGrupo | SupabaseGrupo[] | { nome: string };
+  // Relacionamento com groups (pode ser objeto ou array dependendo da query)
+  groups?: SupabaseGroup | SupabaseGroup[] | { name: string };
 }
 
-export interface SupabaseGrupo {
+export interface SupabaseGroup {
   id?: number;
-  nome: string;
-  descricao?: string;
+  name: string;
+  description?: string;
   created_at?: string;
   updated_at?: string;
 }
 
 // Tipo específico para queries de busca de produtos
-export interface SupabaseProdutoSearch {
+export interface SupabaseProductSearch {
   id: number;
-  nome: string;
-  grupos?: { nome: string } | null;
+  name: string;
+  groups?: { name: string } | null;
 }
+
+// =============================================================================
+// BACKWARD COMPATIBILITY - Will be removed after full migration
+// =============================================================================
+
+/** @deprecated Use SupabaseProduct instead */
+export type SupabaseProduto = SupabaseProduct;
+
+/** @deprecated Use SupabaseGroup instead */
+export type SupabaseGrupo = SupabaseGroup;
+
+/** @deprecated Use SupabaseProductSearch instead */
+export type SupabaseProdutoSearch = SupabaseProductSearch;
 
 // =============================================================================
 // TIPOS PARA ORGANIZAÇÃO (tabela organizacoes)

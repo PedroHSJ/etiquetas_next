@@ -61,10 +61,10 @@ export default function Page() {
     setLoading(true);
     const query = supabase
       .from("etiquetas")
-      .select("*, produto:produtos(nome)")
+      .select("*, product:products(name)")
       .order("created_at", { ascending: false });
     // Filtro por usuário logado (opcional)
-    // if (userId) query = query.eq("usuario_id", userId);
+    // if (userId) query = query.eq("user_id", userId);
     const { data, error } = await query;
     if (!error && data) {
       setEtiquetas(data);
@@ -83,6 +83,7 @@ export default function Page() {
     if (searchTerm) {
       filtered = filtered.filter(
         (etq) =>
+          // etq.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           etq.produto?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           etq.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           etq.observacoes?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -177,11 +178,11 @@ export default function Page() {
                           <div className="flex items-center gap-3">
                             <Avatar>
                               <AvatarFallback className="bg-emerald-100 text-emerald-600">
-                                {getInitials(etq.produto?.nome || "?")}
+                                {getInitials(etq.product?.name || etq.produto?.nome || "?")}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <h3 className="font-medium">{etq.produto?.nome || "Produto desconhecido"}</h3>
+                              <h3 className="font-medium">{etq.product?.name || etq.produto?.nome || "Produto desconhecido"}</h3>
                               <p className="text-xs text-muted-foreground">Status: {etq.status}</p>
                               <p className="text-xs text-muted-foreground">Qtd: {etq.quantidade}</p>
                               <p className="text-xs text-muted-foreground">Impressa em: {format(new Date(etq.data_impressao), "dd/MM/yyyy", { locale: ptBR })}</p>
@@ -214,10 +215,10 @@ export default function Page() {
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
                                   <AvatarFallback className="bg-emerald-100 text-emerald-600 text-xs">
-                                    {getInitials(etq.produto?.nome || "?")}
+                                    {getInitials(etq.product?.name || etq.produto?.nome || "?")}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="font-medium">{etq.produto?.nome || "Produto desconhecido"}</span>
+                                <span className="font-medium">{etq.product?.name || etq.produto?.nome || "Produto desconhecido"}</span>
                               </div>
                             </TableCell>
                             <TableCell>

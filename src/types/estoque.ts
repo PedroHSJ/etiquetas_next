@@ -30,17 +30,17 @@ export interface Estoque {
 // Interface para movimentações de estoque
 export interface EstoqueMovimentacao {
   id: string;
-  produto_id: number;
-  usuario_id: string;
-  tipo_movimentacao: TipoMovimentacao;
-  quantidade: number;
-  observacao?: string;
-  data_movimentacao: string;
+  product_id: number;
+  user_id: string;
+  movement_type: TipoMovimentacao;
+  quantity: number;
+  observation?: string;
+  movement_date: string;
   created_at: string;
 
   // Dados relacionados (joins)
-  produto?: Product;
-  usuario?: {
+  product?: Product;
+  user?: {
     id: string;
     email?: string;
     user_metadata?: {
@@ -51,9 +51,9 @@ export interface EstoqueMovimentacao {
 
 // DTO para entrada rápida de estoque
 export interface EntradaRapidaRequest {
-  produto_id: number;
-  quantidade: number;
-  observacao?: string;
+  product_id: number;
+  quantity: number;
+  observation?: string;
 }
 
 // DTO para resposta de entrada rápida
@@ -67,21 +67,27 @@ export interface EntradaRapidaResponse {
 // Filtros para listagem de estoque
 export interface EstoqueFiltros {
   produto_nome?: string;
-  produto_id?: number;
-  usuario_id?: string;
+  product_id?: number;
+  user_id?: string;
   estoque_zerado?: boolean;
   estoque_baixo?: boolean;
   quantidade_minima?: number;
+  // Deprecated - backward compatibility
+  produto_id?: number;
+  usuario_id?: string;
 }
 
 // Filtros para movimentações
 export interface MovimentacoesFiltros {
-  produto_id?: number;
-  usuario_id?: string;
+  product_id?: number;
+  user_id?: string;
   tipo_movimentacao?: TipoMovimentacao;
   data_inicio?: string;
   data_fim?: string;
   produto_nome?: string;
+  // Deprecated - backward compatibility
+  produto_id?: number;
+  usuario_id?: string;
 }
 
 // Interface para listagem paginada de estoque

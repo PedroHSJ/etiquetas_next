@@ -56,9 +56,9 @@ export default function Page() {
     async function fetchGrupos() {
       setCarregando(true);
       const { data, error } = await supabase
-        .from("grupos")
-        .select("id, nome")
-        .order("nome", { ascending: true });
+        .from("groups")
+        .select("id, name")
+        .order("name", { ascending: true });
       if (!error && data) setGrupos(data);
       setCarregando(false);
     }
@@ -74,10 +74,10 @@ export default function Page() {
     async function fetchProdutos() {
       setCarregando(true);
       const { data, error } = await supabase
-        .from("produtos")
-        .select("id, nome, grupo_id")
-        .eq("grupo_id", grupoSelecionado)
-        .order("nome", { ascending: true });
+        .from("products")
+        .select("id, name, group_id")
+        .eq("group_id", grupoSelecionado)
+        .order("name", { ascending: true });
       if (!error && data) setProdutos(data);
       setCarregando(false);
     }
@@ -86,10 +86,10 @@ export default function Page() {
 
   // Filtragem
   const gruposFiltrados = grupos.filter((g) =>
-    g.nome.toLowerCase().includes(filtroGrupo.toLowerCase())
+    (g.name || g.nome || '').toLowerCase().includes(filtroGrupo.toLowerCase())
   );
   const produtosFiltrados = produtos.filter((p) =>
-    p.nome.toLowerCase().includes(filtroProduto.toLowerCase())
+    (p.name || p.nome || '').toLowerCase().includes(filtroProduto.toLowerCase())
   );
 
   // Função para abrir modal ao clicar no produto
@@ -192,7 +192,7 @@ export default function Page() {
                     className="py-2 cursor-pointer hover:bg-emerald-50 px-2 rounded"
                     onClick={() => setGrupoSelecionado(grupo.id)}
                   >
-                    {grupo.nome}
+                    {grupo.name || grupo.nome}
                   </li>
                 ))}
                 {gruposFiltrados.length === 0 && (
@@ -224,7 +224,7 @@ export default function Page() {
                     className="py-2 px-2 cursor-pointer hover:bg-emerald-50 rounded"
                     onClick={() => handleProdutoClick(produto)}
                   >
-                    {produto.nome}
+                    {produto.name || produto.nome}
                   </li>
                 ))}
                 {produtosFiltrados.length === 0 && (
@@ -251,7 +251,7 @@ export default function Page() {
             </button>
             <h2 className="text-xl font-semibold mb-4">
               Nova etiqueta para:{" "}
-              <span className="font-bold">{produtoSelecionado.nome}</span>
+              <span className="font-bold">{produtoSelecionado.name || produtoSelecionado.nome}</span>
             </h2>
             <form
               onSubmit={(e) => {

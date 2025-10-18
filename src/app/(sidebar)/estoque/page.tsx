@@ -10,12 +10,14 @@ import {
   BarChart3, 
   History,
   AlertTriangle,
-  TrendingUp 
+  TrendingUp,
+  Minus 
 } from "lucide-react";
 
 import { GenericTable, GenericTableColumn } from "@/components/ui/generic-table";
 import { EstoqueStats } from "@/components/estoque/EstoqueStats";
 import { EntradaRapidaDialog } from "@/components/estoque/EntradaRapidaDialog";
+import { SaidaRapidaDialog } from "@/components/estoque/SaidaRapidaDialog";
 
 import { EstoqueEstatisticas, Estoque, EstoqueMovimentacao } from "@/types/estoque";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
@@ -211,7 +213,7 @@ export default function EstoquePage() {
       id: "tipo",
       key: "tipo",
       label: "Tipo",
-      accessor: (row) => row.tipo_movimentacao,
+      accessor: (row) => row.movement_type,
       visible: true,
       render: (value) => (
         <div className="flex justify-center">
@@ -225,7 +227,7 @@ export default function EstoquePage() {
       id: "produto_nome",
       key: "produto_nome",
       label: "Produto",
-      accessor: (row) => (row.produto as any)?.nome || "N/A",
+      accessor: (row) => (row.product as any)?.name || "N/A",
       visible: true,
       width: 300,
     },
@@ -233,7 +235,7 @@ export default function EstoquePage() {
       id: "quantidade",
       key: "quantidade",
       label: "Quantidade",
-      accessor: (row) => row.quantidade,
+      accessor: (row) => row.quantity,
       visible: true,
       render: (value) => (
         <div className="font-mono text-center">
@@ -245,7 +247,7 @@ export default function EstoquePage() {
       id: "observacao",
       key: "observacao",
       label: "Observação",
-      accessor: (row) => row.observacao || "-",
+      accessor: (row) => row.observation || "-",
       visible: true,
       width: 250,
     },
@@ -253,7 +255,7 @@ export default function EstoquePage() {
       id: "usuario",
       key: "usuario",
       label: "Usuário",
-      accessor: (row) => row.usuario?.user_metadata?.full_name || "N/A",
+      accessor: (row) => row.user?.user_metadata?.full_name || "N/A",
       visible: true,
       render: (value) => (
         <div className="text-center text-sm">
@@ -281,6 +283,12 @@ export default function EstoquePage() {
     carregarMovimentacoes();
   };
 
+  const handleSuccessSaida = () => {
+    carregarEstatisticas();
+    carregarEstoque();
+    carregarMovimentacoes();
+  };
+
   return (
     <div className="flex-1 space-y-6 p-6">
       {/* Cabeçalho */}
@@ -291,15 +299,26 @@ export default function EstoquePage() {
             Gerencie o estoque de produtos e acompanhe movimentações
           </p>
         </div>
-        <EntradaRapidaDialog 
-          onSuccess={handleSuccessEntrada}
-          trigger={
-            <Button size="sm" className="gap-2">
-              <PlusCircle className="h-4 w-4" />
-              Entrada Rápida
-            </Button>
-          }
-        />
+        <div className="flex gap-2">
+          <EntradaRapidaDialog 
+            onSuccess={handleSuccessEntrada}
+            trigger={
+              <Button size="sm" className="gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Entrada Rápida
+              </Button>
+            }
+          />
+          <SaidaRapidaDialog 
+            onSuccess={handleSuccessSaida}
+            trigger={
+              <Button size="sm" variant="destructive" className="gap-2">
+                <Minus className="h-4 w-4" />
+                Saída Rápida
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       {/* Estatísticas */}

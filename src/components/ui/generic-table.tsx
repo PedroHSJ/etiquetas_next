@@ -281,7 +281,7 @@ export function GenericTable<T extends Record<string, unknown>>({
         {/* Tabela */}
         <div className="border rounded-lg">
           <Table>
-            <TableHeader>
+            <TableHeader className='bg-accent'>
               <TableRow>
                 {selectable && (
                   <TableHead className="w-[50px]">

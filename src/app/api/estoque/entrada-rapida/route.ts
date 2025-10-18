@@ -1,29 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
-import { EntradaRapidaRequest, EntradaRapidaResponse, ESTOQUE_MESSAGES } from '@/types/estoque';
+import { QuickEntryRequest, QuickEntryResponse, STOCK_MESSAGES } from '@/types/stock';
 
 export async function POST(request: NextRequest) {
   try {
-    const body: EntradaRapidaRequest = await request.json();
-    const { produto_id, quantidade, observacao } = body;
+    const body: QuickEntryRequest = await request.json();
+    const { product_id, quantity, observation } = body;
 
     // Validações básicas
-    if (!produto_id || !quantidade) {
+    if (!product_id || !quantity) {
       return NextResponse.json(
         { 
           success: false, 
           message: 'Produto e quantidade são obrigatórios' 
-        } as EntradaRapidaResponse,
+        } as QuickEntryResponse,
         { status: 400 }
       );
     }
 
-    if (quantidade <= 0) {
+    if (quantity <= 0) {
       return NextResponse.json(
         { 
           success: false, 
-          message: ESTOQUE_MESSAGES.ERRO_QUANTIDADE_INVALIDA 
-        } as EntradaRapidaResponse,
+          message: STOCK_MESSAGES.ERROR_INVALID_QUANTITY 
+        } as QuickEntryResponse,
         { status: 400 }
       );
     }
@@ -37,42 +37,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           success: false, 
-          message: ESTOQUE_MESSAGES.ERRO_USUARIO_NAO_AUTORIZADO 
-        } as EntradaRapidaResponse,
+          message: STOCK_MESSAGES.ERROR_USER_NOT_AUTHORIZED 
+        } as QuickEntryResponse,
         { status: 401 }
       );
     }
 
     // Verificar se o produto existe
     const { data: produto, error: produtoError } = await supabase
-      .from('produtos')
-      .select('id, nome')
-      .eq('id', produto_id)
+      .from('products')
+      .select('id, name')
+      .eq('id', product_id)
       .single();
 
     if (produtoError || !produto) {
       return NextResponse.json(
         { 
           success: false, 
-          message: ESTOQUE_MESSAGES.ERRO_PRODUTO_NAO_ENCONTRADO 
-        } as EntradaRapidaResponse,
+          message: STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND 
+        } as QuickEntryResponse,
         { status: 404 }
       );
     }
 
     // Usar transação para garantir consistência
     const { data: movimentacao, error: movimentacaoError } = await supabase
-      .from('estoque_movimentacoes')
+      .from('stock_movements')
       .insert({
-        produto_id,
-        usuario_id: user.id,
-        tipo_movimentacao: 'ENTRADA',
-        quantidade,
-        observacao: observacao || `Entrada rápida - ${produto.nome}`,
+        product_id,
+        user_id: user.id,
+        movement_type: 'ENTRADA',
+        quantity,
+        observation: observation || `Entrada rápida - ${produto.name}`,
       })
       .select(`
         *,
-        produto:produtos(*)
+        product:products(*)
       `)
       .single();
 
@@ -82,30 +82,30 @@ export async function POST(request: NextRequest) {
         { 
           success: false, 
           message: 'Erro ao registrar movimentação de estoque' 
-        } as EntradaRapidaResponse,
+        } as QuickEntryResponse,
         { status: 500 }
       );
     }
 
     // Buscar estoque atualizado
     const { data: estoqueAtualizado, error: estoqueError } = await supabase
-      .from('estoque')
+      .from('stock')
       .select(`
         *,
-        produto:produtos(*)
+        product:products(*)
       `)
-      .eq('produto_id', produto_id)
+      .eq('product_id', product_id)
       .single();
 
     if (estoqueError) {
       console.warn('Erro ao buscar estoque atualizado:', estoqueError);
     }
 
-    const response: EntradaRapidaResponse = {
+    const response: QuickEntryResponse = {
       success: true,
-      message: ESTOQUE_MESSAGES.ENTRADA_SUCESSO,
-      movimentacao,
-      estoque_atualizado: estoqueAtualizado || undefined,
+      message: STOCK_MESSAGES.ENTRY_SUCCESS,
+      movement: movimentacao,
+      updated_stock: estoqueAtualizado || undefined,
     };
 
     return NextResponse.json(response);
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       { 
         success: false, 
         message: 'Erro interno do servidor' 
-      } as EntradaRapidaResponse,
+      } as QuickEntryResponse,
       { status: 500 }
     );
   }

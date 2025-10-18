@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
 
     // Filtros
     const filtros: MovimentacoesFiltros = {
-      produto_id: searchParams.get('produto_id') ? parseInt(searchParams.get('produto_id')!) : undefined,
-      usuario_id: searchParams.get('usuario_id') || undefined,
+      product_id: searchParams.get('product_id') ? parseInt(searchParams.get('product_id')!) : undefined,
+      user_id: searchParams.get('user_id') || undefined,
       tipo_movimentacao: searchParams.get('tipo_movimentacao') as 'ENTRADA' | 'SAIDA' | undefined,
       data_inicio: searchParams.get('data_inicio') || undefined,
       data_fim: searchParams.get('data_fim') || undefined,
@@ -23,44 +23,44 @@ export async function GET(request: NextRequest) {
 
     // Query base para movimentações com join de produtos
     let query = supabase
-      .from('estoque_movimentacoes')
+      .from('stock_movements')
       .select(`
         *,
-        produto:produtos(*)
+        product:products(*)
       `, { count: 'exact' });
 
     // Aplicar filtros
-    if (filtros.produto_id) {
-      query = query.eq('produto_id', filtros.produto_id);
+    if (filtros.product_id) {
+      query = query.eq('product_id', filtros.product_id);
     }
 
-    if (filtros.usuario_id) {
-      query = query.eq('usuario_id', filtros.usuario_id);
+    if (filtros.user_id) {
+      query = query.eq('user_id', filtros.user_id);
     }
 
     if (filtros.tipo_movimentacao) {
-      query = query.eq('tipo_movimentacao', filtros.tipo_movimentacao);
+      query = query.eq('movement_type', filtros.tipo_movimentacao);
     }
 
     if (filtros.data_inicio) {
-      query = query.gte('data_movimentacao', filtros.data_inicio);
+      query = query.gte('movement_date', filtros.data_inicio);
     }
 
     if (filtros.data_fim) {
       // Adicionar 23:59:59 ao final do dia
       const dataFimCompleta = new Date(filtros.data_fim);
       dataFimCompleta.setHours(23, 59, 59, 999);
-      query = query.lte('data_movimentacao', dataFimCompleta.toISOString());
+      query = query.lte('movement_date', dataFimCompleta.toISOString());
     }
 
     // Filtro por nome do produto (usando inner join)
     if (filtros.produto_nome) {
-      query = query.ilike('produto.nome', `%${filtros.produto_nome}%`);
+      query = query.ilike('product.name', `%${filtros.produto_nome}%`);
     }
 
     // Aplicar paginação e ordenação (mais recentes primeiro)
     query = query
-      .order('data_movimentacao', { ascending: false })
+      .order('movement_date', { ascending: false })
       .range(offset, offset + pageSize - 1);
 
     const { data, error, count } = await query;
@@ -97,10 +97,10 @@ export async function GET(request: NextRequest) {
 // Endpoint para criar movimentação manual (saída, por exemplo)
 export async function POST(request: NextRequest) {
   try {
-    const { produto_id, tipo_movimentacao, quantidade, observacao } = await request.json();
+    const { product_id, tipo_movimentacao, quantidade, observacao } = await request.json();
 
     // Validações básicas
-    if (!produto_id || !tipo_movimentacao || !quantidade) {
+    if (!product_id || !tipo_movimentacao || !quantidade) {
       return NextResponse.json(
         { error: 'Produto, tipo de movimentação e quantidade são obrigatórios' },
         { status: 400 }
@@ -133,9 +133,9 @@ export async function POST(request: NextRequest) {
 
     // Verificar se o produto existe
     const { data: produto, error: produtoError } = await supabase
-      .from('produtos')
-      .select('id, nome')
-      .eq('id', produto_id)
+      .from('products')
+      .select('id, name')
+      .eq('id', product_id)
       .single();
 
     if (produtoError || !produto) {
@@ -148,15 +148,15 @@ export async function POST(request: NextRequest) {
     // Se for saída, verificar se há estoque suficiente
     if (tipo_movimentacao === 'SAIDA') {
       const { data: estoque } = await supabase
-        .from('estoque')
-        .select('quantidade_atual')
-        .eq('produto_id', produto_id)
+        .from('stock')
+        .select('current_quantity')
+        .eq('product_id', product_id)
         .single();
 
-      if (!estoque || estoque.quantidade_atual < quantidade) {
+      if (!estoque || estoque.current_quantity < quantidade) {
         return NextResponse.json(
           { 
-            error: `Quantidade insuficiente em estoque. Disponível: ${estoque?.quantidade_atual || 0}` 
+            error: `Quantidade insuficiente em estoque. Disponível: ${estoque?.current_quantity || 0}` 
           },
           { status: 400 }
         );
@@ -165,17 +165,17 @@ export async function POST(request: NextRequest) {
 
     // Criar movimentação
     const { data: movimentacao, error: movimentacaoError } = await supabase
-      .from('estoque_movimentacoes')
+      .from('stock_movements')
       .insert({
-        produto_id,
-        usuario_id: user.id,
-        tipo_movimentacao,
-        quantidade,
-        observacao: observacao || `${tipo_movimentacao.toLowerCase()} manual - ${produto.nome}`,
+        product_id,
+        user_id: user.id,
+        movement_type: tipo_movimentacao,
+        quantity: quantidade,
+        observation: observacao || `${tipo_movimentacao.toLowerCase()} manual - ${produto.name}`,
       })
       .select(`
         *,
-        produto:produtos(*)
+        product:products(*)
       `)
       .single();
 

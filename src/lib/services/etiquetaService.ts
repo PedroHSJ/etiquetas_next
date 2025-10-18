@@ -5,9 +5,9 @@ export class EtiquetaService {
   // Buscar todos os grupos
   static async getGrupos(): Promise<Grupo[]> {
     const { data, error } = await supabase
-      .from('grupos')
+      .from('groups')
       .select('*')
-      .order('nome');
+      .order('name');
     
     if (error) throw error;
     return data || [];
@@ -15,11 +15,11 @@ export class EtiquetaService {
 
   // Buscar produtos por grupo
   static async getProdutosByGrupo(grupoId: number): Promise<Produto[]> {
-    const { data, error } = await supabase
-      .from('produtos')
+    const { data, error} = await supabase
+      .from('products')
       .select('*')
-      .eq('grupo_id', grupoId)
-      .order('nome');
+      .eq('group_id', grupoId)
+      .order('name');
     
     if (error) throw error;
     return data || [];
@@ -42,8 +42,11 @@ export class EtiquetaService {
     const { data, error } = await supabase
       .from('etiquetas')
       .insert({
-        ...etiqueta,
-        usuario_id: userId,
+        product_id: etiqueta.product_id || etiqueta.produto_id,
+        grupo_id: etiqueta.grupo_id,
+        quantidade: etiqueta.quantidade,
+        observacoes: etiqueta.observacoes,
+        user_id: userId,
         organizacao_id: userOrg.organizacao_id,
         data_impressao: new Date().toISOString()
       })
@@ -62,10 +65,10 @@ export class EtiquetaService {
       .from('etiquetas')
       .select(`
         *,
-        produtos!inner(nome),
-        grupos!inner(nome)
+        products!inner(name),
+        groups!inner(name)
       `)
-      .eq('usuario_id', userId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
     if (error) throw error;

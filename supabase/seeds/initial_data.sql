@@ -44,7 +44,7 @@ VALUES
 ((SELECT id FROM funcionalidades WHERE nome = 'Membros'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'visualizar', true);
 
 -- ===== GRUPOS DE PRODUTOS =====
-INSERT INTO grupos (id, nome) VALUES 
+INSERT INTO groups (id, name) VALUES 
 (1, 'Cereais e derivados'),
 (2, 'Verduras, hortaliças e derivados'),
 (3, 'Frutos e derivados'),
@@ -63,7 +63,7 @@ INSERT INTO grupos (id, nome) VALUES
 (16, 'Bebidas (alcoólicas e não alcoólicas)');
 
 -- ===== PRODUTOS =====
-INSERT INTO produtos (id, nome, grupo_id) VALUES 
+INSERT INTO products (id, name, group_id) VALUES 
 -- Cereais e derivados
 (1, 'Arroz branco', 1),
 (2, 'Arroz integral', 1),

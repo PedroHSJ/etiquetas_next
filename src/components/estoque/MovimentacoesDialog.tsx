@@ -291,27 +291,27 @@ export function MovimentacoesDialog({
                         {!produtoId && (
                           <TableCell>
                             <div className="font-medium">
-                              {movimentacao.produto?.nome || "Produto não encontrado"}
+                              {movimentacao.product?.name || "Produto não encontrado"}
                             </div>
                           </TableCell>
                         )}
                         
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {getTipoIcon(movimentacao.tipo_movimentacao)}
-                            {getTipoBadge(movimentacao.tipo_movimentacao)}
+                            {getTipoIcon(movimentacao.movement_type)}
+                            {getTipoBadge(movimentacao.movement_type)}
                           </div>
                         </TableCell>
                         
                         <TableCell className="text-center font-mono">
-                          {formatarQuantidade(movimentacao.quantidade)}
+                          {formatarQuantidade(movimentacao.quantity)}
                         </TableCell>
                         
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
-                              {formatarData(movimentacao.data_movimentacao)}
+                              {formatarData(movimentacao.movement_date)}
                             </span>
                           </div>
                         </TableCell>
@@ -320,8 +320,8 @@ export function MovimentacoesDialog({
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
-                              {movimentacao.usuario?.user_metadata?.full_name ||
-                               movimentacao.usuario?.email ||
+                              {movimentacao.user?.user_metadata?.full_name ||
+                               movimentacao.user?.email ||
                                "Usuário não identificado"}
                             </span>
                           </div>
@@ -329,7 +329,7 @@ export function MovimentacoesDialog({
                         
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            {movimentacao.observacao || "-"}
+                            {movimentacao.observation || "-"}
                           </span>
                         </TableCell>
                       </TableRow>

@@ -12,6 +12,7 @@ import { Plus, Mail, X, Users, ChefHat, Package, CheckCircle } from "lucide-reac
 import { InviteService } from "@/lib/services/inviteService";
 import { Perfil } from "@/types/permissions";
 import { toast } from "sonner";
+import { useNavigation } from "@/contexts/NavigationContext";
 
 interface InviteEmployeesProps {
   organizationId: string;
@@ -40,7 +41,7 @@ export function InviteEmployees({
   const [currentPerfil, setCurrentPerfil] = useState<string>("");
   const [sending, setSending] = useState(false);
   const [perfis, setPerfis] = useState<Perfil[]>([]);
-
+  const {isNavigating} = useNavigation();
   // Carregar perfis de funcionários (excluir gestor)
   useEffect(() => {
     const loadPerfis = async () => {
@@ -260,7 +261,7 @@ export function InviteEmployees({
               <Button
                 variant="outline"
                 onClick={onSkip}
-                disabled={sending}
+                disabled={sending || isNavigating}
               >
                 Pular por Agora
               </Button>

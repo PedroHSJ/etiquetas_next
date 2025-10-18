@@ -24,7 +24,7 @@ export default function OnboardingPage() {
   const { invites, loading, hasOrganization } = useOnboarding();
   const { state, setChoice, setWizardComplete, setInvitesComplete, addAcceptedInvite, resetToChoice, resetToWizard, clearOnboardingState } = useOnboardingState();
   const router = useRouter();
-  const { isNavigating } = useNavigation();
+  const { isNavigating, setIsNavigating } = useNavigation();
   const { refreshAll } = useProfile();
 
   // Função para formatar nome do perfil
@@ -97,6 +97,7 @@ export default function OnboardingPage() {
   const handleSkipInvites = () => {
     clearOnboardingState();
     refreshAll();
+    setIsNavigating(true);
     router.push("/dashboard");
   };
 

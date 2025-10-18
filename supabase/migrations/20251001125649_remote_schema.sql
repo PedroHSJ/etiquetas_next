@@ -342,10 +342,10 @@ ALTER SEQUENCE "public"."etiquetas_id_seq" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."etiquetas" (
     "id" integer DEFAULT "nextval"('"public"."etiquetas_id_seq"'::"regclass") NOT NULL,
-    "produto_id" integer,
+    "product_id" integer,
     "quantidade" integer DEFAULT 1,
     "data_impressao" timestamp with time zone DEFAULT "now"(),
-    "usuario_id" "uuid",
+    "user_id" "uuid",
     "organizacao_id" "uuid",
     "status" character varying(100) DEFAULT 'impresso'::character varying,
     "observacoes" "text",
@@ -377,17 +377,17 @@ COMMENT ON TABLE "public"."funcionalidades" IS 'Funcionalidades disponíveis no 
 
 
 
-CREATE TABLE IF NOT EXISTS "public"."grupos" (
+CREATE TABLE IF NOT EXISTS "public"."groups" (
     "id" integer NOT NULL,
-    "nome" "text" NOT NULL,
-    "descricao" "text"
+    "name" "text" NOT NULL,
+    "description" "text"
 );
 
 
-ALTER TABLE "public"."grupos" OWNER TO "postgres";
+ALTER TABLE "public"."groups" OWNER TO "postgres";
 
 
-COMMENT ON TABLE "public"."grupos" IS 'Grupos de classificação dos produtos';
+COMMENT ON TABLE "public"."groups" IS 'Product classification groups';
 
 
 
@@ -578,17 +578,17 @@ COMMENT ON TABLE "public"."permissoes" IS 'Permissões de acesso por perfil';
 
 
 
-CREATE TABLE IF NOT EXISTS "public"."produtos" (
+CREATE TABLE IF NOT EXISTS "public"."products" (
     "id" integer NOT NULL,
-    "nome" "text" NOT NULL,
-    "grupo_id" integer
+    "name" "text" NOT NULL,
+    "group_id" integer
 );
 
 
-ALTER TABLE "public"."produtos" OWNER TO "postgres";
+ALTER TABLE "public"."products" OWNER TO "postgres";
 
 
-COMMENT ON TABLE "public"."produtos" IS 'Produtos cadastrados no sistema';
+COMMENT ON TABLE "public"."products" IS 'Products registered in the system';
 
 
 
@@ -707,13 +707,13 @@ ALTER TABLE ONLY "public"."funcionalidades"
 
 
 
-ALTER TABLE ONLY "public"."grupos"
-    ADD CONSTRAINT "grupos_nome_key" UNIQUE ("nome");
+ALTER TABLE ONLY "public"."groups"
+    ADD CONSTRAINT "groups_name_key" UNIQUE ("name");
 
 
 
-ALTER TABLE ONLY "public"."grupos"
-    ADD CONSTRAINT "grupos_pkey" PRIMARY KEY ("id");
+ALTER TABLE ONLY "public"."groups"
+    ADD CONSTRAINT "groups_pkey" PRIMARY KEY ("id");
 
 
 
@@ -757,8 +757,8 @@ ALTER TABLE ONLY "public"."permissoes"
 
 
 
-ALTER TABLE ONLY "public"."produtos"
-    ADD CONSTRAINT "produtos_pkey" PRIMARY KEY ("id");
+ALTER TABLE ONLY "public"."products"
+    ADD CONSTRAINT "products_pkey" PRIMARY KEY ("id");
 
 
 
@@ -801,11 +801,11 @@ CREATE INDEX "idx_etiquetas_organizacao" ON "public"."etiquetas" USING "btree" (
 
 
 
-CREATE INDEX "idx_etiquetas_produto" ON "public"."etiquetas" USING "btree" ("produto_id");
+CREATE INDEX "idx_etiquetas_product" ON "public"."etiquetas" USING "btree" ("product_id");
 
 
 
-CREATE INDEX "idx_etiquetas_usuario" ON "public"."etiquetas" USING "btree" ("usuario_id");
+CREATE INDEX "idx_etiquetas_user" ON "public"."etiquetas" USING "btree" ("user_id");
 
 
 
@@ -853,11 +853,11 @@ CREATE INDEX "idx_organizacoes_tipo_uan" ON "public"."organizacoes" USING "btree
 
 
 
-CREATE INDEX "idx_produtos_grupo" ON "public"."produtos" USING "btree" ("grupo_id");
+CREATE INDEX "idx_products_group" ON "public"."products" USING "btree" ("group_id");
 
 
 
-CREATE INDEX "idx_produtos_nome" ON "public"."produtos" USING "btree" ("nome");
+CREATE INDEX "idx_products_name" ON "public"."products" USING "btree" ("name");
 
 
 
@@ -933,12 +933,12 @@ ALTER TABLE ONLY "public"."etiquetas"
 
 
 ALTER TABLE ONLY "public"."etiquetas"
-    ADD CONSTRAINT "etiquetas_produto_id_fkey" FOREIGN KEY ("produto_id") REFERENCES "public"."produtos"("id");
+    ADD CONSTRAINT "etiquetas_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id");
 
 
 
 ALTER TABLE ONLY "public"."etiquetas"
-    ADD CONSTRAINT "etiquetas_usuario_id_fkey" FOREIGN KEY ("usuario_id") REFERENCES "auth"."users"("id");
+    ADD CONSTRAINT "etiquetas_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
 
 
 
@@ -977,8 +977,8 @@ ALTER TABLE ONLY "public"."permissoes"
 
 
 
-ALTER TABLE ONLY "public"."produtos"
-    ADD CONSTRAINT "produtos_grupo_id_fkey" FOREIGN KEY ("grupo_id") REFERENCES "public"."grupos"("id");
+ALTER TABLE ONLY "public"."products"
+    ADD CONSTRAINT "products_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "public"."groups"("id");
 
 
 
@@ -1319,9 +1319,9 @@ GRANT ALL ON TABLE "public"."funcionalidades" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."grupos" TO "anon";
-GRANT ALL ON TABLE "public"."grupos" TO "authenticated";
-GRANT ALL ON TABLE "public"."grupos" TO "service_role";
+GRANT ALL ON TABLE "public"."groups" TO "anon";
+GRANT ALL ON TABLE "public"."groups" TO "authenticated";
+GRANT ALL ON TABLE "public"."groups" TO "service_role";
 
 
 
@@ -1361,9 +1361,9 @@ GRANT ALL ON TABLE "public"."permissoes" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."produtos" TO "anon";
-GRANT ALL ON TABLE "public"."produtos" TO "authenticated";
-GRANT ALL ON TABLE "public"."produtos" TO "service_role";
+GRANT ALL ON TABLE "public"."products" TO "anon";
+GRANT ALL ON TABLE "public"."products" TO "authenticated";
+GRANT ALL ON TABLE "public"."products" TO "service_role";
 
 
 

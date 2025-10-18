@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS public.fichas_tecnicas_ingredientes (
     quantidade_original VARCHAR(50) NOT NULL, -- Para recálculos de proporção
     
     -- Relacionamento com produtos (opcional)
-    produto_id INTEGER REFERENCES produtos(id) ON DELETE SET NULL,
+    product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
     
     -- Ordem dos ingredientes na lista
     ordem INTEGER NOT NULL DEFAULT 0,
@@ -55,7 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_fichas_tecnicas_organizacao_id ON fichas_tecnicas
 CREATE INDEX IF NOT EXISTS idx_fichas_tecnicas_criado_por ON fichas_tecnicas(criado_por);
 CREATE INDEX IF NOT EXISTS idx_fichas_tecnicas_nome_prato ON fichas_tecnicas(nome_prato);
 CREATE INDEX IF NOT EXISTS idx_fichas_tecnicas_ingredientes_ficha_id ON fichas_tecnicas_ingredientes(ficha_tecnica_id);
-CREATE INDEX IF NOT EXISTS idx_fichas_tecnicas_ingredientes_produto_id ON fichas_tecnicas_ingredientes(produto_id);
+CREATE INDEX IF NOT EXISTS idx_fichas_tecnicas_ingredientes_product_id ON fichas_tecnicas_ingredientes(product_id);
 CREATE INDEX IF NOT EXISTS idx_fichas_tecnicas_ingredientes_ordem ON fichas_tecnicas_ingredientes(ficha_tecnica_id, ordem);
 
 -- Função para atualizar o timestamp updated_at

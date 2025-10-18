@@ -209,34 +209,49 @@ export const LABEL_TYPES_CONFIG = {
 
 export interface Etiqueta {
   id: number;
-  produto_id: number;
+  product_id: number;
   grupo_id: number;
   quantidade: number;
   data_impressao: string;
-  usuario_id: string;
+  user_id: string;
   organizacao_id: string;
   status: string;
   observacoes?: string;
   created_at: string;
-  produtos: { nome: string };
-  grupos: { nome: string };
+  products: { name: string };
+  groups: { name: string };
+  // Deprecated - backward compatibility
+  produto_id?: number;
+  usuario_id?: string;
+  product?: { name: string };
+  produto?: { nome: string };
+  produtos?: { nome: string };
+  grupos?: { nome: string };
 }
 
 export interface EtiquetaCreate {
-  produto_id: number;
+  product_id: number;
   grupo_id: number;
   quantidade: number;
   observacoes?: string;
+  // Deprecated - backward compatibility
+  produto_id?: number;
 }
 
 export interface Grupo {
   id: number;
-  nome: string;
+  name: string;
+  description?: string;
+  // Deprecated - backward compatibility
+  nome?: string;
   descricao?: string;
 }
 
 export interface Produto {
   id: number;
-  nome: string;
-  grupo_id: number;
+  name: string;
+  group_id: number;
+  // Deprecated - backward compatibility
+  nome?: string;
+  grupo_id?: number;
 }
