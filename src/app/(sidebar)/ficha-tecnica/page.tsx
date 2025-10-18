@@ -69,7 +69,7 @@ export default function TechnicalSheetPage() {
           quantidade: ingredient.quantity,
           unidade: ingredient.unit,
           quantidade_original: (ingredient as EditableIngredient).originalQuantity || ingredient.quantity,
-          produto_id: (ingredient as EditableIngredient).productId ? parseInt((ingredient as EditableIngredient).productId!) : undefined,
+          product_id: (ingredient as EditableIngredient).productId ? parseInt((ingredient as EditableIngredient).productId!) : undefined,
           ordem: index
         }))
       };

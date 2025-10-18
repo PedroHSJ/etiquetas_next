@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -126,8 +126,6 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
     };
 
     onSave?.(finalSheet);
-
-    toast.success("A ficha técnica foi salva com sucesso.");
   };
 
   const handleReset = () => {
@@ -325,38 +323,59 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
                   <Calculator className="w-5 h-5" />
                   Informações Nutricionais (por porção)
                 </h3>
-                
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold text-primary">
-                      {technicalSheet.nutritionalInsights.calories}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Calorias</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold text-primary">
-                      {technicalSheet.nutritionalInsights.protein}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Proteínas</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold text-primary">
-                      {technicalSheet.nutritionalInsights.carbs}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Carboidratos</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold text-primary">
-                      {technicalSheet.nutritionalInsights.fat}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Gorduras</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold text-primary">
-                      {technicalSheet.nutritionalInsights.fiber}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Fibras</div>
-                  </div>
+                  <Card className="text-center">
+                    <CardContent className="p-3 flex flex-col items-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {technicalSheet.nutritionalInsights.calories}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-col items-center p-1 pt-0">
+                      <Badge className="text-xs">Calorias</Badge>
+                    </CardFooter>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-3 flex flex-col items-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {technicalSheet.nutritionalInsights.protein}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-col items-center p-1 pt-0">
+                      <Badge className="text-xs">Proteínas</Badge>
+                    </CardFooter>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-3 flex flex-col items-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {technicalSheet.nutritionalInsights.carbs}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-col items-center p-1 pt-0">
+                      <Badge className="text-xs">Carboidratos</Badge>
+                    </CardFooter>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-3 flex flex-col items-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {technicalSheet.nutritionalInsights.fat}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-col items-center p-1 pt-0">
+                      <Badge className="text-xs">Gorduras</Badge>
+                    </CardFooter>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-3 flex flex-col items-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {technicalSheet.nutritionalInsights.fiber}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-col p-1 h-full">
+                      <Badge className="text-xs">
+                       Fibras
+                      </Badge>
+                    </CardFooter>
+                  </Card>
                 </div>
 
                 {technicalSheet.nutritionalInsights.highlights && technicalSheet.nutritionalInsights.highlights.length > 0 && (

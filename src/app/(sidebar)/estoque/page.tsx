@@ -47,15 +47,21 @@ export default function EstoquePage() {
   const carregarEstatisticas = async () => {
     setCarregandoStats(true);
     try {
-      const response = await fetch('/api/estoque?page=1&pageSize=1');
+      const response = await fetch('/api/estoque');
       const data = await response.json();
-      
+      console.log("data estatisticas", data);
       if (response.ok) {
         const stats: EstoqueEstatisticas = {
           total_produtos: data.total || 0,
-          produtos_em_estoque: Math.floor((data.total || 0) * 0.8),
-          produtos_zerados: Math.floor((data.total || 0) * 0.1),
-          produtos_baixo_estoque: Math.floor((data.total || 0) * 0.1),
+          produtos_em_estoque: data.data.filter((p: unknown) => (p as any).current_quantity > 0).length || 0,
+          produtos_zerados: (data.data.filter((p: unknown) => {
+            const qty = (p as any).current_quantity;
+            return qty === 0;
+          }).length) || 0,
+          produtos_baixo_estoque: (data.data.filter((p: unknown) => {
+            const qty = (p as any).current_quantity;
+            return qty > 0 && qty < 10;
+          }).length) || 0,
           ultima_atualizacao: new Date().toISOString(),
         };
         setEstatisticas(stats);
