@@ -10,7 +10,7 @@ export interface Product {
   id: number;
   name: string;
   group_id?: number | null;
-  
+
   // Dados relacionados (joins)
   group?: ProductGroup;
 }
