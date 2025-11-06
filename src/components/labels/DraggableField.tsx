@@ -1,8 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { LabelField, LABEL_TYPES_CONFIG } from "@/types/etiquetas";
-import { Product } from "@/types/products";
-import { ProductSelector } from "@/components/products/ProductSelector";
+import { Product } from "@/types/stock/product";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import QRCode from "qrcode";
@@ -150,33 +149,34 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
         );
       case "product":
         return (
-          <div className="w-full h-full flex items-center">
-            {isEditing ? (
-              <ProductSelector
-                products={products}
-                selectedProduct={
-                  products.find((p) => p.id === field.value) || null
-                }
-                onProductSelect={(product) =>
-                  handleFieldChange({ value: product.id })
-                }
-                trigger={
-                  <div className="w-full h-full border border-gray-300 rounded flex items-center px-2 cursor-pointer hover:bg-gray-50">
-                    <span className="text-sm truncate">
-                      {products.find((p) => p.id === field.value)?.name ||
-                        "Selecionar produto"}
-                    </span>
-                  </div>
-                }
-                placeholder="Selecionar produto"
-              />
-            ) : (
-              <span>
-                {products.find((p) => p.id === field.value)?.name ||
-                  field.label}
-              </span>
-            )}
-          </div>
+          <></>
+          // <div className="w-full h-full flex items-center">
+          //   {isEditing ? (
+          //     <ProductSelector
+          //       products={products}
+          //       selectedProduct={
+          //         products.find((p) => p.id === field.value) || null
+          //       }
+          //       onProductSelect={(product) =>
+          //         handleFieldChange({ value: product.id })
+          //       }
+          //       trigger={
+          //         <div className="w-full h-full border border-gray-300 rounded flex items-center px-2 cursor-pointer hover:bg-gray-50">
+          //           <span className="text-sm truncate">
+          //             {products.find((p) => p.id === field.value)?.name ||
+          //               "Selecionar produto"}
+          //           </span>
+          //         </div>
+          //       }
+          //       placeholder="Selecionar produto"
+          //     />
+          //   ) : (
+          //     <span>
+          //       {products.find((p) => p.id === field.value)?.name ||
+          //         field.label}
+          //     </span>
+          //   )}
+          // </div>
         );
       case "quantity":
         return (

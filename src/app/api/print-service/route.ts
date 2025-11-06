@@ -2,7 +2,7 @@ import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-export async function isUserAuthenticated(req: NextRequest): Promise<boolean> {
+async function isUserAuthenticated(req: NextRequest): Promise<boolean> {
   const supabase = getSupabaseServerClient(req);
   const {
     data: { user },

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { LabelField, LabelTemplate } from "@/types/etiquetas";
-import { Product } from "@/types/products";
+import { Product } from "@/types/stock/product";
 import { DraggableField } from "./DraggableField";
 import { cn } from "@/lib/utils";
 

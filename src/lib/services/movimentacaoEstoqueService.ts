@@ -4,7 +4,7 @@
  */
 
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { EntradaRapidaRequest, EstoqueMovimentacao } from "@/types/estoque";
+import { StockMovement } from "@/types/stock/stock";
 
 export interface MovimentacaoEstoqueRequest {
   produto_id: number;
@@ -15,14 +15,14 @@ export interface MovimentacaoEstoqueRequest {
 export interface MovimentacaoEstoqueResponse {
   success: boolean;
   message: string;
-  movimentacao?: EstoqueMovimentacao;
+  movimentacao?: StockMovement;
   estoque_atualizado?: any;
 }
 
 /**
  * Tipos de movimentação suportadas
  */
-export type TipoMovimentacaoEstoque = 'entrada' | 'saida';
+export type TipoMovimentacaoEstoque = "entrada" | "saida";
 
 /**
  * Classe para operações de estoque
@@ -99,7 +99,7 @@ export class MovimentacaoEstoqueService {
     tipo: TipoMovimentacaoEstoque,
     request: MovimentacaoEstoqueRequest
   ): Promise<MovimentacaoEstoqueResponse> {
-    if (tipo === 'entrada') {
+    if (tipo === "entrada") {
       return this.registrarEntrada(request);
     } else {
       return this.registrarSaida(request);
@@ -113,26 +113,32 @@ export class MovimentacaoEstoqueService {
    * @param apenasComEstoque Se true, filtra apenas produtos com estoque > 0
    * @returns Promise com lista de produtos
    */
-  static async listarProdutos(termo = "", limit = 50, apenasComEstoque = false): Promise<any[]> {
+  static async listarProdutos(
+    termo = "",
+    limit = 50,
+    apenasComEstoque = false
+  ): Promise<any[]> {
     try {
       const params = new URLSearchParams();
-      if (termo) params.append('q', termo);
-      params.append('limit', limit.toString());
+      if (termo) params.append("q", termo);
+      params.append("limit", limit.toString());
 
       const response = await fetch(`/api/estoque/produtos?${params}`);
       const data = await response.json();
 
       if (data.success) {
         let produtos = data.data;
-        
+
         // Filtrar apenas produtos com estoque > 0 se solicitado
         if (apenasComEstoque) {
           produtos = produtos.filter((p: any) => (p.estoque_atual || 0) > 0);
         }
-        
+
         return produtos;
       }
-      throw new Error(data.error || data.details || "Erro ao carregar produtos");
+      throw new Error(
+        data.error || data.details || "Erro ao carregar produtos"
+      );
     } catch (error) {
       console.error("Erro ao listar produtos:", error);
       throw error;
@@ -157,7 +163,10 @@ export class MovimentacaoEstoqueService {
       return { valida: false, erro: "Quantidade deve ser maior que zero" };
     }
 
-    if (quantidadeDisponivel !== undefined && quantidade > quantidadeDisponivel) {
+    if (
+      quantidadeDisponivel !== undefined &&
+      quantidade > quantidadeDisponivel
+    ) {
       return {
         valida: false,
         erro: `Quantidade insuficiente. Disponível: ${quantidadeDisponivel}`,

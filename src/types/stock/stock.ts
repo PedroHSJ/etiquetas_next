@@ -2,10 +2,10 @@
 // STOCK AND MOVEMENTS TYPES
 // =============================================================================
 
-import { Product } from './products';
+import { Product } from "./product";
 
 // Movement type
-export type MovementType = 'ENTRADA' | 'SAIDA';
+export type MovementType = "ENTRADA" | "SAIDA";
 
 // Main stock interface
 export interface Stock {
@@ -128,15 +128,15 @@ export interface ProductSelect {
   group: {
     id: number;
     name: string;
-  }
+  };
   unit_of_measure?: string;
   current_stock?: number;
 }
 
 // Constants for movement types
 export const MOVEMENT_TYPES = [
-  { value: 'ENTRADA', label: 'Entrada' },
-  { value: 'SAIDA', label: 'Saída' },
+  { value: "ENTRADA", label: "Entrada" },
+  { value: "SAIDA", label: "Saída" },
 ] as const;
 
 // Quantity validation
@@ -148,12 +148,12 @@ export const QUANTITY_VALIDATION = {
 
 // Default messages
 export const STOCK_MESSAGES = {
-  ENTRY_SUCCESS: '✅ Entry registered successfully!',
-  EXIT_SUCCESS: '✅ Exit registered successfully!',
-  ERROR_INSUFFICIENT_QUANTITY: 'Insufficient quantity in stock',
-  ERROR_PRODUCT_NOT_FOUND: 'Product not found',
-  ERROR_INVALID_QUANTITY: 'Quantity must be greater than zero',
-  ERROR_USER_NOT_AUTHORIZED: 'User not authorized',
+  ENTRY_SUCCESS: "✅ Entry registered successfully!",
+  EXIT_SUCCESS: "✅ Exit registered successfully!",
+  ERROR_INSUFFICIENT_QUANTITY: "Insufficient quantity in stock",
+  ERROR_PRODUCT_NOT_FOUND: "Product not found",
+  ERROR_INVALID_QUANTITY: "Quantity must be greater than zero",
+  ERROR_USER_NOT_AUTHORIZED: "User not authorized",
 } as const;
 
 // Default pagination settings
@@ -161,56 +161,3 @@ export const STOCK_PAGINATION = {
   DEFAULT_PAGE_SIZE: 20,
   MAX_PAGE_SIZE: 100,
 } as const;
-
-// =============================================================================
-// BACKWARD COMPATIBILITY - Will be removed after full migration
-// =============================================================================
-
-/** @deprecated Use Stock instead */
-export type Estoque = Stock;
-
-/** @deprecated Use StockMovement instead */
-export type EstoqueMovimentacao = StockMovement;
-
-/** @deprecated Use MovementType instead */
-export type TipoMovimentacao = MovementType;
-
-/** @deprecated Use QuickEntryRequest instead */
-export type EntradaRapidaRequest = QuickEntryRequest;
-
-/** @deprecated Use QuickEntryResponse instead */
-export type EntradaRapidaResponse = QuickEntryResponse;
-
-/** @deprecated Use StockFilters instead */
-export type EstoqueFiltros = StockFilters;
-
-/** @deprecated Use MovementFilters instead */
-export type MovimentacoesFiltros = MovementFilters;
-
-/** @deprecated Use StockListResponse instead */
-export type EstoqueListResponse = StockListResponse;
-
-/** @deprecated Use MovementListResponse instead */
-export type MovimentacoesListResponse = MovementListResponse;
-
-/** @deprecated Use StockStatistics instead */
-export type EstoqueEstatisticas = StockStatistics;
-
-/** @deprecated Use StockDashboard instead */
-export type EstoqueDashboard = StockDashboard;
-
-/** @deprecated Use MOVEMENT_TYPES instead */
-export const TIPOS_MOVIMENTACAO = MOVEMENT_TYPES;
-
-/** @deprecated Use STOCK_MESSAGES instead */
-export const ESTOQUE_MESSAGES = {
-  ENTRADA_SUCESSO: STOCK_MESSAGES.ENTRY_SUCCESS,
-  SAIDA_SUCESSO: STOCK_MESSAGES.EXIT_SUCCESS,
-  ERRO_QUANTIDADE_INSUFICIENTE: STOCK_MESSAGES.ERROR_INSUFFICIENT_QUANTITY,
-  ERRO_PRODUTO_NAO_ENCONTRADO: STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND,
-  ERRO_QUANTIDADE_INVALIDA: STOCK_MESSAGES.ERROR_INVALID_QUANTITY,
-  ERRO_USUARIO_NAO_AUTORIZADO: STOCK_MESSAGES.ERROR_USER_NOT_AUTHORIZED,
-} as const;
-
-/** @deprecated Use STOCK_PAGINATION instead */
-export const ESTOQUE_PAGINATION = STOCK_PAGINATION;

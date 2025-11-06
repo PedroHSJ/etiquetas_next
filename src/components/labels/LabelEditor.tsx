@@ -14,7 +14,7 @@ import {
   LabelField,
   LABEL_TYPES_CONFIG,
 } from "@/types/etiquetas";
-import { Product } from "@/types/products";
+import { Product } from "@/types/stock/product";
 import { FieldPalette } from "./FieldPalette";
 import { LabelCanvas } from "./LabelCanvas";
 import { Button } from "@/components/ui/button";

@@ -4,7 +4,7 @@ import {
   LabelTemplate,
   LABEL_TYPES_CONFIG,
 } from "@/types/etiquetas";
-import { Product } from "@/types/products";
+import { Product } from "@/types/stock/product";
 import { LabelEditor } from "@/components/labels/LabelEditor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,7 +73,14 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
       fields:
         config.defaultFields?.map((field, index) => ({
           id: `default_${index}`,
-          type: field.type as "text" | "date" | "temperature" | "qrcode" | "barcode" | "product" | "quantity",
+          type: field.type as
+            | "text"
+            | "date"
+            | "temperature"
+            | "qrcode"
+            | "barcode"
+            | "product"
+            | "quantity",
           label: field.label,
           position: { x: 20 + index * 30, y: 20 + index * 35 },
           size: { width: 120, height: 25 },

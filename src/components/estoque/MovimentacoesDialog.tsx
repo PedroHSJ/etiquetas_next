@@ -20,14 +20,13 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Search, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Search,
+  TrendingUp,
+  TrendingDown,
   Calendar,
   User,
   FileText,
-  ArrowLeft 
 } from "lucide-react";
 import {
   Dialog,
@@ -36,12 +35,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  EstoqueMovimentacao, 
-  MovimentacoesFiltros, 
+import {
+  MovimentacoesFiltros,
   MovimentacoesListResponse,
   ESTOQUE_PAGINATION,
-  TipoMovimentacao 
+  TipoMovimentacao,
 } from "@/types/estoque";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -54,11 +52,11 @@ interface MovimentacoesDialogProps {
   produtoNome?: string;
 }
 
-export function MovimentacoesDialog({ 
-  open, 
-  onOpenChange, 
-  produtoId, 
-  produtoNome 
+export function MovimentacoesDialog({
+  open,
+  onOpenChange,
+  produtoId,
+  produtoNome,
 }: MovimentacoesDialogProps) {
   const [dados, setDados] = useState<MovimentacoesListResponse | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -68,7 +66,7 @@ export function MovimentacoesDialog({
 
   const carregarDados = async () => {
     if (!open) return;
-    
+
     setCarregando(true);
     try {
       const params = new URLSearchParams({
@@ -83,8 +81,10 @@ export function MovimentacoesDialog({
 
       // Adicionar outros filtros
       if (termoBusca) params.append("produto_nome", termoBusca);
-      if (filtros.tipo_movimentacao) params.append("tipo_movimentacao", filtros.tipo_movimentacao);
-      if (filtros.data_inicio) params.append("data_inicio", filtros.data_inicio);
+      if (filtros.tipo_movimentacao)
+        params.append("tipo_movimentacao", filtros.tipo_movimentacao);
+      if (filtros.data_inicio)
+        params.append("data_inicio", filtros.data_inicio);
       if (filtros.data_fim) params.append("data_fim", filtros.data_fim);
 
       const response = await fetch(`/api/estoque/movimentacoes?${params}`);
@@ -119,10 +119,10 @@ export function MovimentacoesDialog({
   // Busca com debounce (só se não tiver produto específico)
   useEffect(() => {
     if (produtoId) return; // Não buscar por nome se já temos um produto específico
-    
+
     const timer = setTimeout(() => {
       if (termoBusca !== filtros.produto_nome) {
-        setFiltros(prev => ({ ...prev, produto_nome: termoBusca }));
+        setFiltros((prev) => ({ ...prev, produto_nome: termoBusca }));
         setPaginaAtual(1);
       }
     }, 500);
@@ -130,13 +130,16 @@ export function MovimentacoesDialog({
     return () => clearTimeout(timer);
   }, [termoBusca, filtros.produto_nome, produtoId]);
 
-  const handleFiltroChange = (key: keyof MovimentacoesFiltros, value: string | undefined) => {
-    setFiltros(prev => ({ ...prev, [key]: value }));
+  const handleFiltroChange = (
+    key: keyof MovimentacoesFiltros,
+    value: string | undefined
+  ) => {
+    setFiltros((prev) => ({ ...prev, [key]: value }));
     setPaginaAtual(1);
   };
 
   const formatarQuantidade = (quantidade: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 3,
     }).format(quantidade);
@@ -151,7 +154,7 @@ export function MovimentacoesDialog({
   };
 
   const getTipoIcon = (tipo: TipoMovimentacao) => {
-    return tipo === 'ENTRADA' ? (
+    return tipo === "ENTRADA" ? (
       <TrendingUp className="h-4 w-4 text-green-600" />
     ) : (
       <TrendingDown className="h-4 w-4 text-red-600" />
@@ -159,12 +162,18 @@ export function MovimentacoesDialog({
   };
 
   const getTipoBadge = (tipo: TipoMovimentacao) => {
-    return tipo === 'ENTRADA' ? (
-      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+    return tipo === "ENTRADA" ? (
+      <Badge
+        variant="default"
+        className="bg-green-100 text-green-800 border-green-200"
+      >
         Entrada
       </Badge>
     ) : (
-      <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200">
+      <Badge
+        variant="destructive"
+        className="bg-red-100 text-red-800 border-red-200"
+      >
         Saída
       </Badge>
     );
@@ -200,11 +209,14 @@ export function MovimentacoesDialog({
                 />
               </div>
             )}
-            
+
             <Select
               value={filtros.tipo_movimentacao || "todos"}
-              onValueChange={(value) => 
-                handleFiltroChange("tipo_movimentacao", value === "todos" ? undefined : value)
+              onValueChange={(value) =>
+                handleFiltroChange(
+                  "tipo_movimentacao",
+                  value === "todos" ? undefined : value
+                )
               }
             >
               <SelectTrigger className="w-[140px]">
@@ -221,7 +233,9 @@ export function MovimentacoesDialog({
               type="date"
               placeholder="Data início"
               value={filtros.data_inicio || ""}
-              onChange={(e) => handleFiltroChange("data_inicio", e.target.value)}
+              onChange={(e) =>
+                handleFiltroChange("data_inicio", e.target.value)
+              }
               className="w-[150px]"
             />
 
@@ -251,12 +265,24 @@ export function MovimentacoesDialog({
                 <TableBody>
                   {Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-40" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -276,7 +302,10 @@ export function MovimentacoesDialog({
                 <TableBody>
                   {dados?.data.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={produtoId ? 5 : 6} className="text-center py-8">
+                      <TableCell
+                        colSpan={produtoId ? 5 : 6}
+                        className="text-center py-8"
+                      >
                         <div className="flex flex-col items-center gap-2">
                           <Calendar className="h-8 w-8 text-muted-foreground" />
                           <p className="text-muted-foreground">
@@ -291,22 +320,23 @@ export function MovimentacoesDialog({
                         {!produtoId && (
                           <TableCell>
                             <div className="font-medium">
-                              {movimentacao.product?.name || "Produto não encontrado"}
+                              {movimentacao.product?.name ||
+                                "Produto não encontrado"}
                             </div>
                           </TableCell>
                         )}
-                        
+
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {getTipoIcon(movimentacao.movement_type)}
                             {getTipoBadge(movimentacao.movement_type)}
                           </div>
                         </TableCell>
-                        
+
                         <TableCell className="text-center font-mono">
                           {formatarQuantidade(movimentacao.quantity)}
                         </TableCell>
-                        
+
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -315,18 +345,18 @@ export function MovimentacoesDialog({
                             </span>
                           </div>
                         </TableCell>
-                        
+
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
                               {movimentacao.user?.user_metadata?.full_name ||
-                               movimentacao.user?.email ||
-                               "Usuário não identificado"}
+                                movimentacao.user?.email ||
+                                "Usuário não identificado"}
                             </span>
                           </div>
                         </TableCell>
-                        
+
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
                             {movimentacao.observation || "-"}
@@ -344,7 +374,7 @@ export function MovimentacoesDialog({
           {dados && dados.totalPages > 1 && (
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Mostrando {((dados.page - 1) * dados.pageSize) + 1} a{" "}
+                Mostrando {(dados.page - 1) * dados.pageSize + 1} a{" "}
                 {Math.min(dados.page * dados.pageSize, dados.total)} de{" "}
                 {dados.total} movimentações
               </div>
@@ -353,7 +383,7 @@ export function MovimentacoesDialog({
                   variant="outline"
                   size="sm"
                   disabled={dados.page <= 1}
-                  onClick={() => setPaginaAtual(prev => prev - 1)}
+                  onClick={() => setPaginaAtual((prev) => prev - 1)}
                 >
                   Anterior
                 </Button>
@@ -361,7 +391,7 @@ export function MovimentacoesDialog({
                   variant="outline"
                   size="sm"
                   disabled={dados.page >= dados.totalPages}
-                  onClick={() => setPaginaAtual(prev => prev + 1)}
+                  onClick={() => setPaginaAtual((prev) => prev + 1)}
                 >
                   Próxima
                 </Button>

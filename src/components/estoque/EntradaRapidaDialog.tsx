@@ -28,7 +28,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import {
   Command,
   CommandInput,
@@ -41,7 +45,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { PlusCircle, Loader2, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
-import { QuickEntryRequest, ProductSelect, STOCK_MESSAGES } from "@/types/stock";
+import {
+  QuickEntryRequest,
+  ProductSelect,
+  STOCK_MESSAGES,
+} from "@/types/stock/stock";
 import { useEffect } from "react";
 
 // Backward compatibility aliases
@@ -72,10 +80,10 @@ interface EntradaRapidaDialogProps {
   produtoIdSelecionado?: number;
 }
 
-export function EntradaRapidaDialog({ 
-  onSuccess, 
+export function EntradaRapidaDialog({
+  onSuccess,
   trigger,
-  produtoIdSelecionado 
+  produtoIdSelecionado,
 }: EntradaRapidaDialogProps) {
   const [open, setOpen] = useState(false); // Dialog
   const [comboOpen, setComboOpen] = useState(false); // Popover do combobox
@@ -99,8 +107,8 @@ export function EntradaRapidaDialog({
     setCarregandoProdutos(true);
     try {
       const params = new URLSearchParams();
-      if (termo) params.append('q', termo);
-      params.append('limit', '50');
+      if (termo) params.append("q", termo);
+      params.append("limit", "50");
 
       const response = await fetch(`/api/estoque/produtos?${params}`);
       const data = await response.json();
@@ -174,15 +182,12 @@ export function EntradaRapidaDialog({
       Entrada Rápida
     </Button>
   );
-  
-  const triggerRef = useRef<HTMLButtonElement>(null);
 
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || defaultTrigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Entrada Rápida de Estoque</DialogTitle>
@@ -193,16 +198,18 @@ export function EntradaRapidaDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-           
-
-           <FormField
+            <FormField
               control={form.control}
               name="produto_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Produto *</FormLabel>
 
-                  <Popover open={comboOpen} onOpenChange={setComboOpen} modal={false}>
+                  <Popover
+                    open={comboOpen}
+                    onOpenChange={setComboOpen}
+                    modal={false}
+                  >
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
@@ -261,47 +268,60 @@ export function EntradaRapidaDialog({
                           ) : (
                             (() => {
                               // Agrupamento permanece — o filtro será feito pelo Shadcn
-                              const byGroup: Record<string, ProdutoSelect[]> = {};
+                              const byGroup: Record<string, ProdutoSelect[]> =
+                                {};
                               const groupNames: Record<string, string> = {};
 
                               for (const p of produtos) {
-                                const gid = p.group_id ? String(p.group_id) : "Sem grupo";
+                                const gid = p.group_id
+                                  ? String(p.group_id)
+                                  : "Sem grupo";
                                 (byGroup[gid] ||= []).push(p);
-                                if (p?.group?.name) groupNames[gid] = p.group.name ?? "";
-                                else if (!groupNames[gid]) groupNames[gid] = gid;
+                                if (p?.group?.name)
+                                  groupNames[gid] = p.group.name ?? "";
+                                else if (!groupNames[gid])
+                                  groupNames[gid] = gid;
                               }
 
-                              return Object.entries(byGroup).map(([gid, list]) => (
-                                <CommandGroup key={gid} heading={groupNames[gid] || gid}>
-                                  {list.map((p) => {
-                                    const idStr = p.id.toString();
-                                    const isSelected = (field.value ?? "") === idStr;
+                              return Object.entries(byGroup).map(
+                                ([gid, list]) => (
+                                  <CommandGroup
+                                    key={gid}
+                                    heading={groupNames[gid] || gid}
+                                  >
+                                    {list.map((p) => {
+                                      const idStr = p.id.toString();
+                                      const isSelected =
+                                        (field.value ?? "") === idStr;
 
-                      
-                                    return (
-                                      <CommandItem
-                                        key={p.id}
-                                        value={p.name.toString()}
-                                        onSelect={() => {
-                                          field.onChange(idStr);
-                                          setComboOpen(false);
-                                        }}
-                                        className={cn(
-                                          isSelected && "bg-accent text-accent-foreground"
-                                        )}
-                                      >
-                                        {p.name}
-                                        <Check
+                                      return (
+                                        <CommandItem
+                                          key={p.id}
+                                          value={p.name.toString()}
+                                          onSelect={() => {
+                                            field.onChange(idStr);
+                                            setComboOpen(false);
+                                          }}
                                           className={cn(
-                                            "ml-auto",
-                                            isSelected ? "opacity-100" : "opacity-0"
+                                            isSelected &&
+                                              "bg-accent text-accent-foreground"
                                           )}
-                                        />
-                                      </CommandItem>
-                                    );
-                                  })}
-                                </CommandGroup>
-                              ));
+                                        >
+                                          {p.name}
+                                          <Check
+                                            className={cn(
+                                              "ml-auto",
+                                              isSelected
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                          />
+                                        </CommandItem>
+                                      );
+                                    })}
+                                  </CommandGroup>
+                                )
+                              );
                             })()
                           )}
                         </CommandList>
@@ -313,10 +333,6 @@ export function EntradaRapidaDialog({
                 </FormItem>
               )}
             />
-
-
-
-
 
             <FormField
               control={form.control}

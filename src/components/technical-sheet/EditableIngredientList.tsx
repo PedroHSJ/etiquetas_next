@@ -11,16 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Edit2, 
-  Check, 
-  X, 
-  Trash2, 
-  Search,
-  Package
-} from "lucide-react";
+import { Edit2, Check, X, Trash2, Search, Package } from "lucide-react";
 import { EditableIngredient } from "@/types/technical-sheet";
-import { UNIT_OF_MEASURE_OPTIONS } from "@/types/products";
+import { UNIT_OF_MEASURE_OPTIONS } from "@/types/stock/product";
 import { TechnicalSheetService } from "@/lib/services/technicalSheetService";
 import { cn } from "@/lib/utils";
 
@@ -39,19 +32,26 @@ interface EditableIngredientListProps {
 export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
   ingredients,
   organizationId,
-  onChange
+  onChange,
 }) => {
-  const [searchingProducts, setSearchingProducts] = useState<Record<string, SimpleProduct[]>>({});
+  const [searchingProducts, setSearchingProducts] = useState<
+    Record<string, SimpleProduct[]>
+  >({});
 
-  const updateIngredient = (id: string, updates: Partial<EditableIngredient>) => {
-    const updatedIngredients = ingredients.map(ingredient =>
+  const updateIngredient = (
+    id: string,
+    updates: Partial<EditableIngredient>
+  ) => {
+    const updatedIngredients = ingredients.map((ingredient) =>
       ingredient.id === id ? { ...ingredient, ...updates } : ingredient
     );
     onChange(updatedIngredients);
   };
 
   const removeIngredient = (id: string) => {
-    const updatedIngredients = ingredients.filter(ingredient => ingredient.id !== id);
+    const updatedIngredients = ingredients.filter(
+      (ingredient) => ingredient.id !== id
+    );
     onChange(updatedIngredients);
   };
 
@@ -60,54 +60,57 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
   };
 
   const cancelEdit = (id: string) => {
-    const ingredient = ingredients.find(i => i.id === id);
+    const ingredient = ingredients.find((i) => i.id === id);
     if (ingredient) {
-      updateIngredient(id, { 
+      updateIngredient(id, {
         isEditing: false,
-        quantity: ingredient.originalQuantity
+        quantity: ingredient.originalQuantity,
       });
     }
   };
 
   const saveEdit = (id: string) => {
-    const ingredient = ingredients.find(i => i.id === id);
+    const ingredient = ingredients.find((i) => i.id === id);
     if (ingredient) {
       if (!TechnicalSheetService.isValidQuantity(ingredient.quantity)) {
         return; // Não salva se quantidade for inválida
       }
-      
-      updateIngredient(id, { 
+
+      updateIngredient(id, {
         isEditing: false,
-        originalQuantity: ingredient.quantity
+        originalQuantity: ingredient.quantity,
       });
     }
   };
 
   const searchProducts = async (ingredientId: string, query: string) => {
     if (!query.trim()) {
-      setSearchingProducts(prev => ({ ...prev, [ingredientId]: [] }));
+      setSearchingProducts((prev) => ({ ...prev, [ingredientId]: [] }));
       return;
     }
 
     try {
-      const products = await TechnicalSheetService.searchAvailableProducts(organizationId, query);
-      setSearchingProducts(prev => ({ ...prev, [ingredientId]: products }));
+      const products = await TechnicalSheetService.searchAvailableProducts(
+        organizationId,
+        query
+      );
+      setSearchingProducts((prev) => ({ ...prev, [ingredientId]: products }));
     } catch (error) {
-      console.error('Erro ao buscar produtos:', error);
+      console.error("Erro ao buscar produtos:", error);
     }
   };
 
   const selectProduct = (ingredientId: string, product: SimpleProduct) => {
-    updateIngredient(ingredientId, { 
+    updateIngredient(ingredientId, {
       name: product.name,
-      productId: product.id
+      productId: product.id,
     });
-    setSearchingProducts(prev => ({ ...prev, [ingredientId]: [] }));
+    setSearchingProducts((prev) => ({ ...prev, [ingredientId]: [] }));
   };
 
   const getQuantityValidationClass = (quantity: string) => {
-    return TechnicalSheetService.isValidQuantity(quantity) 
-      ? "border-input" 
+    return TechnicalSheetService.isValidQuantity(quantity)
+      ? "border-input"
       : "border-destructive";
   };
 
@@ -140,7 +143,7 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
                   placeholder="Nome do ingrediente"
                   className="text-sm"
                 />
-                
+
                 {/* Lista de produtos sugeridos */}
                 {searchingProducts[ingredient.id]?.length > 0 && (
                   <div className="border rounded-md bg-background max-h-32 overflow-y-auto">
@@ -153,7 +156,9 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
                         <Package className="w-3 h-3" />
                         <span className="truncate">{product.name}</span>
                         {product.category && (
-                          <span className="text-xs text-muted-foreground">({product.category})</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({product.category})
+                          </span>
                         )}
                       </button>
                     ))}
@@ -162,7 +167,9 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="font-medium text-sm truncate">{ingredient.name}</span>
+                <span className="font-medium text-sm truncate">
+                  {ingredient.name}
+                </span>
                 {ingredient.productId && (
                   <Badge variant="secondary" className="text-xs">
                     <Package className="w-3 h-3 mr-1" />
@@ -181,12 +188,20 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
                 min="0"
                 step="0.01"
                 value={ingredient.quantity}
-                onChange={(e) => updateIngredient(ingredient.id, { quantity: e.target.value })}
-                className={cn("w-20 text-sm", getQuantityValidationClass(ingredient.quantity))}
+                onChange={(e) =>
+                  updateIngredient(ingredient.id, { quantity: e.target.value })
+                }
+                className={cn(
+                  "w-20 text-sm",
+                  getQuantityValidationClass(ingredient.quantity)
+                )}
               />
             ) : (
               <span className="text-sm font-mono">
-                {TechnicalSheetService.formatQuantity(ingredient.quantity, ingredient.unit)}
+                {TechnicalSheetService.formatQuantity(
+                  ingredient.quantity,
+                  ingredient.unit
+                )}
               </span>
             )}
           </div>
@@ -196,21 +211,27 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
             {ingredient.isEditing ? (
               <Select
                 value={ingredient.unit}
-                onValueChange={(value) => updateIngredient(ingredient.id, { unit: value })}
+                onValueChange={(value) =>
+                  updateIngredient(ingredient.id, { unit: value })
+                }
               >
                 <SelectTrigger className="text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {UNIT_OF_MEASURE_OPTIONS.map((option: { value: string; label: string }) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.value}
-                    </SelectItem>
-                  ))}
+                  {UNIT_OF_MEASURE_OPTIONS.map(
+                    (option: { value: string; label: string }) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.value}
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
             ) : (
-              <span className="text-sm text-muted-foreground">{ingredient.unit}</span>
+              <span className="text-sm text-muted-foreground">
+                {ingredient.unit}
+              </span>
             )}
           </div>
 
@@ -222,7 +243,9 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
                   size="sm"
                   variant="ghost"
                   onClick={() => saveEdit(ingredient.id)}
-                  disabled={!TechnicalSheetService.isValidQuantity(ingredient.quantity)}
+                  disabled={
+                    !TechnicalSheetService.isValidQuantity(ingredient.quantity)
+                  }
                   className="h-8 w-8 p-0"
                 >
                   <Check className="w-4 h-4" />

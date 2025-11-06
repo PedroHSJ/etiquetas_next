@@ -25,7 +25,9 @@ export interface NavigationContextType {
 
 export interface NotificationContextType {
   notifications: Notification[];
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
+  addNotification: (
+    notification: Omit<Notification, "id" | "timestamp">
+  ) => void;
   removeNotification: (id: string) => void;
   clearAllNotifications: () => void;
 }
@@ -76,7 +78,7 @@ export interface ProfileProviderProps {
 // Tipos de notificações
 export interface Notification {
   id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info";
   title: string;
   message?: string;
   timestamp: number;
@@ -97,8 +99,8 @@ export interface FormFieldProps {
 }
 
 // Import types from etiquetas
-import { LabelField, LabelTemplate } from './etiquetas';
-import { Product } from './products';
+import { LabelField, LabelTemplate } from "./etiquetas";
+import { Product } from "./stock/product";
 
 // Tipos para componentes drag and drop
 export interface DraggableFieldProps {
@@ -137,7 +139,7 @@ export interface ProductSelectorProps {
 }
 
 // Import organization types
-import { OrganizationType } from './organization';
+import { OrganizationType } from "./organization";
 
 // Tipos para componentes de organização
 export interface OrganizationDetailsProps {

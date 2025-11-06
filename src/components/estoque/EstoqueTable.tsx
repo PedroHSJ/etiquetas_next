@@ -20,18 +20,23 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, TrendingUp, TrendingDown, MoreHorizontal, Package } from "lucide-react";
+import {
+  Search,
+  TrendingUp,
+  TrendingDown,
+  MoreHorizontal,
+  Package,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Estoque, 
-  EstoqueFiltros, 
+import {
+  EstoqueFiltros,
   EstoqueListResponse,
-  ESTOQUE_PAGINATION 
+  ESTOQUE_PAGINATION,
 } from "@/types/estoque";
 import { EntradaRapidaDialog } from "./EntradaRapidaDialog";
 import { formatDistanceToNow } from "date-fns";
@@ -62,7 +67,10 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
       if (filtros.estoque_zerado) params.append("estoque_zerado", "true");
       if (filtros.estoque_baixo && filtros.quantidade_minima) {
         params.append("estoque_baixo", "true");
-        params.append("quantidade_minima", filtros.quantidade_minima.toString());
+        params.append(
+          "quantidade_minima",
+          filtros.quantidade_minima.toString()
+        );
       }
 
       const response = await fetch(`/api/estoque?${params}`);
@@ -89,7 +97,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (termoBusca !== filtros.produto_nome) {
-        setFiltros(prev => ({ ...prev, produto_nome: termoBusca }));
+        setFiltros((prev) => ({ ...prev, produto_nome: termoBusca }));
         setPaginaAtual(1);
       }
     }, 500);
@@ -97,13 +105,16 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
     return () => clearTimeout(timer);
   }, [termoBusca, filtros.produto_nome]);
 
-  const handleFiltroChange = (key: keyof EstoqueFiltros, value: string | boolean | number | undefined) => {
-    setFiltros(prev => ({ ...prev, [key]: value }));
+  const handleFiltroChange = (
+    key: keyof EstoqueFiltros,
+    value: string | boolean | number | undefined
+  ) => {
+    setFiltros((prev) => ({ ...prev, [key]: value }));
     setPaginaAtual(1);
   };
 
   const formatarQuantidade = (quantidade: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 3,
     }).format(quantidade);
@@ -113,7 +124,8 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
     if (quantidade === 0) {
       return <Badge variant="destructive">Zerado</Badge>;
     }
-    if (quantidade < 10) { // Critério simples para estoque baixo
+    if (quantidade < 10) {
+      // Critério simples para estoque baixo
       return <Badge variant="secondary">Baixo</Badge>;
     }
     return <Badge variant="default">Normal</Badge>;
@@ -151,11 +163,21 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
             <TableBody>
               {Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-40" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8 w-8" />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -178,9 +200,15 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
             className="pl-10"
           />
         </div>
-        
+
         <Select
-          value={filtros.estoque_zerado ? "zerado" : filtros.estoque_baixo ? "baixo" : "todos"}
+          value={
+            filtros.estoque_zerado
+              ? "zerado"
+              : filtros.estoque_baixo
+                ? "baixo"
+                : "todos"
+          }
           onValueChange={(value) => {
             if (value === "zerado") {
               handleFiltroChange("estoque_zerado", true);
@@ -225,7 +253,9 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                   <div className="flex flex-col items-center gap-2">
                     <Package className="h-8 w-8 text-muted-foreground" />
                     <p className="text-muted-foreground">
-                      {termoBusca ? "Nenhum produto encontrado" : "Nenhum produto em estoque"}
+                      {termoBusca
+                        ? "Nenhum produto encontrado"
+                        : "Nenhum produto em estoque"}
                     </p>
                   </div>
                 </TableCell>
@@ -235,39 +265,32 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                 <TableRow key={item.id}>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{item.produto?.name || "Produto não encontrado"}</div>
-                      {item.produto?.category?.name && (
+                      <div className="font-medium">
+                        {item.product?.name || "Produto não encontrado"}
+                      </div>
+                      {item.product?.category?.name && (
                         <div className="text-sm text-muted-foreground">
-                          Categoria: {item.produto.category.name}
+                          Categoria: {item.product.category.name}
                         </div>
                       )}
                     </div>
                   </TableCell>
-                  
-                  <TableCell className="text-center font-mono">
-                    {formatarQuantidade(item.quantidade_atual)}
-                    {item.produto?.unit_of_measure && (
-                      <span className="text-muted-foreground ml-1">
-                        {item.produto.unit_of_measure}
-                      </span>
-                    )}
-                  </TableCell>
-                  
+
                   <TableCell className="text-center">
-                    {getStatusBadge(item.quantidade_atual)}
+                    {getStatusBadge(item.current_quantity)}
                   </TableCell>
-                  
+
                   <TableCell>
                     <div className="text-sm">
                       {formatarDataUltimaAtualizacao(item.updated_at)}
-                      {item.usuario?.user_metadata?.full_name && (
+                      {item.user?.user_metadata?.full_name && (
                         <div className="text-muted-foreground">
-                          por {item.usuario.user_metadata.full_name}
+                          por {item.user.user_metadata.full_name}
                         </div>
                       )}
                     </div>
                   </TableCell>
-                  
+
                   <TableCell className="text-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -277,20 +300,24 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <EntradaRapidaDialog
-                          produtoIdSelecionado={item.produto_id}
+                          produtoIdSelecionado={item.product_id}
                           onSuccess={carregarDados}
                           trigger={
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
                               <TrendingUp className="mr-2 h-4 w-4" />
                               Dar Entrada
                             </DropdownMenuItem>
                           }
                         />
                         <DropdownMenuItem
-                          onClick={() => onViewMovimentacoes?.(
-                            item.produto_id, 
-                            item.produto?.name || "Produto"
-                          )}
+                          onClick={() =>
+                            onViewMovimentacoes?.(
+                              item.product_id,
+                              item.product?.name || "Produto"
+                            )
+                          }
                         >
                           <TrendingDown className="mr-2 h-4 w-4" />
                           Ver Movimentações
@@ -309,7 +336,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
       {dados && dados.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Mostrando {((dados.page - 1) * dados.pageSize) + 1} a{" "}
+            Mostrando {(dados.page - 1) * dados.pageSize + 1} a{" "}
             {Math.min(dados.page * dados.pageSize, dados.total)} de{" "}
             {dados.total} produtos
           </div>
@@ -318,7 +345,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
               variant="outline"
               size="sm"
               disabled={dados.page <= 1}
-              onClick={() => setPaginaAtual(prev => prev - 1)}
+              onClick={() => setPaginaAtual((prev) => prev - 1)}
             >
               Anterior
             </Button>
@@ -326,7 +353,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
               variant="outline"
               size="sm"
               disabled={dados.page >= dados.totalPages}
-              onClick={() => setPaginaAtual(prev => prev + 1)}
+              onClick={() => setPaginaAtual((prev) => prev + 1)}
             >
               Próxima
             </Button>
