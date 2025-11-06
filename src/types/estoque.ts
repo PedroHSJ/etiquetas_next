@@ -10,9 +10,9 @@ export type TipoMovimentacao = "ENTRADA" | "SAIDA";
 // Interface principal do estoque
 export interface Estoque {
   id: string;
-  product_id: number;
+  productId: number;
   current_quantity: number;
-  user_id: string;
+  userId: string;
   created_at: string;
   updated_at: string;
 
@@ -30,8 +30,8 @@ export interface Estoque {
 // Interface para movimentações de estoque
 export interface EstoqueMovimentacao {
   id: string;
-  product_id: number;
-  user_id: string;
+  productId: number;
+  userId: string;
   movement_type: TipoMovimentacao;
   quantity: number;
   observation?: string;
@@ -60,27 +60,21 @@ export interface EntradaRapidaResponse {
 // Filtros para listagem de estoque
 export interface EstoqueFiltros {
   produto_nome?: string;
-  product_id?: number;
-  user_id?: string;
+  productId?: number;
+  userId?: string;
   estoque_zerado?: boolean;
   estoque_baixo?: boolean;
   quantidade_minima?: number;
-  // Deprecated - backward compatibility
-  produto_id?: number;
-  usuario_id?: string;
 }
 
 // Filtros para movimentações
 export interface MovimentacoesFiltros {
-  product_id?: number;
-  user_id?: string;
+  productId?: number;
+  userId?: string;
   tipo_movimentacao?: TipoMovimentacao;
   data_inicio?: string;
   data_fim?: string;
   produto_nome?: string;
-  // Deprecated - backward compatibility
-  produto_id?: number;
-  usuario_id?: string;
 }
 
 // Interface para listagem paginada de estoque

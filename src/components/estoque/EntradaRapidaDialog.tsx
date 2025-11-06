@@ -143,7 +143,7 @@ export function EntradaRapidaDialog({
     setEnviando(true);
     try {
       const request: QuickEntryRequest = {
-        product_id: parseInt(data.produto_id),
+        productId: parseInt(data.produto_id),
         quantity: parseFloat(data.quantidade),
         observation: data.observacao,
       };

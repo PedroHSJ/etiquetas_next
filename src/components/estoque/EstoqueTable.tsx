@@ -287,7 +287,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <EntradaRapidaDialog
-                          produtoIdSelecionado={item.product_id}
+                          produtoIdSelecionado={item.productId}
                           onSuccess={carregarDados}
                           trigger={
                             <DropdownMenuItem
@@ -301,7 +301,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                         <DropdownMenuItem
                           onClick={() =>
                             onViewMovimentacoes?.(
-                              item.product_id,
+                              item.productId,
                               item.product?.name || "Produto"
                             )
                           }

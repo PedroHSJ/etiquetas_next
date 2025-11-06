@@ -6,10 +6,10 @@ import { QuickEntryRequest } from "@/types/stock/stock";
 export async function POST(request: NextRequest) {
   try {
     const body: QuickEntryRequest = await request.json();
-    const { product_id, quantity, observation } = body;
+    const { productId, quantity, observation } = body;
 
     // Validações básicas
-    if (!product_id || !quantity) {
+    if (!productId || !quantity) {
       return NextResponse.json(
         {
           success: false,
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const { data: product, error: productError } = await supabase
       .from("products")
       .select("id, name")
-      .eq("id", product_id)
+      .eq("id", productId)
       .single();
 
     if (productError || !product) {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     const { data: estoque, error: estoqueError } = await supabase
       .from("stock")
       .select("*")
-      .eq("product_id", product_id)
+      .eq("productId", productId)
       .single();
 
     if (estoqueError || !estoque) {
@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
     const { data: movimentacao, error: movimentacaoError } = await supabase
       .from("stock_movements")
       .insert({
-        product_id,
-        user_id: user.id,
+        productId,
+        userId: user.id,
         movement_type: "SAIDA",
         quantity: quantity,
         observation: observation || `Saída rápida - ${product.name}`,

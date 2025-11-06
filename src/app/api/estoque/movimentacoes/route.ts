@@ -17,10 +17,10 @@ export async function GET(request: NextRequest) {
 
     // Filtros
     const filtros: MovimentacoesFiltros = {
-      product_id: searchParams.get("product_id")
-        ? parseInt(searchParams.get("product_id")!)
+      productId: searchParams.get("productId")
+        ? parseInt(searchParams.get("productId")!)
         : undefined,
-      user_id: searchParams.get("user_id") || undefined,
+      userId: searchParams.get("userId") || undefined,
       tipo_movimentacao: searchParams.get("tipo_movimentacao") as
         | "ENTRADA"
         | "SAIDA"
@@ -40,12 +40,12 @@ export async function GET(request: NextRequest) {
     );
 
     // Aplicar filtros
-    if (filtros.product_id) {
-      query = query.eq("product_id", filtros.product_id);
+    if (filtros.productId) {
+      query = query.eq("productId", filtros.productId);
     }
 
-    if (filtros.user_id) {
-      query = query.eq("user_id", filtros.user_id);
+    if (filtros.userId) {
+      query = query.eq("userId", filtros.userId);
     }
 
     if (filtros.tipo_movimentacao) {
@@ -106,11 +106,11 @@ export async function GET(request: NextRequest) {
 // Endpoint para criar movimentação manual (saída, por exemplo)
 export async function POST(request: NextRequest) {
   try {
-    const { product_id, tipo_movimentacao, quantidade, observacao } =
+    const { productId, tipo_movimentacao, quantidade, observacao } =
       await request.json();
 
     // Validações básicas
-    if (!product_id || !tipo_movimentacao || !quantidade) {
+    if (!productId || !tipo_movimentacao || !quantidade) {
       return NextResponse.json(
         {
           error: "Produto, tipo de movimentação e quantidade são obrigatórios",
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     const { data: produto, error: produtoError } = await supabase
       .from("products")
       .select("id, name")
-      .eq("id", product_id)
+      .eq("id", productId)
       .single();
 
     if (produtoError || !produto) {
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       const { data: estoque } = await supabase
         .from("stock")
         .select("current_quantity")
-        .eq("product_id", product_id)
+        .eq("productId", productId)
         .single();
 
       if (!estoque || estoque.current_quantity < quantidade) {
@@ -182,8 +182,8 @@ export async function POST(request: NextRequest) {
     const { data: movimentacao, error: movimentacaoError } = await supabase
       .from("stock_movements")
       .insert({
-        product_id,
-        user_id: user.id,
+        productId,
+        userId: user.id,
         movement_type: tipo_movimentacao,
         quantity: quantidade,
         observation:

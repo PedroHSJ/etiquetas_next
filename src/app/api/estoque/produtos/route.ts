@@ -8,7 +8,7 @@ interface ProductWithGroup extends Omit<Product, "group"> {
 }
 
 interface StockRecord {
-  product_id: number;
+  productId: number;
   current_quantity: number;
 }
 
@@ -73,17 +73,18 @@ export async function GET(request: NextRequest) {
     // Agora buscar o estoque para cada produto
     const { data: estoque, error: estoqueError } = await supabase
       .from("stock")
-      .select("product_id, current_quantity");
+      .select("productId, current_quantity");
 
     if (estoqueError) {
       console.error("Erro ao buscar estoque:", estoqueError);
       // Continuar mesmo se falhar no estoque
     }
 
-    // Criar mapa de estoque por product_id
+    // Criar mapa de estoque por productId
     const estoqueMap = (estoque || []).reduce(
-      (acc: Record<number, number>, e: StockRecord) => {
-        acc[e.product_id] = e.current_quantity;
+      (acc: Record<number, number>, e) => {
+        const record = e as unknown as StockRecord;
+        acc[record.productId] = record.current_quantity;
         return acc;
       },
       {}

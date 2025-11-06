@@ -10,9 +10,9 @@ export type MovementType = "ENTRADA" | "SAIDA";
 // Main stock interface
 export interface Stock {
   id: string;
-  product_id: number;
+  productId: number;
   current_quantity: number;
-  user_id: string;
+  userId: string;
   created_at: string;
   updated_at: string;
 
@@ -33,8 +33,8 @@ export interface Stock {
 // Stock movements interface
 export interface StockMovement {
   id: string;
-  product_id: number;
-  user_id: string;
+  productId: number;
+  userId: string;
   movement_type: MovementType;
   quantity: number;
   observation?: string;
@@ -57,7 +57,7 @@ export interface StockMovement {
 
 // DTO for quick entry
 export interface QuickEntryRequest {
-  product_id: number;
+  productId: number;
   quantity: number;
   observation?: string;
 }
@@ -73,8 +73,8 @@ export interface QuickEntryResponse {
 // Filters for stock listing
 export interface StockFilters {
   product_name?: string;
-  product_id?: number;
-  user_id?: string;
+  productId?: number;
+  userId?: string;
   zero_stock?: boolean;
   low_stock?: boolean;
   minimum_quantity?: number;
@@ -82,8 +82,8 @@ export interface StockFilters {
 
 // Filters for movements
 export interface MovementFilters {
-  product_id?: number;
-  user_id?: string;
+  productId?: number;
+  userId?: string;
   movement_type?: MovementType;
   start_date?: string;
   end_date?: string;
@@ -154,12 +154,12 @@ export const QUANTITY_VALIDATION = {
 
 // Default messages
 export const STOCK_MESSAGES = {
-  ENTRY_SUCCESS: "✅ Entry registered successfully!",
-  EXIT_SUCCESS: "✅ Exit registered successfully!",
-  ERROR_INSUFFICIENT_QUANTITY: "Insufficient quantity in stock",
-  ERROR_PRODUCT_NOT_FOUND: "Product not found",
-  ERROR_INVALID_QUANTITY: "Quantity must be greater than zero",
-  ERROR_USER_NOT_AUTHORIZED: "User not authorized",
+  ENTRY_SUCCESS: "Entrada registrada com sucesso!",
+  EXIT_SUCCESS: "Saída registrada com sucesso!",
+  ERROR_INSUFFICIENT_QUANTITY: "Quantidade insuficiente em estoque.",
+  ERROR_PRODUCT_NOT_FOUND: "Produto não encontrado.",
+  ERROR_INVALID_QUANTITY: "Quantidade deve ser maior que zero.",
+  ERROR_USER_NOT_AUTHORIZED: "Usuário não autorizado.",
 } as const;
 
 // Default pagination settings

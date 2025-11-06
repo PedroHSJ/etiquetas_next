@@ -15,10 +15,10 @@ export async function GET(request: NextRequest) {
     // Filtros
     const filtros: EstoqueFiltros = {
       produto_nome: searchParams.get("produto_nome") || undefined,
-      product_id: searchParams.get("product_id")
-        ? parseInt(searchParams.get("product_id")!)
+      productId: searchParams.get("productId")
+        ? parseInt(searchParams.get("productId")!)
         : undefined,
-      user_id: searchParams.get("user_id") || undefined,
+      userId: searchParams.get("userId") || undefined,
       estoque_zerado: searchParams.get("estoque_zerado") === "true",
       estoque_baixo: searchParams.get("estoque_baixo") === "true",
       quantidade_minima: searchParams.get("quantidade_minima")
@@ -36,12 +36,12 @@ export async function GET(request: NextRequest) {
     );
 
     // Aplicar filtros
-    if (filtros.product_id) {
-      query = query.eq("product_id", filtros.product_id);
+    if (filtros.productId) {
+      query = query.eq("productId", filtros.productId);
     }
 
-    if (filtros.user_id) {
-      query = query.eq("user_id", filtros.user_id);
+    if (filtros.userId) {
+      query = query.eq("userId", filtros.userId);
     }
 
     if (filtros.estoque_zerado) {

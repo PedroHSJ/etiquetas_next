@@ -30,9 +30,9 @@ export function useEstoque() {
         // Adicionar filtros
         if (filtros.produto_nome)
           params.append("produto_nome", filtros.produto_nome);
-        if (filtros.produto_id)
-          params.append("produto_id", filtros.produto_id.toString());
-        if (filtros.usuario_id) params.append("usuario_id", filtros.usuario_id);
+        if (filtros.productId)
+          params.append("productId", filtros.productId.toString());
+        if (filtros.userId) params.append("userId", filtros.userId);
         if (filtros.estoque_zerado) params.append("estoque_zerado", "true");
         if (filtros.estoque_baixo) params.append("estoque_baixo", "true");
         if (filtros.quantidade_minima)
@@ -76,9 +76,9 @@ export function useEstoque() {
         });
 
         // Adicionar filtros
-        if (filtros.produto_id)
-          params.append("produto_id", filtros.produto_id.toString());
-        if (filtros.usuario_id) params.append("usuario_id", filtros.usuario_id);
+        if (filtros.productId)
+          params.append("productId", filtros.productId.toString());
+        if (filtros.userId) params.append("userId", filtros.userId);
         if (filtros.tipo_movimentacao)
           params.append("tipo_movimentacao", filtros.tipo_movimentacao);
         if (filtros.data_inicio)

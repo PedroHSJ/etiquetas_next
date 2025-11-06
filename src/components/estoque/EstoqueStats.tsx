@@ -27,9 +27,9 @@ export function EstoqueStats({ estatisticas, carregando }: EstoqueStatsProps) {
               <div className="text-2xl font-bold">
                 <Skeleton className="h-8 w-16" />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 <Skeleton className="h-3 w-20 mt-1" />
-              </p>
+              </div>
             </CardContent>
           </Card>
         ))}

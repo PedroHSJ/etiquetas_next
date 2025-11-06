@@ -5,21 +5,21 @@
 -- Stock Table (current balance per product)
 CREATE TABLE IF NOT EXISTS "public"."stock" (
     "id" uuid DEFAULT gen_random_uuid() NOT NULL,
-    "product_id" integer NOT NULL,
+    "productId" integer NOT NULL,
     "current_quantity" numeric(10,3) DEFAULT 0 NOT NULL,
-    "user_id" uuid NOT NULL,
+    "userId" uuid NOT NULL,
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT "stock_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "stock_product_id_unique" UNIQUE ("product_id"),
+    CONSTRAINT "stock_productId_unique" UNIQUE ("productId"),
     CONSTRAINT "stock_current_quantity_check" CHECK ("current_quantity" >= 0)
 );
 
 -- Stock Movements Table (entry and exit history)
 CREATE TABLE IF NOT EXISTS "public"."stock_movements" (
     "id" uuid DEFAULT gen_random_uuid() NOT NULL,
-    "product_id" integer NOT NULL,
-    "user_id" uuid NOT NULL,
+    "productId" integer NOT NULL,
+    "userId" uuid NOT NULL,
     "movement_type" text NOT NULL,
     "quantity" numeric(10,3) NOT NULL,
     "observation" text,
@@ -34,10 +34,10 @@ CREATE TABLE IF NOT EXISTS "public"."stock_movements" (
 -- INDEXES
 -- =============================================================================
 
-CREATE INDEX IF NOT EXISTS "idx_stock_product_id" ON "public"."stock" ("product_id");
-CREATE INDEX IF NOT EXISTS "idx_stock_user_id" ON "public"."stock" ("user_id");
-CREATE INDEX IF NOT EXISTS "idx_stock_movements_product_id" ON "public"."stock_movements" ("product_id");
-CREATE INDEX IF NOT EXISTS "idx_stock_movements_user_id" ON "public"."stock_movements" ("user_id");
+CREATE INDEX IF NOT EXISTS "idx_stock_productId" ON "public"."stock" ("productId");
+CREATE INDEX IF NOT EXISTS "idx_stock_userId" ON "public"."stock" ("userId");
+CREATE INDEX IF NOT EXISTS "idx_stock_movements_productId" ON "public"."stock_movements" ("productId");
+CREATE INDEX IF NOT EXISTS "idx_stock_movements_userId" ON "public"."stock_movements" ("userId");
 CREATE INDEX IF NOT EXISTS "idx_stock_movements_date" ON "public"."stock_movements" ("movement_date");
 CREATE INDEX IF NOT EXISTS "idx_stock_movements_type" ON "public"."stock_movements" ("movement_type");
 
@@ -47,21 +47,21 @@ CREATE INDEX IF NOT EXISTS "idx_stock_movements_type" ON "public"."stock_movemen
 
 -- FK to products (assuming products table exists with integer id)
 ALTER TABLE "public"."stock" 
-ADD CONSTRAINT "stock_product_id_fkey" 
-FOREIGN KEY ("product_id") REFERENCES "public"."products" ("id") ON DELETE CASCADE;
+ADD CONSTRAINT "stock_productId_fkey" 
+FOREIGN KEY ("productId") REFERENCES "public"."products" ("id") ON DELETE CASCADE;
 
 ALTER TABLE "public"."stock_movements" 
-ADD CONSTRAINT "stock_movements_product_id_fkey" 
-FOREIGN KEY ("product_id") REFERENCES "public"."products" ("id") ON DELETE CASCADE;
+ADD CONSTRAINT "stock_movements_productId_fkey" 
+FOREIGN KEY ("productId") REFERENCES "public"."products" ("id") ON DELETE CASCADE;
 
 -- FK to users (assuming auth.users table exists)
 ALTER TABLE "public"."stock" 
-ADD CONSTRAINT "stock_user_id_fkey" 
-FOREIGN KEY ("user_id") REFERENCES "auth"."users" ("id") ON DELETE RESTRICT;
+ADD CONSTRAINT "stock_userId_fkey" 
+FOREIGN KEY ("userId") REFERENCES "auth"."users" ("id") ON DELETE RESTRICT;
 
 ALTER TABLE "public"."stock_movements" 
-ADD CONSTRAINT "stock_movements_user_id_fkey" 
-FOREIGN KEY ("user_id") REFERENCES "auth"."users" ("id") ON DELETE RESTRICT;
+ADD CONSTRAINT "stock_movements_userId_fkey" 
+FOREIGN KEY ("userId") REFERENCES "auth"."users" ("id") ON DELETE RESTRICT;
 
 -- =============================================================================
 -- TRIGGERS FOR UPDATED_AT
@@ -97,7 +97,7 @@ BEGIN
         -- Get current quantity or create record if doesn't exist
         SELECT current_quantity INTO v_current_quantity 
         FROM public.stock 
-        WHERE product_id = NEW.product_id;
+        WHERE "productId" = NEW."productId";
         
         -- If stock record doesn't exist, create one
         IF v_current_quantity IS NULL THEN
@@ -105,11 +105,11 @@ BEGIN
                 v_new_quantity := NEW.quantity;
             ELSE
                 -- Don't allow exit without prior stock
-                RAISE EXCEPTION 'Cannot perform exit without prior stock for product ID: %', NEW.product_id;
+                RAISE EXCEPTION 'Cannot perform exit without prior stock for product ID: %', NEW."productId";
             END IF;
             
-            INSERT INTO public.stock (product_id, current_quantity, user_id)
-            VALUES (NEW.product_id, v_new_quantity, NEW.user_id);
+            INSERT INTO public.stock ("productId", current_quantity, "userId")
+            VALUES (NEW."productId", v_new_quantity, NEW."userId");
         ELSE
             -- Calculate new quantity
             IF NEW.movement_type = 'ENTRADA' THEN
@@ -126,9 +126,9 @@ BEGIN
             -- Update stock
             UPDATE public.stock 
             SET current_quantity = v_new_quantity,
-                user_id = NEW.user_id,
+                "userId" = NEW."userId",
                 updated_at = now()
-            WHERE product_id = NEW.product_id;
+            WHERE "productId" = NEW."productId";
         END IF;
         
         RETURN NEW;
@@ -148,9 +148,9 @@ CREATE TRIGGER trigger_process_stock_movement
 -- =============================================================================
 
 COMMENT ON TABLE "public"."stock" IS 'Current product stock';
-COMMENT ON COLUMN "public"."stock"."product_id" IS 'Product reference';
+COMMENT ON COLUMN "public"."stock"."productId" IS 'Product reference';
 COMMENT ON COLUMN "public"."stock"."current_quantity" IS 'Current quantity in stock';
-COMMENT ON COLUMN "public"."stock"."user_id" IS 'User responsible for last update';
+COMMENT ON COLUMN "public"."stock"."userId" IS 'User responsible for last update';
 
 COMMENT ON TABLE "public"."stock_movements" IS 'Stock movement history';
 COMMENT ON COLUMN "public"."stock_movements"."movement_type" IS 'Type: ENTRADA (entry) or SAIDA (exit)';
