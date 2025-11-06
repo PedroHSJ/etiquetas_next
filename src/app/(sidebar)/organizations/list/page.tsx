@@ -3,23 +3,8 @@ import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -28,20 +13,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangle, Trash2, Plus, Building, Edit } from "lucide-react";
+import { AlertTriangle, Trash2, Plus, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import Link from "next/link";
-import FilterBar from "@/components/filters/FilterBar";
-import Pagination from "@/components/pagination/Pagination";
 import { useAuth } from "@/contexts/AuthContext";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
+import {
+  GenericTable,
+  GenericTableColumn,
+} from "@/components/ui/generic-table";
+import { formatCnpj } from "@/lib/utils";
 
 interface Organization {
   id: string;
   nome: string;
   tipo: string;
+  cnpj: string;
   created_at: string;
+  [key: string]: unknown;
 }
 
 interface Department {
@@ -75,7 +64,6 @@ export default function Page() {
   const { userId } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
   const [filteredOrganizations, setfilteredOrganizations] = useState<
     Organization[]
   >([]);
@@ -91,6 +79,47 @@ export default function Page() {
   // Estados da paginação
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Colunas da tabela
+  const organizationsColumns: GenericTableColumn<Organization>[] = [
+    {
+      id: "nome",
+      key: "nome",
+      label: "Nome",
+      accessor: (row) => row.nome,
+      visible: true,
+      width: 300,
+      render: (value, row) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+              {getInitials(row.nome)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="font-medium">{value as string}</span>
+        </div>
+      ),
+    },
+    {
+      id: "cnpj",
+      key: "cnpj",
+      label: "CNPJ",
+      accessor: (row) => formatCnpj(row.cnpj),
+      visible: true,
+    },
+    {
+      id: "created_at",
+      key: "created_at",
+      label: "Cadastrado",
+      accessor: (row) => row.created_at,
+      visible: true,
+      render: (value) => (
+        <div className="text-sm">
+          {format(new Date(value as string), "dd/MM/yyyy", { locale: ptBR })}
+        </div>
+      ),
+    },
+  ];
 
   // Dialog de confirmação de exclusão
   const [deleteDialog, setDeleteDialog] = useState({
@@ -277,8 +306,12 @@ export default function Page() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                <svg
+                  className="w-7 h-7 text-white"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
                 </svg>
               </div>
               <div>
@@ -294,245 +327,30 @@ export default function Page() {
             </NavigationButton>
           </div>
 
-          {/* Filtros */}
-          <FilterBar
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            selectedOrganization={selectedOrganization}
-            setSelectedOrganization={setSelectedOrganization}
-            selectedDepartment={selectedDepartment}
-            setSelectedDepartment={setSelectedDepartment}
-            organizations={organizations}
-            departments={departments}
-            searchPlaceholder="Nome da organização, tipo..."
-            showDepartmentFilter={false}
-            onClearFilters={clearFilters}
+          {/* Tabela de Organizações */}
+          <GenericTable<Organization>
+            title="Organizações"
+            description="Visualize e gerencie todas as suas organizações"
+            columns={organizationsColumns}
+            data={filteredOrganizations}
             loading={loading}
+            searchable={true}
+            searchPlaceholder="Buscar organização..."
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={setItemsPerPage}
+            showAdvancedPagination={true}
+            rowActions={(row: Organization) => (
+              <div className="flex gap-1 justify-end">
+                <NavigationButton
+                  href={`/organizations/edit/${row.id}`}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Edit className="h-4 w-4" />
+                </NavigationButton>
+              </div>
+            )}
           />
-
-          {/* Lista/Tabela de Integrantes */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                Organizações ({totalItems})
-              </CardTitle>
-              <CardDescription>
-                {loading
-                  ? "Carregando..."
-                  : totalPages > 1
-                  ? `Mostrando ${startIndex + 1}-${Math.min(
-                      endIndex,
-                      totalItems
-                    )} de ${totalItems} organizações`
-                  : `${totalItems} organização(s) encontrada(s)`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-muted-foreground">
-                    Carregando integrantes...
-                  </p>
-                </div>
-              ) : totalItems === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchTerm || selectedOrganization || selectedDepartment
-                    ? "Nenhum integrante encontrado com os filtros aplicados"
-                    : "Nenhum integrante cadastrado"}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Visualização em Cards para mobile */}
-                  <div className="block md:hidden space-y-4">
-                    {paginatedOrganizations.map((org) => (
-                      <Card key={org.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                              <Avatar>
-                                <AvatarFallback className="bg-blue-100 text-blue-600">
-                                  {getInitials(org.nome)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <h3 className="font-medium">{org.nome}</h3>
-                                {/* <p className="text-sm text-muted-foreground">
-                                {member.departamento?.organizacao?.nome} • {member.departamento?.nome}
-                              </p> */}
-                                {/* <p className="text-xs text-muted-foreground">
-                                Cadastrado em {format(new Date(member.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                              </p> */}
-                              </div>
-                            </div>
-                            <div className="flex gap-1">
-                              <NavigationButton
-                                href={`/organizations/edit/${org.id}`}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </NavigationButton>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  console.log("Delete organization:", org.id)
-                                }
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          {/* {member.especializacoes && member.especializacoes.length > 0 && (
-                          <div className="flex gap-1 mt-3 flex-wrap">
-                            {member.especializacoes.map((esp) => (
-                              <Badge key={esp.id} variant="secondary" className="text-xs">
-                                {esp.nome}
-                              </Badge>
-                            ))}
-                          </div>
-                        )} */}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* Visualização em Tabela para desktop */}
-                  <div className="hidden md:block">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead>Tipo</TableHead>
-                          <TableHead>Cadastrado</TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedOrganizations.map((org) => (
-                          <TableRow key={org.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                                    {getInitials(org.nome)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium">{org.nome}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                {org.tipo && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {org.tipo.slice(0, 1).toUpperCase() +
-                                      org.tipo.slice(1)}
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="text-sm">
-                                  {format(
-                                    new Date(org.created_at),
-                                    "dd/MM/yyyy",
-                                    { locale: ptBR }
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex gap-1 justify-end">
-                                <NavigationButton
-                                  href={`/organizations/edit/${org.id}`}
-                                  variant="outline"
-                                  size="sm"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </NavigationButton>
-                                {/* <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openDeleteDialog(org as any)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button> */}
-                              </div>
-                            </TableCell>
-                            {/* <TableCell>
-                            <div>
-                              <div className="font-medium">{member.departamento?.organizacao?.nome}</div>
-                              <div className="text-xs text-muted-foreground capitalize">
-                                {member.departamento?.organizacao?.tipo}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div>{member.departamento?.nome}</div>
-                              <div className="text-xs text-muted-foreground capitalize">
-                                {member.departamento?.tipo_departamento}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1 flex-wrap">
-                              {member.especializacoes && member.especializacoes.length > 0 ? (
-                                member.especializacoes.map((esp) => (
-                                  <Badge key={esp.id} variant="secondary" className="text-xs">
-                                    {esp.nome}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-xs text-muted-foreground">Nenhuma</span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              {format(new Date(member.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex gap-1 justify-end">
-                              <Link href={`/escalas/members?edit=${member.id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openDeleteDialog(member)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell> */}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {/* Paginação */}
-                  {totalPages > 1 && (
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      totalItems={totalItems}
-                      itemsPerPage={itemsPerPage}
-                      onPageChange={setCurrentPage}
-                      onItemsPerPageChange={setItemsPerPage}
-                    />
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
           {/* Dialog de Confirmação de Exclusão */}
           <Dialog open={deleteDialog.isOpen} onOpenChange={closeDeleteDialog}>

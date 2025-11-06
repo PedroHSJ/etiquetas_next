@@ -1,26 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -29,19 +14,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangle, Trash2, Plus, Building, Edit, Building2 } from "lucide-react";
+import { AlertTriangle, Trash2, Plus, Edit, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import Link from "next/link";
-import FilterBar from "@/components/filters/FilterBar";
-import Pagination from "@/components/pagination/Pagination";
 import { useAuth } from "@/contexts/AuthContext";
-import { PermissionGuard } from "@/components/auth/PermissionGuard";
-import {
-  OrganizationContext,
-  useOrganization,
-} from "@/contexts/OrganizationContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { toast } from "sonner";
+import {
+  GenericTable,
+  GenericTableColumn,
+} from "@/components/ui/generic-table";
+import { capitalize } from "@/lib/utils";
 interface Department {
   id: string;
   nome: string;
@@ -51,6 +34,7 @@ interface Department {
   organizacao?: {
     nome: string;
   };
+  [key: string]: unknown;
 }
 
 export default function DepartmentsListPage() {
@@ -117,6 +101,42 @@ export default function DepartmentsListPage() {
     setDeleteDialogOpen(true);
   };
 
+  const formatarData = (data: string) => {
+    try {
+      return format(new Date(data), "dd/MM/yyyy", { locale: ptBR });
+    } catch (error) {
+      return "Data inválida";
+    }
+  };
+
+  // Definir colunas da tabela
+  const departmentColumns: GenericTableColumn<Department>[] = [
+    {
+      id: "nome",
+      key: "nome",
+      label: "Nome",
+      accessor: (row) => row.nome,
+      visible: true,
+      width: 300,
+    },
+    {
+      id: "tipo_departamento",
+      key: "tipo_departamento",
+      label: "Tipo",
+      accessor: (row) => capitalize(row.tipo_departamento),
+      visible: true,
+      render: (value) => <Badge variant="secondary">{value as string}</Badge>,
+    },
+    {
+      id: "created_at",
+      key: "created_at",
+      label: "Data de Criação",
+      accessor: (row) => row.created_at,
+      visible: true,
+      render: (value) => formatarData(value as string),
+    },
+  ];
+
   const handleDeleteConfirm = async () => {
     if (!deletingDepartment) return;
 
@@ -151,13 +171,19 @@ export default function DepartmentsListPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              <svg
+                className="w-7 h-7 text-white"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
             <div>
               <h1 className="text-3xl font-bold">Departamentos</h1>
-              <p className="text-muted-foreground">Carregando departamentos...</p>
+              <p className="text-muted-foreground">
+                Carregando departamentos...
+              </p>
             </div>
           </div>
         </div>
@@ -181,8 +207,12 @@ export default function DepartmentsListPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            <svg
+              className="w-7 h-7 text-white"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>
           <div>
@@ -216,101 +246,30 @@ export default function DepartmentsListPage() {
           </div>
         </Card>
       ) : (
-        <>
-          {/* Visualização em Cards para mobile */}
-          <div className="block md:hidden space-y-4">
-            {departments.map((dept) => (
-              <Card key={dept.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium">{dept.nome}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {dept.organizacao?.nome}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Criado em{" "}
-                        {format(new Date(dept.created_at), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
-                      </p>
-                      <Badge variant="secondary" className="mt-2">
-                        {dept.tipo_departamento}
-                      </Badge>
-                    </div>
-                    <div className="flex gap-1">
-                      <NavigationButton
-                        href={`/departments/edit/${dept.id}`}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </NavigationButton>
-                      {/* <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteClick(dept)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button> */}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Visualização em Tabela para desktop */}
-          <div className="hidden md:block">
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Data de Criação</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {departments.map((dept) => (
-                    <TableRow key={dept.id}>
-                      <TableCell className="font-medium">{dept.nome}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {dept.tipo_departamento}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(dept.created_at), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <NavigationButton
-                            href={`/departments/edit/${dept.id}`}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </NavigationButton>
-                          {/* <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteClick(dept)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button> */}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </div>
-        </>
+        <GenericTable
+          data={departments}
+          columns={departmentColumns}
+          searchable
+          searchPlaceholder="Buscar departamentos..."
+          rowActions={(row) => (
+            <div className="flex gap-1">
+              <NavigationButton
+                href={`/departments/edit/${row.id}`}
+                variant="outline"
+                size="sm"
+              >
+                <Edit className="h-4 w-4" />
+              </NavigationButton>
+              {/* <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDeleteClick(row)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button> */}
+            </div>
+          )}
+        />
       )}
 
       {/* Dialog de Confirmação de Exclusão */}

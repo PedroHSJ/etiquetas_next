@@ -90,7 +90,7 @@ export function TeamSwitcher() {
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           role="combobox"
           aria-expanded={open}
           aria-label="Selecionar perfil"

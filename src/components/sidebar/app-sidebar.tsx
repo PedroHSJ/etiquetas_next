@@ -2,14 +2,18 @@
 
 import * as React from "react";
 import {
-  Calendar,
   GalleryVerticalEnd,
   SquareTerminal,
-  Settings,
-  Tags,
   Package,
   Mail,
   Warehouse,
+  Building2,
+  House,
+  FolderTree,
+  Tags,
+  LayoutGrid,
+  Building,
+  UserCog,
 } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -50,7 +54,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         title: "Estrutura",
         url: "#",
-        icon: SquareTerminal,
         isActive:
           pathname.startsWith("/members") ||
           pathname.startsWith("/organizations") ||
@@ -61,16 +64,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "Organização",
             url: "/organizations/list",
             isActive: pathname.startsWith("/organizations"),
+            icon: Building,
           },
           {
             title: "Departamentos",
             url: "/departments/list",
             isActive: pathname.startsWith("/departments"),
+            icon: LayoutGrid,
           },
           {
             title: "Membros",
             url: "/members/list",
             isActive: pathname.startsWith("/members"),
+            icon: UserCog,
           },
         ],
       },
@@ -92,21 +98,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       //   icon: Tags,
       //   isActive: pathname.startsWith("/etiquetas"),
       // },
-      { 
+      {
         title: "Fichas Técnicas",
         url: "/fichas-tecnicas",
-        icon: Package,
         isActive: pathname.startsWith("/ficha"),
-        items: [
-          {
-            title: "Listar Fichas",
-            url: "/fichas-tecnicas",
-          },
-          {
-            title: "Nova Ficha",
-            url: "/ficha-tecnica",
-          },
-        ],
+        icon: Package,
       },
     ],
   };
