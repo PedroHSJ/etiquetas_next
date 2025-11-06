@@ -263,19 +263,6 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
             ) : (
               dados?.data.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">
-                        {item.product?.name || "Produto não encontrado"}
-                      </div>
-                      {item.product?.category?.name && (
-                        <div className="text-sm text-muted-foreground">
-                          Categoria: {item.product.category.name}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-
                   <TableCell className="text-center">
                     {getStatusBadge(item.current_quantity)}
                   </TableCell>

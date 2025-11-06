@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { isUserAuthenticated } from "@/lib/auth";
+import { Product, ProductGroup } from "@/types/stock/product";
+
+interface ProductWithGroup extends Omit<Product, "group"> {
+  group?: ProductGroup | null;
+}
+
+interface StockRecord {
+  product_id: number;
+  current_quantity: number;
+}
+
+interface ProductWithStock {
+  id: number;
+  name: string;
+  group_id?: number | null;
+  group?: ProductGroup | null;
+  stock: number;
+}
 
 // Endpoint para buscar produtos para seleção na entrada rápida
 export async function GET(request: NextRequest) {
@@ -63,13 +81,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Criar mapa de estoque por product_id
-    const estoqueMap = (estoque || []).reduce((acc: any, e: any) => {
-      acc[e.product_id] = e.current_quantity;
-      return acc;
-    }, {});
+    const estoqueMap = (estoque || []).reduce(
+      (acc: Record<number, number>, e: StockRecord) => {
+        acc[e.product_id] = e.current_quantity;
+        return acc;
+      },
+      {}
+    );
 
     // Transformar dados para o formato esperado
-    const produtosComEstoque = (produtos || []).map((produto: any) => ({
+    const produtosComEstoque: ProductWithStock[] = (
+      (produtos || []) as unknown as ProductWithGroup[]
+    ).map((produto) => ({
       id: produto.id,
       name: produto.name,
       group_id: produto.group_id,

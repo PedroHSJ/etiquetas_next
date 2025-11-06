@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
+import { UserProfile } from "@/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,22 +26,35 @@ export function TeamSwitcher() {
   useEffect(() => {
     if (userProfiles.length === 1) {
       const singleProfile = userProfiles[0];
-      
+
       // Se não há perfil ativo, definir o único perfil disponível
       if (!activeProfile) {
         setActiveProfile(singleProfile);
       }
-      
+
       // Sempre garantir que a organização está selecionada quando há apenas um perfil
-      if (!selectedOrganization || selectedOrganization.id !== singleProfile.organizacao.id) {
+      if (
+        !selectedOrganization ||
+        selectedOrganization.id !== singleProfile.organizacao.id
+      ) {
         setSelectedOrganization(singleProfile.organizacao);
       }
     }
-  }, [userProfiles, activeProfile, selectedOrganization, setActiveProfile, setSelectedOrganization]);
+  }, [
+    userProfiles,
+    activeProfile,
+    selectedOrganization,
+    setActiveProfile,
+    setSelectedOrganization,
+  ]);
 
   // Sincronizar organização quando o perfil ativo mudar
   useEffect(() => {
-    if (activeProfile && (!selectedOrganization || selectedOrganization.id !== activeProfile.organizacao.id)) {
+    if (
+      activeProfile &&
+      (!selectedOrganization ||
+        selectedOrganization.id !== activeProfile.organizacao.id)
+    ) {
       setSelectedOrganization(activeProfile.organizacao);
     }
   }, [activeProfile, selectedOrganization, setSelectedOrganization]);
@@ -67,7 +81,7 @@ export function TeamSwitcher() {
     );
   }
 
-  const handleProfileChange = (profile: any) => {
+  const handleProfileChange = (profile: UserProfile) => {
     setActiveProfile(profile);
     setOpen(false);
   };
@@ -100,7 +114,11 @@ export function TeamSwitcher() {
           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 max-w-[calc(100vw-2rem)]" align="start" forceMount>
+      <DropdownMenuContent
+        className="w-56 max-w-[calc(100vw-2rem)]"
+        align="start"
+        forceMount
+      >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">

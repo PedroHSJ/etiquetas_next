@@ -25,6 +25,9 @@ export interface Stock {
       full_name?: string;
     };
   };
+
+  // Index signature to allow dynamic property access
+  [key: string]: unknown;
 }
 
 // Stock movements interface
@@ -47,6 +50,9 @@ export interface StockMovement {
       full_name?: string;
     };
   };
+
+  // Index signature to allow dynamic property access
+  [key: string]: unknown;
 }
 
 // DTO for quick entry

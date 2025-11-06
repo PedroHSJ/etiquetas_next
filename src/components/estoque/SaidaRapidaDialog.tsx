@@ -38,6 +38,7 @@ import { useEffect } from "react";
 import {
   MovimentacaoEstoqueService,
   type MovimentacaoEstoqueRequest,
+  type ProdutoComEstoque,
 } from "@/lib/services/movimentacaoEstoqueService";
 
 // Schema de validação
@@ -60,21 +61,13 @@ interface SaidaRapidaDialogProps {
   produtoIdSelecionado?: number;
 }
 
-interface ProdutoSelect {
-  id: number;
-  nome: string;
-  grupo_id?: number;
-  unidade_medida?: string;
-  estoque_atual?: number;
-}
-
 export function SaidaRapidaDialog({
   onSuccess,
   trigger,
   produtoIdSelecionado,
 }: SaidaRapidaDialogProps) {
   const [open, setOpen] = useState(false);
-  const [produtos, setProdutos] = useState<ProdutoSelect[]>([]);
+  const [produtos, setProdutos] = useState<ProdutoComEstoque[]>([]);
   const [carregandoProdutos, setCarregandoProdutos] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
@@ -92,7 +85,11 @@ export function SaidaRapidaDialog({
     setCarregandoProdutos(true);
     try {
       // Para saída, carregar apenas produtos com estoque > 0
-      const produtos = await MovimentacaoEstoqueService.listarProdutos(termo, 50, true);
+      const produtos = await MovimentacaoEstoqueService.listarProdutos(
+        termo,
+        50,
+        true
+      );
       setProdutos(produtos);
     } catch (error) {
       console.error("Erro ao carregar produtos:", error);
@@ -122,7 +119,10 @@ export function SaidaRapidaDialog({
       const produtoSelecionado = produtos.find(
         (p) => p.id === parseInt(data.produto_id)
       );
-      const estoqueAtual = produtoSelecionado?.estoque_atual || 0;
+      const estoqueAtual =
+        produtoSelecionado?.estoque_atual ||
+        produtoSelecionado?.current_quantity ||
+        0;
 
       const validacao = MovimentacaoEstoqueService.validarQuantidade(
         parseFloat(data.quantidade),
@@ -199,13 +199,20 @@ export function SaidaRapidaDialog({
                     </FormControl>
                     <SelectContent>
                       {produtos.map((produto) => (
-                        <SelectItem key={produto.id} value={produto.id.toString()}>
+                        <SelectItem
+                          key={produto.id}
+                          value={produto.id.toString()}
+                        >
                           <div className="flex items-center gap-2">
-                            <span>{produto.nome}</span>
-                            {produto.estoque_atual !== undefined && (
+                            <span>{produto.name}</span>
+                            {(produto.estoque_atual !== undefined ||
+                              produto.current_quantity !== undefined) && (
                               <span className="text-xs text-muted-foreground">
-                                (Est: {produto.estoque_atual}{" "}
-                                {produto.unidade_medida || ""})
+                                (Est:{" "}
+                                {produto.estoque_atual ||
+                                  produto.current_quantity ||
+                                  0}
+                                )
                               </span>
                             )}
                           </div>

@@ -1,18 +1,24 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  PlusCircle, 
-  ChefHat, 
-  Users, 
-  Clock, 
-  Trash2, 
-  Edit, 
+import {
+  PlusCircle,
+  ChefHat,
+  Users,
+  Clock,
+  Trash2,
+  Edit,
   Eye,
-  Filter 
+  Filter,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -60,19 +66,20 @@ export default function TechnicalSheetsListPage() {
 
     setLoading(true);
     try {
-      const result = await TechnicalSheetService.getTechnicalSheetsByOrganization(
-        selectedOrganization.id,
-        page,
-        pageSize
-      );
+      const result =
+        await TechnicalSheetService.getTechnicalSheetsByOrganization(
+          selectedOrganization.id,
+          page,
+          pageSize
+        );
 
       if (result.success && result.data) {
         let filteredSheets = result.data;
-        
+
         // Aplicar filtro de dificuldade no frontend
         if (difficultyFilter !== "all") {
-          filteredSheets = result.data.filter(sheet => 
-            sheet.difficulty === difficultyFilter
+          filteredSheets = result.data.filter(
+            (sheet) => sheet.difficulty === difficultyFilter
           );
         }
 
@@ -93,7 +100,7 @@ export default function TechnicalSheetsListPage() {
     setDeleting(id);
     try {
       const result = await TechnicalSheetService.deleteTechnicalSheet(id);
-      
+
       if (result.success) {
         toast.success("Ficha técnica removida com sucesso!");
         await loadTechnicalSheets(); // Recarregar a lista
@@ -219,10 +226,9 @@ export default function TechnicalSheetsListPage() {
             Nenhuma ficha técnica encontrada
           </h3>
           <p className="text-muted-foreground mb-6">
-            {difficultyFilter !== "all" 
+            {difficultyFilter !== "all"
               ? "Não há fichas técnicas com essa dificuldade."
-              : "Crie sua primeira ficha técnica para começar."
-            }
+              : "Crie sua primeira ficha técnica para começar."}
           </p>
           <Link href="/ficha-tecnica">
             <Button>
@@ -236,7 +242,10 @@ export default function TechnicalSheetsListPage() {
           {/* Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sheets.map((sheet) => (
-              <Card key={sheet.id} className="hover:shadow-lg transition-shadow">
+              <Card
+                key={sheet.id}
+                className="hover:shadow-lg transition-shadow"
+              >
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg">{sheet.dishName}</CardTitle>
@@ -248,7 +257,7 @@ export default function TechnicalSheetsListPage() {
                     Criado em {formatDate(sheet.createdAt)}
                   </CardDescription>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-4">
                   {/* Informações básicas */}
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -269,7 +278,8 @@ export default function TechnicalSheetsListPage() {
                       {sheet.ingredients.slice(0, 3).map((ing, i) => (
                         <span key={i}>
                           {ing.name}
-                          {i < Math.min(sheet.ingredients.length - 1, 2) && ", "}
+                          {i < Math.min(sheet.ingredients.length - 1, 2) &&
+                            ", "}
                         </span>
                       ))}
                       {sheet.ingredients.length > 3 && (
@@ -290,8 +300,8 @@ export default function TechnicalSheetsListPage() {
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           className="text-destructive hover:text-destructive"
                           disabled={deleting === sheet.id}
@@ -301,10 +311,12 @@ export default function TechnicalSheetsListPage() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Remover Ficha Técnica</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Remover Ficha Técnica
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja remover a ficha técnica "{sheet.dishName}"? 
-                            Esta ação não pode ser desfeita.
+                            Tem certeza que deseja remover a ficha técnica{" "}
+                            {sheet.dishName}? Esta ação não pode ser desfeita.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -329,7 +341,7 @@ export default function TechnicalSheetsListPage() {
             <div className="flex justify-center items-center gap-2 mt-8">
               <Button
                 variant="outline"
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
                 Anterior
@@ -339,7 +351,7 @@ export default function TechnicalSheetsListPage() {
               </span>
               <Button
                 variant="outline"
-                onClick={() => setPage(p => p + 1)}
+                onClick={() => setPage((p) => p + 1)}
                 disabled={page >= Math.ceil(total / pageSize)}
               >
                 Próxima

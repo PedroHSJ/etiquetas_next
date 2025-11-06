@@ -60,21 +60,17 @@ export default function EstoquePage() {
       const data = await response.json();
       console.log("data estatisticas", data);
       if (response.ok) {
+        const stockData = data.data as Stock[];
         const stats: StockStatistics = {
           total_products: data.total || 0,
           products_in_stock:
-            data.data.filter((p: unknown) => (p as any).current_quantity > 0)
-              .length || 0,
+            stockData.filter((p) => p.current_quantity > 0).length || 0,
           products_out_of_stock:
-            data.data.filter((p: unknown) => {
-              const qty = (p as any).current_quantity;
-              return qty === 0;
-            }).length || 0,
+            stockData.filter((p) => p.current_quantity === 0).length || 0,
           products_low_stock:
-            data.data.filter((p: unknown) => {
-              const qty = (p as any).current_quantity;
-              return qty > 0 && qty < 10;
-            }).length || 0,
+            stockData.filter(
+              (p) => p.current_quantity > 0 && p.current_quantity < 10
+            ).length || 0,
           last_update: new Date().toISOString(),
         };
         setEstatisticas(stats);
@@ -228,7 +224,7 @@ export default function EstoquePage() {
       id: "product_name",
       key: "product.name",
       label: "Produto",
-      accessor: (row) => (row.product as any)?.name || "N/A",
+      accessor: (row) => row.product?.name || "N/A",
       visible: true,
       width: 300,
     },
@@ -286,7 +282,7 @@ export default function EstoquePage() {
       id: "produto_nome",
       key: "produto_nome",
       label: "Produto",
-      accessor: (row) => (row.product as any)?.name || "N/A",
+      accessor: (row) => row.product?.name || "N/A",
       visible: true,
       width: 300,
     },
@@ -401,11 +397,11 @@ export default function EstoquePage() {
         </TabsList>
 
         <TabsContent value="estoque" className="space-y-4">
-          <GenericTable
+          <GenericTable<Stock>
             title="Estoque de Produtos"
             description="Visualize e gerencie o estoque atual de todos os produtos"
             columns={estoqueColumns}
-            data={estoqueData as any[]}
+            data={estoqueData}
             loading={carregandoEstoque}
             searchable={true}
             searchPlaceholder="Buscar produto..."
@@ -416,11 +412,11 @@ export default function EstoquePage() {
         </TabsContent>
 
         <TabsContent value="movimentacoes" className="space-y-4">
-          <GenericTable
+          <GenericTable<StockMovement>
             title="Histórico de Movimentações"
             description="Acompanhe todas as entradas e saídas de estoque"
             columns={movimentacoesColumns}
-            data={movimentacoesData as any[]}
+            data={movimentacoesData}
             loading={carregandoMovimentacoes}
             searchable={true}
             searchPlaceholder="Buscar movimentação..."

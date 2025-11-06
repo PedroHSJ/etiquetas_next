@@ -4,7 +4,7 @@
  */
 
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { StockMovement } from "@/types/stock/stock";
+import { StockMovement, Stock, ProductSelect } from "@/types/stock/stock";
 
 export interface MovimentacaoEstoqueRequest {
   produto_id: number;
@@ -16,13 +16,30 @@ export interface MovimentacaoEstoqueResponse {
   success: boolean;
   message: string;
   movimentacao?: StockMovement;
-  estoque_atualizado?: any;
+  estoque_atualizado?: Stock;
 }
 
 /**
  * Tipos de movimentação suportadas
  */
 export type TipoMovimentacaoEstoque = "entrada" | "saida";
+
+/**
+ * Interface para produto com informações de estoque
+ * Usado na listagem de produtos para movimentação
+ */
+export interface ProdutoComEstoque {
+  id: number;
+  name: string;
+  group_id?: number | null;
+  group?: {
+    id: number;
+    name: string;
+    description?: string | null;
+  } | null;
+  estoque_atual?: number;
+  current_quantity?: number;
+}
 
 /**
  * Classe para operações de estoque
@@ -117,7 +134,7 @@ export class MovimentacaoEstoqueService {
     termo = "",
     limit = 50,
     apenasComEstoque = false
-  ): Promise<any[]> {
+  ): Promise<ProdutoComEstoque[]> {
     try {
       const params = new URLSearchParams();
       if (termo) params.append("q", termo);
@@ -127,11 +144,14 @@ export class MovimentacaoEstoqueService {
       const data = await response.json();
 
       if (data.success) {
-        let produtos = data.data;
+        let produtos = data.data as ProdutoComEstoque[];
 
         // Filtrar apenas produtos com estoque > 0 se solicitado
         if (apenasComEstoque) {
-          produtos = produtos.filter((p: any) => (p.estoque_atual || 0) > 0);
+          produtos = produtos.filter((p) => {
+            const estoqueAtual = p.estoque_atual || p.current_quantity || 0;
+            return estoqueAtual > 0;
+          });
         }
 
         return produtos;
