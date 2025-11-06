@@ -106,9 +106,7 @@ export class ProductService {
   }
 
   // Grupos de Produtos
-  static async getGroups(
-    organizationId: string
-  ): Promise<ProductGroup[]> {
+  static async getGroups(organizationId: string): Promise<ProductGroup[]> {
     const { data, error } = await supabase
       .from("groups")
       .select("*")
