@@ -29,9 +29,6 @@ export * from "./table";
 // Tipos de UAN (Unidade de Alimentação e Nutrição)
 export * from "./uan";
 
-// Tipos de componentes e contextos
-export * from "./components";
-
 // =============================================================================
 // TIPOS GLOBAIS DE USUÁRIO (não duplicados em outros arquivos)
 // =============================================================================

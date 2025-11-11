@@ -23,15 +23,7 @@ import {
   GenericTableColumn,
 } from "@/components/ui/generic-table";
 import { formatCnpj } from "@/lib/utils";
-
-interface Organization {
-  id: string;
-  nome: string;
-  tipo: string;
-  cnpj: string;
-  created_at: string;
-  [key: string]: unknown;
-}
+import { Organization } from "@/types/components";
 
 interface Department {
   id: string;
@@ -104,7 +96,7 @@ export default function Page() {
       id: "cnpj",
       key: "cnpj",
       label: "CNPJ",
-      accessor: (row) => formatCnpj(row.cnpj),
+      accessor: (row) => row.cnpj ? formatCnpj(row.cnpj) : "--",
       visible: true,
     },
     {

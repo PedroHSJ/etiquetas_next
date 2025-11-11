@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/provider/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
+import { QueryProvider } from "@/components/provider/QueryProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,11 +22,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <ProfileProvider>
-              {children}
-            </ProfileProvider>
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <ProfileProvider>{children}</ProfileProvider>
+            </AuthProvider>
+          </QueryProvider>
           <Toaster />
         </ThemeProvider>
       </body>

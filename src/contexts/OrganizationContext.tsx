@@ -6,6 +6,7 @@ import { useAuth } from "./AuthContext";
 import { useProfile } from "./ProfileContext";
 import { UANService } from "@/lib/services/UANService";
 import { OrganizacaoExpandida } from "@/types/uan";
+import { OrganizationService } from "@/lib/services/organization-service";
 
 interface Organization {
   id: string;
@@ -38,8 +39,10 @@ export function OrganizationProvider({
   const { userId } = useAuth();
   const { activeProfile } = useProfile();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
-  const [activeOrganizationDetails, setActiveOrganizationDetails] = useState<OrganizacaoExpandida | null>(null);
+  const [selectedOrganization, setSelectedOrganization] =
+    useState<Organization | null>(null);
+  const [activeOrganizationDetails, setActiveOrganizationDetails] =
+    useState<OrganizacaoExpandida | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
@@ -55,7 +58,8 @@ export function OrganizationProvider({
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
-
+      const response = await OrganizationService.getOrganizations(userId);
+      console.table(response);
       if (!error && data) {
         setOrganizations(data);
 
@@ -157,12 +161,21 @@ export function OrganizationProvider({
     if (activeProfile?.organizacao?.nome && organizations.length > 0) {
       // Se o perfil ativo tem uma organização diferente da selecionada
       // Procurar a organização correspondente na lista
-      const profileOrg = organizations.find(org => org.nome === activeProfile.organizacao.nome);
-      if (profileOrg && (!selectedOrganization || profileOrg.id !== selectedOrganization.id)) {
+      const profileOrg = organizations.find(
+        (org) => org.nome === activeProfile.organizacao.nome
+      );
+      if (
+        profileOrg &&
+        (!selectedOrganization || profileOrg.id !== selectedOrganization.id)
+      ) {
         setSelectedOrganization(profileOrg);
       }
     }
-  }, [activeProfile?.organizacao?.nome, organizations.length, selectedOrganization?.id]);
+  }, [
+    activeProfile?.organizacao?.nome,
+    organizations.length,
+    selectedOrganization?.id,
+  ]);
 
   // Salvar organização selecionada no localStorage
   useEffect(() => {

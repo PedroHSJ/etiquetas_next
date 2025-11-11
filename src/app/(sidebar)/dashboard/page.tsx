@@ -1,24 +1,41 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { OrganizationDetails } from "@/components/organization";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { 
-  Building2, 
-  Users, 
-  Package, 
-  ChefHat, 
-  BarChart3, 
+import {
+  Building2,
+  Users,
+  Package,
+  ChefHat,
+  BarChart3,
   Calendar,
   ArrowRight,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { OrganizationService } from "@/lib/services/organization-service";
 
 export default function DashboardPage() {
   const { activeOrganizationDetails, detailsLoading } = useOrganization();
+  const {userId} = useAuth();
+  const {data, isLoading} = useQuery({
+    queryKey: ['organization', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      return await OrganizationService.getOrganizations(userId!);
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -54,7 +71,7 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <OrganizationDetails 
+            <OrganizationDetails
               organization={activeOrganizationDetails}
               variant="compact"
               showAllDetails={false}
@@ -85,9 +102,7 @@ export default function DashboardPage() {
             <div className="text-2xl font-bold">
               {activeOrganizationDetails?.capacidade_atendimento || "--"}
             </div>
-            <p className="text-xs text-muted-foreground">
-              refeições/dia
-            </p>
+            <p className="text-xs text-muted-foreground">refeições/dia</p>
           </CardContent>
         </Card>
 
@@ -100,9 +115,7 @@ export default function DashboardPage() {
             <div className="text-lg font-bold">
               {activeOrganizationDetails?.telefone_principal || "--"}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Contato principal
-            </p>
+            <p className="text-xs text-muted-foreground">Contato principal</p>
           </CardContent>
         </Card>
 
@@ -113,14 +126,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-sm font-bold">
-              {activeOrganizationDetails?.cidade && activeOrganizationDetails?.estado 
+              {activeOrganizationDetails?.cidade &&
+              activeOrganizationDetails?.estado
                 ? `${activeOrganizationDetails.cidade}/${activeOrganizationDetails.estado}`
-                : "--"
-              }
+                : "--"}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Cidade/Estado
-            </p>
+            <p className="text-xs text-muted-foreground">Cidade/Estado</p>
           </CardContent>
         </Card>
 
@@ -133,9 +144,7 @@ export default function DashboardPage() {
             <div className="text-sm font-bold">
               {activeOrganizationDetails?.cnpj || "--"}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Identificação
-            </p>
+            <p className="text-xs text-muted-foreground">Identificação</p>
           </CardContent>
         </Card>
       </div>
@@ -168,9 +177,7 @@ export default function DashboardPage() {
               <ChefHat className="h-5 w-5" />
               Etiquetas
             </CardTitle>
-            <CardDescription>
-              Gerencie etiquetas de alimentos
-            </CardDescription>
+            <CardDescription>Gerencie etiquetas de alimentos</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/etiquetas">
@@ -188,9 +195,7 @@ export default function DashboardPage() {
               <Users className="h-5 w-5" />
               Membros
             </CardTitle>
-            <CardDescription>
-              Gerencie membros da equipe
-            </CardDescription>
+            <CardDescription>Gerencie membros da equipe</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/members">
