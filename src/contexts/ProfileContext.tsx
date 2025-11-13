@@ -7,19 +7,19 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { getAvailableProfiles } from "@/lib/services/profileService";
-import { PermissionService } from "@/lib/services/permissionService";
-import { UserProfile, UsuarioPermissoes } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { UserPermissions, UserProfile } from "@/types/models/profile";
+import { ProfileService } from "@/lib/services/client/profile-service";
+import { PermissionService } from "@/lib/services/client/permission-service";
 
 interface ProfileContextType {
   activeProfile: UserProfile | null;
   userProfiles: UserProfile[];
-  userPermissoes: UsuarioPermissoes | null;
+  userPermissions: UserPermissions | null;
   loading: boolean;
   setActiveProfile: (profile: UserProfile | null) => void;
   refreshProfiles: () => Promise<void>;
-  refreshPermissoes: () => Promise<void>;
+  refreshPermissions: () => Promise<void>;
   refreshAll: () => void;
 }
 
@@ -41,30 +41,32 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const { user } = useAuth();
   const [activeProfile, setActiveProfile] = useState<UserProfile | null>(null);
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
-  const [userPermissoes, setUserPermissoes] =
-    useState<UsuarioPermissoes | null>(null);
+  const [userPermissions, setUserPermissions] =
+    useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    console.log(userProfiles);
-  }, [userProfiles]);
   // Carregar perfis do usuário
   const loadProfiles = async () => {
     try {
+      console.log("⚙️ Carregando perfis para o usuário:", user?.id);
       setLoading(true);
       if (!user?.id) {
         setUserProfiles([]);
         setLoading(false);
         return;
       }
-      const profiles = await getAvailableProfiles(user.id);
-      console.log(profiles);
+      const profiles = await ProfileService.getAvailableProfiles();
       setUserProfiles(profiles);
 
       // Restaurar perfil ativo do localStorage se existir
-  const savedProfileId = typeof window !== 'undefined' ? localStorage.getItem("activeProfileId") : null;
+      const savedProfileId =
+        typeof window !== "undefined"
+          ? localStorage.getItem("activeProfileId")
+          : null;
       if (savedProfileId && profiles.length > 0) {
-        const savedProfile = profiles.find((p) => p.id === savedProfileId);
+        const savedProfile = profiles.find(
+          (p: UserProfile) => p.id === savedProfileId
+        );
         if (savedProfile) {
           setActiveProfile(savedProfile);
         } else {
@@ -83,38 +85,41 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   };
 
   // Carregar permissões do usuário
-  const loadPermissoes = async () => {
-    if (!activeProfile) {
-      setUserPermissoes(null);
+  const loadPermissions = async () => {
+    if (
+      !activeProfile ||
+      !user?.id ||
+      !activeProfile.userOrganization?.organizationId
+    ) {
+      setUserPermissions(null);
       return;
     }
 
     try {
-      const permissoes = await PermissionService.getUsuarioPermissoes(
-        activeProfile.usuario_id,
-        activeProfile.organizacao_id
+      const permissions = await PermissionService.getUserPermissions(
+        activeProfile.userOrganization.organizationId
       );
-      setUserPermissoes(permissoes);
+      setUserPermissions(permissions);
     } catch (error) {
-      console.error("Erro ao carregar permissões:", error);
-      setUserPermissoes(null);
+      setUserPermissions(null);
     }
   };
 
   const refreshAll = () => {
     refreshProfiles();
-    refreshPermissoes();
+    refreshPermissions();
   };
 
   // Carregar perfis quando o usuário autenticado mudar (ou na montagem)
   useEffect(() => {
+    if (!user?.id) return;
     loadProfiles();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Carregar permissões quando o perfil ativo mudar
   useEffect(() => {
-    loadPermissoes();
+    if (!activeProfile) return;
+    loadPermissions();
   }, [activeProfile]);
 
   // Salvar perfil ativo no localStorage
@@ -130,18 +135,18 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     await loadProfiles();
   };
 
-  const refreshPermissoes = async () => {
-    await loadPermissoes();
+  const refreshPermissions = async () => {
+    await loadPermissions();
   };
 
   const value: ProfileContextType = {
     activeProfile,
     userProfiles,
-    userPermissoes,
+    userPermissions,
     loading,
     setActiveProfile,
     refreshProfiles,
-    refreshPermissoes,
+    refreshPermissions,
     refreshAll,
   };
 

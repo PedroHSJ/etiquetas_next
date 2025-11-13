@@ -1,0 +1,6 @@
+-- 010_rls_policies.sql
+-- Exemplo de política de RLS (ajuste conforme necessário)
+-- Habilite RLS e crie políticas para tabelas auxiliares se necessário
+-- Exemplo:
+-- ALTER TABLE public.municipios ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY "Usuários podem ver municípios" ON public.municipios FOR SELECT USING (true);

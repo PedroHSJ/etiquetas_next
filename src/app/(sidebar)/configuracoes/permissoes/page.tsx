@@ -15,8 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { PermissionService } from "@/lib/services/permissionService";
-import { Funcionalidade, Perfil, Permissao } from "@/types/permissions";
+import { Functionality, Profile, Permission } from "@/types/models/user";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -24,9 +23,9 @@ export default function PermissoesPage() {
   const { isMaster, loading: permissionsLoading } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [funcionalidades, setFuncionalidades] = useState<Funcionalidade[]>([]);
-  const [perfis, setPerfis] = useState<Perfil[]>([]);
-  const [permissoes, setPermissoes] = useState<Permissao[]>([]);
+  const [funcionalidades, setFuncionalidades] = useState<Functionality[]>([]);
+  const [perfis, setPerfis] = useState<Profile[]>([]);
+  const [permissoes, setPermissoes] = useState<Permission[]>([]);
   const [configuracoes, setConfiguracoes] = useState<
     Record<string, Record<string, boolean>>
   >({});
@@ -50,7 +49,7 @@ export default function PermissoesPage() {
         config[perfil.id] = {};
         permissoesData.forEach((permissao) => {
           config[perfil.id][
-            `${permissao.funcionalidade_id}_${permissao.acao}`
+            `${permissao.functionality_id}_${permissao.action}`
           ] = false;
         });
       });
@@ -98,7 +97,7 @@ export default function PermissoesPage() {
       if (success) {
         toast.success(
           `Permissões do perfil "${
-            perfis.find((p) => p.id === perfilId)?.nome
+            perfis.find((p) => p.id === perfilId)?.name
           }" atualizadas com sucesso!`
         );
       } else {
@@ -196,10 +195,10 @@ export default function PermissoesPage() {
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <h3 className="text-lg font-semibold">
-                            {perfil.nome}
+                            {perfil.name}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {perfil.descricao}
+                            {perfil.description}
                           </p>
                         </div>
                         <Button
@@ -217,13 +216,13 @@ export default function PermissoesPage() {
                         {funcionalidades.map((funcionalidade) => (
                           <div key={funcionalidade.id} className="space-y-3">
                             <h4 className="font-medium text-sm">
-                              {funcionalidade.nome}
+                              {funcionalidade.name}
                             </h4>
                             <div className="space-y-2">
                               {permissoes
                                 .filter(
                                   (p) =>
-                                    p.funcionalidade_id === funcionalidade.id
+                                    p.functionality_id === funcionalidade.id
                                 )
                                 .map((permissao) => (
                                   <div
@@ -234,14 +233,14 @@ export default function PermissoesPage() {
                                       id={`${perfil.id}_${permissao.id}`}
                                       checked={
                                         configuracoes[perfil.id]?.[
-                                          `${funcionalidade.id}_${permissao.acao}`
+                                          `${funcionalidade.id}_${permissao.action}`
                                         ] || false
                                       }
                                       onCheckedChange={(checked) =>
                                         handlePermissaoChange(
                                           perfil.id,
                                           funcionalidade.id,
-                                          permissao.acao,
+                                          permissao.action,
                                           checked as boolean
                                         )
                                       }
@@ -250,7 +249,7 @@ export default function PermissoesPage() {
                                       htmlFor={`${perfil.id}_${permissao.id}`}
                                       className="text-sm font-normal"
                                     >
-                                      {permissao.acao}
+                                      {permissao.action}
                                     </Label>
                                   </div>
                                 ))}
@@ -282,17 +281,17 @@ export default function PermissoesPage() {
                       className="border rounded-lg p-4"
                     >
                       <h3 className="font-semibold mb-2">
-                        {funcionalidade.nome}
+                        {funcionalidade.name}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-3">
-                        {funcionalidade.descricao}
+                        {funcionalidade.description}
                       </p>
                       <div className="flex items-center gap-2">
                         <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                          {funcionalidade.categoria}
+                          {funcionalidade.category}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {funcionalidade.rota}
+                          {funcionalidade.route}
                         </span>
                       </div>
                     </div>

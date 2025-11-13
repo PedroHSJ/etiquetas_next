@@ -1,24 +1,23 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "./AuthContext";
 import { useProfile } from "./ProfileContext";
 import { UANService } from "@/lib/services/UANService";
-import { OrganizacaoExpandida } from "@/types/uan";
-import { OrganizationService } from "@/lib/services/organization-service";
-
-interface Organization {
-  id: string;
-  nome: string;
-  tipo: string;
-  created_at: string;
-}
+import { Organization } from "@/types/models/organization";
+import { OrganizationService } from "@/lib/services/client/organization-service";
 
 interface OrganizationContextType {
   organizations: Organization[];
   selectedOrganization: Organization | null;
-  activeOrganizationDetails: OrganizacaoExpandida | null;
+  activeOrganizationDetails: Organization | null;
   setSelectedOrganization: (org: Organization) => void;
   loading: boolean;
   detailsLoading: boolean;
@@ -36,52 +35,45 @@ export function OrganizationProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = useAuth();
+  const { userId, session } = useAuth();
   const { activeProfile } = useProfile();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [selectedOrganization, setSelectedOrganization] =
     useState<Organization | null>(null);
   const [activeOrganizationDetails, setActiveOrganizationDetails] =
-    useState<OrganizacaoExpandida | null>(null);
+    useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
   // Função para buscar organizações do usuário
 
-  const fetchOrganizations = async () => {
-    if (!userId) return;
+  const fetchOrganizations = useCallback(async () => {
+    if (!session?.access_token) return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("organizacoes")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-      const response = await OrganizationService.getOrganizations(userId);
-      console.table(response);
-      if (!error && data) {
-        setOrganizations(data);
-
-        // Se não há organização selecionada, selecionar a primeira
-        if (!selectedOrganization && data.length > 0) {
-          setSelectedOrganization(data[0]);
+      const organizationsData = await OrganizationService.getOrganizations();
+      setOrganizations(organizationsData);
+      setSelectedOrganization((current) => {
+        if (!current && organizationsData.length > 0) {
+          return organizationsData[0];
         }
 
-        // Se a organização selecionada não existe mais na lista, selecionar a primeira
         if (
-          selectedOrganization &&
-          !data.find((org) => org.id === selectedOrganization.id)
+          current &&
+          !organizationsData.find((org) => org.id === current.id)
         ) {
-          setSelectedOrganization(data[0] || null);
+          return organizationsData[0] || null;
         }
-      }
+
+        return current;
+      });
     } catch (error) {
       console.error("Erro ao buscar organizações:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.access_token]);
 
   // Carregar detalhes completos da organização ativa
   const loadActiveOrganizationDetails = async (organizacaoId: string) => {
@@ -104,9 +96,9 @@ export function OrganizationProvider({
     }
   };
 
-  const refetchOrganizations = async () => {
+  const refetchOrganizations = useCallback(async () => {
     await fetchOrganizations();
-  };
+  }, [fetchOrganizations]);
 
   const onOrganizationCreated = (newOrganization: Organization) => {
     // Adicionar a nova organização à lista
@@ -120,34 +112,37 @@ export function OrganizationProvider({
   };
 
   useEffect(() => {
-    if (userId) {
+    if (userId && session?.access_token) {
       fetchOrganizations();
-
-      // Listener em tempo real para mudanças na tabela organizacoes
-      const channel = supabase
-        .channel("organizacoes-changes")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "organizacoes",
-            filter: `user_id=eq.${userId}`,
-          },
-          (payload) => {
-            console.log("Mudança detectada na tabela organizacoes:", payload);
-            // Recarregar organizações quando houver mudanças
-            fetchOrganizations();
-          }
-        )
-        .subscribe();
-
-      // Cleanup do listener
-      return () => {
-        supabase.removeChannel(channel);
-      };
     }
-  }, [userId]);
+  }, [userId, session?.access_token, fetchOrganizations]);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const channel = supabase
+      .channel("organizacoes-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "organizacoes",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log("Mudança detectada na tabela organizacoes:", payload);
+          fetchOrganizations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, fetchOrganizations]);
 
   // Efeito para carregar detalhes quando a organização selecionada mudar
   useEffect(() => {
@@ -158,11 +153,14 @@ export function OrganizationProvider({
 
   // Efeito para carregar detalhes quando o perfil ativo mudar
   useEffect(() => {
-    if (activeProfile?.organizacao?.nome && organizations.length > 0) {
+    if (
+      activeProfile?.userOrganization?.organizationId &&
+      organizations.length > 0
+    ) {
       // Se o perfil ativo tem uma organização diferente da selecionada
       // Procurar a organização correspondente na lista
       const profileOrg = organizations.find(
-        (org) => org.nome === activeProfile.organizacao.nome
+        (org) => org.id === activeProfile.userOrganization?.organizationId
       );
       if (
         profileOrg &&
@@ -172,7 +170,7 @@ export function OrganizationProvider({
       }
     }
   }, [
-    activeProfile?.organizacao?.nome,
+    activeProfile?.userOrganization?.organizationId,
     organizations.length,
     selectedOrganization?.id,
   ]);

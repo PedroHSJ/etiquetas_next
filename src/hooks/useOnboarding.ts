@@ -1,61 +1,68 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { InviteService } from '@/lib/services/inviteService';
-import { Convite } from '@/types/onboarding';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { InviteService } from "@/lib/services/inviteService";
+import { Invite } from "@/types/models/invite";
+
+interface OnboardingStatus {
+  invites: Invite[];
+  hasOrganization: boolean;
+}
+
+const defaultStatus: OnboardingStatus = {
+  invites: [],
+  hasOrganization: false,
+};
 
 export const useOnboarding = () => {
   const { user } = useAuth();
-  const [invites, setInvites] = useState<Convite[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hasOrganization, setHasOrganization] = useState(false);
+  const queryClient = useQueryClient();
+  const userId = user?.id;
 
-  useEffect(() => {
-    if (user?.email) {
-      checkUserStatus();
-    }
-  }, [user]);
-
-  const checkUserStatus = async () => {
-    try {
-      setLoading(true);
-      
-      // Verificar se usuário já está em uma organização
-      if (user?.id) {
-        const isInOrganization = await InviteService.checkUserOrganization(user.id);
-        setHasOrganization(isInOrganization);
+  const onboardingQuery = useQuery({
+    queryKey: ["onboarding-status", userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<OnboardingStatus> => {
+      if (!userId) {
+        return defaultStatus;
       }
 
-      // Carregar convites pendentes
-      const pendingInvites = await InviteService.getPendingInvites(user!.email!);
-      setInvites(pendingInvites);
-    } catch (error) {
-      console.error('Erro ao verificar status do usuário:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const [hasOrganization, invites] = await Promise.all([
+        InviteService.checkUserOrganization(userId),
+        InviteService.getPendingInvites(),
+      ]);
+
+      return { hasOrganization, invites };
+    },
+    staleTime: 60 * 1000,
+  });
 
   const refreshInvites = async () => {
-    if (user?.email) {
-      try {
-        const pendingInvites = await InviteService.getPendingInvites(user.email);
-        setInvites(pendingInvites);
-      } catch (error) {
-        console.error('Erro ao atualizar convites:', error);
-      }
-    }
+    if (!userId) return;
+    await queryClient.invalidateQueries({
+      queryKey: ["onboarding-status", userId],
+    });
   };
 
   const removeInvite = (inviteId: string) => {
-    setInvites(prev => prev.filter(inv => inv.id !== inviteId));
+    if (!userId) return;
+    queryClient.setQueryData<OnboardingStatus | undefined>(
+      ["onboarding-status", userId],
+      (prev) =>
+        prev
+          ? {
+              ...prev,
+              invites: prev.invites.filter((invite) => invite.id !== inviteId),
+            }
+          : prev
+    );
   };
 
   return {
-    invites,
-    loading,
-    hasOrganization,
+    invites: onboardingQuery.data?.invites ?? [],
+    hasOrganization: onboardingQuery.data?.hasOrganization ?? false,
+    loading: onboardingQuery.isLoading,
     refreshInvites,
     removeInvite,
-    checkUserStatus
+    checkUserStatus: onboardingQuery.refetch,
   };
 };

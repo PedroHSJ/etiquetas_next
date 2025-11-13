@@ -27,7 +27,7 @@ export default function RootLayout({
               <ProfileProvider>{children}</ProfileProvider>
             </AuthProvider>
           </QueryProvider>
-          <Toaster />
+          <Toaster richColors />
         </ThemeProvider>
       </body>
     </html>

@@ -1,7 +1,7 @@
-// Tipos para expansão de dados da UAN (Unidade de Alimentação e Nutrição)
-import { Estado, Municipio } from "./localidade";
+// Tipos específicos para UAN (Unidade de Alimentação e Nutrição)
+// Para a interface Organization completa, veja @/types/organization
 
-// Definição de tipos básicos
+// Definição de tipos de UAN
 export type TipoUAN =
   | "restaurante_comercial"
   | "restaurante_institucional"
@@ -43,6 +43,9 @@ export const ESTADOS_BRASIL = [
 
 export type EstadoBrasil = (typeof ESTADOS_BRASIL)[number];
 
+/**
+ * Dados do responsável técnico da UAN
+ */
 export interface ResponsavelTecnico {
   nome: string;
   profissao?: string | null;
@@ -51,6 +54,9 @@ export interface ResponsavelTecnico {
   email?: string | null;
 }
 
+/**
+ * Horário de funcionamento da UAN por dia da semana
+ */
 export interface HorarioFuncionamento {
   segunda?: { abertura: string | null; fechamento: string | null };
   terca?: { abertura: string | null; fechamento: string | null };
@@ -59,79 +65,6 @@ export interface HorarioFuncionamento {
   sexta?: { abertura: string | null; fechamento: string | null };
   sabado?: { abertura: string | null; fechamento: string | null };
   domingo?: { abertura: string | null; fechamento: string | null };
-}
-
-export interface OrganizacaoExpandida {
-  // Campos existentes
-  id: string;
-  nome: string;
-  tipo?: string;
-  user_id: string;
-  created_at: string;
-
-  // Novos campos - Informações Básicas
-  cnpj?: string | null;
-  tipo_uan?: TipoUAN | null;
-  capacidade_atendimento?: number | null;
-  data_inauguracao?: string | null;
-  descricao?: string | null;
-
-  // Campos de localização - Novos (com referências)
-  estado_id?: number | null;
-  municipio_id?: number | null;
-  cep?: string | null;
-  endereco?: string | null;
-  numero?: string | null;
-  complemento?: string | null;
-  bairro?: string | null;
-
-  // Campos de localização - Antigos (para compatibilidade)
-  endereco_completo?: string | null;
-  cidade?: string | null;
-  estado?: EstadoBrasil | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  telefone_principal?: string | null;
-  telefone_secundario?: string | null;
-  email?: string | null;
-
-  updated_at?: string | null;
-
-  // Relacionamentos
-  estado_rel?: Estado;
-  municipio_rel?: Municipio;
-  responsavel_tecnico?: ResponsavelTecnico | null;
-  horario_funcionamento?: HorarioFuncionamento | null;
-}
-
-// Tipos para formulários
-export interface OrganizacaoFormData {
-  // Informações Básicas
-  nome: string;
-  cnpj?: string;
-  tipo_uan?: TipoUAN;
-  capacidade_atendimento?: number;
-  data_inauguracao?: string;
-  descricao?: string;
-
-  // Localização - Novos campos
-  estado_id?: number;
-  municipio_id?: number;
-  cep?: string;
-  endereco?: string;
-  numero?: string;
-  complemento?: string;
-  bairro?: string;
-
-  // Localização - Campos antigos (compatibilidade)
-  endereco_completo?: string;
-  cidade?: string;
-  estado?: EstadoBrasil;
-  latitude?: number;
-  longitude?: number;
-  telefone_principal?: string;
-  telefone_secundario?: string;
-  email?: string;
 }
 
 // Constantes para uso nos componentes

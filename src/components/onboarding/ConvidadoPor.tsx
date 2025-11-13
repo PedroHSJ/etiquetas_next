@@ -1,19 +1,29 @@
 "use client";
 
-interface ConvidadoPorProps {
-  usuario?: {
+interface InvitedByProps {
+  user?: {
     id: string;
-    nome: string;
+    name: string;
     email: string;
   };
   isLoading?: boolean;
   compact?: boolean; // Nova prop para versão compacta
 }
 
-export function ConvidadoPor({ usuario, isLoading = false, compact = false }: ConvidadoPorProps) {
-  if (isLoading || !usuario) {
+export function ConvidadoPor({
+  user,
+  isLoading = false,
+  compact = false,
+}: InvitedByProps) {
+  if (isLoading || !user) {
     return (
-      <p className={compact ? "text-xs text-muted-foreground" : "text-sm text-muted-foreground"}>
+      <p
+        className={
+          compact
+            ? "text-xs text-muted-foreground"
+            : "text-sm text-muted-foreground"
+        }
+      >
         <strong>Convidado por:</strong>{" "}
         <span className="inline-block h-4 w-20 bg-gray-200 animate-pulse rounded"></span>
       </p>
@@ -21,11 +31,11 @@ export function ConvidadoPor({ usuario, isLoading = false, compact = false }: Co
   }
 
   // Gerar iniciais para avatar
-  const initials = usuario.nome
-    .split(' ')
-    .map(name => name[0])
+  const initials = user.name
+    .split(" ")
+    .map((name) => name[0])
     .slice(0, 2)
-    .join('')
+    .join("")
     .toUpperCase();
 
   // Gerar cor baseada no nome
@@ -39,17 +49,25 @@ export function ConvidadoPor({ usuario, isLoading = false, compact = false }: Co
   };
 
   return (
-    <div className={`flex items-center gap-2 ${compact ? "text-xs" : "text-sm"} text-muted-foreground`}>
+    <div
+      className={`flex items-center gap-2 ${
+        compact ? "text-xs" : "text-sm"
+      } text-muted-foreground`}
+    >
       <strong>Convidado por:</strong>
       <div className="flex items-center gap-2">
         <div
-          className={`${compact ? "w-5 h-5" : "w-6 h-6"} rounded-full flex items-center justify-center text-xs text-white font-medium`}
-          style={{ backgroundColor: getAvatarColor(usuario.nome) }}
-          title={`${usuario.nome} (${usuario.email})`}
+          className={`${
+            compact ? "w-5 h-5" : "w-6 h-6"
+          } rounded-full flex items-center justify-center text-xs text-white font-medium`}
+          style={{ backgroundColor: getAvatarColor(user.name) }}
+          title={`${user.name} (${user.email})`}
         >
           {initials}
         </div>
-        <span className={`font-medium ${compact ? "truncate max-w-20" : ""}`}>{usuario.nome}</span>
+        <span className={`font-medium ${compact ? "truncate max-w-20" : ""}`}>
+          {user.name}
+        </span>
       </div>
     </div>
   );

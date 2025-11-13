@@ -1,63 +1,76 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function AuthCallback() {
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleAuth = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      console.log("Dados da sessão:", data);
-      
-      if (error) {
-        console.error("Erro ao recuperar sessão:", error);
-        router.push("/login");
-        return;
-      }
-      
-      if (data?.session?.user) {
-        console.log("Usuário autenticado:", data.session.user);
-        
-        // Verificar se o usuário já tem uma organização através de usuarios_organizacoes
-        const { data: organizations, error: orgError } = await supabase
-          .from('usuarios_organizacoes')
-          .select('id')
-          .eq('usuario_id', data.session.user.id)
-          .eq('ativo', true)
-          .limit(1);
-        
-        if (orgError) {
-          console.error("Erro ao verificar organização:", orgError);
-          router.push("/onboarding");
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("Error retrieving session:", sessionError);
+          setError("Authentication failed");
+          router.push("/login");
           return;
         }
-        
-        // Se não tem organização, é primeiro login
-        if (!organizations || organizations.length === 0) {
-          console.log("Primeiro login - redirecionando para onboarding");
-          router.push("/onboarding");
+
+        if (data?.session?.user) {
+          // Check if user already has an organization via user_organizations
+          const { data: userOrgs, error: orgError } = await supabase
+            .from("user_organizations")
+            .select("id")
+            .eq("user_id", data.session.user.id)
+            .eq("active", true)
+            .limit(1);
+
+          if (orgError) {
+            console.error("Error checking user organization:", orgError);
+            // If there's an error checking, redirect to onboarding to be safe
+            router.push("/onboarding");
+            return;
+          }
+
+          // If no organization, it's first login - redirect to onboarding
+          if (!userOrgs || userOrgs.length === 0) {
+            router.push("/onboarding");
+          } else {
+            // User already has organization - redirect to dashboard
+            router.push("/dashboard");
+          }
         } else {
-          console.log("Usuário já tem organização - redirecionando para dashboard");
-          router.push("/dashboard");
+          setError("No authenticated user");
+          router.push("/login");
         }
-      } else {
-        console.log("Usuário não autenticado, redirecionando para login");
+      } catch (err) {
+        console.error("Unexpected error during auth callback:", err);
+        setError("An unexpected error occurred");
         router.push("/login");
       }
     };
-    
-    console.log("Iniciando processo de autenticação...");
+
     handleAuth();
   }, [router]);
 
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        <p className="mt-2">Carregando...</p>
+        {error ? (
+          <div>
+            <p className="text-red-600 mb-2">{error}</p>
+            <p className="text-sm text-gray-600">Redirecting to login...</p>
+          </div>
+        ) : (
+          <>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2">Loading...</p>
+          </>
+        )}
       </div>
     </div>
   );

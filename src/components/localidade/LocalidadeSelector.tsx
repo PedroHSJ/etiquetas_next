@@ -1,153 +1,154 @@
-import React, { useState, useCallback, useEffect } from 'react'
-import { Search, MapPin, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import React, { useState, useCallback, useEffect } from "react";
+import { Search, MapPin, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { LocalidadeService } from '@/lib/services/LocalidadeService'
-import { Estado, Municipio, ViaCEPResponse } from '@/types/localidade'
-import { useToast } from '@/hooks/use-toast'
-import { formatCEP, unformatCEP } from '@/utils/masks'
+} from "@/components/ui/select";
+import { LocationService } from "@/lib/services/client/localidade-service";
+import { Estado, Municipio, ViaCEPResponse } from "@/types/localidade";
+import { useToast } from "@/hooks/use-toast";
+import { formatCEP, unformatCEP } from "@/utils/masks";
 
 interface LocalidadeSelectorProps {
   value?: {
-    estado_id?: number
-    municipio_id?: number
-    cep?: string
-    endereco?: string
-    numero?: string
-    complemento?: string
-    bairro?: string
-  }
+    estado_id?: number;
+    municipio_id?: number;
+    cep?: string;
+    endereco?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+  };
   onChange: (localidade: {
-    estado_id?: number
-    municipio_id?: number
-    cep?: string
-    endereco?: string
-    numero?: string
-    complemento?: string
-    bairro?: string
-  }) => void
-  showAddressFields?: boolean
-  disabled?: boolean
+    estado_id?: number;
+    municipio_id?: number;
+    cep?: string;
+    endereco?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+  }) => void;
+  showAddressFields?: boolean;
+  disabled?: boolean;
 }
 
 export function LocalidadeSelector({
   value = {},
   onChange,
   showAddressFields = true,
-  disabled = false
+  disabled = false,
 }: LocalidadeSelectorProps) {
-  const { toast } = useToast()
-  
+  const { toast } = useToast();
+
   // Estados e municípios
-  const [estados, setEstados] = useState<Estado[]>([])
-  const [municipios, setMunicipios] = useState<Municipio[]>([])
-  const [municipioSelecionado, setMunicipioSelecionado] = useState<Municipio | null>(null)
-  
+  const [estados, setEstados] = useState<Estado[]>([]);
+  const [municipios, setMunicipios] = useState<Municipio[]>([]);
+  const [municipioSelecionado, setMunicipioSelecionado] =
+    useState<Municipio | null>(null);
+
   // Loading states
-  const [loadingEstados, setLoadingEstados] = useState(true)
-  const [loadingMunicipios, setLoadingMunicipios] = useState(false)
-  const [loadingCEP, setLoadingCEP] = useState(false)
-  
+  const [loadingEstados, setLoadingEstados] = useState(true);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
+  const [loadingCEP, setLoadingCEP] = useState(false);
+
   // Form values
-  const [cep, setCep] = useState(value.cep || '')
-  const [endereco, setEndereco] = useState(value.endereco || '')
-  const [numero, setNumero] = useState(value.numero || '')
-  const [complemento, setComplemento] = useState(value.complemento || '')
-  const [bairro, setBairro] = useState(value.bairro || '')
+  const [cep, setCep] = useState(value.cep || "");
+  const [endereco, setEndereco] = useState(value.endereco || "");
+  const [numero, setNumero] = useState(value.numero || "");
+  const [complemento, setComplemento] = useState(value.complemento || "");
+  const [bairro, setBairro] = useState(value.bairro || "");
 
   // Carrega estados ao montar o componente
   useEffect(() => {
-    carregarEstados()
-  }, [])
+    carregarEstados();
+  }, []);
 
   // Carrega municípios quando o estado muda
   useEffect(() => {
     if (value.estado_id) {
-      carregarMunicipios(value.estado_id)
+      carregarMunicipios(value.estado_id);
     } else {
-      setMunicipios([])
-      setMunicipioSelecionado(null)
+      setMunicipios([]);
+      setMunicipioSelecionado(null);
     }
-  }, [value.estado_id])
+  }, [value.estado_id]);
 
   // Atualiza o município selecionado quando o value muda
   useEffect(() => {
     if (value.municipio_id && municipios.length > 0) {
-      const municipio = municipios.find(m => m.id === value.municipio_id)
-      setMunicipioSelecionado(municipio || null)
+      const municipio = municipios.find((m) => m.id === value.municipio_id);
+      setMunicipioSelecionado(municipio || null);
     } else {
-      setMunicipioSelecionado(null)
+      setMunicipioSelecionado(null);
     }
-  }, [value.municipio_id, municipios])
+  }, [value.municipio_id, municipios]);
 
   // Sincroniza os campos locais com o value
   useEffect(() => {
-    setCep(value.cep || '')
-    setEndereco(value.endereco || '')
-    setNumero(value.numero || '')
-    setComplemento(value.complemento || '')
-    setBairro(value.bairro || '')
-  }, [value])
+    setCep(value.cep || "");
+    setEndereco(value.endereco || "");
+    setNumero(value.numero || "");
+    setComplemento(value.complemento || "");
+    setBairro(value.bairro || "");
+  }, [value]);
 
   const carregarEstados = async () => {
     try {
-      console.log('🔍 LocalidadeSelector: Carregando estados...');
-      setLoadingEstados(true)
-      const estadosData = await LocalidadeService.listarEstados()
-      console.log('✅ LocalidadeSelector: Estados carregados:', estadosData);
-      setEstados(estadosData)
+      console.log("🔍 LocalidadeSelector: Carregando estados...");
+      setLoadingEstados(true);
+      const estadosData = await LocationService.listStates();
+      console.log("✅ LocalidadeSelector: Estados carregados:", estadosData);
+      setEstados(estadosData);
     } catch (error) {
-      console.error('❌ LocalidadeSelector: Erro ao carregar estados:', error);
-      toast.error("Erro ao carregar estados")
+      console.error("❌ LocalidadeSelector: Erro ao carregar estados:", error);
+      toast.error("Erro ao carregar estados");
     } finally {
-      setLoadingEstados(false)
+      setLoadingEstados(false);
     }
-  }
+  };
 
   const carregarMunicipios = async (estadoId: number) => {
     try {
-      setLoadingMunicipios(true)
-      const municipiosData = await LocalidadeService.listarMunicipiosPorEstado(estadoId)
-      setMunicipios(municipiosData)
+      setLoadingMunicipios(true);
+      const municipiosData = await LocationService.listCitiesByState(estadoId);
+      setMunicipios(municipiosData);
     } catch (error) {
-      toast.error("Erro ao carregar municípios")
+      toast.error("Erro ao carregar municípios");
     } finally {
-      setLoadingMunicipios(false)
+      setLoadingMunicipios(false);
     }
-  }
+  };
 
   const buscarPorCEP = useCallback(async () => {
-    if (!LocalidadeService.validarCEP(cep)) {
-      toast.error("CEP inválido - Digite um CEP válido com 8 dígitos")
-      return
+    if (!LocationService.validateCEP(cep)) {
+      toast.error("CEP inválido - Digite um CEP válido com 8 dígitos");
+      return;
     }
 
     try {
-      setLoadingCEP(true)
-      
-      const municipioResponse = await LocalidadeService.buscarOuCriarMunicipio(cep)
-      
+      setLoadingCEP(true);
+
+      const municipioResponse = await LocationService.fetchOrCreateCity(cep);
+
       if (!municipioResponse) {
-        toast.error("CEP não encontrado - Verifique se o CEP está correto")
-        return
+        toast.error("CEP não encontrado - Verifique se o CEP está correto");
+        return;
       }
 
       // Busca dados completos do CEP
-      const dadosCEP = await LocalidadeService.buscarCEP(cep)
-      
+      const dadosCEP = await LocationService.fetchCEP(cep);
+
       if (dadosCEP) {
         // Atualiza os campos de endereço
-        setEndereco(dadosCEP.logradouro)
-        setBairro(dadosCEP.bairro)
-        
+        setEndereco(dadosCEP.logradouro);
+        setBairro(dadosCEP.bairro);
+
         // Atualiza a seleção
         onChange({
           ...value,
@@ -157,54 +158,58 @@ export function LocalidadeSelector({
           endereco: dadosCEP.logradouro,
           numero,
           complemento,
-          bairro: dadosCEP.bairro
-        })
+          bairro: dadosCEP.bairro,
+        });
 
-        toast.success(`CEP encontrado! ${municipioResponse.nome} - ${municipioResponse.estado.codigo}`)
+        toast.success(
+          `CEP encontrado! ${municipioResponse.nome} - ${municipioResponse.estado.codigo}`
+        );
       }
     } catch (error) {
-      toast.error("Erro ao buscar CEP")
+      toast.error("Erro ao buscar CEP");
     } finally {
-      setLoadingCEP(false)
+      setLoadingCEP(false);
     }
-  }, [cep, numero, complemento, onChange, value, toast])
+  }, [cep, numero, complemento, onChange, value, toast]);
 
   const handleEstadoChange = (estadoId: string) => {
-    const novoEstadoId = parseInt(estadoId)
+    const novoEstadoId = parseInt(estadoId);
     onChange({
       ...value,
       estado_id: novoEstadoId,
-      municipio_id: undefined // Reset município quando estado muda
-    })
-    setMunicipioSelecionado(null)
-    carregarMunicipios(novoEstadoId)
-  }
+      municipio_id: undefined, // Reset município quando estado muda
+    });
+    setMunicipioSelecionado(null);
+    carregarMunicipios(novoEstadoId);
+  };
 
   const handleMunicipioChange = (municipio: Municipio) => {
-    setMunicipioSelecionado(municipio)
+    setMunicipioSelecionado(municipio);
     onChange({
       ...value,
-      municipio_id: municipio.id
-    })
-  }
+      municipio_id: municipio.id,
+    });
+  };
 
   const handleCepChange = (novoCep: string) => {
-    setCep(novoCep)
-    
+    setCep(novoCep);
+
     onChange({
       ...value,
-      cep: novoCep
-    })
-  }
+      cep: novoCep,
+    });
+  };
 
-  const filteredMunicipios = municipios
+  const filteredMunicipios = municipios;
 
   return (
     <div className="space-y-4">
       {/* CEP e busca */}
       <div className="flex gap-2">
         <div className="flex-1">
-          <Label htmlFor="cep" className="mb-2">CEP</Label>
+          <Label htmlFor="cep" className="mb-2">
+            CEP
+          </Label>
           <Input
             id="cep"
             placeholder="00000-000"
@@ -257,8 +262,10 @@ export function LocalidadeSelector({
           <Select
             value={value.municipio_id?.toString()}
             onValueChange={(value) => {
-              const municipio = municipios.find(m => m.id.toString() === value)
-              if (municipio) handleMunicipioChange(municipio)
+              const municipio = municipios.find(
+                (m) => m.id.toString() === value
+              );
+              if (municipio) handleMunicipioChange(municipio);
             }}
             disabled={true}
           >
@@ -276,7 +283,10 @@ export function LocalidadeSelector({
                 </SelectItem>
               ) : (
                 filteredMunicipios.map((municipio) => (
-                  <SelectItem key={municipio.id} value={municipio.id.toString()}>
+                  <SelectItem
+                    key={municipio.id}
+                    value={municipio.id.toString()}
+                  >
                     <div className="flex items-center">
                       <MapPin className="mr-2 h-4 w-4" />
                       {municipio.nome}
@@ -293,14 +303,16 @@ export function LocalidadeSelector({
       {showAddressFields && (
         <div className="space-y-4">
           <div>
-            <Label htmlFor="endereco" className="mb-2">Endereço</Label>
+            <Label htmlFor="endereco" className="mb-2">
+              Endereço
+            </Label>
             <Input
               id="endereco"
               placeholder="Rua, Avenida, etc."
               value={endereco}
               onChange={(e) => {
-                setEndereco(e.target.value)
-                onChange({ ...value, endereco: e.target.value })
+                setEndereco(e.target.value);
+                onChange({ ...value, endereco: e.target.value });
               }}
               disabled={true}
             />
@@ -308,42 +320,48 @@ export function LocalidadeSelector({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="numero" className="mb-2">Número</Label>
+              <Label htmlFor="numero" className="mb-2">
+                Número
+              </Label>
               <Input
                 id="numero"
                 placeholder="123"
                 value={numero}
                 onChange={(e) => {
-                  setNumero(e.target.value)
-                  onChange({ ...value, numero: e.target.value })
+                  setNumero(e.target.value);
+                  onChange({ ...value, numero: e.target.value });
                 }}
                 disabled={disabled}
               />
             </div>
 
             <div>
-              <Label htmlFor="complemento" className="mb-2">Complemento</Label>
+              <Label htmlFor="complemento" className="mb-2">
+                Complemento
+              </Label>
               <Input
                 id="complemento"
                 placeholder="Apto, Sala, etc."
                 value={complemento}
                 onChange={(e) => {
-                  setComplemento(e.target.value)
-                  onChange({ ...value, complemento: e.target.value })
+                  setComplemento(e.target.value);
+                  onChange({ ...value, complemento: e.target.value });
                 }}
                 disabled={disabled}
               />
             </div>
 
             <div>
-              <Label htmlFor="bairro" className="mb-2">Bairro</Label>
+              <Label htmlFor="bairro" className="mb-2">
+                Bairro
+              </Label>
               <Input
                 id="bairro"
                 placeholder="Centro, etc."
                 value={bairro}
                 onChange={(e) => {
-                  setBairro(e.target.value)
-                  onChange({ ...value, bairro: e.target.value })
+                  setBairro(e.target.value);
+                  onChange({ ...value, bairro: e.target.value });
                 }}
                 disabled={true}
               />
@@ -352,5 +370,5 @@ export function LocalidadeSelector({
         </div>
       )}
     </div>
-  )
+  );
 }

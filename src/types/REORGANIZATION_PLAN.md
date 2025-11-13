@@ -1,0 +1,123 @@
+/\*\*
+
+- TYPE ORGANIZATION PLAN
+-
+- Current structure has mixed concerns. This plan reorganizes types into:
+-
+- 1.  /types/database/ - Direct database table structures (snake_case matching DB)
+- 2.  /types/dto/ - Data Transfer Objects for API requests/responses (camelCase)
+- 3.  /types/models/ - Frontend-only models and UI state
+- 4.  /types/enums/ - Shared enums and constants
+-
+- STRUCTURE:
+-
+- src/types/
+- ├── database/ # Database entities (matches Supabase schema exactly)
+- │ ├── organization.ts # organizations table
+- │ ├── department.ts # departments table
+- │ ├── user.ts # user-related tables
+- │ ├── location.ts # states, cities tables
+- │ ├── product.ts # products, groups tables
+- │ ├── label.ts # labels table
+- │ ├── profile.ts # profiles, permissions tables
+- │ └── index.ts
+- │
+- ├── dto/ # API request/response types (camelCase)
+- │ ├── organization/
+- │ │ ├── request.ts # CreateOrganizationDto, UpdateOrganizationDto
+- │ │ ├── response.ts # OrganizationResponseDto, OrganizationListDto
+- │ │ └── index.ts
+- │ ├── product/
+- │ │ ├── request.ts
+- │ │ ├── response.ts
+- │ │ └── index.ts
+- │ ├── location/
+- │ │ ├── request.ts
+- │ │ ├── response.ts
+- │ │ └── index.ts
+- │ ├── auth/
+- │ │ ├── request.ts
+- │ │ ├── response.ts
+- │ │ └── index.ts
+- │ └── index.ts
+- │
+- ├── models/ # Frontend-specific models
+- │ ├── organization.ts # UI models with computed fields
+- │ ├── product.ts
+- │ ├── label.ts
+- │ ├── user.ts
+- │ └── index.ts
+- │
+- ├── enums/ # Shared enums
+- │ ├── organization.ts # OrganizationType, ResponsibleType
+- │ ├── product.ts
+- │ ├── label.ts
+- │ └── index.ts
+- │
+- ├── common/ # Shared utility types
+- │ ├── pagination.ts
+- │ ├── api.ts
+- │ └── index.ts
+- │
+- └── index.ts # Main exports
+-
+-
+- MIGRATION STEPS:
+-
+- 1.  Create new directory structure
+- 2.  Create database types from Supabase schema
+- 3.  Create DTO types for API layer
+- 4.  Create frontend models
+- 5.  Create enums
+- 6.  Update imports across codebase
+- 7.  Remove old files
+-
+- NAMING CONVENTIONS:
+-
+- - Database types: snake_case (matches DB columns)
+- - DTOs: camelCase with Dto suffix
+- - Models: camelCase
+- - Enums: PascalCase
+- - Interfaces: PascalCase
+-
+- EXAMPLES:
+-
+- Database:
+- export interface OrganizationEntity {
+-     id: string;
+-     name: string;
+-     user_id: string | null;
+-     created_at: string;
+-     main_phone: string | null;
+- }
+-
+- DTO Request:
+- export interface CreateOrganizationDto {
+-     name: string;
+-     userId?: string;
+-     mainPhone?: string;
+- }
+-
+- DTO Response:
+- export interface OrganizationResponseDto {
+-     id: string;
+-     name: string;
+-     userId: string | null;
+-     createdAt: string;
+-     mainPhone: string | null;
+-     state?: StateResponseDto;
+-     city?: CityResponseDto;
+- }
+-
+- Model (Frontend):
+- export interface Organization {
+-     id: string;
+-     name: string;
+-     userId: string | null;
+-     createdAt: Date; // parsed date
+-     mainPhone: string | null;
+-     formattedPhone?: string; // computed
+-     state?: State;
+-     city?: City;
+- }
+  \*/

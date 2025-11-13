@@ -1,16 +1,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Mail, X, Users, ChefHat, Package, CheckCircle } from "lucide-react";
+import {
+  Plus,
+  Mail,
+  X,
+  Users,
+  ChefHat,
+  Package,
+  CheckCircle,
+} from "lucide-react";
 import { InviteService } from "@/lib/services/inviteService";
-import { Perfil } from "@/types/permissions";
+import { Profile } from "@/types/models/profile";
 import { toast } from "sonner";
 import { useNavigation } from "@/contexts/NavigationContext";
 
@@ -40,15 +60,19 @@ export function InviteEmployees({
   const [currentEmail, setCurrentEmail] = useState("");
   const [currentPerfil, setCurrentPerfil] = useState<string>("");
   const [sending, setSending] = useState(false);
-  const [perfis, setPerfis] = useState<Perfil[]>([]);
-  const {isNavigating} = useNavigation();
+  const [perfis, setPerfis] = useState<Profile[]>([]);
+  const { isNavigating } = useNavigation();
+
   // Carregar perfis de funcionários (excluir gestor)
   useEffect(() => {
     const loadPerfis = async () => {
       try {
         const allPerfis = await InviteService.getPerfis();
-        //const funcionarioPerfis = allPerfis.filter(p => p.nome.toLowerCase() !== 'gestor');
-        setPerfis(allPerfis);
+        // Filtrar apenas perfis de funcionários (excluir gestor)
+        const funcionarioPerfis = allPerfis.filter(
+          (p) => p.name.toLowerCase() !== "gestor"
+        );
+        setPerfis(funcionarioPerfis);
       } catch (error) {
         console.error("Erro ao carregar perfis:", error);
       }
@@ -70,7 +94,11 @@ export function InviteEmployees({
     }
 
     // Verificar se email já foi adicionado
-    if (invites.some(inv => inv.email === currentEmail && inv.perfil === currentPerfil)) {
+    if (
+      invites.some(
+        (inv) => inv.email === currentEmail && inv.perfil === currentPerfil
+      )
+    ) {
       toast.error("Este email já foi adicionado");
       return;
     }
@@ -92,7 +120,7 @@ export function InviteEmployees({
 
     try {
       setSending(true);
-      
+
       // Enviar todos os convites
       for (const invite of invites) {
         await InviteService.createInvite(
@@ -114,34 +142,31 @@ export function InviteEmployees({
   };
 
   const getPerfilIcon = (perfilId: string) => {
-    const perfil = perfis.find(p => p.id === perfilId);
-    return perfil?.nome === 'cozinheiro' ? ChefHat : Package;
+    const perfil = perfis.find((p) => p.id === perfilId);
+    return perfil?.name === "cozinheiro" ? ChefHat : Package;
   };
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
       {onBack && (
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={onBack} className="mb-4">
           ← Voltar
         </Button>
       )}
-      
+
       <div className="text-center mb-6 sm:mb-8">
         <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center">
           <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold mb-4">
-          UAN Criada com Sucesso! 🎉
+          Empresa cadastrada com sucesso! 🎉
         </h1>
         <p className="text-base sm:text-lg text-muted-foreground mb-2">
-          <strong>{organizationName}</strong> foi configurada
+          <strong>{organizationName}</strong> foi cadastrada
         </p>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Agora você pode convidar funcionários para participar da sua UAN
+          Agora você pode convidar funcionários para atuar nas UANs da sua
+          empresa.
         </p>
       </div>
 
@@ -153,7 +178,7 @@ export function InviteEmployees({
           </CardTitle>
           <CardDescription>
             Envie convites para cozinheiros e estoquistas se juntarem à sua UAN.
-            Eles receberão um email com instruções para aceitar o convite.
+            Ao entrarem no sistema eles receberão uma notificação com o convite.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -178,9 +203,13 @@ export function InviteEmployees({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="perfil" className="mb-2">Perfil</Label>
-                  <Select value={currentPerfil} 
-                    onValueChange={setCurrentPerfil}>
+                  <Label htmlFor="perfil" className="mb-2">
+                    Perfil
+                  </Label>
+                  <Select
+                    value={currentPerfil}
+                    onValueChange={setCurrentPerfil}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o perfil" />
                     </SelectTrigger>
@@ -188,14 +217,14 @@ export function InviteEmployees({
                       {perfis.map((perfil) => (
                         <SelectItem key={perfil.id} value={perfil.id}>
                           <div className="flex items-center gap-2">
-                            {perfil.nome.toLowerCase() === 'cozinheiro' ? (
+                            {perfil.name.toLowerCase() === "cozinheiro" ? (
                               <ChefHat className="h-4 w-4" />
-                            ) : perfil.nome.toLowerCase() === 'estoquista' ? (
+                            ) : perfil.name.toLowerCase() === "estoquista" ? (
                               <Package className="h-4 w-4" />
                             ) : (
                               <Users className="h-4 w-4" />
                             )}
-                            {perfil.nome}
+                            {perfil.name}
                           </div>
                         </SelectItem>
                       ))}
@@ -203,8 +232,8 @@ export function InviteEmployees({
                   </Select>
                 </div>
               </div>
-              
-              <Button 
+
+              <Button
                 onClick={addInvite}
                 disabled={!currentEmail || !currentPerfil}
                 className="w-full sm:w-auto"
@@ -233,9 +262,12 @@ export function InviteEmployees({
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <p className="font-medium truncate">{invite.email}</p>
+                              <p className="font-medium truncate">
+                                {invite.email}
+                              </p>
                               <Badge variant="outline" className="text-xs">
-                                {perfis.find(p => p.id === invite.perfil)?.nome || 'Perfil Desconhecido'}
+                                {perfis.find((p) => p.id === invite.perfil)
+                                  ?.name || "Perfil Desconhecido"}
                               </Badge>
                             </div>
                           </div>
@@ -265,35 +297,40 @@ export function InviteEmployees({
               >
                 Pular por Agora
               </Button>
-              
-                {invites.length > 0 && (
-                  <Button
-                    onClick={sendInvites}
-                    disabled={sending}
-                  >
-                    {sending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="h-4 w-4 mr-2" />
-                        Enviar Convites
-                      </>
-                    )}
-                  </Button>
-                )}
+
+              {invites.length > 0 && (
+                <Button onClick={sendInvites} disabled={sending}>
+                  {sending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Enviar Convites
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
 
             {/* Informação adicional */}
             <div className="text-sm text-muted-foreground bg-blue-50 p-4 rounded-lg">
-              <p className="font-medium mb-2">ℹ️ Informações sobre os convites:</p>
+              <p className="font-medium mb-2">
+                ℹ️ Informações sobre os convites:
+              </p>
               <ul className="space-y-1">
                 <li>• Os convites expiram em 7 dias</li>
                 <li>• Os funcionários receberão um email com instruções</li>
-                <li>• Você pode enviar mais convites depois através do painel de administração</li>
-                <li>• Cada funcionário precisa criar uma conta para aceitar o convite</li>
+                <li>
+                  • Você pode enviar mais convites depois através do painel de
+                  administração
+                </li>
+                <li>
+                  • Cada funcionário precisa criar uma conta para aceitar o
+                  convite
+                </li>
               </ul>
             </div>
           </div>

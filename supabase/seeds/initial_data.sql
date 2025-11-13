@@ -1,14 +1,14 @@
 BEGIN;
 
--- ===== PERFIS DE USUÁRIO =====
-INSERT INTO "public"."perfis" ("nome", "descricao", "ativo") 
+-- ===== USER PROFILES =====
+INSERT INTO public.profiles (name, description, active) 
 VALUES 
 ('Estoquista', 'Acesso de estoque', true), 
 ('Gestor', 'Acesso de gerenciamento', true), 
 ('Cozinheiro', 'Acesso de cozinha', true);
 
--- ===== FUNCIONALIDADES =====
-INSERT INTO "public"."funcionalidades" ("nome", "descricao", "rota", "ativo") 
+-- ===== FUNCTIONALITIES =====
+INSERT INTO public.functionalities (name, description, route, active) 
 VALUES 
 ('Membros', 'Gerenciamento de membros da organização', '/members', true), 
 ('Dashboard Cozinheiro', 'Visualização do painel principal', '/dashboard', true), 
@@ -19,32 +19,32 @@ VALUES
 ('Dashboard Gestor', 'Visualização do painel principal', '/dashboard', true), 
 ('Organizações', 'Gerenciamento de organizações', '/organizations', true);
 
--- ===== PERMISSÕES =====
-INSERT INTO "public"."permissoes" ("funcionalidade_id", "perfil_usuario_id", "acao", "ativo") 
+-- ===== PERMISSIONS =====
+INSERT INTO public.permissions (functionality_id, profile_id, action, active) 
 VALUES 
 -- Estoquista
-((SELECT id FROM funcionalidades WHERE nome = 'Etiquetas'), (SELECT id FROM perfis WHERE nome = 'Estoquista'), 'liberado', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Dashboard Estoquista'), (SELECT id FROM perfis WHERE nome = 'Estoquista'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Etiquetas'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Dashboard Estoquista'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'liberado', true),
 
 -- Cozinheiro
-((SELECT id FROM funcionalidades WHERE nome = 'Dashboard Cozinheiro'), (SELECT id FROM perfis WHERE nome = 'Cozinheiro'), 'liberado', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Etiquetas'), (SELECT id FROM perfis WHERE nome = 'Cozinheiro'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Dashboard Cozinheiro'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Etiquetas'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'liberado', true),
 
 -- Gestor - Acesso completo
-((SELECT id FROM funcionalidades WHERE nome = 'Dashboard Gestor'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'liberado', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Etiquetas'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'liberado', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Convites'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'liberado', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Organizações'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'liberado', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Departamentos'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'liberado', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Membros'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Dashboard Gestor'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Etiquetas'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Convites'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Organizações'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Departamentos'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
+((SELECT id FROM public.functionalities WHERE name = 'Membros'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
 -- Permissões de visualização para Gestor
-((SELECT id FROM funcionalidades WHERE nome = 'Convites'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'visualizar', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Organizações'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'visualizar', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Departamentos'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'visualizar', true),
-((SELECT id FROM funcionalidades WHERE nome = 'Membros'), (SELECT id FROM perfis WHERE nome = 'Gestor'), 'visualizar', true);
+((SELECT id FROM public.functionalities WHERE name = 'Convites'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'visualizar', true),
+((SELECT id FROM public.functionalities WHERE name = 'Organizações'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'visualizar', true),
+((SELECT id FROM public.functionalities WHERE name = 'Departamentos'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'visualizar', true),
+((SELECT id FROM public.functionalities WHERE name = 'Membros'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'visualizar', true);
 
--- ===== GRUPOS DE PRODUTOS =====
-INSERT INTO groups (id, name) VALUES 
+-- ===== PRODUCT GROUPS =====
+INSERT INTO public.groups (id, name) VALUES 
 (1, 'Cereais e derivados'),
 (2, 'Verduras, hortaliças e derivados'),
 (3, 'Frutos e derivados'),
@@ -62,8 +62,8 @@ INSERT INTO groups (id, name) VALUES
 (15, 'Frutas e derivados'),
 (16, 'Bebidas (alcoólicas e não alcoólicas)');
 
--- ===== PRODUTOS =====
-INSERT INTO products (id, name, group_id) VALUES 
+-- ===== PRODUCTS =====
+INSERT INTO public.products (id, name, group_id) VALUES 
 -- Cereais e derivados
 (1, 'Arroz branco', 1),
 (2, 'Arroz integral', 1),

@@ -117,7 +117,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         {loading ? (
           <div className="flex items-center justify-center h-16">
-            <span>Loading...</span>
+            <span>Carregando...</span>
           </div>
         ) : (
           <NavUser user={data.user} />

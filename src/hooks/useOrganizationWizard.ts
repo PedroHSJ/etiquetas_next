@@ -1,33 +1,31 @@
 import { useState, useCallback } from "react";
-import { OrganizationTemplate } from "@/types/organization";
+import { CreateOrganizationDto } from "@/types/dto/organization/request";
+import { OrganizationTemplate } from "@/types/models/organization";
 import { getTemplate } from "@/config/organization-templates";
-import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
+import { OrganizationService } from "@/lib/services/client/organization-service";
+import { TipoUAN } from "@/types/uan";
 
 interface UANData {
-  // Informações Básicas
   cnpj?: string;
-  tipo_uan?: 'restaurante_comercial' | 'restaurante_institucional' | 'lanchonete' | 'padaria' | 'cozinha_industrial' | 'catering' | 'outro';
-  capacidade_atendimento?: number;
-  data_inauguracao?: string;
-  descricao?: string;
-  
-  // Localização
-  estado_id?: number;
-  municipio_id?: number;
-  cep?: string;
-  endereco?: string;
-  numero?: string;
-  complemento?: string;
-  bairro?: string;
-  endereco_completo?: string;
+  uanType?: TipoUAN;
+  capacity?: number;
+  openingDate?: string;
+  description?: string;
+  stateId?: number;
+  cityId?: number;
+  zipCode?: string;
+  address?: string;
+  number?: string;
+  addressComplement?: string;
+  district?: string;
+  fullAddress?: string;
   latitude?: number;
   longitude?: number;
-  
-  // Contato
-  telefone_principal?: string;
-  telefone_secundario?: string;
-  email?: string;
+  mainPhone?: string;
+  altPhone?: string;
+  institutionalEmail?: string;
 }
 
 interface WizardData {
@@ -47,14 +45,57 @@ interface UseOrganizationWizardReturn {
   prevStep: () => void;
   updateWizardData: (data: Partial<WizardData>) => void;
   submitWizard: (
-    userId: string
+    userId: string,
+    options?: SubmitWizardOptions
   ) => Promise<{ success: boolean; organizationId?: string }>;
   getTotalSteps: () => number;
 }
 
+const sanitizeCnpj = (value?: string | null) => {
+  if (!value) return undefined;
+  const digits = value.replace(/\D/g, "");
+  return digits.slice(0, 14) || undefined;
+};
+
+const buildOrganizationPayload = (
+  wizardData: WizardData
+): CreateOrganizationDto => {
+  const { uanData } = wizardData;
+
+  return {
+    name: wizardData.organizationName.trim(),
+    type: wizardData.organizationType,
+    cnpj: sanitizeCnpj(uanData.cnpj),
+    capacity: uanData.capacity,
+    openingDate: uanData.openingDate,
+    fullAddress: uanData.fullAddress,
+    zipCode: uanData.zipCode,
+    district: uanData.district,
+    latitude: uanData.latitude,
+    longitude: uanData.longitude,
+    mainPhone: uanData.mainPhone,
+    altPhone: uanData.altPhone,
+    institutionalEmail: uanData.institutionalEmail,
+    stateId: uanData.stateId,
+    cityId: uanData.cityId,
+    address: uanData.address,
+    number: uanData.number,
+    addressComplement: uanData.addressComplement,
+  };
+};
+
+interface SubmitWizardVariables {
+  userId: string;
+  wizardData: WizardData;
+  managerProfileId: string;
+}
+
+interface SubmitWizardOptions {
+  managerProfileId?: string;
+}
+
 export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
   const [wizardData, setWizardData] = useState<WizardData>({
     organizationName: "",
     organizationType: "uan",
@@ -76,151 +117,97 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
     setWizardData((prev) => ({ ...prev, ...data }));
   }, []);
 
+  const createOrganizationMutation = useMutation<
+    { organizationId: string; departmentsCreated: number },
+    Error,
+    SubmitWizardVariables
+  >({
+    mutationFn: async ({ wizardData, managerProfileId }) => {
+      console.log("Starting organization setup...", {
+        name: wizardData.organizationName,
+        type: wizardData.organizationType,
+      });
+
+      if (!managerProfileId) {
+        throw new Error("Perfil de gestor não informado");
+      }
+
+      // Preparar dados da organização
+      const organizationPayload = buildOrganizationPayload(wizardData);
+
+      // Preparar departments
+      const allDepartments = [
+        ...wizardData.selectedDepartments,
+        ...wizardData.customDepartments,
+      ];
+
+      const departments = allDepartments.map((dept) => ({
+        name: dept.nome,
+        departmentType: dept.tipo,
+      }));
+
+      console.log("Calling setupOrganization with:", {
+        organization: organizationPayload,
+        departments,
+        managerProfileId,
+      });
+
+      // Chama o serviço de frontend que chama a API
+      const result = await OrganizationService.setupOrganization({
+        organization: organizationPayload,
+        departments: departments.length > 0 ? departments : undefined,
+        managerProfileId,
+      });
+
+      console.log("Organization setup completed:", result);
+
+      return result;
+    },
+  });
+
   const submitWizard = useCallback(
     async (
-      userId: string
+      userId: string,
+      options?: SubmitWizardOptions
     ): Promise<{ success: boolean; organizationId?: string }> => {
-      setIsLoading(true);
+      if (!options?.managerProfileId) {
+        toast.error("Não foi possível identificar o perfil de gestor.");
+        return { success: false };
+      }
+
       try {
-        console.log("Iniciando criação da organização...", {
-          nome: wizardData.organizationName,
-          tipo: wizardData.organizationType,
-          user_id: userId,
+        const result = await createOrganizationMutation.mutateAsync({
+          userId,
+          wizardData,
+          managerProfileId: options.managerProfileId,
         });
 
-        // 1. Criar organização (UUID será gerado automaticamente)
-        const { data: orgData, error: orgError } = await supabase
-          .from("organizacoes")
-          .insert({
-            nome: wizardData.organizationName,
-            tipo: wizardData.organizationType,
-            user_id: userId,
-            // Dados UAN
-            ...wizardData.uanData,
-          })
-          .select()
-          .single();
-
-        if (orgError) {
-          console.error("Erro ao criar organização:", orgError);
-          throw new Error(`Erro ao criar organização: ${orgError.message}`);
-        }
-
-        console.log("Organização criada:", orgData);
-
-        // 2. Criar departamentos
-        const allDepartments = [
-          ...wizardData.selectedDepartments,
-          ...wizardData.customDepartments,
-        ];
-
-        if (allDepartments.length > 0) {
-          const departmentInserts = allDepartments.map((dept) => ({
-            nome: dept.nome,
-            organizacao_id: orgData.id,
-            tipo_departamento: dept.tipo,
-          }));
-
-          console.log("Inserindo departamentos:", departmentInserts);
-
-          const { data: deptData, error: deptError } = await supabase
-            .from("departamentos")
-            .insert(departmentInserts)
-            .select();
-
-          if (deptError) {
-            console.error("Erro ao criar departamentos:", deptError);
-            throw new Error(
-              `Erro ao criar departamentos: ${deptError.message}`
-            );
-          }
-
-          console.log("Departamentos criados:", deptData);
-        }
-
-        // 3. Buscar ID do perfil gestor
-        const { data: gestorPerfil, error: perfilError } = await supabase
-          .from("perfis")
-          .select("id")
-          .ilike("nome", "gestor")
-          .single();
-
-        if (perfilError || !gestorPerfil) {
-          console.error("Erro ao buscar perfil gestor:", perfilError);
-          throw new Error("Erro ao buscar perfil gestor");
-        }
-
-        // 4. Adicionar usuário como gestor da organização
-        const { data: userOrgData, error: userOrgError } = await supabase
-          .from("usuarios_organizacoes")
-          .insert({
-            usuario_id: userId,
-            organizacao_id: orgData.id,
-            perfil_id: gestorPerfil.id,
-            ativo: true,
-          })
-          .select()
-          .single();
-
-        if (userOrgError || !userOrgData) {
-          console.error(
-            "Erro ao adicionar usuário à organização:",
-            userOrgError
-          );
-          throw new Error(
-            `Erro ao adicionar usuário à organização: ${userOrgError?.message}`
-          );
-        }
-
-        // 5. Criar registro em usuarios_perfis
-        const { error: userPerfilError } = await supabase
-          .from("usuarios_perfis")
-          .insert({
-            usuario_organizacao_id: userOrgData.id,
-            perfil_usuario_id: gestorPerfil.id,
-            ativo: true,
-          });
-
-        if (userPerfilError) {
-          console.error(
-            "Erro ao criar perfil do usuário:",
-            userPerfilError
-          );
-          throw new Error(
-            `Erro ao criar perfil do usuário: ${userPerfilError.message}`
-          );
-        }
-
-        console.log("Usuário adicionado como gestor da organização");
-
         toast.success("Organização configurada com sucesso!");
-        return { success: true, organizationId: orgData.id };
+        return { success: true, organizationId: result.organizationId };
       } catch (error) {
-        console.error("Erro completo ao criar organização:", error);
+        console.error("Error while creating organization:", error);
         toast.error(
-          `Erro ao configurar organização: ${
+          `Não foi possível configurar a organização: ${
             error instanceof Error ? error.message : "Erro desconhecido"
           }`
         );
         return { success: false };
-      } finally {
-        setIsLoading(false);
       }
     },
-    [wizardData]
+    [createOrganizationMutation, wizardData]
   );
 
   const getTotalSteps = useCallback(() => {
-    // Passo 1: Nome da UAN + Dados UAN completos
-    // Passo 2: Departamentos
-    // Passo 3: Resumo
+    // Step 1: UAN basic data
+    // Step 2: Departments
+    // Step 3: Summary
     return 3;
   }, []);
 
   return {
     currentStep,
     wizardData,
-    isLoading,
+    isLoading: createOrganizationMutation.isPending,
     nextStep,
     prevStep,
     updateWizardData,

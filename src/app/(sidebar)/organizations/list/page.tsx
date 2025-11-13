@@ -23,14 +23,10 @@ import {
   GenericTableColumn,
 } from "@/components/ui/generic-table";
 import { formatCnpj } from "@/lib/utils";
-import { Organization } from "@/types/components";
-
-interface Department {
-  id: string;
-  nome: string;
-  organizacao_id: string;
-  tipo_departamento: string;
-}
+import { Organization } from "@/types/models/organization";
+import { useQuery } from "@tanstack/react-query";
+import { OrganizationService } from "@/lib/services/client/organization-service";
+import { Department } from "@/types/models/department";
 
 interface Member {
   id: string;
@@ -54,7 +50,6 @@ interface Member {
 
 export default function Page() {
   const { userId } = useAuth();
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [filteredOrganizations, setfilteredOrganizations] = useState<
     Organization[]
@@ -78,14 +73,14 @@ export default function Page() {
       id: "nome",
       key: "nome",
       label: "Nome",
-      accessor: (row) => row.nome,
+      accessor: (row) => row.name,
       visible: true,
       width: 300,
       render: (value, row) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-              {getInitials(row.nome)}
+              {getInitials(row.name)}
             </AvatarFallback>
           </Avatar>
           <span className="font-medium">{value as string}</span>
@@ -96,14 +91,14 @@ export default function Page() {
       id: "cnpj",
       key: "cnpj",
       label: "CNPJ",
-      accessor: (row) => row.cnpj ? formatCnpj(row.cnpj) : "--",
+      accessor: (row) => (row.cnpj ? formatCnpj(row.cnpj) : "--"),
       visible: true,
     },
     {
       id: "created_at",
       key: "created_at",
       label: "Cadastrado",
-      accessor: (row) => row.created_at,
+      accessor: (row) => row.createdAt,
       visible: true,
       render: (value) => (
         <div className="text-sm">
@@ -120,37 +115,17 @@ export default function Page() {
     isDeleting: false,
   });
 
-  const fetchOrganizations = async () => {
-    console.log("Fetching organizations for user:", userId);
-    if (!userId) {
-      console.log("No userId available, skipping fetch");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Buscar organizações através da relação usuarios_organizacoes
-      const { data, error } = await supabase
-        .from("organizacoes")
-        .select("*")
-        .eq("user_id", userId)
-        .order("nome");
-
-      console.log("Organizations query result:", { data, error });
-
-      if (!error && data) {
-        setOrganizations(data);
-        setfilteredOrganizations(data);
-        console.log("Organizations loaded:", data.length);
-      } else if (error) {
-        console.error("Error fetching organizations:", error);
-      }
-    } catch (error) {
-      console.error("Unexpected error fetching organizations:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: orgsData, isLoading: orgsLoading } = useQuery<
+    Organization[],
+    Error
+  >({
+    queryKey: ["organizations", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      return await OrganizationService.getOrganizationsByUserIdExpanded(userId);
+    },
+    enabled: !!userId,
+  });
 
   const fetchDepartments = async (organizationId?: string) => {
     let query = supabase.from("departamentos").select("*").order("nome");
@@ -167,20 +142,6 @@ export default function Page() {
   };
 
   useEffect(() => {
-    console.log("User ID changed:", userId);
-    console.log("User ID type:", typeof userId);
-    console.log("User ID length:", userId?.length);
-
-    if (userId) {
-      console.log("Calling fetch functions with userId:", userId);
-      fetchOrganizations();
-      fetchDepartments();
-    } else {
-      console.log("No userId available, not fetching data");
-    }
-  }, [userId]);
-
-  useEffect(() => {
     if (selectedOrganization) {
       fetchDepartments(selectedOrganization);
       setSelectedDepartment(undefined);
@@ -191,7 +152,7 @@ export default function Page() {
 
   // Filtros
   useEffect(() => {
-    let filtered = organizations;
+    let filtered = orgsData || [];
 
     // Filtro por organização selecionada
     if (selectedOrganization) {
@@ -202,14 +163,14 @@ export default function Page() {
     if (searchTerm) {
       filtered = filtered.filter(
         (org) =>
-          org.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          org.tipo?.toLowerCase().includes(searchTerm.toLowerCase())
+          org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          org.cnpj?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     setfilteredOrganizations(filtered);
     setCurrentPage(1); // Reset para primeira página quando filtros mudam
-  }, [organizations, selectedOrganization, searchTerm]);
+  }, [orgsData, selectedOrganization, searchTerm]);
 
   // Dados paginados
   const totalItems = filteredOrganizations.length;

@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Card,
   CardContent,
@@ -9,31 +12,39 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { LocalidadeSelector } from "@/components/localidade/LocalidadeSelector";
+import { LocationSelector } from "@/components/location/LocationSelector";
 import { TIPOS_UAN, TipoUAN } from "@/types/uan";
-import { formatCNPJ, formatTelefone, formatCEP, unformatCNPJ, unformatTelefone } from "@/utils/masks";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  CheckCircle,
-  Circle,
-  Building2,
-  Users,
-  X,
-} from "lucide-react";
+import { InputHookForm } from "@/components/inputs/InputHookForm";
+import { SelectHookForm } from "@/components/inputs/SelectHookForm";
+import { TextareaHookForm } from "@/components/inputs/TextareaHookForm";
+import { CheckCircle, Building2, Users, X } from "lucide-react";
 import { useOrganizationWizard } from "@/hooks/useOrganizationWizard";
-import { organizationTemplates } from "@/config/organization-templates";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useProfilesQuery } from "@/hooks/useProfilesQuery";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+
+// Schema de validação do formulário
+const uanFormSchema = z.object({
+  organizationName: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  cnpj: z.string().optional(),
+  uanType: z.string().optional(),
+  capacity: z.number().optional(),
+  mainPhone: z.string().optional(),
+  description: z.string().optional(),
+  stateId: z.number().optional(),
+  cityId: z.number().optional(),
+  zipCode: z.string().optional(),
+  address: z.string().optional(),
+  number: z.string().optional(),
+  addressComplement: z.string().optional(),
+  district: z.string().optional(),
+});
+
+type UANFormData = z.infer<typeof uanFormSchema>;
 
 interface OrganizationWizardProps {
   userId: string;
@@ -55,19 +66,60 @@ export function OrganizationWizard({
     getTotalSteps,
   } = useOrganizationWizard();
 
-  const [customDepartmentName, setCustomDepartmentName] = useState("");
+  // React Hook Form
+  const form = useForm<UANFormData>({
+    resolver: zodResolver(uanFormSchema),
+    defaultValues: {
+      organizationName: wizardData.organizationName || "",
+      cnpj: wizardData.uanData.cnpj || "",
+      uanType: wizardData.uanData.uanType || "",
+      capacity: wizardData.uanData.capacity,
+      mainPhone: wizardData.uanData.mainPhone || "",
+      description: wizardData.uanData.description || "",
+      stateId: wizardData.uanData.stateId,
+      cityId: wizardData.uanData.cityId,
+      zipCode: wizardData.uanData.zipCode || "",
+      address: wizardData.uanData.address || "",
+      number: wizardData.uanData.number || "",
+      addressComplement: wizardData.uanData.addressComplement || "",
+      district: wizardData.uanData.district || "",
+    },
+  });
 
-  const handleSubmit = async () => {
-    const result = await submitWizard(userId);
-    if (result.success && result.organizationId) {
-      onComplete(result.organizationId, wizardData.organizationName);
-    }
-  };
+  const { control, watch, setValue, getValues } = form;
+  const formValues = watch();
+
+  const [customDepartmentName, setCustomDepartmentName] = useState("");
+  const {
+    data: profilesData,
+    isLoading: isProfilesLoading,
+    error: profilesError,
+  } = useProfilesQuery();
+  const profiles = profilesData ?? [];
+
+  // Debug do erro da query
+  const managerProfileId = useMemo(() => {
+    const targets = ["gestor", "manager"];
+    const normalize = (value: string) =>
+      value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+    console.log("⚙️ Perfis disponíveis para o usuário:", profiles);
+    const found = profiles.find((profile) =>
+      targets.includes(normalize(profile.name))
+    );
+    console.log("⚙️ Perfil de gestor encontrado:", found);
+    return found?.id;
+  }, [profiles]);
 
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return wizardData.organizationName.trim().length >= 3;
+        return (
+          formValues.organizationName &&
+          formValues.organizationName.trim().length >= 3
+        );
       case 2:
         return (
           wizardData.selectedDepartments.length > 0 ||
@@ -77,6 +129,57 @@ export function OrganizationWizard({
         return true; // Review sempre pode ser enviado
       default:
         return false;
+    }
+  };
+
+  const isFinishDisabled =
+    !canProceed() || isLoading || isProfilesLoading || !managerProfileId;
+
+  // Função para sincronizar dados do formulário com wizardData
+  const syncFormToWizardData = () => {
+    const values = getValues();
+    updateWizardData({
+      organizationName: values.organizationName || "",
+      uanData: {
+        cnpj: values.cnpj,
+        uanType: values.uanType as TipoUAN,
+        capacity: values.capacity,
+        mainPhone: values.mainPhone,
+        description: values.description,
+        stateId: values.stateId,
+        cityId: values.cityId,
+        zipCode: values.zipCode,
+        address: values.address,
+        number: values.number,
+        addressComplement: values.addressComplement,
+        district: values.district,
+      },
+    });
+  };
+
+  const handleNextStep = () => {
+    // Sincronizar dados antes de avançar
+    if (currentStep === 1) {
+      syncFormToWizardData();
+    }
+    nextStep();
+  };
+
+  const handleSubmit = async () => {
+    if (!managerProfileId) {
+      toast.error(
+        "Erro: Não foi possível carregar os perfis de usuário. " +
+          "Verifique sua conexão e tente novamente."
+      );
+      return;
+    }
+
+    // Sincronizar dados do formulário com wizardData antes de enviar
+    syncFormToWizardData();
+
+    const result = await submitWizard(userId, { managerProfileId });
+    if (result.success && result.organizationId) {
+      onComplete(result.organizationId, formValues.organizationName || "");
     }
   };
 
@@ -119,175 +222,104 @@ export function OrganizationWizard({
     }
   };
 
-
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
           <div className="space-y-6">
-            <div>
-              <Label htmlFor="orgName" className="mb-2">Nome da UAN</Label>
-              <Input
-                id="orgName"
+            <div className="grid grid-cols-12 gap-4">
+              <InputHookForm
+                control={control}
+                name="organizationName"
+                label="Nome da UAN"
                 placeholder="Ex: UAN Hospital Central, UAN Escola Municipal"
-                value={wizardData.organizationName}
-                onChange={(e) =>
-                  updateWizardData({ organizationName: e.target.value })
-                }
-                className="mt-2"
+                colSpan="12"
+                required
+                tip="Informe o nome da sua Unidade de Alimentação e Nutrição"
               />
-              <p className="text-sm text-muted-foreground mt-2">
-                Digite o nome da sua Unidade de Alimentação e Nutrição
-              </p>
+
+              <InputHookForm
+                control={control}
+                name="cnpj"
+                label="CNPJ"
+                placeholder="00.000.000/0000-00"
+                format="##.###.###/####-##"
+                colSpan="6"
+              />
+
+              <SelectHookForm
+                control={control}
+                name="uanType"
+                label="Tipo de UAN"
+                placeholder="Selecione o tipo"
+                options={Object.entries(TIPOS_UAN).map(([key, value]) => ({
+                  value: key,
+                  label: value as string,
+                }))}
+                colSpan="6"
+              />
+
+              <InputHookForm
+                control={control}
+                name="capacity"
+                label="Capacidade diária"
+                placeholder="Ex: 500 refeições/dia"
+                type="number"
+                colSpan="6"
+              />
+
+              <InputHookForm
+                control={control}
+                name="mainPhone"
+                label="Telefone principal"
+                placeholder="(11) 99999-9999"
+                format="(##) #####-####"
+                colSpan="6"
+              />
+
+              <TextareaHookForm
+                control={control}
+                name="description"
+                label="Descrição"
+                placeholder="Descreva brevemente sua UAN..."
+                colSpan="12"
+                rows={3}
+              />
             </div>
 
-            {/* Informações da UAN */}
-            <div className="border-t pt-6">
-              <h4 className="text-lg font-medium mb-4">
-                Dados da UAN
-              </h4>
-
-              <Card className="p-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* CNPJ */}
-                  <div>
-                    <Label htmlFor="cnpj" className="mb-2">CNPJ</Label>
-                    <Input
-                      id="cnpj"
-                      placeholder="00.000.000/0000-00"
-                      value={formatCNPJ(wizardData.uanData.cnpj || "")}
-                      onChange={(e) => {
-                        const unformatted = unformatCNPJ(e.target.value);
-                        updateWizardData({
-                          uanData: {
-                            ...wizardData.uanData,
-                            cnpj: unformatted
-                          }
-                        });
-                      }}
-                    />
-                  </div>
-
-                  {/* Tipo UAN */}
-                  <div>
-                    <Label className="mb-2">Tipo da UAN</Label>
-                    <Select
-                      value={wizardData.uanData.tipo_uan}
-                      onValueChange={(value) =>
-                        updateWizardData({
-                          uanData: {
-                            ...wizardData.uanData,
-                            tipo_uan: value as TipoUAN
-                          }
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(TIPOS_UAN).map(([key, value]) => (
-                          <SelectItem key={key} value={key}>
-                            {value as string}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Capacidade de Atendimento */}
-                  <div>
-                    <Label htmlFor="capacidade" className="mb-2">Capacidade de Atendimento</Label>
-                    <Input
-                      id="capacidade"
-                      type="number"
-                      placeholder="Ex: 500 refeições/dia"
-                      value={wizardData.uanData.capacidade_atendimento || ""}
-                      onChange={(e) =>
-                        updateWizardData({
-                          uanData: {
-                            ...wizardData.uanData,
-                            capacidade_atendimento: parseInt(e.target.value) || undefined
-                          }
-                        })
-                      }
-                    />
-                  </div>
-
-                  {/* Telefone Principal */}
-                  <div>
-                    <Label htmlFor="telefone" className="mb-2">Telefone Principal</Label>
-                    <Input
-                      id="telefone"
-                      placeholder="(11) 99999-9999"
-                      value={formatTelefone(wizardData.uanData.telefone_principal || "")}
-                      onChange={(e) => {
-                        const unformatted = unformatTelefone(e.target.value);
-                        updateWizardData({
-                          uanData: {
-                            ...wizardData.uanData,
-                            telefone_principal: unformatted
-                          }
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Descrição */}
-                <div>
-                  <Label htmlFor="descricao" className="mb-2">Descrição</Label>
-                  <Textarea
-                    id="descricao"
-                    placeholder="Descreva brevemente sua UAN..."
-                    value={wizardData.uanData.descricao || ""}
-                    onChange={(e) =>
-                      updateWizardData({
-                        uanData: {
-                          ...wizardData.uanData,
-                          descricao: e.target.value
-                        }
-                      })
-                    }
-                  />
-                </div>
-
-                {/* Localização */}
-                <div>
-                  <Label className="text-base font-medium mb-2">Localização</Label>
-                  <div className="mt-2">
-                    <LocalidadeSelector
-                      value={{
-                        estado_id: wizardData.uanData.estado_id,
-                        municipio_id: wizardData.uanData.municipio_id,
-                        cep: wizardData.uanData.cep,
-                        endereco: wizardData.uanData.endereco,
-                        numero: wizardData.uanData.numero,
-                        complemento: wizardData.uanData.complemento,
-                        bairro: wizardData.uanData.bairro
-                      }}
-                      onChange={(localidade: {
-                        estado_id?: number;
-                        municipio_id?: number;
-                        cep?: string;
-                        endereco?: string;
-                        numero?: string;
-                        complemento?: string;
-                        bairro?: string;
-                      }) =>
-                        updateWizardData({
-                          uanData: {
-                            ...wizardData.uanData,
-                            ...localidade
-                          }
-                        })
-                      }
-                      showAddressFields={true}
-                    />
-                  </div>
-                </div>
-              </Card>
+            <div>
+              <Label className="text-base font-medium mb-2">Localização</Label>
+              <div className="mt-2">
+                <LocationSelector
+                  value={{
+                    estado_id: formValues.stateId,
+                    municipio_id: formValues.cityId,
+                    cep: formValues.zipCode,
+                    endereco: formValues.address,
+                    numero: formValues.number,
+                    complemento: formValues.addressComplement,
+                    bairro: formValues.district,
+                  }}
+                  onChange={(localidade: {
+                    estado_id?: number;
+                    municipio_id?: number;
+                    cep?: string;
+                    endereco?: string;
+                    numero?: string;
+                    complemento?: string;
+                    bairro?: string;
+                  }) => {
+                    setValue("stateId", localidade.estado_id);
+                    setValue("cityId", localidade.municipio_id);
+                    setValue("zipCode", localidade.cep);
+                    setValue("address", localidade.endereco);
+                    setValue("number", localidade.numero);
+                    setValue("addressComplement", localidade.complemento);
+                    setValue("district", localidade.bairro);
+                  }}
+                  showAddressFields={true}
+                />
+              </div>
             </div>
           </div>
         );
@@ -304,23 +336,25 @@ export function OrganizationWizard({
 
               {wizardData.template?.departamentos && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                  {wizardData.template.departamentos.map((dept: { nome: string; tipo: string }) => (
-                    <div
-                      key={dept.tipo}
-                      className="flex items-center space-x-2"
-                    >
-                      <Checkbox
-                        id={dept.tipo}
-                        checked={wizardData.selectedDepartments.some(
-                          (d) => d.tipo === dept.tipo
-                        )}
-                        onCheckedChange={() => toggleDepartment(dept)}
-                      />
-                      <Label htmlFor={dept.tipo} className="flex-1">
-                        {dept.nome}
-                      </Label>
-                    </div>
-                  ))}
+                  {wizardData.template.departamentos.map(
+                    (dept: { nome: string; tipo: string }) => (
+                      <div
+                        key={dept.tipo}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={dept.tipo}
+                          checked={wizardData.selectedDepartments.some(
+                            (d) => d.tipo === dept.tipo
+                          )}
+                          onCheckedChange={() => toggleDepartment(dept)}
+                        />
+                        <Label htmlFor={dept.tipo} className="flex-1">
+                          {dept.nome}
+                        </Label>
+                      </div>
+                    )
+                  )}
                 </div>
               )}
 
@@ -329,7 +363,7 @@ export function OrganizationWizard({
                   Adicionar{" "}
                   {wizardData.template?.terminologia.departamento ||
                     "Departamento"}{" "}
-                  Personalizado
+                  personalizado
                 </Label>
                 <div className="flex gap-2 mt-2">
                   <Input
@@ -379,47 +413,69 @@ export function OrganizationWizard({
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-medium mb-4">
-                Resumo da Configuração
+                Resumo da configuração
               </h3>
 
               <Card className="p-4 mb-4">
-                <h4 className="font-medium mb-2">UAN</h4>
-                <p>
-                  <strong>Nome:</strong> {wizardData.organizationName}
-                </p>
-                <p>
-                  <strong>Tipo:</strong> Unidade de Alimentação e Nutrição
-                </p>
-                {wizardData.uanData.cnpj && (
-                  <p>
-                    <strong>CNPJ:</strong> {formatCNPJ(wizardData.uanData.cnpj)}
-                  </p>
-                )}
-                {wizardData.uanData.tipo_uan && (
-                  <p>
-                    <strong>Tipo UAN:</strong> {TIPOS_UAN[wizardData.uanData.tipo_uan]}
-                  </p>
-                )}
-                {wizardData.uanData.capacidade_atendimento && (
-                  <p>
-                    <strong>Capacidade:</strong> {wizardData.uanData.capacidade_atendimento} refeições/dia
-                  </p>
-                )}
-                {wizardData.uanData.telefone_principal && (
-                  <p>
-                    <strong>Telefone:</strong> {formatTelefone(wizardData.uanData.telefone_principal)}
-                  </p>
-                )}
-                {wizardData.uanData.cep && (
-                  <p>
-                    <strong>CEP:</strong> {formatCEP(wizardData.uanData.cep)}
-                  </p>
-                )}
-                {wizardData.uanData.descricao && (
-                  <p>
-                    <strong>Descrição:</strong> {wizardData.uanData.descricao}
-                  </p>
-                )}
+                <h4 className="font-medium mb-2">Visão geral da UAN</h4>
+                <div className="grid grid-cols-2">
+                  <span className="text-sm">Nome:</span>
+                  <span className="text-sm font-semibold">
+                    {formValues.organizationName}
+                  </span>
+                  {formValues.cnpj && (
+                    <>
+                      <span className="text-sm">CNPJ:</span>
+                      <span className="text-sm font-semibold">
+                        {formValues.cnpj}
+                      </span>
+                    </>
+                  )}
+                  {formValues.uanType && (
+                    <>
+                      <span className="text-sm">Tipo de UAN:</span>
+                      <span className="text-sm font-semibold">
+                        {
+                          TIPOS_UAN[
+                            formValues.uanType as keyof typeof TIPOS_UAN
+                          ]
+                        }
+                      </span>
+                    </>
+                  )}
+                  {formValues.capacity && (
+                    <>
+                      <span className="text-sm">Capacidade:</span>
+                      <span className="text-sm font-semibold">
+                        {formValues.capacity} refeições/dia
+                      </span>
+                    </>
+                  )}
+                  {formValues.mainPhone && (
+                    <>
+                      <span className="text-sm">Telefone:</span>
+                      <span className="text-sm font-semibold">
+                        {formValues.mainPhone}
+                      </span>
+                    </>
+                  )}
+                  {formValues.zipCode && (
+                    <>
+                      <span className="text-sm">CEP:</span>
+                      <span className="text-sm font-semibold">
+                        {formValues.zipCode}
+                      </span>
+                    </>
+                  )}
+                  {formValues.description && (
+                    <>
+                      <span className="text-sm">Descrição:</span>
+                      <span className="text-sm font-semibold">
+                        {formValues.description}
+                      </span>
+                    </>
+                  )}
+                </div>
               </Card>
 
               <Card className="p-4 mb-4">
@@ -427,8 +483,8 @@ export function OrganizationWizard({
                   {[
                     ...wizardData.selectedDepartments,
                     ...wizardData.customDepartments,
-                  ].length === 1 
-                    ? wizardData.template?.terminologia.departamento 
+                  ].length === 1
+                    ? wizardData.template?.terminologia.departamento
                     : `${wizardData.template?.terminologia.departamento}s`}
                 </h4>
                 <div className="space-y-3">
@@ -457,7 +513,10 @@ export function OrganizationWizard({
                   {[
                     ...wizardData.selectedDepartments,
                     ...wizardData.customDepartments,
-                  ].length === 1 ? "setor configurado" : "setores configurados"}.
+                  ].length === 1
+                    ? "departamento configurado"
+                    : "departamentos configurados"}
+                  .
                 </p>
               </div>
             </div>
@@ -469,10 +528,9 @@ export function OrganizationWizard({
     }
   };
 
-  // 3 steps para UANs
   const steps = [
-    { number: 1, title: "Informações da UAN", icon: Building2 },
-    { number: 2, title: "Setores", icon: Users },
+    { number: 1, title: "UAN", icon: Building2 },
+    { number: 2, title: "Departamentos", icon: Users },
     { number: 3, title: "Resumo", icon: CheckCircle },
   ];
 
@@ -483,7 +541,8 @@ export function OrganizationWizard({
           Configuração da UAN
         </h1>
         <p className="text-sm sm:text-base text-center text-muted-foreground mb-6">
-          Vamos configurar sua Unidade de Alimentação e Nutrição para começar a gerenciar os setores
+          Vamos configurar sua Unidade de Alimentação e Nutrição para que você
+          possa começar a gerenciar todos os departamentos
         </p>
 
         <Progress
@@ -549,12 +608,12 @@ export function OrganizationWizard({
             Passo {currentStep}: {steps[currentStep - 1]?.title || "Passo"}
           </CardTitle>
           <CardDescription>
-            {currentStep === 1 && "Informe o nome da sua Unidade de Alimentação e Nutrição"}
+            {currentStep === 1 &&
+              "Informe as informações básicas sobre sua UAN"}
             {currentStep === 2 &&
-              "Selecione os setores que sua UAN possui"}
+              "Selecione os departamentos que fazem parte da sua UAN"}
             {currentStep === 3 &&
-              "Configure as especializações para cada setor"}
-            {currentStep === 4 && "Revise as configurações antes de finalizar"}
+              "Revise todas as informações antes de finalizar"}
           </CardDescription>
         </CardHeader>
         <CardContent>{renderStepContent()}</CardContent>
@@ -567,21 +626,29 @@ export function OrganizationWizard({
           disabled={currentStep === 1}
           className="order-2 sm:order-1"
         >
-          Anterior
+          Voltar
         </Button>
 
         <div className="flex gap-2 order-1 sm:order-2">
           {currentStep < getTotalSteps() ? (
-            <Button onClick={nextStep} disabled={!canProceed()} className="w-full sm:w-auto">
-              Próximo
+            <Button
+              onClick={handleNextStep}
+              disabled={!canProceed()}
+              className="w-full sm:w-auto"
+            >
+              Avançar
             </Button>
           ) : (
             <Button
               onClick={handleSubmit}
-              disabled={!canProceed() || isLoading}
+              disabled={isFinishDisabled}
               className="w-full sm:w-auto"
             >
-              {isLoading ? "Criando..." : "Finalizar Configuração"}
+              {isLoading
+                ? "Criando..."
+                : isProfilesLoading
+                ? "Carregando perfis..."
+                : "Finalizar e Criar UAN"}
             </Button>
           )}
         </div>

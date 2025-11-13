@@ -2,10 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Package, CheckCircle, Clock, Info } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Package,
+  CheckCircle,
+  Clock,
+  Info,
+  LogOut,
+} from "lucide-react";
 import { OrganizationWizard } from "@/components/wizard/OrganizationWizard";
 import { InviteEmployees } from "@/components/onboarding/InviteEmployees";
 import { ConvidadoPor } from "@/components/onboarding/ConvidadoPor";
@@ -17,33 +31,63 @@ import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { supabase } from "@/lib/supabaseClient";
+import { Invite } from "@/types/models/invite";
 
 export default function OnboardingPage() {
   const [acceptingInvite, setAcceptingInvite] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const { user } = useAuth();
   const { invites, loading, hasOrganization } = useOnboarding();
-  const { state, setChoice, setWizardComplete, setInvitesComplete, addAcceptedInvite, resetToChoice, resetToWizard, clearOnboardingState } = useOnboardingState();
+  const {
+    state,
+    setChoice,
+    setWizardComplete,
+    setInvitesComplete,
+    addAcceptedInvite,
+    resetToChoice,
+    resetToWizard,
+    clearOnboardingState,
+  } = useOnboardingState();
   const router = useRouter();
   const { isNavigating, setIsNavigating } = useNavigation();
   const { refreshAll } = useProfile();
 
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
+      await supabase.auth.signOut();
+      toast.success("Logout realizado com sucesso");
+      router.push("/login");
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      toast.error("Erro ao fazer logout");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   // Função para formatar nome do perfil
   const formatProfileName = (profileName?: string) => {
     if (!profileName) return "Perfil";
-    
+
     const profileMap: Record<string, string> = {
-      'gestor': 'Gestor',
-      'cozinheiro': 'Cozinheiro',
-      'estoquista': 'Estoquista',
-      'master': 'Master'
+      gestor: "Gestor",
+      cozinheiro: "Cozinheiro",
+      estoquista: "Estoquista",
+      master: "Master",
     };
-    
+
     return profileMap[profileName.toLowerCase()] || profileName;
   };
 
   // Redirecionamento automático para dashboard se não houver convites
   useEffect(() => {
-    if (!loading && invites.length === 0 && state.choice?.tipo === 'funcionario') {
+    if (
+      !loading &&
+      invites.length === 0 &&
+      state.choice?.tipo === "funcionario"
+    ) {
       console.log("Redirecionamento automático em 5 segundos...");
       const timer = setTimeout(() => {
         console.log("Redirecionando para dashboard...");
@@ -58,21 +102,24 @@ export default function OnboardingPage() {
     }
   }, [loading, invites.length, state.choice?.tipo, router]);
 
-  const handleChoice = (tipo: 'gestor' | 'funcionario', perfil?: 'cozinheiro' | 'estoquista') => {
+  const handleChoice = (
+    tipo: "gestor" | "funcionario",
+    perfil?: "cozinheiro" | "estoquista"
+  ) => {
     setChoice({ tipo, perfil });
   };
 
-  const handleAcceptInvite = async (convite: Convite) => {
+  const handleAcceptInvite = async (convite: Invite) => {
     if (!user?.id) return;
 
     try {
       setAcceptingInvite(convite.id);
-      await InviteService.acceptInvite(convite.token_invite, user.id);
+      await InviteService.acceptInvite(convite.inviteToken);
       toast.success("Convite aceito com sucesso!");
-      
+
       // Adicionar convite aceito ao estado
       addAcceptedInvite(convite.id);
-      
+
       // Redirecionar para dashboard
       refreshAll();
       router.push("/dashboard");
@@ -102,7 +149,7 @@ export default function OnboardingPage() {
   };
 
   const handleBack = () => {
-    if (state.step === 'invites') {
+    if (state.step === "invites") {
       resetToWizard();
     } else {
       resetToChoice();
@@ -110,10 +157,22 @@ export default function OnboardingPage() {
   };
 
   // Renderização baseada no step atual
-  if (state.step === 'invites' && state.organizationData) {
+  if (state.step === "invites" && state.organizationData) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto py-6">
+          <div className="flex justify-end mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              {loggingOut ? "Saindo..." : "Sair"}
+            </Button>
+          </div>
           {!isNavigating && (
             <InviteEmployees
               organizationId={state.organizationData.id}
@@ -131,23 +190,30 @@ export default function OnboardingPage() {
               <p className="mt-2 text-muted-foreground">Redirecionando...</p>
             </div>
           )}
-
         </div>
       </div>
     );
   }
 
-  if (state.step === 'wizard' && state.choice?.tipo === 'gestor') {
+  if (state.step === "wizard" && state.choice?.tipo === "gestor") {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto py-6">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-          >
-            ← Voltar
-          </Button>
+          <div className="flex justify-between items-center mb-6">
+            <Button variant="ghost" onClick={handleBack}>
+              ← Voltar
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              {loggingOut ? "Saindo..." : "Sair"}
+            </Button>
+          </div>
           <OrganizationWizard
             userId={user?.id || ""}
             onComplete={handleWizardComplete}
@@ -157,52 +223,64 @@ export default function OnboardingPage() {
     );
   }
 
-  if (state.choice?.tipo === 'funcionario') {
+  if (state.choice?.tipo === "funcionario") {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto py-4 px-4 sm:py-6">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-4 sm:mb-6"
-          >
-            ← Voltar
-          </Button>
-          
+          <div className="flex justify-between items-center mb-4 sm:mb-6">
+            <Button variant="ghost" onClick={handleBack}>
+              ← Voltar
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              {loggingOut ? "Saindo..." : "Sair"}
+            </Button>
+          </div>
+
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-6 sm:mb-8">
               <h1 className="text-2xl sm:text-3xl font-bold mb-4">
                 Bem-vindo como Funcionário!
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Você foi convidado para participar de uma UAN. 
-                Aceite um dos convites abaixo para começar.
+                Você foi convidado para participar de uma UAN. Aceite um dos
+                convites abaixo para começar.
               </p>
             </div>
 
             {loading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-2 text-muted-foreground">Carregando convites...</p>
+                <p className="mt-2 text-muted-foreground">
+                  Carregando convites...
+                </p>
               </div>
             ) : invites.length === 0 ? (
               <Card className="text-center py-12">
                 <CardContent>
                   <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Nenhum convite encontrado</h3>
+                  <h3 className="text-lg font-medium mb-2">
+                    Nenhum convite encontrado
+                  </h3>
                   <p className="text-muted-foreground mb-6">
                     Você ainda não recebeu convites para participar de UANs.
                   </p>
                   <div className="space-y-3">
-                                      <Button 
-                    onClick={() => {
-                      refreshAll();
-                      router.push("/dashboard")
-                    }}
-                    className="w-full sm:w-auto"
-                  >
-                    Ir para Dashboard
-                  </Button>
+                    <Button
+                      onClick={() => {
+                        refreshAll();
+                        router.push("/dashboard");
+                      }}
+                      className="w-full sm:w-auto"
+                    >
+                      Ir para Dashboard
+                    </Button>
                     <p className="text-xs text-muted-foreground">
                       Você será redirecionado automaticamente em 5 segundos...
                     </p>
@@ -211,45 +289,51 @@ export default function OnboardingPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                                 {invites.map((convite) => (
-                   <Card key={convite.id} className="p-4 sm:p-6">
-                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                       <div className="flex-1">
-                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-                           <div className="flex items-center gap-2">
-                             <Building2 className="h-5 w-5 text-primary" />
-                             <h3 className="text-base sm:text-lg font-medium">
-                               {convite.organizacao?.nome || "UAN"}
-                             </h3>
-                           </div>
-                           <Badge variant="outline" className="w-fit">
-                             {formatProfileName(convite.perfil?.nome)}
-                           </Badge>
-                         </div>
-                        
+                {invites.map((invite) => (
+                  <Card key={invite.id} className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-5 w-5 text-primary" />
+                            <h3 className="text-base sm:text-lg font-medium">
+                              {invite.organization?.name || "UAN"}
+                            </h3>
+                          </div>
+                          <Badge variant="outline" className="w-fit">
+                            {formatProfileName(invite.profile?.name)}
+                          </Badge>
+                        </div>
+
                         <div className="space-y-2 text-sm text-muted-foreground">
-                          <ConvidadoPor 
-                            usuario={convite.convidado_por_usuario}
-                            isLoading={!convite.convidado_por_usuario}
-                          />
+                          {/* <ConvidadoPor
+                            user={{
+                              id: invite.invitedBy?.id || "",
+                            }}
+                            isLoading={!invite.convidado_por_usuario}
+                          /> */}
                           <p>
-                            <strong>Data do convite:</strong>{" "}
-                            {new Date(convite.created_at).toLocaleDateString('pt-BR')}
+                            <strong>Data do invite:</strong>{" "}
+                            {new Date(invite.createdAt).toLocaleDateString(
+                              "pt-BR"
+                            )}
                           </p>
                           <p>
                             <strong>Expira em:</strong>{" "}
-                            {new Date(convite.expira_em).toLocaleDateString('pt-BR')}
+                            {new Date(invite.expiresAt).toLocaleDateString(
+                              "pt-BR"
+                            )}
                           </p>
                         </div>
                       </div>
 
-                                             <div className="flex flex-col gap-2 sm:min-w-[120px]">
-                         <Button
-                           onClick={() => handleAcceptInvite(convite)}
-                           disabled={acceptingInvite === convite.id}
-                           className="w-full sm:w-auto"
-                         >
-                          {acceptingInvite === convite.id ? (
+                      <div className="flex flex-col gap-2 sm:min-w-[120px]">
+                        <Button
+                          onClick={() => handleAcceptInvite(invite)}
+                          disabled={acceptingInvite === invite.id}
+                          className="w-full sm:w-auto"
+                        >
+                          {acceptingInvite === invite.id ? (
                             <>
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                               Aceitando...
@@ -261,8 +345,8 @@ export default function OnboardingPage() {
                             </>
                           )}
                         </Button>
-                        
-                        {new Date(convite.expira_em) < new Date() && (
+
+                        {new Date(invite.expiresAt) < new Date() && (
                           <Badge variant="destructive" className="text-xs">
                             <Clock className="h-3 w-3 mr-1" />
                             Expirado
@@ -284,6 +368,19 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-6 px-4 sm:py-12">
         <div className="max-w-4xl mx-auto">
+          <div className="flex justify-end mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              {loggingOut ? "Saindo..." : "Sair"}
+            </Button>
+          </div>
+
           <div className="text-center mb-8 sm:mb-12">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
               Bem-vindo ao Sistema de Gestão de UANs!
@@ -295,9 +392,9 @@ export default function OnboardingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Opção Gestor */}
-            <Card 
+            <Card
               className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-              onClick={() => handleChoice('gestor')}
+              onClick={() => handleChoice("gestor")}
             >
               <CardHeader className="text-center">
                 <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center">
@@ -305,7 +402,8 @@ export default function OnboardingPage() {
                 </div>
                 <CardTitle className="text-2xl">Gestor</CardTitle>
                 <CardDescription className="text-base">
-                  Crie e gerencie sua própria Unidade de Alimentação e Nutrição
+                  Cadastre e gerencie sua própria empresa e suas Unidades de
+                  Alimentação e Nutrição
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center">
@@ -322,9 +420,9 @@ export default function OnboardingPage() {
             </Card>
 
             {/* Opção Funcionário */}
-            <Card 
+            <Card
               className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-              onClick={() => handleChoice('funcionario')}
+              onClick={() => handleChoice("funcionario")}
             >
               <CardHeader className="text-center">
                 <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center">
@@ -349,20 +447,21 @@ export default function OnboardingPage() {
             </Card>
           </div>
 
-                      {invites.length > 0 && (
-             <div className="mt-8 sm:mt-12 text-center">
-               <p className="text-sm sm:text-base text-muted-foreground mb-4">
-                 Você tem {invites.length} convite{invites.length > 1 ? 's' : ''} pendente{invites.length > 1 ? 's' : ''}
-               </p>
-               <Button 
-                 variant="outline" 
-                 onClick={() => handleChoice('funcionario')}
-                 className="w-full sm:w-auto"
-               >
-                 Ver Convites Pendentes
-               </Button>
-             </div>
-           )}
+          {invites.length > 0 && (
+            <div className="mt-8 sm:mt-12 text-center">
+              <p className="text-sm sm:text-base text-muted-foreground mb-4">
+                Você tem {invites.length} convite{invites.length > 1 ? "s" : ""}{" "}
+                pendente{invites.length > 1 ? "s" : ""}
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => handleChoice("funcionario")}
+                className="w-full sm:w-auto"
+              >
+                Ver Convites Pendentes
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

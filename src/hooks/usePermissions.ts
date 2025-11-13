@@ -1,116 +1,120 @@
 import { useContext, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { PermissionService } from "@/lib/services/permissionService";
-import { UsuarioPermissoes } from "@/types/permissions";
+import { PermissionService } from "@/lib/services/client/permission-service";
+import { UserPermissions } from "@/types/models/profile";
 
 export function usePermissions() {
   const { user } = useAuth();
   const { activeProfile } = useProfile();
-  const [permissoes, setPermissoes] = useState<UsuarioPermissoes | null>(null);
+  const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user && activeProfile) {
-      loadPermissoes();
+      loadPermissions();
     } else {
-      setPermissoes(null);
+      setPermissions(null);
       setLoading(false);
     }
   }, [user, activeProfile]);
 
-  const loadPermissoes = async () => {
-    if (!user || !activeProfile) return;
+  const loadPermissions = async () => {
+    if (
+      !user ||
+      !activeProfile ||
+      !activeProfile.userOrganization?.organizationId
+    )
+      return;
 
     try {
       setLoading(true);
-      const data = await PermissionService.getUsuarioPermissoes(
-        user.id,
-        activeProfile.organizacao_id
+      const data = await PermissionService.getUserPermissions(
+        activeProfile.userOrganization?.organizationId
       );
-      setPermissoes(data);
+      setPermissions(data);
     } catch (error) {
       console.error("Erro ao carregar permissões:", error);
-      setPermissoes(null);
+      setPermissions(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const temPermissao = (funcionalidade: string, acao: string): boolean => {
+  const hasPermission = (functionality: string, action: string): boolean => {
     if (process.env.NODE_ENV === "development") return true;
-    if (!permissoes) return false;
+    if (!permissions) return false;
 
     // Usuários master têm acesso total
-    const temPerfilMaster = permissoes.perfis.some(
-      (perfil) => perfil.nome === "master"
+    const hasMasterProfile = permissions.profiles.some(
+      (profile) => profile.name === "master"
     );
-    if (temPerfilMaster) return true;
+    if (hasMasterProfile) return true;
 
     // Verificar permissão específica
-    return permissoes.permissoes.some((permissao) => {
+    return permissions.permissions.some((permission) => {
       if (
-        permissao.funcionalidade?.nome === funcionalidade &&
-        permissao.acao === acao
+        permission.functionality?.name === functionality &&
+        permission.action === action
       ) {
-        return permissao.ativo;
+        return permission.active;
       }
       return false;
     });
   };
 
-  const temPermissaoVisualizar = (funcionalidade: string): boolean => {
-    return temPermissao(funcionalidade, "visualizar");
+  const hasPermissionToView = (functionality: string): boolean => {
+    return hasPermission(functionality, "visualizar");
   };
 
-  const temPermissaoCriar = (funcionalidade: string): boolean => {
-    return temPermissao(funcionalidade, "criar");
+  const hasPermissionToCreate = (functionality: string): boolean => {
+    return hasPermission(functionality, "criar");
   };
 
-  const temPermissaoEditar = (funcionalidade: string): boolean => {
-    return temPermissao(funcionalidade, "editar");
+  const hasPermissionToEdit = (functionality: string): boolean => {
+    return hasPermission(functionality, "editar");
   };
 
-  const temPermissaoExcluir = (funcionalidade: string): boolean => {
-    return temPermissao(funcionalidade, "excluir");
+  const hasPermissionToDelete = (functionality: string): boolean => {
+    return hasPermission(functionality, "excluir");
   };
 
-  const temPermissaoGerenciar = (funcionalidade: string): boolean => {
-    return temPermissao(funcionalidade, "gerenciar");
+  const hasPermissionToManage = (functionality: string): boolean => {
+    return hasPermission(functionality, "gerenciar");
   };
 
   const isMaster = (): boolean => {
-    if (!permissoes) return false;
-    return permissoes.perfis.some((perfil) => perfil.nome === "master");
+    if (!permissions) return false;
+    return permissions.profiles.some((profile) => profile.name === "master");
   };
 
   const isGestor = (): boolean => {
-    if (!permissoes) return false;
-    return permissoes.perfis.some(
-      (perfil) => perfil.nome === "gestor" || perfil.nome === "master"
+    if (!permissions) return false;
+    return permissions.profiles.some(
+      (profile) => profile.name === "gestor" || profile.name === "master"
     );
   };
 
-  const getPerfis = () => {
-    return permissoes?.perfis || [];
+  const getProfiles = () => {
+    return permissions?.profiles || [];
   };
 
-  const refreshPermissoes = () => {
-    loadPermissoes();
+  const refreshPermissions = () => {
+    loadPermissions();
   };
 
   return {
-    permissoes,
+    permissions,
     loading,
-    temPermissao,
-    temPermissaoVisualizar,
-    temPermissaoCriar,
-    temPermissaoEditar,
-    temPermissaoExcluir,
-    temPermissaoGerenciar,
+    hasPermission,
+    hasPermissionToView,
+    hasPermissionToCreate,
+    hasPermissionToEdit,
+    hasPermissionToDelete,
+    hasPermissionToManage,
     isMaster,
     isGestor,
-    getPerfis,
-    refreshPermissoes,
+    getProfiles,
+    refreshPermissions,
   };
 }

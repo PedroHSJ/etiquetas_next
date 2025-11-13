@@ -1,11 +1,11 @@
-import { Perfil } from './permissions';
+import { Profile } from "./models/profile";
 
 export interface Convite {
   id: string;
   email: string;
-  organizacao_id: string;
-  perfil_id: string;
-  status: 'pendente' | 'aceito' | 'expirado' | 'rejeitado' | 'cancelado';
+  organization_id: string;
+  profile_id: string;
+  status: "pendente" | "aceito" | "expirado" | "rejeitado" | "cancelado";
   token_invite: string;
   expira_em: string;
   convidado_por: string;
@@ -16,10 +16,10 @@ export interface Convite {
   rejeitado_por?: string;
   // Campos relacionados
   organizacao?: {
-    nome: string;
-    tipo: string;
+    name: string;
+    type: string;
   };
-  perfil?: Perfil;
+  perfil?: Profile;
   convidado_por_usuario?: {
     id: string;
     nome: string;
@@ -29,22 +29,22 @@ export interface Convite {
 
 export interface UsuarioOrganizacao {
   id: string;
-  usuario_id: string;
-  organizacao_id: string;
-  perfil_id: string;
-  ativo: boolean;
-  data_entrada: string;
-  data_saida?: string;
+  user_id: string;
+  organization_id: string;
+  profile_id: string;
+  active: boolean;
+  entry_date: string;
+  exit_date?: string;
   created_at: string;
   // Campos relacionados
   organizacao?: {
-    nome: string;
-    tipo: string;
+    name: string;
+    type: string;
   };
-  perfil?: Perfil;
+  perfil?: Profile;
 }
 
 export interface OnboardingChoice {
-  tipo: 'gestor' | 'funcionario';
-  perfil?: 'cozinheiro' | 'estoquista';
+  tipo: "gestor" | "funcionario";
+  perfil?: "cozinheiro" | "estoquista";
 }

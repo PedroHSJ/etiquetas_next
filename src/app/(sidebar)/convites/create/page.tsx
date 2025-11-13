@@ -48,19 +48,14 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { useOrganization } from "@/contexts/OrganizationContext";
-
-interface Perfil {
-  id: string;
-  nome: string;
-  descricao: string;
-}
+import { Profile } from "@/types";
 
 export default function CreateConvitePage() {
   const router = useRouter();
   const { userId } = useAuth();
   const { selectedOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
-  const [perfis, setPerfis] = useState<Perfil[]>([]);
+  const [perfis, setPerfis] = useState<Profile[]>([]);
 
   // Estados do formulário
   const [email, setEmail] = useState("");
@@ -141,7 +136,7 @@ export default function CreateConvitePage() {
             <div>
               <h1 className="text-3xl font-bold">Criar Convite</h1>
               <p className="text-muted-foreground">
-                Convide novos usuários para {selectedOrganization?.nome}
+                Convide novos usuários para {selectedOrganization?.name}
               </p>
             </div>
           </div>
@@ -187,9 +182,9 @@ export default function CreateConvitePage() {
                     {perfis.map((perfil) => (
                       <SelectItem key={perfil.id} value={perfil.id}>
                         <div className="flex flex-col">
-                          <span className="font-medium">{perfil.nome}</span>
+                          <span className="font-medium">{perfil.name}</span>
                           <span className="text-sm text-muted-foreground">
-                            {perfil.descricao}
+                            {perfil.description}
                           </span>
                         </div>
                       </SelectItem>

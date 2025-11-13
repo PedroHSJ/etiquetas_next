@@ -24,16 +24,17 @@ import {
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { OrganizationService } from "@/lib/services/organization-service";
+import { OrganizationService } from "@/lib/services/client/organization-service";
 
 export default function DashboardPage() {
   const { activeOrganizationDetails, detailsLoading } = useOrganization();
-  const {userId} = useAuth();
-  const {data, isLoading} = useQuery({
-    queryKey: ['organization', userId],
-    enabled: !!userId,
+  const { session } = useAuth();
+  const accessToken = session?.access_token;
+  const { isLoading } = useQuery({
+    queryKey: ["organization", accessToken],
+    enabled: !!accessToken,
     queryFn: async () => {
-      return await OrganizationService.getOrganizations(userId!);
+      return await OrganizationService.getOrganizations();
     },
   });
 
