@@ -22,16 +22,17 @@ export function PermissionGuard({
   const { hasPermission, loading } = usePermissions();
 
   if (loading) {
-    return (
-      loadingFallback || (
-        <div className="flex items-center justify-center p-4">
-          <Spinner />
-          <span className="ml-2 text-sm text-muted-foreground">
-            Verificando permissões...
-          </span>
-        </div>
-      )
-    );
+    return null;
+    // return (
+    //   loadingFallback || (
+    //     <div className="flex items-center justify-center p-4">
+    //       <Spinner />
+    //       <span className="ml-2 text-sm text-muted-foreground">
+    //         Verificando permissões...
+    //       </span>
+    //     </div>
+    //   )
+    // );
   }
 
   if (!hasPermission(funcionalidade, acao)) {

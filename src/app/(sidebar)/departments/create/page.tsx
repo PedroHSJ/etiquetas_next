@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,40 +21,35 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { NavigationButton } from "@/components/ui/navigation-button";
+import { DepartmentService } from "@/lib/services/client/department-service";
 
 export default function CreateDepartmentPage() {
   const router = useRouter();
-  const { userId } = useAuth();
   const { organizations, selectedOrganization } = useOrganization();
 
   const [formData, setFormData] = useState({
-    nome: "",
-    organizacao_id: selectedOrganization?.id || "",
-    tipo_departamento: "",
+    name: "",
+    organizationId: selectedOrganization?.id || "",
+    departmentType: "",
   });
   const [saving, setSaving] = useState(false);
 
   // Atualizar organização quando selectedOrganization mudar
   useEffect(() => {
-    if (selectedOrganization && !formData.organizacao_id) {
+    if (selectedOrganization && !formData.organizationId) {
       setFormData((prev) => ({
         ...prev,
-        organizacao_id: selectedOrganization.id,
+        organizationId: selectedOrganization.id,
       }));
     }
-  }, [selectedOrganization, formData.organizacao_id]);
+  }, [selectedOrganization, formData.organizationId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.nome.trim() ||
-      !formData.organizacao_id ||
-      !formData.tipo_departamento
-    ) {
+    if (!formData.name.trim() || !formData.organizationId || !formData.departmentType) {
       toast.error("Por favor, preencha todos os campos");
       return;
     }
@@ -63,23 +57,11 @@ export default function CreateDepartmentPage() {
     setSaving(true);
 
     try {
-      const { error } = await supabase.from("departamentos").insert({
-        nome: formData.nome.trim(),
-        organizacao_id: formData.organizacao_id,
-        tipo_departamento: formData.tipo_departamento,
+      await DepartmentService.createDepartment({
+        name: formData.name.trim(),
+        organizationId: formData.organizationId,
+        departmentType: formData.departmentType,
       });
-
-      if (error) {
-        console.error("Erro ao criar departamento:", error);
-        if (error.code === "23505") {
-          toast.error(
-            "Já existe um departamento com este nome nesta organização"
-          );
-        } else {
-          toast.error("Erro ao criar departamento");
-        }
-        return;
-      }
 
       toast.success("Departamento criado com sucesso!");
       router.push("/departments/list");
@@ -152,9 +134,9 @@ export default function CreateDepartmentPage() {
               <div className="space-y-2">
                 <Label htmlFor="organizacao">Organização</Label>
                 <Select
-                  value={formData.organizacao_id}
+                  value={formData.organizationId}
                   onValueChange={(value) =>
-                    handleInputChange("organizacao_id", value)
+                    handleInputChange("organizationId", value)
                   }
                   disabled={saving}
                   required
@@ -171,7 +153,7 @@ export default function CreateDepartmentPage() {
                               Atual
                             </span>
                           )}
-                          {org.nome}
+                          {org.name}
                         </div>
                       </SelectItem>
                     ))}
@@ -179,7 +161,7 @@ export default function CreateDepartmentPage() {
                 </Select>
                 {selectedOrganization && (
                   <p className="text-xs text-muted-foreground">
-                    A organização atual ({selectedOrganization.nome}) está
+                    A organização atual ({selectedOrganization.name}) está
                     pré-selecionada
                   </p>
                 )}
@@ -189,8 +171,8 @@ export default function CreateDepartmentPage() {
                 <Label htmlFor="nome">Nome do Departamento</Label>
                 <Input
                   id="nome"
-                  value={formData.nome}
-                  onChange={(e) => handleInputChange("nome", e.target.value)}
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
                   placeholder="Digite o nome do departamento"
                   disabled={saving}
                   required
@@ -200,9 +182,9 @@ export default function CreateDepartmentPage() {
               <div className="space-y-2">
                 <Label htmlFor="tipo">Tipo de Departamento</Label>
                 <Select
-                  value={formData.tipo_departamento}
+                  value={formData.departmentType}
                   onValueChange={(value) =>
-                    handleInputChange("tipo_departamento", value)
+                    handleInputChange("departmentType", value)
                   }
                   disabled={saving}
                   required

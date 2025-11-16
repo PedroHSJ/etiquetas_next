@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +25,6 @@ import { formatCnpj } from "@/lib/utils";
 import { Organization } from "@/types/models/organization";
 import { useQuery } from "@tanstack/react-query";
 import { OrganizationService } from "@/lib/services/client/organization-service";
-import { Department } from "@/types/models/department";
 
 interface Member {
   id: string;
@@ -50,14 +48,10 @@ interface Member {
 
 export default function Page() {
   const { userId } = useAuth();
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [filteredOrganizations, setfilteredOrganizations] = useState<
     Organization[]
   >([]);
   const [selectedOrganization, setSelectedOrganization] = useState<
-    string | undefined
-  >();
-  const [selectedDepartment, setSelectedDepartment] = useState<
     string | undefined
   >();
   const [searchTerm, setSearchTerm] = useState("");
@@ -97,7 +91,7 @@ export default function Page() {
     {
       id: "created_at",
       key: "created_at",
-      label: "Cadastrado",
+      label: "Cadastrado em",
       accessor: (row) => row.createdAt,
       visible: true,
       render: (value) => (
@@ -126,29 +120,6 @@ export default function Page() {
     },
     enabled: !!userId,
   });
-
-  const fetchDepartments = async (organizationId?: string) => {
-    let query = supabase.from("departamentos").select("*").order("nome");
-
-    if (organizationId) {
-      query = query.eq("organizacao_id", organizationId);
-    }
-
-    const { data, error } = await query;
-
-    if (!error && data) {
-      setDepartments(data);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedOrganization) {
-      fetchDepartments(selectedOrganization);
-      setSelectedDepartment(undefined);
-    } else if (userId) {
-      fetchDepartments();
-    }
-  }, [selectedOrganization]);
 
   // Filtros
   useEffect(() => {
@@ -236,7 +207,6 @@ export default function Page() {
 
   const clearFilters = () => {
     setSelectedOrganization(undefined);
-    setSelectedDepartment(undefined);
     setSearchTerm("");
   };
 

@@ -9,9 +9,10 @@ export const PermissionService = {
     const { data, status } = await api.get<UserPermissions>(`/permissions`, {
       params: { organizationId },
     });
-    if (!data || status !== 200)
+    if (status !== 200)
       throw new Error("Não foi possível buscar permissões");
-    return data;
+    // Quando não há permissões, a API pode retornar null; tratamos como "sem permissões"
+    return (data as UserPermissions | null) ?? ({} as UserPermissions);
   },
 
   /**

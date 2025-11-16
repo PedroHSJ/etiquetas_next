@@ -7,7 +7,7 @@ export interface DepartmentResponseDto {
   name: string;
   organizationId: string;
   departmentType: string | null;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface DepartmentWithOrganizationResponseDto

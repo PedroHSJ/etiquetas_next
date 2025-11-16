@@ -182,16 +182,11 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
           managerProfileId: options.managerProfileId,
         });
 
-        toast.success("Organização configurada com sucesso!");
         return { success: true, organizationId: result.organizationId };
       } catch (error) {
-        console.error("Error while creating organization:", error);
-        toast.error(
-          `Não foi possível configurar a organização: ${
-            error instanceof Error ? error.message : "Erro desconhecido"
-          }`
+        throw new Error(
+          `${error instanceof Error ? error.message : "Erro desconhecido"}`
         );
-        return { success: false };
       }
     },
     [createOrganizationMutation, wizardData]

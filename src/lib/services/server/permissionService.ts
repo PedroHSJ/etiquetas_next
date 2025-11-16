@@ -163,7 +163,6 @@ export class PermissionBackendService {
           id,
           name,
           description,
-          category,
           route,
           active,
           created_at
@@ -175,7 +174,7 @@ export class PermissionBackendService {
 
     if (permError) {
       console.error("Erro ao buscar permissões:", permError);
-      return null;
+      throw new Error("Erro ao buscar permissões");
     }
 
     const permissoes: PermissionEntity[] = (permissions || []).map((perm) => {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,78 +24,41 @@ import {
   GenericTableColumn,
 } from "@/components/ui/generic-table";
 import { capitalize } from "@/lib/utils";
-interface Department {
-  id: string;
-  nome: string;
-  organizacao_id: string;
-  tipo_departamento: string;
-  created_at: string;
-  organizacao?: {
-    nome: string;
-  };
-  [key: string]: unknown;
-}
+import { DepartmentWithOrganization } from "@/types/models/department";
+import { DepartmentService } from "@/lib/services/client/department-service";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function DepartmentsListPage() {
   const { userId } = useAuth();
   const { selectedOrganization } = useOrganization();
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingDepartment, setDeletingDepartment] =
-    useState<Department | null>(null);
+    useState<DepartmentWithOrganization | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (userId) {
-      fetchDepartments();
-    }
-    if (selectedOrganization) {
-      fetchDepartments();
-    }
-  }, [userId, selectedOrganization]);
-
-  const fetchDepartments = async () => {
-    if (!userId) return;
-    if (!selectedOrganization) {
-      setDepartments([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from("departamentos")
-        .select(
-          `
-          *,
-          organizacao:organizacoes(nome)
-        `
-        )
-        .in(
-          "organizacao_id",
-          selectedOrganization ? [selectedOrganization.id] : []
-        )
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Erro ao buscar departamentos:", error);
-        toast.error("Erro ao carregar departamentos");
-        return;
+  const { data: departments = [], isLoading: isQueryLoading } = useQuery<
+    DepartmentWithOrganization[],
+    Error
+  >({
+    queryKey: ["departments", selectedOrganization?.id],
+    queryFn: async () => {
+      if (!userId || !selectedOrganization?.id) {
+        return [];
       }
+      return await DepartmentService.getDepartments({
+        organizationId: selectedOrganization.id,
+      });
+    },
+    enabled: !!userId && !!selectedOrganization?.id,
+  });
 
-      setDepartments(data || []);
-    } catch (error) {
-      console.error("Erro inesperado:", error);
-      toast.error("Erro inesperado ao carregar departamentos");
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    setLoading(isQueryLoading);
+  }, [isQueryLoading]);
 
-  const handleDeleteClick = (department: Department) => {
+  const handleDeleteClick = (department: DepartmentWithOrganization) => {
     setDeletingDepartment(department);
     setDeleteDialogOpen(true);
   };
@@ -110,12 +72,12 @@ export default function DepartmentsListPage() {
   };
 
   // Definir colunas da tabela
-  const departmentColumns: GenericTableColumn<Department>[] = [
+  const departmentColumns: GenericTableColumn<DepartmentWithOrganization>[] = [
     {
       id: "nome",
       key: "nome",
       label: "Nome",
-      accessor: (row) => row.nome,
+      accessor: (row) => row.name,
       visible: true,
       width: 300,
     },
@@ -123,7 +85,7 @@ export default function DepartmentsListPage() {
       id: "tipo_departamento",
       key: "tipo_departamento",
       label: "Tipo",
-      accessor: (row) => capitalize(row.tipo_departamento),
+      accessor: (row) => capitalize(row.departmentType || ""),
       visible: true,
       render: (value) => <Badge variant="secondary">{value as string}</Badge>,
     },
@@ -131,7 +93,7 @@ export default function DepartmentsListPage() {
       id: "created_at",
       key: "created_at",
       label: "Data de Criação",
-      accessor: (row) => row.created_at,
+      accessor: (row) => row.createdAt.toString(),
       visible: true,
       render: (value) => formatarData(value as string),
     },
@@ -142,19 +104,21 @@ export default function DepartmentsListPage() {
 
     setDeleting(true);
     try {
-      const { error } = await supabase
-        .from("departamentos")
-        .delete()
-        .eq("id", deletingDepartment.id);
+      const success = await DepartmentService.deleteDepartment(
+        deletingDepartment.id
+      );
 
-      if (error) {
-        console.error("Erro ao excluir departamento:", error);
+      if (!success) {
         toast.error("Erro ao excluir departamento");
         return;
       }
 
       toast.success("Departamento excluído com sucesso!");
-      await fetchDepartments();
+      if (selectedOrganization?.id) {
+        queryClient.invalidateQueries({
+          queryKey: ["departments", selectedOrganization.id],
+        });
+      }
     } catch (error) {
       console.error("Erro inesperado:", error);
       toast.error("Erro inesperado ao excluir departamento");
@@ -251,24 +215,24 @@ export default function DepartmentsListPage() {
           columns={departmentColumns}
           searchable
           searchPlaceholder="Buscar departamentos..."
-          rowActions={(row) => (
-            <div className="flex gap-1">
-              <NavigationButton
-                href={`/departments/edit/${row.id}`}
-                variant="outline"
-                size="sm"
-              >
-                <Edit className="h-4 w-4" />
-              </NavigationButton>
-              {/* <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDeleteClick(row)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button> */}
-            </div>
-          )}
+          // rowActions={(row) => (
+          //   <div className="flex gap-1">
+          //     <NavigationButton
+          //       href={`/departments/edit/${row.id}`}
+          //       variant="outline"
+          //       size="sm"
+          //     >
+          //       <Edit className="h-4 w-4" />
+          //     </NavigationButton>
+          //     {/* <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => handleDeleteClick(row)}
+          //     >
+          //       <Trash2 className="h-4 w-4" />
+          //     </Button> */}
+          //   </div>
+          // )}
         />
       )}
 
@@ -282,7 +246,7 @@ export default function DepartmentsListPage() {
             </DialogTitle>
             <DialogDescription>
               Tem certeza que deseja excluir o departamento{" "}
-              <strong>{deletingDepartment?.nome}</strong>?
+              <strong>{deletingDepartment?.name}</strong>?
               <br />
               <br />
               Esta ação não pode ser desfeita e todos os integrantes e dados

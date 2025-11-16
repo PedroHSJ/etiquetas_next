@@ -6,25 +6,30 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Page() {
   const { userId } = useAuth();
-  const { refetchOrganizations, onOrganizationCreated } = useOrganization();
+  const { refetchOrganizations } = useOrganization();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const handleWizardComplete = async () => {
     try {
       // Recarregar as organizações para atualizar o TeamSwitcher
       await refetchOrganizations();
       toast.success("Organização criada com sucesso!");
-
+      //Invalid query keys
+      await queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      await queryClient.invalidateQueries({ queryKey: ["organizations"] });
       // Usar router.push em vez de redirect para melhor UX
-      router.push("/dashboard");
+      router.push("/organizations/list");
     } catch (error) {
-      console.error("Erro ao recarregar organizações:", error);
-      // Mesmo assim mostrar sucesso e redirecionar
-      toast.success("Organização criada com sucesso!");
-      router.push("/dashboard");
+      toast.error(
+        `Não foi possível criar a organização: ${
+          error instanceof Error ? error.message : "Erro desconhecido"
+        }`
+      );
     }
   };
 

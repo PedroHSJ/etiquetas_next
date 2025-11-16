@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,18 +26,8 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { NavigationButton } from "@/components/ui/navigation-button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface Department {
-  id: string;
-  nome: string;
-  organizacao_id: string;
-  tipo_departamento: string;
-  created_at: string;
-  organizacao?: {
-    nome: string;
-    user_id: string;
-  };
-}
+import { DepartmentWithOrganization } from "@/types/models/department";
+import { DepartmentService } from "@/lib/services/client/department-service";
 
 export default function EditDepartmentPage() {
   const params = useParams();
@@ -46,11 +35,11 @@ export default function EditDepartmentPage() {
   const { userId } = useAuth();
   const { organizations, selectedOrganization } = useOrganization();
 
-  const [department, setDepartment] = useState<Department | null>(null);
+  const [department, setDepartment] = useState<DepartmentWithOrganization | null>(null);
   const [formData, setFormData] = useState({
-    nome: "",
-    organizacao_id: "",
-    tipo_departamento: "",
+    name: "",
+    organizationId: "",
+    departmentType: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,47 +51,20 @@ export default function EditDepartmentPage() {
       if (!userId || !departmentId) return;
 
       try {
-        const { data, error } = await supabase
-          .from("departamentos")
-          .select(
-            `
-            *,
-            organizacao:organizacoes(id, nome)
-          `
-          )
-          .eq("id", departmentId)
-          .single();
+        const data = await DepartmentService.getDepartmentById(departmentId);
 
-        if (error) {
-          console.error("Erro ao buscar departamento:", error);
+        if (!data) {
           toast.error("Departamento não encontrado");
           router.push("/departments/list");
           return;
         }
 
-        if (data) {
-          // Verificar se o usuário tem acesso à organização
-          const { data: userOrg, error: userOrgError } = await supabase
-            .from("usuarios_organizacoes")
-            .select("id")
-            .eq("usuario_id", userId)
-            .eq("organizacao_id", data.organizacao?.id)
-            .eq("ativo", true)
-            .single();
-
-          if (userOrgError || !userOrg) {
-            toast.error("Você não tem permissão para editar este departamento");
-            router.push("/departments/list");
-            return;
-          }
-
-          setDepartment(data);
-          setFormData({
-            nome: data.nome,
-            organizacao_id: data.organizacao_id,
-            tipo_departamento: data.tipo_departamento,
-          });
-        }
+        setDepartment(data);
+        setFormData({
+          name: data.name,
+          organizationId: data.organizationId,
+          departmentType: data.departmentType || "",
+        });
       } catch (error) {
         console.error("Erro inesperado:", error);
         toast.error("Erro ao carregar departamento");
@@ -119,9 +81,9 @@ export default function EditDepartmentPage() {
     e.preventDefault();
 
     if (
-      !formData.nome.trim() ||
-      !formData.organizacao_id ||
-      !formData.tipo_departamento
+      !formData.name.trim() ||
+      !formData.organizationId ||
+      !formData.departmentType
     ) {
       toast.error("Por favor, preencha todos os campos");
       return;
@@ -130,26 +92,10 @@ export default function EditDepartmentPage() {
     setSaving(true);
 
     try {
-      const { error } = await supabase
-        .from("departamentos")
-        .update({
-          nome: formData.nome.trim(),
-          organizacao_id: formData.organizacao_id,
-          tipo_departamento: formData.tipo_departamento,
-        })
-        .eq("id", departmentId);
-
-      if (error) {
-        console.error("Erro ao atualizar departamento:", error);
-        if (error.code === "23505") {
-          toast.error(
-            "Já existe um departamento com este nome nesta organização"
-          );
-        } else {
-          toast.error("Erro ao salvar alterações");
-        }
-        return;
-      }
+      await DepartmentService.updateDepartment(departmentId, {
+        name: formData.name.trim(),
+        departmentType: formData.departmentType,
+      });
 
       toast.success("Departamento atualizado com sucesso!");
       router.push("/departments/list");
@@ -282,12 +228,12 @@ export default function EditDepartmentPage() {
 
       <div className="grid gap-6 w-full">
         <Card>
-          <CardHeader>
+              <CardHeader>
             <CardTitle>Informações do Departamento</CardTitle>
             <CardDescription>
               Criado em{" "}
               {format(
-                new Date(department.created_at),
+                department.createdAt,
                 "dd 'de' MMMM 'de' yyyy",
                 { locale: ptBR }
               )}
@@ -298,9 +244,9 @@ export default function EditDepartmentPage() {
               <div className="space-y-2">
                 <Label htmlFor="organizacao">Organização</Label>
                 <Select
-                  value={formData.organizacao_id}
+                  value={formData.organizationId}
                   onValueChange={(value) =>
-                    handleInputChange("organizacao_id", value)
+                    handleInputChange("organizationId", value)
                   }
                   disabled={saving}
                   required
@@ -317,16 +263,16 @@ export default function EditDepartmentPage() {
                               Atual
                             </span>
                           )}
-                          {org.nome}
+                          {org.name}
                         </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {department?.organizacao && (
+                {department?.organization && (
                   <p className="text-xs text-muted-foreground">
                     Departamento pertence à organização:{" "}
-                    {department.organizacao.nome}
+                    {department.organization.name}
                   </p>
                 )}
               </div>
@@ -335,8 +281,8 @@ export default function EditDepartmentPage() {
                 <Label htmlFor="nome">Nome do Departamento</Label>
                 <Input
                   id="nome"
-                  value={formData.nome}
-                  onChange={(e) => handleInputChange("nome", e.target.value)}
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
                   placeholder="Digite o nome do departamento"
                   disabled={saving}
                   required
@@ -346,9 +292,9 @@ export default function EditDepartmentPage() {
               <div className="space-y-2">
                 <Label htmlFor="tipo">Tipo de Departamento</Label>
                 <Select
-                  value={formData.tipo_departamento}
+                  value={formData.departmentType}
                   onValueChange={(value) =>
-                    handleInputChange("tipo_departamento", value)
+                    handleInputChange("departmentType", value)
                   }
                   disabled={saving}
                   required

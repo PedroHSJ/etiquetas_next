@@ -13,7 +13,9 @@ interface EditOrganizationPageProps {
   }>;
 }
 
-export default function EditOrganizationPage({ params }: EditOrganizationPageProps) {
+export default function EditOrganizationPage({
+  params,
+}: EditOrganizationPageProps) {
   const { userId } = useAuth();
   const { refetchOrganizations, onOrganizationCreated } = useOrganization();
   const router = useRouter();
@@ -27,18 +29,22 @@ export default function EditOrganizationPage({ params }: EditOrganizationPagePro
       // Usar router.push em vez de redirect para melhor UX
       router.push("/dashboard");
     } catch (error) {
-      console.error("Erro ao recarregar organizações:", error);
-      // Mesmo assim mostrar sucesso e redirecionar
-      toast.success("Organização criada com sucesso!");
-      router.push("/dashboard");
+      toast.error(
+        `Não foi possível editar a organização: ${
+          error instanceof Error ? error.message : "Erro desconhecido"
+        }`
+      );
     }
   };
-  
+
   return (
-          <PermissionGuard funcionalidade="Organizações" acao="editar">
-      <OrganizationWizard userId={userId} onComplete={() => {
-        handleWizardComplete();
-      }} />
+    <PermissionGuard funcionalidade="Organizações" acao="editar">
+      <OrganizationWizard
+        userId={userId}
+        onComplete={() => {
+          handleWizardComplete();
+        }}
+      />
     </PermissionGuard>
   );
 }
