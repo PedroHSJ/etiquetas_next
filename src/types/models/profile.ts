@@ -3,6 +3,8 @@
  * These models use camelCase, Date objects, and include computed fields
  */
 
+import { Organization } from "./organization";
+
 /**
  * Profile Model
  * Represents access profiles/roles in the system
@@ -61,6 +63,7 @@ export interface UserOrganization {
 
   // Expanded fields (optional)
   profile?: Profile;
+  organization?: Organization;
 }
 
 /**

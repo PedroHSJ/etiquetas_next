@@ -2,6 +2,8 @@
  * Profile API Response DTOs
  */
 
+import { OrganizationResponseDto } from "../organization/response";
+
 /**
  * Functionality response
  */
@@ -50,6 +52,9 @@ export interface UserProfileResponseDto {
   startDate: string;
   createdAt: string;
   profile?: ProfileResponseDto;
+  userOrganization?: {
+    organization: OrganizationResponseDto;
+  };
 }
 
 /**

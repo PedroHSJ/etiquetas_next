@@ -1,36 +1,40 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { Convite } from '../../types/onboarding';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Separator } from '../ui/separator';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Check, X, Clock, User, Mail, Shield } from 'lucide-react';
-import { toast } from 'sonner';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState } from "react";
+import { useNotifications } from "../../contexts/NotificationContext";
+import { Convite } from "../../types/onboarding";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Separator } from "../ui/separator";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Check, X, Clock, User, Mail, Shield } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "../../contexts/AuthContext";
+import { Invite } from "@/types/models/invite";
 
-interface ConviteManagerProps {
-  convite: Convite;
+interface InviteManagerProps {
+  invite: Invite;
   onClose: () => void;
 }
 
-export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose }) => {
-  const { aceitarConvite, rejeitarConvite } = useNotifications();
+export const InviteManager: React.FC<InviteManagerProps> = ({
+  invite,
+  onClose,
+}) => {
+  const { acceptInvite, rejectInvite } = useNotifications();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const formatDate = (dateString: string) => {
     try {
-      return formatDistanceToNow(new Date(dateString), { 
-        addSuffix: true, 
-        locale: ptBR 
+      return formatDistanceToNow(new Date(dateString), {
+        addSuffix: true,
+        locale: ptBR,
       });
     } catch {
-      return 'Data inválida';
+      return "Data inválida";
     }
   };
 
@@ -40,16 +44,16 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
       const agora = new Date();
       const diffMs = expiraEm.getTime() - agora.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      
-      if (diffDays <= 0) return 'Expirado';
-      if (diffDays === 1) return 'Expira amanhã';
+
+      if (diffDays <= 0) return "Expirado";
+      if (diffDays === 1) return "Expira amanhã";
       return `Expira em ${diffDays} dias`;
     } catch {
-      return 'Data inválida';
+      return "Data inválida";
     }
   };
 
-  const handleAceitarConvite = async () => {
+  const handleAcceptInvite = async () => {
     if (!user?.id) {
       toast.error("Usuário não autenticado");
       return;
@@ -57,9 +61,9 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
 
     setIsLoading(true);
     try {
-      const success = await aceitarConvite(convite.token_invite, user.id);
+      const success = await acceptInvite(invite.inviteToken, user.id);
       if (success) {
-        toast.success("Convite aceito com sucesso!");   
+        toast.success("Convite aceito com sucesso!");
         onClose();
       } else {
         toast.error("Não foi possível aceitar o convite");
@@ -71,10 +75,10 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
     }
   };
 
-  const handleRejeitarConvite = async () => {
+  const handleRejectInvite = async () => {
     setIsLoading(true);
     try {
-      const success = await rejeitarConvite(convite.id);
+      const success = await rejectInvite(invite.id);
       if (success) {
         toast.success("Convite rejeitado com sucesso!");
         onClose();
@@ -88,7 +92,7 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
     }
   };
 
-  const isExpired = new Date(convite.expira_em) < new Date();
+  const isExpired = new Date(invite.expiresAt) < new Date();
 
   return (
     <div className="w-full max-w-md">
@@ -98,26 +102,26 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
           Gerenciar Convite
         </div>
       </div>
-      
+
       <div className="space-y-4">
         {/* Informações do convite */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{convite.email}</span>
+            <span className="text-sm font-medium">{invite.email}</span>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              Perfil: {convite.perfil?.nome || 'N/A'}
+              Perfil: {invite.profile?.name || "N/A"}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              {formatDate(convite.created_at)}
+              {formatDate(invite.createdAt.toString())}
             </span>
           </div>
         </div>
@@ -128,18 +132,22 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Status:</span>
-            <Badge 
+            <Badge
               variant={isExpired ? "destructive" : "outline"}
               className="text-xs"
             >
-              {convite.status}
+              {invite.status}
             </Badge>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Expiração:</span>
-            <span className={`text-xs ${isExpired ? 'text-destructive' : 'text-muted-foreground'}`}>
-              {formatExpiration(convite.expira_em)}
+            <span
+              className={`text-xs ${
+                isExpired ? "text-destructive" : "text-muted-foreground"
+              }`}
+            >
+              {formatExpiration(invite.expiresAt.toString())}
             </span>
           </div>
         </div>
@@ -149,7 +157,7 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
         {/* Ações */}
         <div className="flex gap-2 pt-2">
           <Button
-            onClick={handleAceitarConvite}
+            onClick={handleAcceptInvite}
             disabled={isLoading || isExpired}
             className="flex-1"
             size="sm"
@@ -157,9 +165,9 @@ export const ConviteManager: React.FC<ConviteManagerProps> = ({ convite, onClose
             <Check className="h-4 w-4 mr-2" />
             Aceitar
           </Button>
-          
+
           <Button
-            onClick={handleRejeitarConvite}
+            onClick={handleRejectInvite}
             disabled={isLoading}
             variant="outline"
             className="flex-1"

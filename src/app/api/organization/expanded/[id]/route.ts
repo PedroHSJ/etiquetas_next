@@ -22,7 +22,8 @@ export async function GET(
   try {
     const supabase = getSupabaseBearerClient(token);
     const service = new OrganizationBackendService(supabase);
-    const org = await service.getByIdExpanded(params.id);
+    const { id } = params;
+    const org = await service.getByIdExpanded(id);
 
     const successResponse: ApiSuccessResponse<OrganizationExpandedResponseDto> =
       {
@@ -57,7 +58,8 @@ export async function PUT(
 
     const supabase = getSupabaseBearerClient(token);
     const service = new OrganizationBackendService(supabase);
-    const updated = await service.updateExpanded(params.id, dto);
+    const { id } = await params;
+    const updated = await service.updateExpanded(id, dto);
 
     const successResponse: ApiSuccessResponse<OrganizationExpandedResponseDto> =
       {

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { InviteEntity } from "@/types/database/invite";
 import { convertKeysToCamel } from "@/utils/caseConverter";
-
+import crypto from "crypto";
 interface ListInvitesOptions {
   email?: string;
   status?: string;
@@ -94,7 +94,7 @@ export class InviteBackendService {
    */
   async createInvite(inviteData: CreateInviteData): Promise<InviteEntity> {
     const inviteToken =
-      self.crypto?.randomUUID?.() ||
+      crypto?.randomUUID?.() ||
       Math.random().toString(36).substring(2, 15) +
         Math.random().toString(36).substring(2, 15);
 

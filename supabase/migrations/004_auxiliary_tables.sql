@@ -29,6 +29,12 @@ CREATE TABLE IF NOT EXISTS public.cities (
     CONSTRAINT cities_state_id_fkey FOREIGN KEY (state_id) REFERENCES public.states(id)
 );
 
+ALTER TABLE public.organizations
+    ADD CONSTRAINT organizations_state_id_fkey
+    FOREIGN KEY (state_id) REFERENCES public.states(id),
+    ADD CONSTRAINT organizations_city_id_fkey
+    FOREIGN KEY (city_id) REFERENCES public.cities(id);
+
 -- Functionalities (System features/modules)
 CREATE TABLE IF NOT EXISTS public.functionalities (
     id uuid DEFAULT gen_random_uuid() NOT NULL,

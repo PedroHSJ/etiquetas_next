@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ProfileEntity, UserProfileEntity } from "@/types/database/profile";
+import {
+  ProfileEntity,
+  UserProfileEntity,
+  UserOrganizationEntity,
+} from "@/types/database/profile";
+import { OrganizationEntity } from "@/types/database/organization";
+import { toOrganizationResponseDto } from "@/lib/converters/organization";
 import {
   ProfileResponseDto,
   UserProfileResponseDto,
@@ -34,6 +40,9 @@ interface UserProfileWithRelations {
   start_date: string;
   created_at: string;
   profile?: ProfileEntity;
+  user_organization?: UserOrganizationEntity & {
+    organization?: OrganizationEntity;
+  };
 }
 
 /**
@@ -50,6 +59,13 @@ function toUserProfileResponseDto(
     startDate: entity.start_date,
     createdAt: entity.created_at,
     profile: entity.profile ? toProfileResponseDto(entity.profile) : undefined,
+    userOrganization: entity.user_organization?.organization
+      ? {
+          organization: toOrganizationResponseDto(
+            entity.user_organization.organization
+          ),
+        }
+      : undefined,
   };
 }
 
@@ -134,7 +150,10 @@ export class ProfileBackendService {
           `
           *,
           profile:profiles(*),
-          user_organization:user_organizations(*)
+          user_organization:user_organizations(
+            *,
+            organization:organizations(*)
+          )
         `
         )
         .eq("user_organization.user_id", userId)

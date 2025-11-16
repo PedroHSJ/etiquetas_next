@@ -2,6 +2,7 @@ import { api } from "@/lib/apiClient";
 import { ApiResponse } from "@/types/common";
 import { UserProfileResponseDto } from "@/types/dto/profile";
 import { Profile, UserProfile } from "@/types/models/profile";
+import { toOrganizationModel } from "@/lib/converters/organization";
 
 interface GetProfilesParams {
   search?: string;
@@ -54,7 +55,48 @@ export const ProfileService = {
         `/profiles/available`
       );
       if (!Array.isArray(data) || status !== 200) return [];
-      return data;
+
+      // Adaptar DTO → modelo frontend, preservando organization com converter padrão
+      return data.map((dto): UserProfile => {
+        const profile = dto.profile
+          ? {
+              id: dto.profile.id,
+              name: dto.profile.name,
+              description: dto.profile.description,
+              active: dto.profile.active,
+              createdAt: dto.profile.createdAt,
+            }
+          : undefined;
+
+        const userOrganization = dto.userOrganization
+          ? {
+              // userOrganization vem apenas com organization expandida;
+              // usamos os campos do próprio DTO para preencher o resto
+              id: dto.userOrganizationId,
+              userId: dto.userOrganization.organization.userId ?? "",
+              organizationId: dto.userOrganization.organization.id,
+              profileId: dto.profileId,
+              active: dto.active,
+              entryDate: dto.startDate,
+              exitDate: null,
+              createdAt: dto.createdAt,
+              organization: toOrganizationModel(
+                dto.userOrganization.organization
+              ),
+            }
+          : undefined;
+
+        return {
+          id: dto.id,
+          userOrganizationId: dto.userOrganizationId,
+          profileId: dto.profileId,
+          active: dto.active,
+          startDate: dto.startDate,
+          createdAt: dto.createdAt,
+          profile,
+          userOrganization,
+        };
+      });
     } catch (error) {
       return [];
     }

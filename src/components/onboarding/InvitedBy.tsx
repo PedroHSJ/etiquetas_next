@@ -10,7 +10,7 @@ interface InvitedByProps {
   compact?: boolean; // Nova prop para versão compacta
 }
 
-export function ConvidadoPor({
+export function InvitedBy({
   user,
   isLoading = false,
   compact = false,

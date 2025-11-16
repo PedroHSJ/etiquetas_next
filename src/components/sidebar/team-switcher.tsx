@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
-import { UserProfile } from "@/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronsUpDown, Building2, User } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { UserProfile } from "@/types/models/profile";
 
 export function TeamSwitcher() {
   const { activeProfile, userProfiles, loading, setActiveProfile } =
@@ -35,9 +35,10 @@ export function TeamSwitcher() {
       // Sempre garantir que a organização está selecionada quando há apenas um perfil
       if (
         !selectedOrganization ||
-        selectedOrganization.id !== singleProfile.organizacao.id
+        selectedOrganization.id !==
+          singleProfile.userOrganization?.organizationId
       ) {
-        setSelectedOrganization(singleProfile.organizacao);
+        setSelectedOrganization(singleProfile.userOrganization?.organization!);
       }
     }
   }, [
@@ -53,9 +54,10 @@ export function TeamSwitcher() {
     if (
       activeProfile &&
       (!selectedOrganization ||
-        selectedOrganization.id !== activeProfile.organizacao.id)
+        selectedOrganization.id !==
+          activeProfile.userOrganization?.organizationId)
     ) {
-      setSelectedOrganization(activeProfile.organizacao);
+      setSelectedOrganization(activeProfile.userOrganization?.organization!);
     }
   }, [activeProfile, selectedOrganization, setSelectedOrganization]);
 
@@ -94,20 +96,20 @@ export function TeamSwitcher() {
           role="combobox"
           aria-expanded={open}
           aria-label="Selecionar perfil"
-          className="w-full justify-between px-3 py-2 min-w-0"
+          className="w-full justify-between px-3 py-6 min-w-0"
         >
           <div className="flex items-center space-x-2 min-w-0 flex-1">
             <Avatar className="h-6 w-6 shrink-0">
               <AvatarFallback className="text-xs">
-                {activeProfile.perfil.nome.charAt(0).toUpperCase()}
+                {activeProfile?.profile?.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col items-start text-left min-w-0 flex-1">
               <span className="text-sm font-medium leading-none truncate max-w-full">
-                {activeProfile.perfil.nome}
+                {activeProfile?.profile?.name}
               </span>
               <span className="text-xs leading-none text-muted-foreground truncate max-w-full">
-                {activeProfile.organizacao.nome}
+                {activeProfile?.userOrganization?.organization?.name}
               </span>
             </div>
           </div>
@@ -135,22 +137,22 @@ export function TeamSwitcher() {
             key={profile.id}
             className="cursor-pointer"
             onClick={() => {
-              setSelectedOrganization(profile.organizacao);
+              setSelectedOrganization(profile.userOrganization?.organization!);
               handleProfileChange(profile);
             }}
           >
             <div className="flex items-center space-x-2 min-w-0 flex-1">
               <Avatar className="h-6 w-6 shrink-0">
                 <AvatarFallback className="text-xs">
-                  {profile.perfil.nome.charAt(0).toUpperCase()}
+                  {profile?.profile?.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="text-sm font-medium leading-none truncate">
-                  {profile.perfil.nome}
+                  {profile?.profile?.name}
                 </span>
                 <span className="text-xs leading-none text-muted-foreground truncate">
-                  {profile.organizacao.nome}
+                  {profile.userOrganization?.organization?.name}
                 </span>
               </div>
             </div>

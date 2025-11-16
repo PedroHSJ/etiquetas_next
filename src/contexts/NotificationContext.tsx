@@ -1,26 +1,36 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { Convite } from '../types/onboarding';
-import { useOrganization } from './OrganizationContext';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useCallback,
+} from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOrganization } from "./OrganizationContext";
 import { InviteService } from "@/lib/services/inviteService";
-import { useAuth } from './AuthContext';
+import { useAuth } from "./AuthContext";
+import { Invite } from "@/types/models/invite";
 
 interface NotificationContextType {
-  convitesPendentes: Convite[];
-  contagemConvites: number;
+  pendingInvites: Invite[];
+  pendingInviteCount: number;
   isLoading: boolean;
-  refreshConvites: () => Promise<void>;
-  aceitarConvite: (tokenInvite: string, aceitoPor: string) => Promise<boolean>;
-  rejeitarConvite: (conviteId: string) => Promise<boolean>;
+  refreshInvites: () => Promise<void>;
+  acceptInvite: (tokenInvite: string, acceptedBy: string) => Promise<boolean>;
+  rejectInvite: (inviteId: string) => Promise<boolean>;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined
+);
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotifications deve ser usado dentro de um NotificationProvider');
+    throw new Error(
+      "useNotifications deve ser usado dentro de um NotificationProvider"
+    );
   }
   return context;
 };
@@ -29,79 +39,93 @@ interface NotificationProviderProps {
   children: ReactNode;
 }
 
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
+export const NotificationProvider: React.FC<NotificationProviderProps> = ({
+  children,
+}) => {
   const { selectedOrganization } = useOrganization();
-  const [convitesPendentes, setConvitesPendentes] = useState<Convite[]>([]);
-  const [contagemConvites, setContagemConvites] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const fetchConvites = useCallback(async () => {
-    if (!user?.email) return;
-    setIsLoading(true);
-    try {
-      const convites = await InviteService.getConvitesByStatus('pendente', user?.email);
-      setConvitesPendentes(convites);
-      setContagemConvites(convites.length);
-    } catch (error) {
-      console.error('Erro ao buscar convites:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.email]);
+  // Query para buscar convites pendentes
+  const {
+    data: pendingInvites = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["pending-invites", user?.email, selectedOrganization?.id],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return await InviteService.getPendingInvites();
+    },
+    enabled: !!user?.email,
+    refetchInterval: 5 * 60 * 1000, // Atualizar a cada 5 minutos
+    staleTime: 2 * 60 * 1000, // Considerar dados frescos por 2 minutos
+  });
 
-  const refreshConvites = useCallback(async () => {
-    await fetchConvites();
-  }, [fetchConvites]);
+  // Mutation para aceitar convite
+  const acceptMutation = useMutation({
+    mutationFn: async (tokenInvite: string) => {
+      return await InviteService.acceptInvite(tokenInvite);
+    },
+    onSuccess: () => {
+      // Invalidar a query de convites pendentes para recarregar
+      queryClient.invalidateQueries({
+        queryKey: ["pending-invites", user?.email],
+      });
+    },
+  });
 
-  const aceitarConvite = useCallback(async (tokenInvite: string, aceitoPor: string): Promise<boolean> => {
-    try {
-      const success = await InviteService.acceptInvite(tokenInvite, aceitoPor);
-      if (success) {
-        await refreshConvites();
+  // Mutation para rejeitar convite
+  const rejectMutation = useMutation({
+    mutationFn: async (conviteId: string) => {
+      // TODO: Implementar método de rejeição no InviteService
+      throw new Error("Método de rejeição ainda não implementado");
+    },
+    onSuccess: () => {
+      // Invalidar a query de convites pendentes para recarregar
+      queryClient.invalidateQueries({
+        queryKey: ["pending-invites", user?.email],
+      });
+    },
+  });
+
+  const refreshInvites = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
+
+  const acceptInvite = useCallback(
+    async (tokenInvite: string, _aceitoPor: string): Promise<boolean> => {
+      try {
+        await acceptMutation.mutateAsync(tokenInvite);
+        return true;
+      } catch (error) {
+        console.error("Erro ao aceitar convite:", error);
+        return false;
       }
-      return success;
-    } catch (error) {
-      console.error('Erro ao aceitar convite:', error);
-      return false;
-    }
-  }, [refreshConvites]);
+    },
+    [acceptMutation]
+  );
 
-  const rejeitarConvite = useCallback(async (conviteId: string): Promise<boolean> => {
-    try {
-      const success = await InviteService.rejeitarConvite(conviteId);
-      if (success) {
-        await refreshConvites();
+  const rejectInvite = useCallback(
+    async (conviteId: string): Promise<boolean> => {
+      try {
+        await rejectMutation.mutateAsync(conviteId);
+        return true;
+      } catch (error) {
+        console.error("Erro ao cancelar convite:", error);
+        return false;
       }
-      return success;
-    } catch (error) {
-      console.error('Erro ao cancelar convite:', error);
-      return false;
-    }
-  }, [refreshConvites]);
-
-  // Buscar convites quando a organização ou usuário mudar
-  useEffect(() => {
-    if (user?.email) {
-      fetchConvites();
-    }
-  }, [selectedOrganization?.id, user?.email, fetchConvites]);
-
-  // Atualizar a cada 5 minutos
-  useEffect(() => {
-    if (!user?.email) return;
-
-    const interval = setInterval(fetchConvites, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [user?.email, fetchConvites]);
+    },
+    [rejectMutation]
+  );
 
   const value: NotificationContextType = {
-    convitesPendentes,
-    contagemConvites,
+    pendingInvites,
+    pendingInviteCount: pendingInvites.length,
     isLoading,
-    refreshConvites,
-    aceitarConvite,
-    rejeitarConvite,
+    refreshInvites,
+    acceptInvite,
+    rejectInvite,
   };
 
   return (

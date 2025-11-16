@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -67,7 +68,7 @@ export default function AuthCallback() {
           </div>
         ) : (
           <>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <Spinner />
             <p className="mt-2">Loading...</p>
           </>
         )}

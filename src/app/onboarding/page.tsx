@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { OrganizationWizard } from "@/components/wizard/OrganizationWizard";
 import { InviteEmployees } from "@/components/onboarding/InviteEmployees";
-import { ConvidadoPor } from "@/components/onboarding/ConvidadoPor";
+import { ConvidadoPor } from "@/components/onboarding/InvitedBy";
 import { InviteService } from "@/lib/services/inviteService";
 import { Convite, OnboardingChoice } from "@/types/onboarding";
 import { useAuth } from "@/contexts/AuthContext";

@@ -1,43 +1,50 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { Bell } from 'lucide-react';
-import { useNotifications } from '@/contexts/NotificationContext';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { ScrollArea } from '../ui/scroll-area';
-import { Separator } from '../ui/separator';
-import { Dialog, DialogContent } from '../ui/dialog';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { ConviteManager } from './ConviteManager';
-import { ConvidadoPor } from '../onboarding/ConvidadoPor';
-import { Convite } from '@/types/onboarding';
+import React, { useEffect, useState } from "react";
+import { Bell } from "lucide-react";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { ScrollArea } from "../ui/scroll-area";
+import { Separator } from "../ui/separator";
+import { Dialog, DialogContent } from "../ui/dialog";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { InviteManager } from "./InviteManager";
+import { InvitedBy } from "../onboarding/InvitedBy";
+import { Invite } from "@/types/models/invite";
 
 export const NotificationBell: React.FC = () => {
-  const { convitesPendentes, contagemConvites, isLoading } = useNotifications();
+  const {
+    acceptInvite,
+    rejectInvite,
+    refreshInvites,
+    pendingInvites,
+    pendingInviteCount,
+    isLoading,
+  } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedConvite, setSelectedConvite] = useState<Convite | null>(null);
+  const [selectedInvite, setSelectedInvite] = useState<Invite | null>(null);
 
   const formatDate = (dateString: string) => {
     try {
-      return formatDistanceToNow(new Date(dateString), { 
-        addSuffix: true, 
-        locale: ptBR 
+      return formatDistanceToNow(new Date(dateString), {
+        addSuffix: true,
+        locale: ptBR,
       });
     } catch {
-      return 'Data inválida';
+      return "Data inválida";
     }
   };
 
-  const handleConviteClick = (convite: Convite) => {
-    setSelectedConvite(convite);
+  const handleInviteClick = (invite: Invite) => {
+    setSelectedInvite(invite);
     setIsOpen(false); // Fechar o popover de notificações
   };
 
-  const handleCloseConviteManager = () => {
-    setSelectedConvite(null);
+  const handleCloseInviteManager = () => {
+    setSelectedInvite(null);
   };
 
   return (
@@ -51,66 +58,67 @@ export const NotificationBell: React.FC = () => {
             aria-label="Notificações"
           >
             <Bell className="h-5 w-5" />
-            {contagemConvites > 0 && (
+            {pendingInviteCount > 0 && (
               <Badge
                 variant="destructive"
                 className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
               >
-                {contagemConvites > 99 ? '99+' : contagemConvites}
+                {pendingInviteCount > 99 ? "99+" : pendingInviteCount}
               </Badge>
             )}
           </Button>
         </PopoverTrigger>
-        
+
         <PopoverContent className="w-80 p-0" align="end">
           <div className="flex items-center justify-between p-4 border-b">
             <h4 className="font-semibold">Convites Pendentes</h4>
             <Badge variant="secondary">
-              {contagemConvites} {contagemConvites === 1 ? 'convite' : 'convites'}
+              {pendingInviteCount}{" "}
+              {pendingInviteCount === 1 ? "convite" : "convites"}
             </Badge>
           </div>
-          
+
           <ScrollArea className="h-80">
             {isLoading ? (
               <div className="p-4 text-center text-muted-foreground">
                 Carregando...
               </div>
-            ) : convitesPendentes.length === 0 ? (
+            ) : pendingInvites.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground">
                 Nenhum convite pendente
               </div>
             ) : (
               <div className="p-2">
-                {convitesPendentes.map((convite, index) => (
-                  <div key={convite.id}>
+                {/* {pendingInvites?.map((invite, index) => (
+                  <div key={invite.id}>
                     <div
                       className="p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                      onClick={() => handleConviteClick(convite)}
+                      onClick={() => handleInviteClick(invite)}
                     >
-                      {convite.email.length > 25 ? (
+                      {invite.email.length > 25 ? (
                         // Layout para emails longos - badge na parte inferior
                         <div className="space-y-2">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground break-all">
-                              {convite.email}
+                              {invite.email}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              Perfil: {convite.perfil?.nome || 'N/A'}
+                              Perfil: {invite.profile?.name || "N/A"}
                             </p>
                             <div className="mt-1">
-                              <ConvidadoPor 
-                                usuario={convite.convidado_por_usuario}
+                              <InvitedBy
+                                user={invite.invitedBy}
                                 isLoading={isLoading}
                                 compact={true}
                               />
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              {formatDate(convite.created_at)}
+                              {formatDate(invite.createdAt.toString())}
                             </p>
                           </div>
                           <div className="flex justify-end">
                             <Badge variant="outline" className="text-xs">
-                              {convite.status}
+                              {invite.status}
                             </Badge>
                           </div>
                         </div>
@@ -119,40 +127,40 @@ export const NotificationBell: React.FC = () => {
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate">
-                              {convite.email}
+                              {invite.email}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              Perfil: {convite.perfil?.nome || 'N/A'}
+                              Perfil: {invite.profile?.name || "N/A"}
                             </p>
                             <div className="mt-1">
-                              <ConvidadoPor 
-                                usuario={convite.convidado_por_usuario}
+                              <InvitedBy
+                                user={invite.invitedBy}
                                 isLoading={isLoading}
                                 compact={true}
                               />
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              {formatDate(convite.created_at)}
+                              {formatDate(invite.createdAt.toString())}
                             </p>
                           </div>
                           <div className="ml-2 text-right">
                             <Badge variant="outline" className="text-xs">
-                              {convite.status}
+                              {invite.status}
                             </Badge>
                           </div>
                         </div>
                       )}
                     </div>
-                    {index < convitesPendentes.length - 1 && (
+                    {index < pendingInvites.length - 1 && (
                       <Separator className="my-2" />
                     )}
                   </div>
-                ))}
+                ))} */}
               </div>
             )}
           </ScrollArea>
-          
-          {convitesPendentes.length > 0 && (
+
+          {pendingInvites.length > 0 && (
             <div className="p-3 border-t bg-muted/50">
               <p className="text-xs text-muted-foreground text-center">
                 Clique em um convite para gerenciá-lo
@@ -163,12 +171,15 @@ export const NotificationBell: React.FC = () => {
       </Popover>
 
       {/* Modal para gerenciar convite */}
-      <Dialog open={!!selectedConvite} onOpenChange={() => setSelectedConvite(null)}>
+      <Dialog
+        open={!!selectedInvite}
+        onOpenChange={() => setSelectedInvite(null)}
+      >
         <DialogContent className="" showCloseButton={false}>
-          {selectedConvite && (
-            <ConviteManager 
-              convite={selectedConvite} 
-              onClose={handleCloseConviteManager} 
+          {selectedInvite && (
+            <InviteManager
+              invite={selectedInvite}
+              onClose={handleCloseInviteManager}
             />
           )}
         </DialogContent>

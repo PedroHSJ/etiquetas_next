@@ -33,6 +33,7 @@ import { InviteService } from "@/lib/services/inviteService";
 import { Profile } from "@/types/models/profile";
 import { toast } from "sonner";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { useProfilesQuery } from "@/hooks/useProfilesQuery";
 
 interface InviteEmployeesProps {
   organizationId: string;
@@ -63,22 +64,18 @@ export function InviteEmployees({
   const [perfis, setPerfis] = useState<Profile[]>([]);
   const { isNavigating } = useNavigation();
 
-  // Carregar perfis de funcionários (excluir gestor)
+  const {
+    data: profiles,
+    isLoading: isProfilesLoading,
+    error: profilesError,
+  } = useProfilesQuery();
+
   useEffect(() => {
-    const loadPerfis = async () => {
-      try {
-        const allPerfis = await InviteService.getPerfis();
-        // Filtrar apenas perfis de funcionários (excluir gestor)
-        const funcionarioPerfis = allPerfis.filter(
-          (p) => p.name.toLowerCase() !== "gestor"
-        );
-        setPerfis(funcionarioPerfis);
-      } catch (error) {
-        console.error("Erro ao carregar perfis:", error);
-      }
-    };
-    loadPerfis();
-  }, []);
+    console.log("⚙️ Perfis carregados:", { profiles, profilesError });
+    if (profiles) {
+      setPerfis(profiles);
+    }
+  }, [profiles, profilesError]);
 
   const addInvite = () => {
     if (!currentEmail || !currentPerfil) {
@@ -126,8 +123,7 @@ export function InviteEmployees({
         await InviteService.createInvite(
           invite.email,
           organizationId,
-          invite.perfil,
-          userId
+          invite.perfil
         );
       }
 
@@ -257,7 +253,7 @@ export function InviteEmployees({
                       return (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
+                          className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg shadow-sm"
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -275,7 +271,7 @@ export function InviteEmployees({
                             variant="ghost"
                             size="sm"
                             onClick={() => removeInvite(index)}
-                            className="text-red-500 hover:text-red-700 flex-shrink-0"
+                            className="text-red-500 hover:text-red-700 flex-shrink-0 hover:cursor-pointer"
                           >
                             <X className="h-4 w-4" />
                           </Button>

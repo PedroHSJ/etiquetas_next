@@ -10,7 +10,6 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "./AuthContext";
 import { useProfile } from "./ProfileContext";
-import { UANService } from "@/lib/services/UANService";
 import { Organization } from "@/types/models/organization";
 import { OrganizationService } from "@/lib/services/client/organization-service";
 
@@ -76,10 +75,12 @@ export function OrganizationProvider({
   }, [session?.access_token]);
 
   // Carregar detalhes completos da organização ativa
-  const loadActiveOrganizationDetails = async (organizacaoId: string) => {
+  const loadActiveOrganizationDetails = async (organizationId: string) => {
     try {
       setDetailsLoading(true);
-      const details = await UANService.getOrganizacaoById(organizacaoId);
+      const details = await OrganizationService.getOrganizationByIdExpanded(
+        organizationId
+      );
       setActiveOrganizationDetails(details);
     } catch (error) {
       console.error("Erro ao carregar detalhes da organização:", error);

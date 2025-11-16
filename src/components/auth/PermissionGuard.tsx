@@ -2,6 +2,7 @@
 
 import React from "react";
 import { usePermissions } from "@/hooks/usePermissions";
+import { Spinner } from "../ui/spinner";
 
 interface PermissionGuardProps {
   funcionalidade: string;
@@ -18,13 +19,13 @@ export function PermissionGuard({
   fallback,
   loadingFallback,
 }: PermissionGuardProps) {
-  const { temPermissao, loading } = usePermissions();
+  const { hasPermission, loading } = usePermissions();
 
   if (loading) {
     return (
       loadingFallback || (
         <div className="flex items-center justify-center p-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+          <Spinner />
           <span className="ml-2 text-sm text-muted-foreground">
             Verificando permissões...
           </span>
@@ -33,7 +34,7 @@ export function PermissionGuard({
     );
   }
 
-  if (!temPermissao(funcionalidade, acao)) {
+  if (!hasPermission(funcionalidade, acao)) {
     return (
       fallback || (
         <div className="flex items-center justify-center p-4 text-center">

@@ -9,7 +9,11 @@ export interface Invite {
   status: string;
   inviteToken: string;
   expiresAt: Date;
-  invitedBy: string;
+  invitedBy: {
+    id: string;
+    name: string;
+    email: string;
+  };
   createdAt: Date;
   acceptedAt: Date | null;
   acceptedBy: string | null;

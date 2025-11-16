@@ -69,19 +69,6 @@ export interface UserOrganization {
 }
 
 /**
- * User Profile model for frontend
- */
-export interface UserProfile {
-  id: string;
-  userOrganizationId: string;
-  profileId: string;
-  active: boolean;
-  startDate: Date;
-  createdAt: Date;
-  profile?: Profile;
-}
-
-/**
  * Permission Check - Request to check if user has permission
  */
 export interface PermissionCheck {
