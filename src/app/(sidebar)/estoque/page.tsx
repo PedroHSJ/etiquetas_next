@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover } from "@radix-ui/react-popover";
 import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Stock, StockMovement, StockStatistics } from "@/types/stock/stock";
+import { StockService } from "@/lib/services/client/stock-service";
 
 export default function EstoquePage() {
   const [estatisticas, setEstatisticas] = useState<StockStatistics | null>(
@@ -41,7 +42,6 @@ export default function EstoquePage() {
   // Estoque
   const [estoqueData, setEstoqueData] = useState<Stock[]>([]);
   const [carregandoEstoque, setCarregandoEstoque] = useState(true);
-  const [paginaEstoque, setPaginaEstoque] = useState(1);
   const [itemsPerPageEstoque, setItemsPerPageEstoque] = useState(10);
 
   // Movimentações
@@ -49,32 +49,14 @@ export default function EstoquePage() {
     []
   );
   const [carregandoMovimentacoes, setCarregandoMovimentacoes] = useState(true);
-  const [paginaMovimentacoes, setPaginaMovimentacoes] = useState(1);
   const [itemsPerPageMovimentacoes, setItemsPerPageMovimentacoes] =
     useState(10);
 
   const carregarEstatisticas = async () => {
     setCarregandoStats(true);
     try {
-      const response = await fetch("/api/estoque");
-      const data = await response.json();
-      console.log("data estatisticas", data);
-      if (response.ok) {
-        const stockData = data.data as Stock[];
-        const stats: StockStatistics = {
-          total_products: data.total || 0,
-          products_in_stock:
-            stockData.filter((p) => p.current_quantity > 0).length || 0,
-          products_out_of_stock:
-            stockData.filter((p) => p.current_quantity === 0).length || 0,
-          products_low_stock:
-            stockData.filter(
-              (p) => p.current_quantity > 0 && p.current_quantity < 10
-            ).length || 0,
-          last_update: new Date().toISOString(),
-        };
-        setEstatisticas(stats);
-      }
+      const stats = await StockService.getStockStatistics();
+      setEstatisticas(stats);
     } catch (error) {
       console.error("Erro ao carregar estatísticas:", error);
       toast.error("Erro ao carregar estatísticas do estoque");
@@ -86,19 +68,11 @@ export default function EstoquePage() {
   const carregarEstoque = async () => {
     setCarregandoEstoque(true);
     try {
-      const params = new URLSearchParams({
-        page: paginaEstoque.toString(),
-        pageSize: itemsPerPageEstoque.toString(),
+      const response = await StockService.listStock({
+        page: 1,
+        pageSize: itemsPerPageEstoque,
       });
-
-      const response = await fetch(`/api/estoque?${params}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setEstoqueData(data.data || []);
-      } else {
-        toast.error(data.error || "Erro ao carregar estoque");
-      }
+      setEstoqueData(response.data || []);
     } catch (error) {
       console.error("Erro ao carregar estoque:", error);
       toast.error("Erro ao carregar dados do estoque");
@@ -110,19 +84,11 @@ export default function EstoquePage() {
   const carregarMovimentacoes = async () => {
     setCarregandoMovimentacoes(true);
     try {
-      const params = new URLSearchParams({
-        page: paginaMovimentacoes.toString(),
-        pageSize: itemsPerPageMovimentacoes.toString(),
+      const response = await StockService.listMovements({
+        page: 1,
+        pageSize: itemsPerPageMovimentacoes,
       });
-
-      const response = await fetch(`/api/estoque/movimentacoes?${params}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setMovimentacoesData(data.data || []);
-      } else {
-        toast.error(data.error || "Erro ao carregar movimentações");
-      }
+      setMovimentacoesData(response.data || []);
     } catch (error) {
       console.error("Erro ao carregar movimentações:", error);
       toast.error("Erro ao carregar movimentações");
@@ -137,11 +103,11 @@ export default function EstoquePage() {
 
   useEffect(() => {
     carregarEstoque();
-  }, [paginaEstoque, itemsPerPageEstoque]);
+  }, [itemsPerPageEstoque]);
 
   useEffect(() => {
     carregarMovimentacoes();
-  }, [paginaMovimentacoes, itemsPerPageMovimentacoes]);
+  }, [itemsPerPageMovimentacoes]);
 
   const formatarQuantidade = (quantidade: number) => {
     return new Intl.NumberFormat("pt-BR", {

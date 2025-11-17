@@ -7,6 +7,7 @@ import {
 } from "@/types/estoque";
 import { toast } from "sonner";
 import { ProductSelect, QuickEntryRequest } from "@/types/stock/stock";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export function useEstoque() {
   const [carregandoEstoque, setCarregandoEstoque] = useState(false);
@@ -41,7 +42,7 @@ export function useEstoque() {
             filtros.quantidade_minima.toString()
           );
 
-        const response = await fetch(`/api/estoque?${params}`);
+        const response = await fetchWithAuth(`/api/estoque?${params}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -87,7 +88,9 @@ export function useEstoque() {
         if (filtros.produto_nome)
           params.append("produto_nome", filtros.produto_nome);
 
-        const response = await fetch(`/api/estoque/movimentacoes?${params}`);
+        const response = await fetchWithAuth(
+          `/api/estoque/movimentacoes?${params}`
+        );
         const data = await response.json();
 
         if (response.ok) {
@@ -118,7 +121,7 @@ export function useEstoque() {
 
         if (termo) params.append("q", termo);
 
-        const response = await fetch(`/api/estoque/produtos?${params}`);
+        const response = await fetchWithAuth(`/api/estoque/produtos?${params}`);
         const data = await response.json();
 
         if (response.ok && data.success) {
@@ -142,7 +145,7 @@ export function useEstoque() {
   const entradaRapida = useCallback(
     async (request: QuickEntryRequest): Promise<boolean> => {
       try {
-        const response = await fetch("/api/estoque/entrada-rapida", {
+        const response = await fetchWithAuth("/api/estoque/entrada-rapida", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -177,7 +180,7 @@ export function useEstoque() {
       observacao?: string
     ): Promise<boolean> => {
       try {
-        const response = await fetch("/api/estoque/movimentacoes", {
+        const response = await fetchWithAuth("/api/estoque/movimentacoes", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,7 +50,7 @@ import {
   ProductSelect,
   STOCK_MESSAGES,
 } from "@/types/stock/stock";
-import { useEffect } from "react";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 // Backward compatibility aliases
 import { ChevronsUpDown, Check } from "lucide-react";
@@ -110,7 +110,7 @@ export function EntradaRapidaDialog({
       if (termo) params.append("q", termo);
       params.append("limit", "50");
 
-      const response = await fetch(`/api/estoque/produtos?${params}`);
+      const response = await fetchWithAuth(`/api/estoque/produtos?${params}`);
       const data = await response.json();
 
       if (data.success) {
@@ -148,8 +148,6 @@ export function EntradaRapidaDialog({
         observation: data.observacao,
       };
 
-      // Utiliza fetchWithAuth para enviar o token JWT e cookies
-      const { fetchWithAuth } = await import("@/lib/fetchWithAuth");
       const response = await fetchWithAuth("/api/estoque/entrada-rapida", {
         method: "POST",
         headers: {

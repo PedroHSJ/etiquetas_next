@@ -44,6 +44,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 interface MovimentacoesDialogProps {
   open: boolean;
@@ -76,7 +77,7 @@ export function MovimentacoesDialog({
 
       // Adicionar filtro do produto se especificado
       if (produtoId) {
-        params.append("produto_id", produtoId.toString());
+        params.append("productId", produtoId.toString());
       }
 
       // Adicionar outros filtros
@@ -87,7 +88,9 @@ export function MovimentacoesDialog({
         params.append("data_inicio", filtros.data_inicio);
       if (filtros.data_fim) params.append("data_fim", filtros.data_fim);
 
-      const response = await fetch(`/api/estoque/movimentacoes?${params}`);
+      const response = await fetchWithAuth(
+        `/api/estoque/movimentacoes?${params}`
+      );
       const data = await response.json();
 
       if (response.ok) {

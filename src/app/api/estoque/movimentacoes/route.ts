@@ -1,21 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { StockBackendService } from "@/lib/services/server/stockService";
 import {
   MovimentacoesFiltros,
   MovimentacoesListResponse,
 } from "@/types/estoque";
-import { StockMovement } from "@/types/stock/stock";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
+  const authHeader = request.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
 
-    // Parâmetros de paginação
+  if (!token) {
+    const errorResponse: ApiErrorResponse = {
+      error: "Access token not provided",
+    };
+    return NextResponse.json(errorResponse, { status: 401 });
+  }
+
+  try {
+    const supabase = getSupabaseBearerClient(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      const errorResponse: ApiErrorResponse = {
+        error: "User not authenticated",
+      };
+      return NextResponse.json(errorResponse, { status: 401 });
+    }
+
+    const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "20");
-    const offset = (page - 1) * pageSize;
 
-    // Filtros
     const filtros: MovimentacoesFiltros = {
       productId: searchParams.get("productId")
         ? parseInt(searchParams.get("productId")!)
@@ -30,82 +50,54 @@ export async function GET(request: NextRequest) {
       produto_nome: searchParams.get("produto_nome") || undefined,
     };
 
-    // Query base para movimentações com join de produtos
-    let query = supabase.from("stock_movements").select(
-      `
-        *,
-        product:products(*)
-      `,
-      { count: "exact" }
-    );
-
-    // Aplicar filtros
-    if (filtros.productId) {
-      query = query.eq("productId", filtros.productId);
-    }
-
-    if (filtros.userId) {
-      query = query.eq("userId", filtros.userId);
-    }
-
-    if (filtros.tipo_movimentacao) {
-      query = query.eq("movement_type", filtros.tipo_movimentacao);
-    }
-
-    if (filtros.data_inicio) {
-      query = query.gte("movement_date", filtros.data_inicio);
-    }
-
-    if (filtros.data_fim) {
-      // Adicionar 23:59:59 ao final do dia
-      const dataFimCompleta = new Date(filtros.data_fim);
-      dataFimCompleta.setHours(23, 59, 59, 999);
-      query = query.lte("movement_date", dataFimCompleta.toISOString());
-    }
-
-    // Filtro por nome do produto (usando inner join)
-    if (filtros.produto_nome) {
-      query = query.ilike("product.name", `%${filtros.produto_nome}%`);
-    }
-
-    // Aplicar paginação e ordenação (mais recentes primeiro)
-    query = query
-      .order("movement_date", { ascending: false })
-      .range(offset, offset + pageSize - 1);
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      console.error("Erro ao buscar movimentações:", error);
-      return NextResponse.json(
-        { error: "Erro ao buscar histórico de movimentações" },
-        { status: 500 }
-      );
-    }
-
-    const totalPages = Math.ceil((count || 0) / pageSize);
-
-    const response: MovimentacoesListResponse = {
-      data: (data as unknown as StockMovement[]) || [],
-      total: count || 0,
+    const stockService = new StockBackendService(supabase);
+    const result = await stockService.listMovements({
       page,
       pageSize,
-      totalPages,
+      filters: filtros,
+    });
+
+    const successResponse: ApiSuccessResponse<MovimentacoesListResponse> = {
+      data: result,
     };
 
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error("Erro na API de movimentações:", error);
-    return NextResponse.json(
-      { error: "Erro interno do servidor" },
-      { status: 500 }
-    );
+    return NextResponse.json(successResponse, { status: 200 });
+  } catch (err) {
+    console.error("Erro na API de movimentações:", err);
+    const errorResponse: ApiErrorResponse = {
+      error: "Internal error while fetching stock movements",
+      details: err instanceof Error ? { message: err.message } : undefined,
+    };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
 
 // Endpoint para criar movimentação manual (saída, por exemplo)
 export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
+
+  if (!token) {
+    const errorResponse: ApiErrorResponse = {
+      error: "Access token not provided",
+    };
+    return NextResponse.json(errorResponse, { status: 401 });
+  }
+
   try {
+    const supabase = getSupabaseBearerClient(token);
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "Usuário não autorizado" },
+        { status: 401 }
+      );
+    }
+
     const { productId, tipo_movimentacao, quantidade, observacao } =
       await request.json();
 
@@ -130,19 +122,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Quantidade deve ser maior que zero" },
         { status: 400 }
-      );
-    }
-
-    // Obter usuário autenticado
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: "Usuário não autorizado" },
-        { status: 401 }
       );
     }
 

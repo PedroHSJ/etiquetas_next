@@ -140,7 +140,7 @@ export class MovimentacaoEstoqueService {
       if (termo) params.append("q", termo);
       params.append("limit", limit.toString());
 
-      const response = await fetch(`/api/estoque/produtos?${params}`);
+      const response = await fetchWithAuth(`/api/estoque/produtos?${params}`);
       const data = await response.json();
 
       if (data.success) {

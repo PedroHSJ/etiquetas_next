@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseBearerClient } from "@/lib/supabaseServer";
 import { StockBackendService } from "@/lib/services/server/stockService";
-import { EstoqueFiltros, EstoqueListResponse } from "@/types/estoque";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
+import { StockStatistics } from "@/types/stock/stock";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
@@ -29,39 +29,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
-    const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get("page") || "1");
-    const pageSize = parseInt(searchParams.get("pageSize") || "20");
-
-    const filtros: EstoqueFiltros = {
-      produto_nome: searchParams.get("produto_nome") || undefined,
-      productId: searchParams.get("productId")
-        ? parseInt(searchParams.get("productId")!)
-        : undefined,
-      userId: searchParams.get("userId") || undefined,
-      estoque_zerado: searchParams.get("estoque_zerado") === "true",
-      estoque_baixo: searchParams.get("estoque_baixo") === "true",
-      quantidade_minima: searchParams.get("quantidade_minima")
-        ? parseFloat(searchParams.get("quantidade_minima")!)
-        : undefined,
-    };
-
     const stockService = new StockBackendService(supabase);
-    const result = await stockService.listStock({
-      page,
-      pageSize,
-      filters: filtros,
-    });
+    const stats = await stockService.getStatistics();
 
-    const successResponse: ApiSuccessResponse<EstoqueListResponse> = {
-      data: result,
+    const successResponse: ApiSuccessResponse<StockStatistics> = {
+      data: stats,
     };
 
     return NextResponse.json(successResponse, { status: 200 });
   } catch (err) {
-    console.error("Erro na API de estoque:", err);
+    console.error("Erro ao buscar estatísticas de estoque:", err);
     const errorResponse: ApiErrorResponse = {
-      error: "Internal error while fetching stock data",
+      error: "Internal error while fetching stock statistics",
       details: err instanceof Error ? { message: err.message } : undefined,
     };
     return NextResponse.json(errorResponse, { status: 500 });

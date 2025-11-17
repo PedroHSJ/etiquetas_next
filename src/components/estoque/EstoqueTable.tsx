@@ -42,6 +42,7 @@ import { EntradaRapidaDialog } from "./EntradaRapidaDialog";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 interface EstoqueTableProps {
   onViewMovimentacoes?: (produtoId: number, produtoNome: string) => void;
@@ -73,7 +74,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
         );
       }
 
-      const response = await fetch(`/api/estoque?${params}`);
+      const response = await fetchWithAuth(`/api/estoque?${params}`);
       const data = await response.json();
 
       if (response.ok) {
