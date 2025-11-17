@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { OrganizationService } from "@/lib/services/client/organization-service";
+import { formatCNPJ, formatPhone } from "@/lib/converters";
 
 export default function DashboardPage() {
   const { activeOrganizationDetails, detailsLoading } = useOrganization();
@@ -112,7 +113,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {activeOrganizationDetails?.mainPhone || "--"}
+              {formatPhone(activeOrganizationDetails?.mainPhone) || "--"}
             </div>
             <p className="text-xs text-muted-foreground">Contato principal</p>
           </CardContent>
@@ -141,7 +142,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-sm font-bold">
-              {activeOrganizationDetails?.cnpj || "--"}
+              {formatCNPJ(activeOrganizationDetails?.cnpj) || "--"}
             </div>
             <p className="text-xs text-muted-foreground">Identificação</p>
           </CardContent>

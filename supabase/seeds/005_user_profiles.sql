@@ -1,0 +1,5 @@
+INSERT INTO public.user_profiles (id, user_organization_id, profile_id, active, start_date, created_at) VALUES
+	('e911758b-18f5-4358-83bf-ba5a45b56339'::uuid, '99099ccd-0382-4a7f-8096-108811d5b76d'::uuid, (SELECT id FROM public.profiles WHERE name ILIKE 'gestor' LIMIT 1), true, '2025-11-17 11:45:14.526538-03', '2025-11-17 11:45:14.526538-03'),
+	('46fb1b28-b97c-4224-96bd-85d3abfa540f'::uuid, 'f28715b2-7e1e-420a-82a0-c72b502fe599'::uuid, (SELECT id FROM public.profiles WHERE name ILIKE 'gestor' LIMIT 1), true, '2025-11-17 11:46:22.543482-03', '2025-11-17 11:46:22.543482-03'),
+	('9a59d8a6-4c1b-4f5d-846e-f4c4c3ac08d5'::uuid, 'e656a21f-d8bc-4e03-8b0e-1505a31f4911'::uuid, (SELECT id FROM public.profiles WHERE name ILIKE 'cozinheiro' LIMIT 1), true, '2025-11-17 11:59:40.621348-03', '2025-11-17 11:59:40.621348-03'),
+	('08f9c42d-085d-4dee-899f-3744b610a0db'::uuid, '84dc9180-40d4-41d0-9ffa-0fa266c9696c'::uuid, (SELECT id FROM public.profiles WHERE name ILIKE 'estoquista' LIMIT 1), true, '2025-11-17 12:00:21.967704-03', '2025-11-17 12:00:21.967704-03');

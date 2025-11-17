@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
     const organizationId =
       request.nextUrl.searchParams.get("organizationId") ?? undefined;
     const pending = request.nextUrl.searchParams.get("pending") === "true";
+    const scope = request.nextUrl.searchParams.get("scope") ?? undefined;
 
     const inviteService = new InviteBackendService(supabase);
 
@@ -56,8 +57,16 @@ export async function GET(request: NextRequest) {
 
     // Otherwise, list with filters
     console.log("Listing invites with filters");
+
+    if (scope === "organization" && !organizationId) {
+      const errorResponse: ApiErrorResponse = {
+        error: "organizationId is required for scope=organization",
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
     const invites = await inviteService.listInvites({
-      email: email || user.email,
+      email: scope === "organization" ? undefined : email || user.email,
       status,
       organizationId,
     });

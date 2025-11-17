@@ -29,7 +29,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, CheckCircle, XCircle, Mail, User } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Mail,
+  Send,
+  User,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,6 +55,7 @@ export default function ConvitesPage() {
   const [pendingInvites, setPendingInvites] = useState<Invite[]>([]);
   const [acceptedInvites, setAcceptedInvites] = useState<Invite[]>([]);
   const [rejectedInvites, setRejectedInvites] = useState<Invite[]>([]);
+  const [sentInvites, setSentInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("pendentes");
 
@@ -72,7 +80,10 @@ export default function ConvitesPage() {
         user?.email || ""
       );
       setInvites(allInvites);
-      console.log("Convites buscados:", allInvites);
+      const organizationInvites = await InviteService.getInvitesByOrganization(
+        organizacaoId
+      );
+      setSentInvites(organizationInvites);
       // Separar por status
       setPendingInvites(allInvites.filter((c) => c.status === "pending"));
       setAcceptedInvites(allInvites.filter((c) => c.status === "accepted"));
@@ -80,6 +91,7 @@ export default function ConvitesPage() {
     } catch (error) {
       console.error("Erro ao buscar convites:", error);
       toast.error("Erro ao carregar convites");
+      setSentInvites([]);
     } finally {
       setLoading(false);
     }
@@ -394,6 +406,149 @@ export default function ConvitesPage() {
     );
   };
 
+  const renderSentInvitesTable = (invitesList: Invite[]) => {
+    if (invitesList.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          Nenhum convite enviado
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="block md:hidden space-y-4">
+          {invitesList.map((invite) => (
+            <Card key={invite.id}>
+              <CardContent className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Destinatário</p>
+                    <h3 className="text-base font-semibold">{invite.email}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Perfil: {invite.profile?.name ?? "—"}
+                    </p>
+                    {invite.invitedBy?.name && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Enviado por {invite.invitedBy.name}
+                      </p>
+                    )}
+                  </div>
+                  {getStatusBadge(invite.status)}
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>
+                    Enviado em{" "}
+                    {format(invite.createdAt, "dd/MM/yyyy", { locale: ptBR })}
+                  </p>
+                  <p>
+                    Expira em{" "}
+                    {format(invite.expiresAt, "dd/MM/yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+                {invite.status === "pending" && (
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCancelInvite(invite)}
+                      className="flex items-center gap-2"
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Destinatário</TableHead>
+                <TableHead>Perfil</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Responsável</TableHead>
+                <TableHead>Enviado em</TableHead>
+                <TableHead>Expira em</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invitesList.map((invite) => (
+                <TableRow key={invite.id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{invite.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {invite.organization?.name}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>{invite.profile?.name ?? "—"}</TableCell>
+                  <TableCell>{getStatusBadge(invite.status)}</TableCell>
+                  <TableCell>
+                    {invite.invitedBy ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback className="h-6 w-6 text-xs bg-gray-100 text-gray-600">
+                            {getInitials(
+                              invite.invitedBy.name ??
+                                invite.invitedBy.email ??
+                                "U"
+                            )}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="text-sm font-medium">
+                            {invite.invitedBy.name ?? "Usuário"}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {invite.invitedBy.email ?? "—"}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">
+                      {format(invite.createdAt, "dd/MM/yyyy", { locale: ptBR })}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">
+                      {format(invite.expiresAt, "dd/MM/yyyy", { locale: ptBR })}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {invite.status === "pending" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancelInvite(invite)}
+                        className="flex items-center gap-2"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        Cancelar
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Suspense
       fallback={
@@ -441,7 +596,7 @@ export default function ConvitesPage() {
             className="w-full"
           >
             {/* Tabs para Desktop */}
-            <TabsList className="hidden md:grid w-full grid-cols-4">
+            <TabsList className="hidden md:grid w-full grid-cols-5">
               <TabsTrigger
                 value="pendentes"
                 className="flex items-center gap-2"
@@ -459,6 +614,10 @@ export default function ConvitesPage() {
               >
                 <XCircle className="h-4 w-4" />
                 Rejeitados ({rejectedInvites.length})
+              </TabsTrigger>
+              <TabsTrigger value="enviados" className="flex items-center gap-2">
+                <Send className="h-4 w-4" />
+                Enviados ({sentInvites.length})
               </TabsTrigger>
               <TabsTrigger value="todos" className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
@@ -545,6 +704,31 @@ export default function ConvitesPage() {
                 </button>
 
                 <button
+                  onClick={() => setActiveTab("enviados")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    activeTab === "enviados"
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border bg-card hover:bg-accent/50"
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Send
+                      className={`h-6 w-6 ${
+                        activeTab === "enviados"
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                    <div className="text-center">
+                      <div className="font-semibold text-sm">Enviados</div>
+                      <div className="text-xs text-muted-foreground">
+                        {sentInvites.length} convite(s)
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
+                <button
                   onClick={() => setActiveTab("todos")}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     activeTab === "todos"
@@ -578,6 +762,7 @@ export default function ConvitesPage() {
                     {activeTab === "pendentes" && "Pendentes"}
                     {activeTab === "aceitos" && "Aceitos"}
                     {activeTab === "rejeitados" && "Rejeitados"}
+                    {activeTab === "enviados" && "Enviados"}
                     {activeTab === "todos" && "Todos os Convites"}
                   </span>
                 </div>
@@ -657,6 +842,32 @@ export default function ConvitesPage() {
                     </div>
                   ) : (
                     renderInvitesTable(rejectedInvites)
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="enviados" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Send className="h-5 w-5" />
+                    Convites Enviados ({sentInvites.length})
+                  </CardTitle>
+                  <CardDescription>
+                    Convites criados e enviados para novos integrantes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      <p className="mt-2 text-muted-foreground">
+                        Carregando convites...
+                      </p>
+                    </div>
+                  ) : (
+                    renderSentInvitesTable(sentInvites)
                   )}
                 </CardContent>
               </Card>

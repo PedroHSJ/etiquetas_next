@@ -159,6 +159,24 @@ BEGIN
         au.raw_user_meta_data->>'name', 
         split_part(au.email, '@', 1),
         'Usuário'
+      ),
+      'name', COALESCE(
+        au.raw_user_meta_data->>'full_name',
+        au.raw_user_meta_data->>'name', 
+        split_part(au.email, '@', 1),
+        'Usuário'
+      ),
+      'avatar_url', COALESCE(
+        au.raw_user_meta_data->>'avatar_url',
+        au.raw_user_meta_data->>'picture'
+      ),
+      'avatarUrl', COALESCE(
+        au.raw_user_meta_data->>'avatar_url',
+        au.raw_user_meta_data->>'picture'
+      ),
+      'picture', COALESCE(
+        au.raw_user_meta_data->>'picture',
+        au.raw_user_meta_data->>'avatar_url'
       )
     )
   ) INTO users_data

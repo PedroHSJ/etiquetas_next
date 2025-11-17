@@ -167,6 +167,34 @@ export class InviteService {
   }
 
   /**
+   * Lista convites enviados por uma organização
+   */
+  static async getInvitesByOrganization(
+    organizationId: string
+  ): Promise<Invite[]> {
+    if (!organizationId) {
+      return [];
+    }
+
+    try {
+      const { data, status } = await api.get<
+        ApiResponse<InviteWithRelationsResponseDto[]>
+      >("/invites", {
+        params: { organizationId, scope: "organization" },
+      });
+
+      if (!data || !Array.isArray(data.data) || status !== 200) {
+        return [];
+      }
+
+      return toInviteModelList(data.data);
+    } catch (error) {
+      console.error("Erro ao buscar convites enviados:", error);
+      return [];
+    }
+  }
+
+  /**
    * Rejeita um convite pelo ID
    */
   static async rejectInvite(inviteId: string): Promise<boolean> {

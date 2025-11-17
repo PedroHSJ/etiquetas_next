@@ -78,7 +78,7 @@ export const NotificationBell: React.FC = () => {
             </Badge>
           </div>
 
-          <ScrollArea className="h-80">
+          <ScrollArea className="h-max">
             {isLoading ? (
               <div className="p-4 text-center text-muted-foreground">
                 Carregando...
