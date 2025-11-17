@@ -1,7 +1,34 @@
+"use client";
+
 import { LoginForm } from "@/components/form/login-form";
 import { Package } from "lucide-react";
+import { useEffect } from "react";
 
 export default function LoginPage() {
+  const cleanLocalStorage = () => {
+    if (typeof window === "undefined") return;
+    localStorage.clear();
+  };
+
+  const clearAllClientCookies = () => {
+    if (typeof document === "undefined") return;
+    const cookies = document.cookie.split(";");
+
+    for (const cookie of cookies) {
+      console.log("Clearing cookie:", cookie);
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.slice(0, eqPos) : cookie;
+
+      document.cookie =
+        name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    }
+  };
+
+  useEffect(() => {
+    cleanLocalStorage();
+    clearAllClientCookies();
+  }, []);
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">

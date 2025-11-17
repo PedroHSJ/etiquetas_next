@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { OrganizationDetails } from "@/components/organization";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import {
@@ -17,7 +16,6 @@ import {
   Package,
   ChefHat,
   BarChart3,
-  Calendar,
   ArrowRight,
   Loader2,
 } from "lucide-react";
@@ -101,7 +99,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {activeOrganizationDetails?.capacidade_atendimento || "--"}
+              {activeOrganizationDetails?.capacity || "--"}
             </div>
             <p className="text-xs text-muted-foreground">refeições/dia</p>
           </CardContent>
@@ -114,7 +112,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {activeOrganizationDetails?.telefone_principal || "--"}
+              {activeOrganizationDetails?.mainPhone || "--"}
             </div>
             <p className="text-xs text-muted-foreground">Contato principal</p>
           </CardContent>
@@ -127,9 +125,9 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-sm font-bold">
-              {activeOrganizationDetails?.cidade &&
-              activeOrganizationDetails?.estado
-                ? `${activeOrganizationDetails.cidade}/${activeOrganizationDetails.estado}`
+              {activeOrganizationDetails?.city &&
+              activeOrganizationDetails?.state
+                ? `${activeOrganizationDetails.city}/${activeOrganizationDetails.state}`
                 : "--"}
             </div>
             <p className="text-xs text-muted-foreground">Cidade/Estado</p>

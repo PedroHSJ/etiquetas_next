@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Bell } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { Button } from "../ui/button";
@@ -8,12 +8,12 @@ import { Badge } from "../ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
-import { Dialog, DialogContent } from "../ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { InviteManager } from "./InviteManager";
-import { InvitedBy } from "../onboarding/InvitedBy";
 import { Invite } from "@/types/models/invite";
+import { cn } from "@/lib/utils";
 
 export const NotificationBell: React.FC = () => {
   const {
@@ -89,73 +89,68 @@ export const NotificationBell: React.FC = () => {
               </div>
             ) : (
               <div className="p-2">
-                {/* {pendingInvites?.map((invite, index) => (
-                  <div key={invite.id}>
-                    <div
-                      className="p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                      onClick={() => handleInviteClick(invite)}
-                    >
-                      {invite.email.length > 25 ? (
-                        // Layout para emails longos - badge na parte inferior
-                        <div className="space-y-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground break-all">
-                              {invite.email}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Perfil: {invite.profile?.name || "N/A"}
-                            </p>
-                            <div className="mt-1">
-                              <InvitedBy
-                                user={invite.invitedBy}
-                                isLoading={isLoading}
-                                compact={true}
-                              />
+                {pendingInvites?.map((invite, index) => {
+                  const isExpired = new Date(invite.expiresAt) < new Date();
+
+                  return (
+                    <div key={invite.id}>
+                      <div
+                        className="p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                        onClick={() => handleInviteClick(invite)}
+                      >
+                        {invite.email.length > 25 ? (
+                          <div className="space-y-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground break-all">
+                                {invite.email}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Perfil: {invite.profile?.name || "N/A"}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {formatDate(invite.createdAt.toString())}
+                              </p>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(invite.createdAt.toString())}
-                            </p>
-                          </div>
-                          <div className="flex justify-end">
-                            <Badge variant="outline" className="text-xs">
-                              {invite.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      ) : (
-                        // Layout padrão para emails normais - badge à direita
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">
-                              {invite.email}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Perfil: {invite.profile?.name || "N/A"}
-                            </p>
-                            <div className="mt-1">
-                              <InvitedBy
-                                user={invite.invitedBy}
-                                isLoading={isLoading}
-                                compact={true}
-                              />
+                            <div className="flex justify-end">
+                              <Badge
+                                variant={isExpired ? "destructive" : "outline"}
+                                className="text-xs"
+                              >
+                                {invite.status == "pending"
+                                  ? "Pendente"
+                                  : invite.status}
+                              </Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(invite.createdAt.toString())}
-                            </p>
                           </div>
-                          <div className="ml-2 text-right">
-                            <Badge variant="outline" className="text-xs">
-                              {invite.status}
-                            </Badge>
+                        ) : (
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">
+                                {invite.email}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Perfil: {invite.profile?.name || "N/A"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(invite.createdAt.toString())}
+                              </p>
+                            </div>
+                            <div className="ml-2 text-right">
+                              <Badge variant="destructive" className="text-xs">
+                                {invite.status == "pending"
+                                  ? "Pendente"
+                                  : invite.status}
+                              </Badge>
+                            </div>
                           </div>
-                        </div>
+                        )}
+                      </div>
+                      {index < pendingInvites.length - 1 && (
+                        <Separator className="my-2" />
                       )}
                     </div>
-                    {index < pendingInvites.length - 1 && (
-                      <Separator className="my-2" />
-                    )}
-                  </div>
-                ))} */}
+                  );
+                })}
               </div>
             )}
           </ScrollArea>

@@ -14,7 +14,7 @@ export interface Database {
           id: string;
           name: string;
           type: string | null;
-          user_id: string | null;
+          created_by: string | null;
           created_at: string | null;
           cnpj: string | null;
           capacity: number | null;
@@ -38,7 +38,7 @@ export interface Database {
           id?: string;
           name: string;
           type?: string | null;
-          user_id?: string | null;
+          created_by?: string | null;
           created_at?: string | null;
           cnpj?: string | null;
           capacity?: number | null;
@@ -62,7 +62,7 @@ export interface Database {
           id?: string;
           name?: string;
           type?: string | null;
-          user_id?: string | null;
+          created_by?: string | null;
           created_at?: string | null;
           cnpj?: string | null;
           capacity?: number | null;

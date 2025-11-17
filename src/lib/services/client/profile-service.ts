@@ -73,7 +73,7 @@ export const ProfileService = {
               // userOrganization vem apenas com organization expandida;
               // usamos os campos do próprio DTO para preencher o resto
               id: dto.userOrganizationId,
-              userId: dto.userOrganization.organization.userId ?? "",
+              userId: dto.userOrganization.organization.createdBy ?? "",
               organizationId: dto.userOrganization.organization.id,
               profileId: dto.profileId,
               active: dto.active,

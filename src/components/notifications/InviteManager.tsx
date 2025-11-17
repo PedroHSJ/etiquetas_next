@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useNotifications } from "../../contexts/NotificationContext";
-import { Convite } from "../../types/onboarding";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -136,7 +135,7 @@ export const InviteManager: React.FC<InviteManagerProps> = ({
               variant={isExpired ? "destructive" : "outline"}
               className="text-xs"
             >
-              {invite.status}
+              {invite.status == "pending" ? "Pendente" : invite.status}
             </Badge>
           </div>
 

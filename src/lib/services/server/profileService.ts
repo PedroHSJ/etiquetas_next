@@ -150,14 +150,17 @@ export class ProfileBackendService {
           `
           *,
           profile:profiles(*),
-          user_organization:user_organizations(
+          user_organization:user_organizations!inner(
             *,
             organization:organizations(*)
           )
         `
         )
-        .eq("user_organization.user_id", userId)
+        // Importante: o filtro deve usar o nome da tabela real (user_organizations),
+        // não o alias (user_organization), para o Supabase aplicar corretamente.
+        .eq("user_organizations.user_id", userId)
         .eq("active", true);
+      console.log("userId:", userId);
 
       if (error) {
         throw new Error(error.message || "Error fetching user profiles");

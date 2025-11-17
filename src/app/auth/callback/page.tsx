@@ -67,10 +67,10 @@ export default function AuthCallback() {
             <p className="text-sm text-gray-600">Redirecting to login...</p>
           </div>
         ) : (
-          <>
+          <div className="flex flex-row items-center justify-center gap-4">
             <Spinner />
-            <p className="mt-2">Loading...</p>
-          </>
+            <p className="mt-2">Aguarde...</p>
+          </div>
         )}
       </div>
     </div>

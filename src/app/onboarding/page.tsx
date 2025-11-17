@@ -19,12 +19,13 @@ import {
   Clock,
   Info,
   LogOut,
+  XCircle,
 } from "lucide-react";
 import { OrganizationWizard } from "@/components/wizard/OrganizationWizard";
 import { InviteEmployees } from "@/components/onboarding/InviteEmployees";
-import { ConvidadoPor } from "@/components/onboarding/InvitedBy";
+import { InvitedBy } from "@/components/onboarding/InvitedBy";
 import { InviteService } from "@/lib/services/inviteService";
-import { Convite, OnboardingChoice } from "@/types/onboarding";
+import { OnboardingChoice } from "@/types/onboarding";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
@@ -36,9 +37,11 @@ import { Invite } from "@/types/models/invite";
 
 export default function OnboardingPage() {
   const [acceptingInvite, setAcceptingInvite] = useState<string | null>(null);
+  const [rejectingInvite, setRejectingInvite] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const { user } = useAuth();
-  const { invites, loading, hasOrganization } = useOnboarding();
+  const { invites, loading, hasOrganization, refreshInvites, removeInvite } =
+    useOnboarding();
   const {
     state,
     setChoice,
@@ -128,6 +131,23 @@ export default function OnboardingPage() {
       toast.error("Erro ao aceitar convite");
     } finally {
       setAcceptingInvite(null);
+    }
+  };
+
+  const handleRejectInvite = async (convite: Invite) => {
+    if (!user?.id) return;
+
+    try {
+      setRejectingInvite(convite.id);
+      await InviteService.rejectInvite(convite.id);
+      toast.success("Convite recusado com sucesso!");
+      removeInvite(convite.id);
+      await refreshInvites();
+    } catch (error) {
+      console.error("Erro ao recusar convite:", error);
+      toast.error("Erro ao recusar convite");
+    } finally {
+      setRejectingInvite(null);
     }
   };
 
@@ -306,14 +326,20 @@ export default function OnboardingPage() {
                         </div>
 
                         <div className="space-y-2 text-sm text-muted-foreground">
-                          {/* <ConvidadoPor
+                          <InvitedBy
                             user={{
-                              id: invite.invitedBy?.id || "",
+                              id: invite.invitedBy.id,
+                              name:
+                                invite.invitedBy.name ||
+                                invite.invitedBy.email ||
+                                "Usuário",
+                              email: invite.invitedBy.email || "",
+                              avatarUrl: invite.invitedBy.avatarUrl,
                             }}
-                            isLoading={!invite.convidado_por_usuario}
-                          /> */}
+                            isLoading={loading}
+                          />
                           <p>
-                            <strong>Data do invite:</strong>{" "}
+                            <strong>Data do convite:</strong>{" "}
                             {new Date(invite.createdAt).toLocaleDateString(
                               "pt-BR"
                             )}
@@ -330,7 +356,10 @@ export default function OnboardingPage() {
                       <div className="flex flex-col gap-2 sm:min-w-[120px]">
                         <Button
                           onClick={() => handleAcceptInvite(invite)}
-                          disabled={acceptingInvite === invite.id}
+                          disabled={
+                            acceptingInvite === invite.id ||
+                            rejectingInvite === invite.id
+                          }
                           className="w-full sm:w-auto"
                         >
                           {acceptingInvite === invite.id ? (
@@ -342,6 +371,28 @@ export default function OnboardingPage() {
                             <>
                               <CheckCircle className="h-4 w-4 mr-2" />
                               Aceitar
+                            </>
+                          )}
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          onClick={() => handleRejectInvite(invite)}
+                          disabled={
+                            acceptingInvite === invite.id ||
+                            rejectingInvite === invite.id
+                          }
+                          className="w-full sm:w-auto"
+                        >
+                          {rejectingInvite === invite.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground mr-2"></div>
+                              Recusando...
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Recusar
                             </>
                           )}
                         </Button>
@@ -366,7 +417,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-6 px-4 sm:py-12">
+      <div className="container mx-auto py-6 px-4 sm:py-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-end mb-6">
             <Button
@@ -393,7 +444,7 @@ export default function OnboardingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Opção Gestor */}
             <Card
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 flex flex-col"
               onClick={() => handleChoice("gestor")}
             >
               <CardHeader className="text-center">
@@ -406,14 +457,14 @@ export default function OnboardingPage() {
                   Alimentação e Nutrição
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
-                <ul className="text-sm text-muted-foreground space-y-2 mb-6">
+              <CardContent className="text-center flex flex-col flex-1">
+                <ul className="text-sm text-muted-foreground space-y-2 mb-6 flex-1">
                   <li>• Configure setores e departamentos</li>
                   <li>• Gerencie funcionários e convites</li>
                   <li>• Acesso completo ao sistema</li>
                   <li>• Relatórios e análises</li>
                 </ul>
-                <Button size="lg" className="w-full">
+                <Button size="lg" className="w-full mt-auto">
                   Começar como Gestor
                 </Button>
               </CardContent>
@@ -421,33 +472,55 @@ export default function OnboardingPage() {
 
             {/* Opção Funcionário */}
             <Card
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 flex flex-col"
               onClick={() => handleChoice("funcionario")}
             >
               <CardHeader className="text-center">
-                <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center">
-                  <Users className="h-8 w-8 text-primary" />
+                <div className="relative mx-auto mb-4">
+                  {" "}
+                  <div className="p-3 bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center">
+                    {" "}
+                    <Users className="h-8 w-8 text-primary" />{" "}
+                  </div>{" "}
+                  {!loading && invites.length > 0 && (
+                    <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold border border-background">
+                      {" "}
+                      {invites.length > 99 ? "99+" : invites.length}{" "}
+                    </div>
+                  )}{" "}
                 </div>
                 <CardTitle className="text-2xl">Funcionário</CardTitle>
                 <CardDescription className="text-base">
                   Participe de uma UAN existente através de convites
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
-                <ul className="text-sm text-muted-foreground space-y-2 mb-6">
+              <CardContent className="text-center flex flex-col flex-1">
+                {!loading && (
+                  <div className="mb-3 flex justify-center">
+                    <Badge
+                      variant={invites.length > 0 ? "default" : "outline"}
+                      className="px-3 py-1 text-xs"
+                    >
+                      {invites.length} convite
+                      {invites.length === 1 ? "" : "s"} pendente
+                      {invites.length === 1 ? "" : "s"}
+                    </Badge>
+                  </div>
+                )}
+                <ul className="text-sm text-muted-foreground space-y-2 mb-6 flex-1">
                   <li>• Aceite convites recebidos</li>
                   <li>• Perfis: Cozinheiro ou Estoquista</li>
                   <li>• Acesso específico às funções</li>
                   <li>• Integração com a equipe</li>
                 </ul>
-                <Button size="lg" variant="outline" className="w-full">
+                <Button size="lg" variant="outline" className="w-full mt-auto">
                   Ver Convites
                 </Button>
               </CardContent>
             </Card>
           </div>
 
-          {invites.length > 0 && (
+          {/* {invites.length > 0 && (
             <div className="mt-8 sm:mt-12 text-center">
               <p className="text-sm sm:text-base text-muted-foreground mb-4">
                 Você tem {invites.length} convite{invites.length > 1 ? "s" : ""}{" "}
@@ -461,7 +534,7 @@ export default function OnboardingPage() {
                 Ver Convites Pendentes
               </Button>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

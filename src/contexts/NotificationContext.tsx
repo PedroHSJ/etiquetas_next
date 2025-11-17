@@ -77,14 +77,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   // Mutation para rejeitar convite
   const rejectMutation = useMutation({
-    mutationFn: async (conviteId: string) => {
-      // TODO: Implementar método de rejeição no InviteService
-      throw new Error("Método de rejeição ainda não implementado");
+    mutationFn: async (inviteId: string) => {
+      return await InviteService.rejectInvite(inviteId);
     },
     onSuccess: () => {
       // Invalidar a query de convites pendentes para recarregar
       queryClient.invalidateQueries({
-        queryKey: ["pending-invites", user?.email],
+        queryKey: ["pending-invites", user?.email, selectedOrganization?.id],
       });
     },
   });
@@ -107,9 +106,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   );
 
   const rejectInvite = useCallback(
-    async (conviteId: string): Promise<boolean> => {
+    async (inviteId: string): Promise<boolean> => {
       try {
-        await rejectMutation.mutateAsync(conviteId);
+        await rejectMutation.mutateAsync(inviteId);
         return true;
       } catch (error) {
         console.error("Erro ao cancelar convite:", error);

@@ -37,7 +37,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Definir rotas públicas que não necessitam autenticação
-  const publicRoutes = ["/login", "/auth"];
+  const publicRoutes = ["/login", "/auth", "/register"];
   const isPublicRoute = publicRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
@@ -50,10 +50,10 @@ export async function updateSession(request: NextRequest) {
   // Para todas as outras rotas, verificar autenticação
   try {
     // No desenvolvimento, considerar sempre autenticado
-    if (process.env.NODE_ENV === "development") {
-      console.log("Development mode: skipping authentication check");
-      return supabaseResponse;
-    }
+    // if (process.env.NODE_ENV === "development") {
+    //   console.log("Development mode: skipping authentication check");
+    //   return supabaseResponse;
+    // }
 
     const {
       data: { user },

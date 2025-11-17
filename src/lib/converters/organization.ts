@@ -137,7 +137,7 @@ export function toOrganizationResponseDto(
     mainPhone: entity.main_phone,
     altPhone: entity.alt_phone,
     institutionalEmail: entity.institutional_email,
-    userId: entity.user_id,
+    createdBy: entity.created_by,
     createdAt: entity.created_at,
     updatedAt: entity.updated_at,
   };
@@ -225,7 +225,7 @@ export function toOrganizationModel(
     mainPhone: dto.mainPhone,
     altPhone: dto.altPhone,
     institutionalEmail: dto.institutionalEmail,
-    userId: dto.userId,
+    createdBy: dto.createdBy,
     createdAt: new Date(dto.createdAt),
     updatedAt: new Date(dto.updatedAt),
 
@@ -322,7 +322,7 @@ export function toOrganizationEntityForCreate(
     main_phone: cleanNumericString(dto.mainPhone) ?? null,
     alt_phone: cleanNumericString(dto.altPhone) ?? null,
     institutional_email: dto.institutionalEmail ?? null,
-    user_id: userId ?? null,
+    created_by: userId ?? null,
   };
 }
 

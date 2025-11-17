@@ -10,7 +10,7 @@ export interface OrganizationEntity {
   id: string;
   name: string;
   type: string | null;
-  user_id: string | null;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
   cnpj: string | null;

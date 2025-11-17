@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     type character varying(100),
-    user_id uuid,
+    created_by uuid,
     created_at timestamp with time zone DEFAULT now(),
     cnpj character varying(14),
     capacity integer,

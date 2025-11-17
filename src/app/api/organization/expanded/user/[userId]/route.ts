@@ -21,7 +21,8 @@ export async function GET(
   try {
     const supabase = getSupabaseBearerClient(token);
     const service = new OrganizationBackendService(supabase);
-    const orgs = await service.listByUserIdExpanded(params.userId);
+    const { userId } = await params;
+    const orgs = await service.listByUserIdExpanded(userId);
 
     const successResponse: ApiSuccessResponse<
       OrganizationExpandedResponseDto[]

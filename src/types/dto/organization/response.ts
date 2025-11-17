@@ -9,7 +9,7 @@ export interface OrganizationResponseDto {
   id: string;
   name: string;
   type: string | null;
-  userId: string | null;
+  createdBy: string | null;
   createdAt: string;
   updatedAt: string;
   cnpj: string | null;

@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/database";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -6,13 +6,11 @@ const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUB_KEY!;
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true, // ✅ Persiste sessão no localStorage
-    autoRefreshToken: true, // ✅ Renova token automaticamente
-    detectSessionInUrl: true, // ✅ Detecta sessão na URL (útil para OAuth)
-  },
-});
+// Browser client usando cookies compatíveis com createServerClient (middleware/API)
+export const supabase = createBrowserClient<Database>(
+  supabaseUrl,
+  supabaseAnonKey
+);
 // Função para definir sessão atual (para RLS)
 export async function setCurrentSession(sessionId: string) {
   if (!supabase) {

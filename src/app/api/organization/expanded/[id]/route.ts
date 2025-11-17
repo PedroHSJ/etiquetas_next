@@ -22,7 +22,7 @@ export async function GET(
   try {
     const supabase = getSupabaseBearerClient(token);
     const service = new OrganizationBackendService(supabase);
-    const { id } = params;
+    const { id } = await params;
     const org = await service.getByIdExpanded(id);
 
     const successResponse: ApiSuccessResponse<OrganizationExpandedResponseDto> =

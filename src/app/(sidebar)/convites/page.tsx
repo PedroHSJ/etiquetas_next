@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
 import {
@@ -12,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -30,42 +29,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Mail,
-  Plus,
-  User,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, Mail, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { InviteService } from "@/lib/services/inviteService";
-import { Convite } from "@/types/onboarding";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { toast } from "sonner";
-import FilterBar from "@/components/filters/FilterBar";
-import Pagination from "@/components/pagination/Pagination";
+import { Invite } from "@/types/models/invite";
 
 export default function ConvitesPage() {
   const { userId, user } = useAuth();
   const { selectedOrganization } = useOrganization();
   const organizacaoId = selectedOrganization?.id;
-  const organizacaoNome = selectedOrganization?.nome || "";
-  const [convites, setConvites] = useState<Convite[]>([]);
-  const [convitesPendentes, setConvitesPendentes] = useState<Convite[]>([]);
-  const [convitesAceitos, setConvitesAceitos] = useState<Convite[]>([]);
-  const [convitesRejeitados, setConvitesRejeitados] = useState<Convite[]>([]);
+  const organizacaoNome = selectedOrganization?.name || "";
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<Invite[]>([]);
+  const [acceptedInvites, setAcceptedInvites] = useState<Invite[]>([]);
+  const [rejectedInvites, setRejectedInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("pendentes");
 
@@ -76,27 +58,25 @@ export default function ConvitesPage() {
   // Dialog de confirmação de ações
   const [actionDialog, setActionDialog] = useState({
     isOpen: false,
-    convite: null as Convite | null,
+    invite: null as Invite | null,
     action: "" as "aceitar" | "rejeitar" | "cancelar",
     isProcessing: false,
   });
 
-  const fetchConvites = async () => {
+  const fetchInvites = async () => {
     if (!organizacaoId) return;
 
     setLoading(true);
     try {
-      const allConvites = await InviteService.getConvitesByEmail(
+      const allInvites = await InviteService.getInvitesByEmail(
         user?.email || ""
       );
-      setConvites(allConvites);
-
+      setInvites(allInvites);
+      console.log("Convites buscados:", allInvites);
       // Separar por status
-      setConvitesPendentes(allConvites.filter((c) => c.status === "pendente"));
-      setConvitesAceitos(allConvites.filter((c) => c.status === "aceito"));
-      setConvitesRejeitados(
-        allConvites.filter((c) => c.status === "rejeitado")
-      );
+      setPendingInvites(allInvites.filter((c) => c.status === "pending"));
+      setAcceptedInvites(allInvites.filter((c) => c.status === "accepted"));
+      setRejectedInvites(allInvites.filter((c) => c.status === "rejected"));
     } catch (error) {
       console.error("Erro ao buscar convites:", error);
       toast.error("Erro ao carregar convites");
@@ -107,64 +87,64 @@ export default function ConvitesPage() {
 
   useEffect(() => {
     if (organizacaoId) {
-      fetchConvites();
+      fetchInvites();
     }
   }, [organizacaoId]);
 
-  const handleAceitarConvite = async (convite: Convite) => {
+  const handleAcceptInvite = async (invite: Invite) => {
     if (!userId) return;
 
     setActionDialog({
       isOpen: true,
-      convite,
+      invite,
       action: "aceitar",
       isProcessing: false,
     });
   };
 
-  const handleRejeitarConvite = async (convite: Convite) => {
+  const handleRejectInvite = async (invite: Invite) => {
     if (!userId) return;
 
     setActionDialog({
       isOpen: true,
-      convite,
+      invite,
       action: "rejeitar",
       isProcessing: false,
     });
   };
 
-  const handleCancelarConvite = async (convite: Convite) => {
+  const handleCancelInvite = async (invite: Invite) => {
     setActionDialog({
       isOpen: true,
-      convite,
+      invite,
       action: "cancelar",
       isProcessing: false,
     });
   };
 
   const confirmAction = async () => {
-    if (!actionDialog.convite || !userId) return;
+    if (!actionDialog.invite || !userId) return;
 
     setActionDialog((prev) => ({ ...prev, isProcessing: true }));
 
     try {
       switch (actionDialog.action) {
         case "aceitar":
-          await InviteService.aceitarConvite(actionDialog.convite.id, userId);
+          await InviteService.acceptInvite(actionDialog.invite.inviteToken);
           toast.success("Convite aceito com sucesso!");
           break;
         case "rejeitar":
-          await InviteService.rejeitarConvite(actionDialog.convite.id, userId);
+          await InviteService.rejectInvite(actionDialog.invite.id);
           toast.success("Convite rejeitado");
           break;
         case "cancelar":
-          await InviteService.cancelarConvite(actionDialog.convite.id);
+          await InviteService.cancelInvite(actionDialog.invite.id);
           toast.success("Convite cancelado");
           break;
       }
 
       // Recarregar convites
-      await fetchConvites();
+      await fetchInvites();
       closeActionDialog();
     } catch (error) {
       console.error("Erro ao processar ação:", error);
@@ -176,7 +156,7 @@ export default function ConvitesPage() {
   const closeActionDialog = () => {
     setActionDialog({
       isOpen: false,
-      convite: null,
+      invite: null,
       action: "aceitar",
       isProcessing: false,
     });
@@ -191,20 +171,31 @@ export default function ConvitesPage() {
       .substring(0, 2);
   };
 
-  const getStatusBadge = (status: Convite["status"]) => {
+  const getStatusBadge = (status: Invite["status"]) => {
     const statusInfo = InviteService.getStatusInfo(status);
+    console.log("Status Info:", status);
     return (
-      <Badge variant={statusInfo.variant as "default" | "secondary" | "destructive" | "outline"} className={statusInfo.color}>
+      <Badge
+        variant={
+          // statusInfo.variant as
+          //   | "default"
+          //   | "secondary"
+          //   | "destructive"
+          //   | "outline"
+          "outline"
+        }
+        className={statusInfo.color}
+      >
         {statusInfo.label}
       </Badge>
     );
   };
 
-  const renderConvitesTable = (
-    convitesList: Convite[],
+  const renderInvitesTable = (
+    invites: Invite[],
     showActions: boolean = false
   ) => {
-    if (convitesList.length === 0) {
+    if (invites.length === 0) {
       return (
         <div className="text-center py-8 text-muted-foreground">
           Nenhum convite encontrado
@@ -216,8 +207,8 @@ export default function ConvitesPage() {
       <div className="space-y-4">
         {/* Visualização em Cards para mobile */}
         <div className="block md:hidden space-y-4">
-          {convitesList.map((convite) => (
-            <Card key={convite.id} className="overflow-hidden">
+          {invites.map((invite) => (
+            <Card key={invite.id} className="overflow-hidden">
               <CardContent className="p-0">
                 {/* Header do Card */}
                 <div className="p-4 pb-3 border-b border-border/50">
@@ -226,15 +217,15 @@ export default function ConvitesPage() {
                       <div className="flex items-center gap-3 mb-2">
                         <Avatar className="h-10 w-10">
                           <AvatarFallback className="bg-blue-100 text-blue-600 text-sm">
-                            {getInitials(convite.email.split("@")[0])}
+                            {getInitials(invite.email.split("@")[0])}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-base truncate">
-                            {convite.email}
+                            {invite.email}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {convite.perfil?.nome} • {convite.organizacao?.nome}
+                            {invite.profile?.name} • {invite.organization?.name}
                           </p>
                         </div>
                       </div>
@@ -243,13 +234,13 @@ export default function ConvitesPage() {
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">
                           Enviado em{" "}
-                          {format(new Date(convite.created_at), "dd/MM/yyyy", {
+                          {format(new Date(invite.createdAt), "dd/MM/yyyy", {
                             locale: ptBR,
                           })}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Expira em{" "}
-                          {format(new Date(convite.expira_em), "dd/MM/yyyy", {
+                          {format(new Date(invite.expiresAt), "dd/MM/yyyy", {
                             locale: ptBR,
                           })}
                         </p>
@@ -257,36 +248,36 @@ export default function ConvitesPage() {
                     </div>
 
                     {/* Status Badge */}
-                    <div className="ml-2">{getStatusBadge(convite.status)}</div>
+                    <div className="ml-2">{getStatusBadge(invite.status)}</div>
                   </div>
                 </div>
 
                 {/* Footer do Card com informações de quem convidou */}
                 <div className="p-4 pt-3 bg-muted/30">
-                  {convite.convidado_por_usuario && (
+                  {invite.invitedBy && (
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="h-8 w-8 text-xs bg-gray-100 text-gray-600">
-                          {getInitials(convite.convidado_por_usuario.nome)}
+                          {getInitials(invite.invitedBy.name ?? "")}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-muted-foreground">
-                          Convidado por {convite.convidado_por_usuario.nome}
+                          Convidado por {invite.invitedBy.name}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {convite.convidado_por_usuario.email}
+                          {invite.invitedBy.email}
                         </p>
                       </div>
                     </div>
                   )}
 
                   {/* Ações para convites pendentes */}
-                  {showActions && convite.status === "pendente" && (
+                  {showActions && invite.status === "pendente" && (
                     <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
                       <Button
                         size="sm"
-                        onClick={() => handleAceitarConvite(convite)}
+                        onClick={() => handleAcceptInvite(invite)}
                         className="flex-1 h-10"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
@@ -295,7 +286,7 @@ export default function ConvitesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleRejeitarConvite(convite)}
+                        onClick={() => handleRejectInvite(invite)}
                         className="flex-1 h-10"
                       >
                         <XCircle className="h-4 w-4 mr-2" />
@@ -325,31 +316,31 @@ export default function ConvitesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {convitesList.map((convite) => (
-                <TableRow key={convite.id}>
+              {invites.map((invite) => (
+                <TableRow key={invite.id}>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{convite.perfil?.nome}</div>
+                      <div className="font-medium">{invite.profile?.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {convite.perfil?.descricao}
+                        {invite.profile?.description || "N/A"}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(convite.status)}</TableCell>
+                  <TableCell>{getStatusBadge(invite.status)}</TableCell>
                   <TableCell>
-                    {convite.convidado_por_usuario ? (
+                    {invite.invitedBy ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                            <AvatarFallback className="h-6 w-6 text-xs bg-gray-100 text-gray-600">
-                              {getInitials(convite.convidado_por_usuario.nome)}
-                            </AvatarFallback>
+                          <AvatarFallback className="h-6 w-6 text-xs bg-gray-100 text-gray-600">
+                            {getInitials(invite.invitedBy.name ?? "")}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="text-sm font-medium">
-                            {convite.convidado_por_usuario.nome}
+                            {invite.invitedBy.name}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {convite.convidado_por_usuario.email}
+                            {invite.invitedBy.email}
                           </div>
                         </div>
                       </div>
@@ -359,25 +350,25 @@ export default function ConvitesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      {format(new Date(convite.created_at), "dd/MM/yyyy", {
+                      {format(new Date(invite.createdAt), "dd/MM/yyyy", {
                         locale: ptBR,
                       })}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      {format(new Date(convite.expira_em), "dd/MM/yyyy", {
+                      {format(new Date(invite.expiresAt), "dd/MM/yyyy", {
                         locale: ptBR,
                       })}
                     </div>
                   </TableCell>
                   {showActions && (
                     <TableCell className="text-right">
-                      {convite.status === "pendente" && (
+                      {invite.status === "pendente" && (
                         <div className="flex gap-1 justify-end">
                           <Button
                             size="sm"
-                            onClick={() => handleAceitarConvite(convite)}
+                            onClick={() => handleAcceptInvite(invite)}
                             className="h-8 px-2"
                           >
                             <CheckCircle className="h-4 w-4" />
@@ -385,7 +376,7 @@ export default function ConvitesPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleRejeitarConvite(convite)}
+                            onClick={() => handleRejectInvite(invite)}
                             className="h-8 px-2"
                           >
                             <XCircle className="h-4 w-4" />
@@ -456,22 +447,22 @@ export default function ConvitesPage() {
                 className="flex items-center gap-2"
               >
                 <Mail className="h-4 w-4" />
-                Pendentes ({convitesPendentes.length})
+                Pendentes ({pendingInvites.length})
               </TabsTrigger>
               <TabsTrigger value="aceitos" className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
-                Aceitos ({convitesAceitos.length})
+                Aceitos ({acceptedInvites.length})
               </TabsTrigger>
               <TabsTrigger
                 value="rejeitados"
                 className="flex items-center gap-2"
               >
                 <XCircle className="h-4 w-4" />
-                Rejeitados ({convitesRejeitados.length})
+                Rejeitados ({rejectedInvites.length})
               </TabsTrigger>
               <TabsTrigger value="todos" className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                Todos ({convites.length})
+                Todos ({invites.length})
               </TabsTrigger>
             </TabsList>
 
@@ -497,7 +488,7 @@ export default function ConvitesPage() {
                     <div className="text-center">
                       <div className="font-semibold text-sm">Pendentes</div>
                       <div className="text-xs text-muted-foreground">
-                        {convitesPendentes.length} convite(s)
+                        {pendingInvites.length} convite(s)
                       </div>
                     </div>
                   </div>
@@ -522,7 +513,7 @@ export default function ConvitesPage() {
                     <div className="text-center">
                       <div className="font-semibold text-sm">Aceitos</div>
                       <div className="text-xs text-muted-foreground">
-                        {convitesAceitos.length} convite(s)
+                        {acceptedInvites.length} convite(s)
                       </div>
                     </div>
                   </div>
@@ -547,7 +538,7 @@ export default function ConvitesPage() {
                     <div className="text-center">
                       <div className="font-semibold text-sm">Rejeitados</div>
                       <div className="text-xs text-muted-foreground">
-                        {convitesRejeitados.length} convite(s)
+                        {rejectedInvites.length} convite(s)
                       </div>
                     </div>
                   </div>
@@ -572,7 +563,7 @@ export default function ConvitesPage() {
                     <div className="text-center">
                       <div className="font-semibold text-sm">Todos</div>
                       <div className="text-xs text-muted-foreground">
-                        {convites.length} convite(s)
+                        {invites.length} convite(s)
                       </div>
                     </div>
                   </div>
@@ -598,7 +589,7 @@ export default function ConvitesPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Mail className="h-5 w-5" />
-                    Convites Pendentes ({convitesPendentes.length})
+                    Convites Pendentes ({pendingInvites.length})
                   </CardTitle>
                   <CardDescription>
                     Convites aguardando resposta dos usuários
@@ -613,7 +604,7 @@ export default function ConvitesPage() {
                       </p>
                     </div>
                   ) : (
-                    renderConvitesTable(convitesPendentes, true)
+                    renderInvitesTable(pendingInvites, true)
                   )}
                 </CardContent>
               </Card>
@@ -624,7 +615,7 @@ export default function ConvitesPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5" />
-                    Convites Aceitos ({convitesAceitos.length})
+                    Convites Aceitos ({acceptedInvites.length})
                   </CardTitle>
                   <CardDescription>
                     Convites que foram aceitos pelos usuários
@@ -639,7 +630,7 @@ export default function ConvitesPage() {
                       </p>
                     </div>
                   ) : (
-                    renderConvitesTable(convitesAceitos)
+                    renderInvitesTable(acceptedInvites)
                   )}
                 </CardContent>
               </Card>
@@ -650,7 +641,7 @@ export default function ConvitesPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <XCircle className="h-5 w-5" />
-                    Convites Rejeitados ({convitesRejeitados.length})
+                    Convites Rejeitados ({rejectedInvites.length})
                   </CardTitle>
                   <CardDescription>
                     Convites que foram rejeitados pelos usuários
@@ -665,7 +656,7 @@ export default function ConvitesPage() {
                       </p>
                     </div>
                   ) : (
-                    renderConvitesTable(convitesRejeitados)
+                    renderInvitesTable(rejectedInvites)
                   )}
                 </CardContent>
               </Card>
@@ -676,7 +667,7 @@ export default function ConvitesPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Mail className="h-5 w-5" />
-                    Todos os Convites ({convites.length})
+                    Todos os Convites ({invites.length})
                   </CardTitle>
                   <CardDescription>
                     Visão geral de todos os convites da organização
@@ -691,7 +682,7 @@ export default function ConvitesPage() {
                       </p>
                     </div>
                   ) : (
-                    renderConvitesTable(convites)
+                    renderInvitesTable(invites)
                   )}
                 </CardContent>
               </Card>
@@ -729,35 +720,31 @@ export default function ConvitesPage() {
                 </DialogDescription>
               </DialogHeader>
 
-              {actionDialog.convite && (
+              {actionDialog.invite && (
                 <div className="py-4">
                   <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {getInitials(actionDialog.convite.email.split("@")[0])}
+                        {getInitials(actionDialog.invite.email.split("@")[0])}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">
-                        {actionDialog.convite.email}
-                      </p>
+                      <p className="font-medium">{actionDialog.invite.email}</p>
                       <p className="text-sm text-muted-foreground">
-                        {actionDialog.convite.perfil?.nome} •{" "}
-                        {actionDialog.convite.organizacao?.nome}
+                        {actionDialog.invite.profile?.name} •{" "}
+                        {actionDialog.invite.organization?.name}
                       </p>
-                      {actionDialog.convite.convidado_por_usuario && (
+                      {actionDialog.invite.invitedBy && (
                         <div className="flex items-center gap-2 mt-1">
                           <Avatar className="h-4 w-4">
-                              <AvatarFallback className="h-4 w-4 text-xs bg-gray-100 text-gray-600">
-                                {getInitials(
-                                  actionDialog.convite.convidado_por_usuario
-                                    .nome
-                                )}
-                              </AvatarFallback>
+                            <AvatarFallback className="h-4 w-4 text-xs bg-gray-100 text-gray-600">
+                              {getInitials(
+                                actionDialog.invite.invitedBy.name ?? ""
+                              )}
+                            </AvatarFallback>
                           </Avatar>
                           <span className="text-xs text-muted-foreground">
-                            Convidado por{" "}
-                            {actionDialog.convite.convidado_por_usuario.nome}
+                            Convidado por {actionDialog.invite.invitedBy.name}
                           </span>
                         </div>
                       )}

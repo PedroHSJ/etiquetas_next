@@ -11,8 +11,9 @@ export interface Invite {
   expiresAt: Date;
   invitedBy: {
     id: string;
-    name: string;
-    email: string;
+    name?: string;
+    email?: string;
+    avatarUrl?: string;
   };
   createdAt: Date;
   acceptedAt: Date | null;

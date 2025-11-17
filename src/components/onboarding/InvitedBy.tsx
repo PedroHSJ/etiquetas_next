@@ -5,6 +5,7 @@ interface InvitedByProps {
     id: string;
     name: string;
     email: string;
+    avatarUrl?: string;
   };
   isLoading?: boolean;
   compact?: boolean; // Nova prop para versão compacta
@@ -59,11 +60,25 @@ export function InvitedBy({
         <div
           className={`${
             compact ? "w-5 h-5" : "w-6 h-6"
-          } rounded-full flex items-center justify-center text-xs text-white font-medium`}
-          style={{ backgroundColor: getAvatarColor(user.name) }}
+          } rounded-full flex items-center justify-center text-xs text-white font-medium overflow-hidden`}
+          style={
+            user.avatarUrl
+              ? {}
+              : { backgroundColor: getAvatarColor(user.name) }
+          }
           title={`${user.name} (${user.email})`}
         >
-          {initials}
+          {user.avatarUrl ? (
+            // Usar foto se disponível
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              className="w-full h-full object-cover rounded-full"
+            />
+          ) : (
+            initials
+          )}
         </div>
         <span className={`font-medium ${compact ? "truncate max-w-20" : ""}`}>
           {user.name}

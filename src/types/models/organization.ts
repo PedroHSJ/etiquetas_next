@@ -33,7 +33,7 @@ export interface Organization {
   id: string;
   name: string;
   type: OrganizationType | null;
-  userId: string | null;
+  createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
   cnpj: string | null;

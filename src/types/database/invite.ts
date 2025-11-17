@@ -8,6 +8,9 @@ export interface InviteEntity {
   invite_token: string;
   expires_at: string;
   invited_by: string;
+  invited_by_name?: string | null;
+  invited_by_email?: string | null;
+  invited_by_avatar_url?: string | null;
   created_at: string;
   accepted_at?: string;
   accepted_by?: string;
@@ -15,13 +18,14 @@ export interface InviteEntity {
   rejected_by?: string;
   canceled_at?: string;
   organization?: {
+    id: string;
     name: string;
-    type: string;
+    type: string | null;
   };
   profile?: {
     id: string;
     name: string;
-    description?: string;
+    description: string | null;
   };
 }
 

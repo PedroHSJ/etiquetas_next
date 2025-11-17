@@ -26,29 +26,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  CalendarIcon,
-  Mail,
-  UserPlus,
-  Building,
-  Shield,
-  Info,
-  CheckCircle,
-  ArrowLeft,
-} from "lucide-react";
+import { CalendarIcon, Mail, UserPlus, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {} from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { InviteService } from "@/lib/services/inviteService";
-import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { Profile } from "@/types";
+import { Profile } from "@/types/models/profile";
+import { ProfileService } from "@/lib/services/client/profile-service";
 
 export default function CreateConvitePage() {
   const router = useRouter();
@@ -74,14 +63,11 @@ export default function CreateConvitePage() {
   const fetchPerfis = async () => {
     try {
       // Buscar perfis disponíveis (excluindo master)
-      const { data, error } = await supabase
-        .from("perfis")
-        .select("*")
-        .neq("nome", "master")
-        .eq("ativo", true);
-
-      if (error) throw error;
-      setPerfis(data || []);
+      const data = await ProfileService.getProfiles();
+      const filtered = data.filter(
+        (profile) => profile.name.toLowerCase() !== "master"
+      );
+      setPerfis(filtered);
     } catch (error) {
       console.error("Erro ao buscar perfis:", error);
       toast.error("Erro ao carregar perfis");
@@ -101,8 +87,7 @@ export default function CreateConvitePage() {
       await InviteService.createInvite(
         email.trim(),
         selectedOrganization.id,
-        perfilId,
-        userId
+        perfilId
       );
 
       toast.success("Convite enviado com sucesso!");

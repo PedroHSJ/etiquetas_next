@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { InviteEntity } from "@/types/database/invite";
-import { convertKeysToCamel } from "@/utils/caseConverter";
 import crypto from "crypto";
+import {
+  InviteWithRelationsResponseDto,
+} from "@/types/dto/invite";
+import { toInviteWithRelationsResponseDto } from "@/lib/converters/invite";
 interface ListInvitesOptions {
   email?: string;
   status?: string;
@@ -13,6 +16,9 @@ interface CreateInviteData {
   organizationId: string;
   profileId: string;
   invitedBy: string;
+  invitedByName?: string | null;
+  invitedByEmail?: string | null;
+  invitedByAvatarUrl?: string | null;
 }
 
 interface AcceptInviteData {
@@ -29,7 +35,9 @@ export class InviteBackendService {
   /**
    * List invites with filters
    */
-  async listInvites(options: ListInvitesOptions = {}): Promise<InviteEntity[]> {
+  async listInvites(
+    options: ListInvitesOptions = {}
+  ): Promise<InviteWithRelationsResponseDto[]> {
     const { email, status, organizationId } = options;
 
     let query = this.supabase
@@ -61,13 +69,16 @@ export class InviteBackendService {
       throw new Error(error.message || "Error fetching invites");
     }
 
-    return data;
+    const entities = (data ?? []) as InviteEntity[];
+    return entities.map(toInviteWithRelationsResponseDto);
   }
 
   /**
    * Get pending invites for an email
    */
-  async getPendingInvites(email: string): Promise<InviteEntity[]> {
+  async getPendingInvites(
+    email: string
+  ): Promise<InviteWithRelationsResponseDto[]> {
     const { data, error } = await this.supabase
       .from("invites")
       .select(
@@ -86,13 +97,16 @@ export class InviteBackendService {
       throw new Error(error.message || "Error fetching pending invites");
     }
 
-    return data;
+    const entities = (data ?? []) as InviteEntity[];
+    return entities.map(toInviteWithRelationsResponseDto);
   }
 
   /**
    * Create a new invite
    */
-  async createInvite(inviteData: CreateInviteData): Promise<InviteEntity> {
+  async createInvite(
+    inviteData: CreateInviteData
+  ): Promise<InviteWithRelationsResponseDto> {
     const inviteToken =
       crypto?.randomUUID?.() ||
       Math.random().toString(36).substring(2, 15) +
@@ -110,6 +124,9 @@ export class InviteBackendService {
         invite_token: inviteToken,
         expires_at: expiresAt.toISOString(),
         invited_by: inviteData.invitedBy,
+        invited_by_name: inviteData.invitedByName ?? null,
+        invited_by_email: inviteData.invitedByEmail ?? null,
+        invited_by_avatar_url: inviteData.invitedByAvatarUrl ?? null,
       })
       .select()
       .single();
@@ -118,7 +135,8 @@ export class InviteBackendService {
       throw new Error(error.message || "Error creating invite");
     }
 
-    return data as InviteEntity;
+    const entity = data as InviteEntity;
+    return toInviteWithRelationsResponseDto(entity);
   }
 
   /**

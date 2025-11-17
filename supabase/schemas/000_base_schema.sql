@@ -474,7 +474,7 @@ CREATE TABLE IF NOT EXISTS "public"."organizations" (
     "id" uuid DEFAULT gen_random_uuid() NOT NULL,
     "name" character varying(255) NOT NULL,
     "type" character varying(100),
-    "user_id" uuid,
+    "created_by" uuid,
     "created_at" timestamp with time zone DEFAULT now(),
     "cnpj" character varying(14),
     "type" character varying(50),
@@ -972,7 +972,7 @@ ALTER TABLE ONLY "public"."organizacoes"
 
 
 ALTER TABLE ONLY "public"."organizacoes"
-    ADD CONSTRAINT "organizacoes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
+    ADD CONSTRAINT "organizacoes_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "auth"."users"("id");
 
 
 

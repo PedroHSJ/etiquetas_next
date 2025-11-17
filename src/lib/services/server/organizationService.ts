@@ -24,21 +24,69 @@ export class OrganizationBackendService {
   constructor(private readonly supabase: SupabaseClient) {}
 
   /**
-   * Returns every organization linked to the authenticated user.
+   * Returns every organization the user created OR belongs to.
    */
   async listByUserId(userId: string): Promise<OrganizationResponseDto[]> {
-    const { data, error } = await this.supabase
+    // 1) Organizations created by the user
+    const { data: owned, error: ownedError } = await this.supabase
       .from("organizations")
       .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+      .eq("created_by", userId);
 
-    if (error) {
-      throw new Error(error.message || "Error while fetching organizations");
+    if (ownedError) {
+      throw new Error(
+        ownedError.message || "Error while fetching owned organizations"
+      );
     }
 
-    const entities = data as OrganizationEntity[];
-    return toOrganizationResponseDtoList(entities);
+    // 2) Organizations where the user is a member (user_organizations)
+    const { data: memberships, error: membershipsError } = await this.supabase
+      .from("user_organizations")
+      .select("organization_id")
+      .eq("user_id", userId)
+      .eq("active", true);
+
+    if (membershipsError) {
+      throw new Error(
+        membershipsError.message || "Error while fetching user organizations"
+      );
+    }
+
+    const memberOrgIds = (memberships ?? []).map(
+      (m: any) => m.organization_id as string
+    );
+
+    let memberOrgs: OrganizationEntity[] = [];
+    if (memberOrgIds.length > 0) {
+      const { data: memberData, error: memberError } = await this.supabase
+        .from("organizations")
+        .select("*")
+        .in("id", memberOrgIds);
+
+      if (memberError) {
+        throw new Error(
+          memberError.message || "Error while fetching member organizations"
+        );
+      }
+
+      memberOrgs = (memberData ?? []) as OrganizationEntity[];
+    }
+
+    // 3) Merge and deduplicate by organization id
+    const map = new Map<string, OrganizationEntity>();
+    for (const org of (owned ?? []) as OrganizationEntity[]) {
+      map.set(org.id, org);
+    }
+    for (const org of memberOrgs) {
+      map.set(org.id, org);
+    }
+
+    const combined = Array.from(map.values());
+    combined.sort((a, b) =>
+      (b.created_at || "").localeCompare(a.created_at || "")
+    );
+
+    return toOrganizationResponseDtoList(combined);
   }
 
   async createOrganization(
@@ -153,7 +201,8 @@ export class OrganizationBackendService {
   async listByUserIdExpanded(
     userId: string
   ): Promise<OrganizationExpandedResponseDto[]> {
-    const { data, error } = await this.supabase
+    // 1) Organizations created by the user (expanded)
+    const { data: owned, error: ownedError } = await this.supabase
       .from("organizations")
       .select(
         `
@@ -162,19 +211,70 @@ export class OrganizationBackendService {
         city:cities(*, state:states(*))
       `
       )
-      .eq("user_id", userId)
-      .order("name");
+      .eq("created_by", userId);
 
-    if (error) {
-      throw new Error(error.message || "Error while fetching organizations");
+    if (ownedError) {
+      throw new Error(
+        ownedError.message || "Error while fetching owned organizations"
+      );
     }
+
+    // 2) Organizations where the user is a member
+    const { data: memberships, error: membershipsError } = await this.supabase
+      .from("user_organizations")
+      .select("organization_id")
+      .eq("user_id", userId)
+      .eq("active", true);
+
+    if (membershipsError) {
+      throw new Error(
+        membershipsError.message || "Error while fetching user organizations"
+      );
+    }
+
+    const memberOrgIds = (memberships ?? []).map(
+      (m: any) => m.organization_id as string
+    );
 
     type ExpandedEntity = OrganizationEntity & {
       state?: StateEntity;
       city?: CityEntity & { state?: StateEntity };
     };
 
-    const entities = data as ExpandedEntity[];
-    return entities.map(toOrganizationExpandedResponseDto);
+    let memberOrgs: ExpandedEntity[] = [];
+    if (memberOrgIds.length > 0) {
+      const { data: memberData, error: memberError } = await this.supabase
+        .from("organizations")
+        .select(
+          `
+          *,
+          state:states(*),
+          city:cities(*, state:states(*))
+        `
+        )
+        .in("id", memberOrgIds);
+
+      if (memberError) {
+        throw new Error(
+          memberError.message || "Error while fetching member organizations"
+        );
+      }
+
+      memberOrgs = (memberData ?? []) as ExpandedEntity[];
+    }
+
+    // 3) Merge and deduplicate
+    const map = new Map<string, ExpandedEntity>();
+    for (const org of (owned ?? []) as ExpandedEntity[]) {
+      map.set(org.id, org);
+    }
+    for (const org of memberOrgs) {
+      map.set(org.id, org);
+    }
+
+    const combined = Array.from(map.values());
+    combined.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+    return combined.map(toOrganizationExpandedResponseDto);
   }
 }

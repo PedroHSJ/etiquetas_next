@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseBearerClient } from "@/lib/supabaseServer";
 import { InviteBackendService } from "@/lib/services/server/inviteService";
 import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
-import { InviteEntity } from "@/types/database/invite";
+import { InviteWithRelationsResponseDto } from "@/types/dto/invite";
 
 /**
  * GET /api/invites
@@ -46,7 +46,9 @@ export async function GET(request: NextRequest) {
     // If pending flag is true, get only pending invites for user's email
     if (pending && user.email) {
       const invites = await inviteService.getPendingInvites(user.email);
-      const successResponse: ApiSuccessResponse<InviteEntity[]> = {
+      const successResponse: ApiSuccessResponse<
+        InviteWithRelationsResponseDto[]
+      > = {
         data: invites,
       };
       return NextResponse.json(successResponse, { status: 200 });
@@ -61,7 +63,9 @@ export async function GET(request: NextRequest) {
     });
     console.log("Found invites:", invites.length);
 
-    const successResponse: ApiSuccessResponse<InviteEntity[]> = {
+    const successResponse: ApiSuccessResponse<
+      InviteWithRelationsResponseDto[]
+    > = {
       data: invites,
     };
     return NextResponse.json(successResponse, { status: 200 });
@@ -116,14 +120,27 @@ export async function POST(request: NextRequest) {
     }
 
     const inviteService = new InviteBackendService(supabase);
+
+    const metadata = (user.user_metadata || {}) as Record<string, any>;
+    const invitedByName =
+      metadata.name || metadata.full_name || user.email || null;
+    const invitedByEmail = user.email ?? null;
+    const invitedByAvatarUrl =
+      metadata.avatar_url || metadata.picture || null;
+
     const invite = await inviteService.createInvite({
       email,
       organizationId,
       profileId,
       invitedBy: user.id,
+      invitedByName,
+      invitedByEmail,
+      invitedByAvatarUrl,
     });
 
-    const successResponse: ApiSuccessResponse<InviteEntity> = {
+    const successResponse: ApiSuccessResponse<
+      InviteWithRelationsResponseDto
+    > = {
       data: invite,
     };
     return NextResponse.json(successResponse, { status: 201 });

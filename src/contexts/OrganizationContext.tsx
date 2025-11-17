@@ -131,7 +131,7 @@ export function OrganizationProvider({
           event: "*",
           schema: "public",
           table: "organizacoes",
-          filter: `user_id=eq.${userId}`,
+          filter: `created_by=eq.${userId}`,
         },
         (payload) => {
           console.log("Mudança detectada na tabela organizacoes:", payload);

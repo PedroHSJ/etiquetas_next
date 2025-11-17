@@ -25,6 +25,8 @@ import { formatCnpj } from "@/lib/utils";
 import { Organization } from "@/types/models/organization";
 import { useQuery } from "@tanstack/react-query";
 import { OrganizationService } from "@/lib/services/client/organization-service";
+import { useProfile } from "@/contexts/ProfileContext";
+import { formatPhone } from "@/lib/converters";
 
 interface Member {
   id: string;
@@ -48,6 +50,7 @@ interface Member {
 
 export default function Page() {
   const { userId } = useAuth();
+  const { userProfiles } = useProfile();
   const [filteredOrganizations, setfilteredOrganizations] = useState<
     Organization[]
   >([]);
@@ -87,6 +90,40 @@ export default function Page() {
       label: "CNPJ",
       accessor: (row) => (row.cnpj ? formatCnpj(row.cnpj) : "--"),
       visible: true,
+    },
+    {
+      id: "profile",
+      key: "profile",
+      label: "Perfil",
+      accessor: () => "",
+      visible: true,
+      render: (_value, row) => {
+        const profilesForOrg = userProfiles
+          .filter(
+            (p) => p.userOrganization?.organizationId === row.id && p.profile
+          )
+          .map((p) => p.profile!.name);
+
+        if (profilesForOrg.length === 0) {
+          return <span className="text-sm text-muted-foreground">—</span>;
+        }
+
+        return (
+          <Badge className="text-sm font-medium" variant={"outline"}>
+            {profilesForOrg.join(", ")}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "main_phone",
+      key: "main_phone",
+      label: "Telefone Principal",
+      accessor: (row) => row.mainPhone,
+      visible: true,
+      render: (value) => (
+        <span className="text-sm">{formatPhone(value as string)}</span>
+      ),
     },
     {
       id: "created_at",
@@ -262,17 +299,29 @@ export default function Page() {
             itemsPerPage={itemsPerPage}
             onItemsPerPageChange={setItemsPerPage}
             showAdvancedPagination={true}
-            rowActions={(row: Organization) => (
-              <div className="flex gap-1 justify-end">
-                <NavigationButton
-                  href={`/organizations/edit/${row.id}`}
-                  variant="outline"
-                  size="sm"
-                >
-                  <Edit className="h-4 w-4" />
-                </NavigationButton>
-              </div>
-            )}
+            rowActions={(row: Organization) => {
+              const hasGestorProfile = userProfiles.some(
+                (profile) =>
+                  profile.userOrganization?.organizationId === row.id &&
+                  profile.profile?.name?.toLowerCase() === "gestor"
+              );
+
+              if (!hasGestorProfile) {
+                return null;
+              }
+
+              return (
+                <div className="flex gap-1 justify-end">
+                  <NavigationButton
+                    href={`/organizations/edit/${row.id}`}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </NavigationButton>
+                </div>
+              );
+            }}
           />
 
           {/* Dialog de Confirmação de Exclusão */}

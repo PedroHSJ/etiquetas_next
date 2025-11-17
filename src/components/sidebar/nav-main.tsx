@@ -39,22 +39,36 @@ export function NavMain({
             {item.items && item.items.length > 0 ? (
               item.items.map((subItem) => (
                 <SidebarMenuItem key={subItem.title}>
-                  <SidebarMenuButton asChild isActive={subItem.isActive}>
-                    <NavigationLink href={subItem.url}>
+                  {subItem.isActive ? (
+                    <SidebarMenuButton isActive>
                       {subItem.icon && <subItem.icon />}
                       <span>{subItem.title}</span>
-                    </NavigationLink>
-                  </SidebarMenuButton>
+                    </SidebarMenuButton>
+                  ) : (
+                    <SidebarMenuButton asChild>
+                      <NavigationLink href={subItem.url}>
+                        {subItem.icon && <subItem.icon />}
+                        <span>{subItem.title}</span>
+                      </NavigationLink>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))
             ) : (
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={item.isActive}>
-                  <NavigationLink href={item.url}>
+                {item.isActive ? (
+                  <SidebarMenuButton isActive>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
-                  </NavigationLink>
-                </SidebarMenuButton>
+                  </SidebarMenuButton>
+                ) : (
+                  <SidebarMenuButton asChild>
+                    <NavigationLink href={item.url}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </NavigationLink>
+                  </SidebarMenuButton>
+                )}
               </SidebarMenuItem>
             )}
           </SidebarMenu>

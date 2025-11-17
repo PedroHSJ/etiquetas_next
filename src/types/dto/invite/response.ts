@@ -9,12 +9,15 @@ export interface InviteResponseDto {
   profileId: string;
   status: string;
   inviteToken: string;
-  expiresAt: Date;
+  expiresAt: string;
   invitedBy: string;
-  createdAt: Date;
-  acceptedAt: Date | null;
+  invitedByName?: string | null;
+  invitedByEmail?: string | null;
+  invitedByAvatarUrl?: string | null;
+  createdAt: string;
+  acceptedAt: string | null;
   acceptedBy: string | null;
-  rejectedAt: Date | null;
+  rejectedAt: string | null;
   rejectedBy: string | null;
 }
 
@@ -28,5 +31,6 @@ export interface InviteWithRelationsResponseDto extends InviteResponseDto {
     id: string;
     name: string;
     description: string | null;
+    createdAt: string;
   };
 }
