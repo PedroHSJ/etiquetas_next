@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -51,6 +51,7 @@ import {
   STOCK_MESSAGES,
 } from "@/types/stock/stock";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { UNIT_OF_MEASURE_OPTIONS } from "@/types/stock/product";
 
 // Backward compatibility aliases
 import { ChevronsUpDown, Check } from "lucide-react";
@@ -59,6 +60,12 @@ import { cn } from "@/lib/utils";
 type EntradaRapidaRequest = QuickEntryRequest;
 type ProdutoSelect = ProductSelect;
 const ESTOQUE_MESSAGES = STOCK_MESSAGES;
+
+const getUnitLabel = (unit?: string | null) => {
+  if (!unit) return null;
+  const option = UNIT_OF_MEASURE_OPTIONS.find((opt) => opt.value === unit);
+  return option?.label || unit;
+};
 
 // Schema de validação
 const entradaRapidaSchema = z.object({
@@ -101,6 +108,17 @@ export function EntradaRapidaDialog({
       observacao: "",
     },
   });
+
+  const produtoSelecionadoId = form.watch("produto_id");
+  const produtoSelecionado = useMemo(() => {
+    const id = parseInt(produtoSelecionadoId || "", 10);
+    if (!id) return undefined;
+    return produtos.find((produto) => produto.id === id);
+  }, [produtos, produtoSelecionadoId]);
+
+  const quantidadeLabel = getUnitLabel(
+    produtoSelecionado?.unit_of_measure_code
+  );
 
   // Carregar produtos ao abrir o dialog
   const carregarProdutos = async (termo = "") => {
@@ -337,7 +355,14 @@ export function EntradaRapidaDialog({
               name="quantidade"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Quantidade *</FormLabel>
+                  <FormLabel>
+                    Quantidade *
+                    {quantidadeLabel && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({quantidadeLabel})
+                      </span>
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"

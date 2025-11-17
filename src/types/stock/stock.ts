@@ -7,11 +7,21 @@ import { Product } from "./product";
 // Movement type
 export type MovementType = "ENTRADA" | "SAIDA";
 
+export type UnitOfMeasureCode =
+  | "un"
+  | "kg"
+  | "g"
+  | "l"
+  | "ml"
+  | "cx"
+  | "pct";
+
 // Main stock interface
 export interface Stock {
   id: string;
   productId: number;
   current_quantity: number;
+  unit_of_measure_code: UnitOfMeasureCode;
   userId: string;
   created_at: string;
   updated_at: string;
@@ -37,6 +47,7 @@ export interface StockMovement {
   userId: string;
   movement_type: MovementType;
   quantity: number;
+  unit_of_measure_code: UnitOfMeasureCode;
   observation?: string;
   movement_date: string;
   created_at: string;
@@ -135,7 +146,7 @@ export interface ProductSelect {
     id: number;
     name: string;
   };
-  unit_of_measure?: string;
+  unit_of_measure_code: UnitOfMeasureCode;
   current_stock?: number;
 }
 

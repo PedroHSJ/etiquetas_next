@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         movement_type: "SAIDA",
         quantity: quantity,
+        unit_of_measure_code: estoque.unit_of_measure_code ?? "un",
         observation: observation || `Saída rápida - ${product.name}`,
       })
       .select(

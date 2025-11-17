@@ -12,6 +12,7 @@ export interface Estoque {
   id: string;
   productId: number;
   current_quantity: number;
+  unit_of_measure_code: string;
   userId: string;
   created_at: string;
   updated_at: string;
@@ -34,6 +35,7 @@ export interface EstoqueMovimentacao {
   userId: string;
   movement_type: TipoMovimentacao;
   quantity: number;
+  unit_of_measure_code: string;
   observation?: string;
   movement_date: string;
   created_at: string;
@@ -101,6 +103,7 @@ export interface ProdutoSelect {
   nome: string;
   grupo_id?: number;
   unidade_medida?: string;
+  unit_of_measure_code?: string;
   estoque_atual?: number;
 }
 

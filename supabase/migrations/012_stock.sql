@@ -2,17 +2,24 @@
 -- STOCK MODULE - TABLES
 -- =============================================================================
 
+CREATE TABLE IF NOT EXISTS public.unit_of_measure (
+    code character varying(10) PRIMARY KEY,
+    description character varying(100) NOT NULL
+);
+
 -- Stock Table (current balance per product)
 CREATE TABLE IF NOT EXISTS "public"."stock" (
     "id" uuid DEFAULT gen_random_uuid() NOT NULL,
     "productId" integer NOT NULL,
+    "unit_of_measure_code" character varying(10) DEFAULT 'un' NOT NULL,
     "current_quantity" numeric(10,3) DEFAULT 0 NOT NULL,
     "userId" uuid NOT NULL,
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT "stock_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "stock_productId_unique" UNIQUE ("productId"),
-    CONSTRAINT "stock_current_quantity_check" CHECK ("current_quantity" >= 0)
+    CONSTRAINT "stock_current_quantity_check" CHECK ("current_quantity" >= 0),
+    CONSTRAINT "stock_unit_of_measure_code_fkey" FOREIGN KEY ("unit_of_measure_code") REFERENCES public.unit_of_measure(code)
 );
 
 -- Stock Movements Table (entry and exit history)
@@ -22,12 +29,14 @@ CREATE TABLE IF NOT EXISTS "public"."stock_movements" (
     "userId" uuid NOT NULL,
     "movement_type" text NOT NULL,
     "quantity" numeric(10,3) NOT NULL,
+    "unit_of_measure_code" character varying(10) DEFAULT 'un' NOT NULL,
     "observation" text,
     "movement_date" timestamp with time zone DEFAULT now() NOT NULL,
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT "stock_movements_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "stock_movements_type_check" CHECK ("movement_type" IN ('ENTRADA', 'SAIDA')),
-    CONSTRAINT "stock_movements_quantity_check" CHECK ("quantity" > 0)
+    CONSTRAINT "stock_movements_quantity_check" CHECK ("quantity" > 0),
+    CONSTRAINT "stock_movements_uom_fkey" FOREIGN KEY ("unit_of_measure_code") REFERENCES public.unit_of_measure(code)
 );
 
 -- =============================================================================
@@ -91,11 +100,13 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_current_quantity NUMERIC;
     v_new_quantity NUMERIC;
+    v_current_unit character varying(10);
 BEGIN
     -- If INSERT (new movement)
     IF TG_OP = 'INSERT' THEN
         -- Get current quantity or create record if doesn't exist
-        SELECT current_quantity INTO v_current_quantity 
+        SELECT current_quantity, unit_of_measure_code
+        INTO v_current_quantity, v_current_unit
         FROM public.stock 
         WHERE "productId" = NEW."productId";
         
@@ -108,9 +119,12 @@ BEGIN
                 RAISE EXCEPTION 'Cannot perform exit without prior stock for product ID: %', NEW."productId";
             END IF;
             
-            INSERT INTO public.stock ("productId", current_quantity, "userId")
-            VALUES (NEW."productId", v_new_quantity, NEW."userId");
+            INSERT INTO public.stock ("productId", current_quantity, unit_of_measure_code, "userId")
+            VALUES (NEW."productId", v_new_quantity, NEW.unit_of_measure_code, NEW."userId");
         ELSE
+            IF v_current_unit IS NOT NULL AND v_current_unit <> NEW.unit_of_measure_code THEN
+                RAISE EXCEPTION 'Unit mismatch for product ID %, expected %, received %', NEW."productId", v_current_unit, NEW.unit_of_measure_code;
+            END IF;
             -- Calculate new quantity
             IF NEW.movement_type = 'ENTRADA' THEN
                 v_new_quantity := v_current_quantity + NEW.quantity;
@@ -126,6 +140,7 @@ BEGIN
             -- Update stock
             UPDATE public.stock 
             SET current_quantity = v_new_quantity,
+                unit_of_measure_code = COALESCE(v_current_unit, NEW.unit_of_measure_code),
                 "userId" = NEW."userId",
                 updated_at = now()
             WHERE "productId" = NEW."productId";

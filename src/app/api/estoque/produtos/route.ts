@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
-import { isUserAuthenticated } from "@/lib/auth";
+import {
+  getSupabaseBearerClient,
+  getSupabaseServerClient,
+} from "@/lib/supabaseServer";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 import { Product, ProductGroup } from "@/types/stock/product";
 
 interface ProductWithGroup extends Omit<Product, "group"> {
@@ -10,6 +13,7 @@ interface ProductWithGroup extends Omit<Product, "group"> {
 interface StockRecord {
   productId: number;
   current_quantity: number;
+  unit_of_measure_code: string | null;
 }
 
 interface ProductWithStock {
@@ -17,30 +21,33 @@ interface ProductWithStock {
   name: string;
   group_id?: number | null;
   group?: ProductGroup | null;
-  stock: number;
+  current_quantity: number;
+  unit_of_measure_code: string;
 }
 
-// Endpoint para buscar produtos para seleção na entrada rápida
+// Endpoint to list products with stock metadata for quick entry dialog
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const termo = searchParams.get("q") || "";
-    const limite = parseInt(searchParams.get("limit") || "50");
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "");
 
-    // Obter client autenticado
-    const supabase = getSupabaseServerClient(request);
-
-    // Verificar autenticação
-    // const { data: { user }, error: userError } = await supabase.auth.getUser();
-    const isAuthenticated = await isUserAuthenticated(request);
-    if (!isAuthenticated) {
-      return NextResponse.json(
-        { error: "Usuário não autorizado" },
-        { status: 401 }
-      );
+    if (!token) {
+      const errorResponse: ApiErrorResponse = {
+        error: "Access token not provided",
+      };
+      return NextResponse.json(errorResponse, { status: 401 });
     }
 
-    // Query para buscar produtos com informações de estoque
+    const supabase = getSupabaseBearerClient(token);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    const { searchParams } = new URL(request.url);
+    const searchTerm = searchParams.get("q") || "";
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
+
+    // Query products
     let query = supabase.from("products").select(`
         id,
         name,
@@ -48,74 +55,69 @@ export async function GET(request: NextRequest) {
         group:groups(*)
       `);
 
-    // Filtrar por nome se termo foi fornecido
-    if (termo) {
-      query = query.ilike("name", `%${termo}%`);
+    if (searchTerm) {
+      query = query.ilike("name", `%${searchTerm}%`);
     }
 
-    // Aplicar limite e ordenação
-    query = query.order("name", { ascending: true }).limit(limite);
+    query = query.order("name", { ascending: true }).limit(limit);
 
-    const { data: produtos, error } = await query;
+    const { data: products, error: productsError } = await query;
 
-    if (error) {
-      console.error("Erro ao buscar produtos:", error);
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Erro ao buscar produtos",
-          details: error.message,
-        },
-        { status: 500 }
-      );
+    if (productsError) {
+      console.error("Error fetching products:", productsError);
+      const errorResponse: ApiErrorResponse = {
+        error: "Failed to fetch products",
+        details: { message: productsError.message },
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
     }
 
-    // Agora buscar o estoque para cada produto
-    const { data: estoque, error: estoqueError } = await supabase
+    // Stock metadata per product
+    const { data: stockRows, error: stockError } = await supabase
       .from("stock")
-      .select("productId, current_quantity");
+      .select("productId, current_quantity, unit_of_measure_code");
 
-    if (estoqueError) {
-      console.error("Erro ao buscar estoque:", estoqueError);
-      // Continuar mesmo se falhar no estoque
+    if (stockError) {
+      console.error("Error fetching stock info:", stockError);
     }
 
-    // Criar mapa de estoque por productId
-    const estoqueMap = (estoque || []).reduce(
-      (acc: Record<number, number>, e) => {
+    const stockMap = (stockRows || []).reduce(
+      (acc: Record<number, StockRecord>, e) => {
         const record = e as unknown as StockRecord;
-        acc[record.productId] = record.current_quantity;
+        acc[record.productId] = record;
         return acc;
       },
       {}
     );
 
-    // Transformar dados para o formato esperado
-    const produtosComEstoque: ProductWithStock[] = (
-      (produtos || []) as unknown as ProductWithGroup[]
-    ).map((produto) => ({
-      id: produto.id,
-      name: produto.name,
-      group_id: produto.group_id,
-      group: produto.group, // objeto completo do grupo
-      stock: estoqueMap[produto.id] || 0,
-    }));
+    const productsWithStock: ProductWithStock[] = (
+      (products || []) as unknown as ProductWithGroup[]
+    ).map((produto) => {
+      const stockInfo = stockMap[produto.id];
+      const quantity = stockInfo?.current_quantity || 0;
+      const unit = stockInfo?.unit_of_measure_code || "un";
 
-    return NextResponse.json({
-      success: true,
-      data: produtosComEstoque,
+      return {
+        id: produto.id,
+        name: produto.name,
+        group_id: produto.group_id,
+        group: produto.group,
+        unit_of_measure_code: unit,
+        current_quantity: quantity,
+      };
     });
+
+    const successResponse: ApiSuccessResponse<ProductWithStock[]> = {
+      data: productsWithStock,
+    };
+
+    return NextResponse.json(successResponse, { status: 200 });
   } catch (error) {
-    console.error("Erro na API de produtos:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Erro desconhecido";
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Erro interno do servidor",
-        details: errorMessage,
-      },
-      { status: 500 }
-    );
+    console.error("Error on /api/estoque/produtos route:", error);
+    const errorResponse: ApiErrorResponse = {
+      error: "Internal error while fetching products",
+      details: error instanceof Error ? { message: error.message } : undefined,
+    };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }

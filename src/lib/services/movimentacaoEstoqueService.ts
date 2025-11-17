@@ -4,7 +4,12 @@
  */
 
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { StockMovement, Stock, ProductSelect } from "@/types/stock/stock";
+import {
+  StockMovement,
+  Stock,
+  ProductSelect,
+  UnitOfMeasureCode,
+} from "@/types/stock/stock";
 
 export interface MovimentacaoEstoqueRequest {
   produto_id: number;
@@ -39,6 +44,8 @@ export interface ProdutoComEstoque {
   } | null;
   estoque_atual?: number;
   current_quantity?: number;
+  current_stock?: number;
+  unit_of_measure_code: UnitOfMeasureCode;
 }
 
 /**
