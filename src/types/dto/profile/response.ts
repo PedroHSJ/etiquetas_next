@@ -74,6 +74,17 @@ export interface PermissionCheckResponseDto {
 }
 
 /**
+ * Basic user info with name (used in lookups)
+ */
+export interface UserWithName {
+  id: string;
+  email?: string;
+  name?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+}
+
+/**
  * User profiles list response
  */
 export interface UserProfilesListResponseDto {

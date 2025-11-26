@@ -1,0 +1,156 @@
+import {
+  ProductStockResponseDto,
+  StockMovementResponseDto,
+  StockResponseDto,
+  MovementUserDto,
+} from "@/types/dto/stock/response";
+import { StockEntity, StockMovementEntity } from "@/types/database/stock";
+import { UnitOfMeasureCode } from "@/types/stock/stock";
+import {
+  ProductStockModel,
+  StockModel,
+  StockMovementModel,
+  MovementUserModel,
+} from "@/types/models/stock";
+
+type ProductEntityLike = {
+  id: number;
+  name: string;
+  group_id?: number | null;
+  unit_of_measure_code?: UnitOfMeasureCode | null;
+  current_quantity?: number | null;
+  current_stock?: number | null;
+  estoque_atual?: number | null;
+} | null;
+
+const parseQuantity = (value: unknown): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+export function toProductStockResponseDto(
+  product?: ProductEntityLike
+): ProductStockResponseDto | undefined {
+  if (!product) return undefined;
+
+  return {
+    id: product.id,
+    name: product.name,
+    groupId: product.group_id ?? null,
+    unitOfMeasureCode: product.unit_of_measure_code ?? undefined,
+    currentQuantity:
+      product.current_quantity !== undefined
+        ? parseQuantity(product.current_quantity)
+        : product.current_stock !== undefined
+          ? parseQuantity(product.current_stock)
+          : product.estoque_atual !== undefined
+            ? parseQuantity(product.estoque_atual)
+            : undefined,
+  };
+}
+
+export function toStockResponseDto(
+  entity: StockEntity & { product?: ProductEntityLike }
+): StockResponseDto {
+  return {
+    id: entity.id,
+    productId: entity.productId,
+    currentQuantity: parseQuantity(entity.current_quantity),
+    unitOfMeasureCode: (entity.unit_of_measure_code ||
+      "un") as UnitOfMeasureCode,
+    userId: entity.userId,
+    createdAt: entity.created_at,
+    updatedAt: entity.updated_at,
+    product: toProductStockResponseDto(entity.product),
+  };
+}
+
+export function toStockMovementResponseDto(
+  entity: StockMovementEntity & {
+    product?: ProductEntityLike;
+    user?: MovementUserDto;
+  }
+): StockMovementResponseDto {
+  return {
+    id: entity.id,
+    productId: entity.productId,
+    userId: entity.userId,
+    movementType: entity.movement_type,
+    quantity: parseQuantity(entity.quantity),
+    unitOfMeasureCode: (entity.unit_of_measure_code ||
+      "un") as UnitOfMeasureCode,
+    observation: entity.observation,
+    movementDate: entity.movement_date,
+    createdAt: entity.created_at,
+    user: entity.user,
+    product: toProductStockResponseDto(entity.product),
+  };
+}
+
+// ============================================================
+// DTO -> Model converters (frontend camelCase + Date)
+// ============================================================
+
+const toProductModel = (
+  product?: ProductStockResponseDto
+): ProductStockModel | undefined => {
+  if (!product) return undefined;
+  return {
+    id: product.id,
+    name: product.name,
+    groupId: product.groupId ?? null,
+    unitOfMeasureCode: product.unitOfMeasureCode,
+    currentQuantity: product.currentQuantity,
+  };
+};
+
+const toUserModel = (user?: StockMovementResponseDto["user"]): MovementUserModel | undefined => {
+  if (!user) return undefined;
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    fullName: user.fullName ?? user.name,
+  };
+};
+
+export function toStockModel(
+  dto: StockResponseDto | (StockEntity & { product?: ProductEntityLike })
+): StockModel {
+  const baseDto =
+    "currentQuantity" in dto ? dto : toStockResponseDto(dto as any);
+
+  return {
+    id: baseDto.id,
+    productId: baseDto.productId,
+    currentQuantity: baseDto.currentQuantity,
+    unitOfMeasureCode: baseDto.unitOfMeasureCode,
+    userId: baseDto.userId,
+    createdAt: new Date(baseDto.createdAt),
+    updatedAt: new Date(baseDto.updatedAt),
+    product: toProductModel(baseDto.product),
+  };
+}
+
+export function toStockMovementModel(
+  dto:
+    | StockMovementResponseDto
+    | (StockMovementEntity & { product?: ProductEntityLike })
+): StockMovementModel {
+  const baseDto =
+    "movementType" in dto ? dto : toStockMovementResponseDto(dto as any);
+
+  return {
+    id: baseDto.id,
+    productId: baseDto.productId,
+    userId: baseDto.userId,
+    movementType: baseDto.movementType,
+    quantity: baseDto.quantity,
+    unitOfMeasureCode: baseDto.unitOfMeasureCode,
+    observation: baseDto.observation,
+    movementDate: new Date(baseDto.movementDate),
+    createdAt: new Date(baseDto.createdAt),
+    product: toProductModel(baseDto.product),
+    user: toUserModel(baseDto.user),
+  };
+}

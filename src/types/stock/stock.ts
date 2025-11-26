@@ -7,14 +7,7 @@ import { Product } from "./product";
 // Movement type
 export type MovementType = "ENTRADA" | "SAIDA";
 
-export type UnitOfMeasureCode =
-  | "un"
-  | "kg"
-  | "g"
-  | "l"
-  | "ml"
-  | "cx"
-  | "pct";
+export type UnitOfMeasureCode = "un" | "kg" | "g" | "l" | "ml" | "cx" | "pct";
 
 // Main stock interface
 export interface Stock {
@@ -70,15 +63,16 @@ export interface StockMovement {
 export interface QuickEntryRequest {
   productId: number;
   quantity: number;
+  unit_of_measure_code?: UnitOfMeasureCode;
   observation?: string;
 }
 
 // DTO for quick entry response
 export interface QuickEntryResponse {
-  success: boolean;
   message: string;
   movement?: StockMovement;
-  updated_stock?: Stock;
+  updatedStock?: Stock;
+  success?: boolean;
 }
 
 // Filters for stock listing

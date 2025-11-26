@@ -6,8 +6,13 @@ import {
   MovimentacoesListResponse,
 } from "@/types/estoque";
 import { toast } from "sonner";
-import { ProductSelect, QuickEntryRequest } from "@/types/stock/stock";
+import {
+  ProductSelect,
+  QuickEntryRequest,
+  STOCK_MESSAGES,
+} from "@/types/stock/stock";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { StockService } from "@/lib/services/client/stock-service";
 
 export function useEstoque() {
   const [carregandoEstoque, setCarregandoEstoque] = useState(false);
@@ -145,26 +150,17 @@ export function useEstoque() {
   const entradaRapida = useCallback(
     async (request: QuickEntryRequest): Promise<boolean> => {
       try {
-        const response = await fetchWithAuth("/api/estoque/entrada-rapida", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(request),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          toast.success(result.message);
-          return true;
-        } else {
-          toast.error(result.message || "Erro ao registrar entrada");
-          return false;
-        }
+        const result = await StockService.quickEntry(request);
+        const message = result.message || STOCK_MESSAGES.ENTRY_SUCCESS;
+        toast.success(message);
+        return true;
       } catch (error) {
         console.error("Erro ao registrar entrada:", error);
-        toast.error("Erro ao registrar entrada");
+        const fallbackMessage =
+          error instanceof Error
+            ? error.message
+            : "Erro ao registrar entrada";
+        toast.error(fallbackMessage);
         return false;
       }
     },

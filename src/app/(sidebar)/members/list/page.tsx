@@ -166,7 +166,7 @@ export default function MembersListPage() {
 
   if (!selectedOrganization) {
     return (
-      <div className="p-6">
+      <div>
         <Card>
           <CardContent className="py-10 text-center space-y-2">
             <p className="text-lg font-semibold">
@@ -183,7 +183,7 @@ export default function MembersListPage() {
 
   if (!canAccess) {
     return (
-      <div className="p-6">
+      <div>
         <Card>
           <CardContent className="py-10 text-center space-y-2">
             <p className="text-lg font-semibold text-muted-foreground">
@@ -199,7 +199,7 @@ export default function MembersListPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">

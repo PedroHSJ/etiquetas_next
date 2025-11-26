@@ -5,7 +5,41 @@ import {
   EstoqueFiltros,
   MovimentacoesFiltros,
 } from "@/types/estoque";
-import { Stock, StockMovement, StockStatistics } from "@/types/stock/stock";
+import {
+  Stock,
+  StockMovement,
+  StockStatistics,
+  STOCK_MESSAGES,
+  UnitOfMeasureCode,
+} from "@/types/stock/stock";
+import {
+  QuickEntryResponseDto,
+  StockMovementResponseDto,
+  StockResponseDto,
+} from "@/types/dto/stock/response";
+import { StockEntity, StockMovementEntity } from "@/types/database/stock";
+import {
+  toStockMovementResponseDto,
+  toStockResponseDto,
+} from "@/lib/converters/stock";
+import { UserWithName } from "@/types/dto/profile/response";
+
+type ProductJoin = {
+  id: number;
+  name: string;
+  group_id?: number | null;
+  unit_of_measure_code?: UnitOfMeasureCode | null;
+};
+
+type MovementWithRelations = StockMovementEntity & {
+  product?: ProductJoin | null;
+  user?: {
+    id: string;
+    email?: string;
+    name?: string;
+    fullName?: string;
+  };
+};
 
 interface ListStockParams {
   page: number;
@@ -133,13 +167,58 @@ export class StockBackendService {
     const { data, error, count } = await query;
 
     if (error) {
-      throw new Error(
-        error.message || "Error while fetching stock movements"
-      );
+      throw new Error(error.message || "Error while fetching stock movements");
     }
 
+    const movements = (data ?? []) as MovementWithRelations[];
+
+    // Enrich with user info
+    const uniqueUserIds = Array.from(
+      new Set(movements.map((movement) => movement.userId).filter(Boolean))
+    );
+
+    let usersMap = new Map<string, UserWithName>();
+
+    if (uniqueUserIds.length > 0) {
+      const { data: usersData, error: usersError } = await this.supabase.rpc(
+        "get_multiple_users_data",
+        { user_ids: uniqueUserIds }
+      );
+
+      if (usersError) {
+        throw new Error(
+          usersError.message || "Error while loading movement user data"
+        );
+      }
+
+      (usersData as UserWithName[] | null)?.forEach((user) => {
+        if (user?.id) {
+          usersMap.set(user.id, user);
+        }
+      });
+    }
+
+    const enriched = movements.map((movement) => {
+      const user = usersMap.get(movement.userId);
+      const movementUser = user
+        ? {
+            id: user.id,
+            email: user.email,
+            name: user.name ?? user.full_name ?? undefined,
+            fullName: user.full_name ?? user.name ?? undefined,
+          }
+        : undefined;
+
+      const movementWithUser: MovementWithRelations = {
+        ...movement,
+        user: movementUser,
+      };
+
+      return toStockMovementResponseDto(movementWithUser);
+    });
+
     return {
-      data: (data ?? []) as StockMovement[],
+      data: enriched as unknown as StockMovement[],
       total: count || 0,
       page,
       pageSize,
@@ -179,6 +258,217 @@ export class StockBackendService {
       products_out_of_stock: productsOutOfStock,
       products_low_stock: productsLowStock,
       last_update: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Registra uma entrada rápida de estoque e retorna DTOs normalizados
+   */
+  async registerQuickEntry(params: {
+    productId: number;
+    quantity: number;
+    userId: string;
+    unitOfMeasureCode?: UnitOfMeasureCode;
+    observation?: string;
+  }): Promise<QuickEntryResponseDto> {
+    const { productId, quantity, userId, unitOfMeasureCode, observation } =
+      params;
+
+    if (!productId || !quantity) {
+      throw new Error("Produto e quantidade são obrigatórios");
+    }
+
+    if (quantity <= 0) {
+      throw new Error(STOCK_MESSAGES.ERROR_INVALID_QUANTITY);
+    }
+
+    const { data: product, error: productError } = await this.supabase
+      .from("products")
+      .select("id, name, group_id, unit_of_measure_code")
+      .eq("id", productId)
+      .single();
+
+    if (productError || !product) {
+      throw new Error(STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND);
+    }
+
+    const { data: stockExists } = await this.supabase
+      .from("stock")
+      .select("unit_of_measure_code")
+      .eq("productId", productId)
+      .maybeSingle();
+
+    const unitCode =
+      unitOfMeasureCode ||
+      (stockExists?.unit_of_measure_code as UnitOfMeasureCode | undefined) ||
+      (product as { unit_of_measure_code?: UnitOfMeasureCode })
+        .unit_of_measure_code ||
+      "un";
+
+    const { data: movement, error: movementError } = await this.supabase
+      .from("stock_movements")
+      .insert({
+        productId,
+        userId,
+        movement_type: "ENTRADA",
+        quantity,
+        unit_of_measure_code: unitCode,
+        observation: observation || `Entrada rápida - ${product.name}`,
+      })
+      .select(
+        `
+        *,
+        product:products(id, name, group_id, unit_of_measure_code)
+      `
+      )
+      .single();
+
+    if (movementError || !movement) {
+      throw new Error(
+        movementError?.message ||
+          movementError?.details ||
+          "Erro ao registrar movimentação de estoque"
+      );
+    }
+
+    const movementDto: StockMovementResponseDto = toStockMovementResponseDto(
+      movement as MovementWithRelations
+    );
+
+    const { data: updatedStock, error: stockError } = await this.supabase
+      .from("stock")
+      .select(
+        `
+        *,
+        product:products(id, name, group_id, unit_of_measure_code)
+      `
+      )
+      .eq("productId", productId)
+      .single();
+
+    let updatedStockDto: StockResponseDto | undefined;
+
+    if (updatedStock) {
+      updatedStockDto = toStockResponseDto(
+        updatedStock as StockEntity & { product?: ProductJoin }
+      );
+    } else if (stockError) {
+      console.warn("Erro ao buscar estoque atualizado:", stockError);
+    }
+
+    return {
+      message: STOCK_MESSAGES.ENTRY_SUCCESS,
+      movement: movementDto,
+      updatedStock: updatedStockDto,
+    };
+  }
+
+  /**
+   * Registra uma saída rápida de estoque e retorna DTOs normalizados
+   */
+  async registerQuickExit(params: {
+    productId: number;
+    quantity: number;
+    userId: string;
+    unitOfMeasureCode?: UnitOfMeasureCode;
+    observation?: string;
+  }): Promise<QuickEntryResponseDto> {
+    const { productId, quantity, userId, unitOfMeasureCode, observation } =
+      params;
+
+    if (!productId || !quantity) {
+      throw new Error("Produto e quantidade são obrigatórios");
+    }
+
+    if (quantity <= 0) {
+      throw new Error(STOCK_MESSAGES.ERROR_INVALID_QUANTITY);
+    }
+
+    const { data: product, error: productError } = await this.supabase
+      .from("products")
+      .select("id, name, group_id")
+      .eq("id", productId)
+      .single();
+
+    if (productError || !product) {
+      throw new Error(STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND);
+    }
+
+    const { data: stockRow, error: stockError } = await this.supabase
+      .from("stock")
+      .select("id, current_quantity, unit_of_measure_code")
+      .eq("productId", productId)
+      .single();
+
+    if (stockError || !stockRow) {
+      throw new Error(STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND);
+    }
+
+    const availableQuantity = Number(stockRow.current_quantity ?? 0);
+    if (availableQuantity < quantity) {
+      throw new Error(STOCK_MESSAGES.ERROR_INSUFFICIENT_QUANTITY);
+    }
+
+    const unitCode =
+      unitOfMeasureCode ||
+      (stockRow.unit_of_measure_code as UnitOfMeasureCode | undefined) ||
+      (product as { unit_of_measure_code?: UnitOfMeasureCode })
+        .unit_of_measure_code ||
+      "un";
+
+    const { data: movement, error: movementError } = await this.supabase
+      .from("stock_movements")
+      .insert({
+        productId,
+        userId,
+        movement_type: "SAIDA",
+        quantity,
+        unit_of_measure_code: unitCode,
+        observation: observation || `Saída rápida - ${product.name}`,
+      })
+      .select(
+        `
+        *,
+        product:products(id, name, group_id)
+      `
+      )
+      .single();
+
+    if (movementError || !movement) {
+      throw new Error(
+        movementError?.message ||
+          movementError?.details ||
+          "Erro ao registrar movimentação de estoque"
+      );
+    }
+
+    const movementDto: StockMovementResponseDto = toStockMovementResponseDto(
+      movement as MovementWithRelations
+    );
+
+    const { data: updatedStock } = await this.supabase
+      .from("stock")
+      .select(
+        `
+        *,
+        product:products(id, name, group_id)
+      `
+      )
+      .eq("productId", productId)
+      .single();
+
+    let updatedStockDto: StockResponseDto | undefined;
+
+    if (updatedStock) {
+      updatedStockDto = toStockResponseDto(
+        updatedStock as StockEntity & { product?: ProductJoin }
+      );
+    }
+
+    return {
+      message: STOCK_MESSAGES.EXIT_SUCCESS,
+      movement: movementDto,
+      updatedStock: updatedStockDto,
     };
   }
 }

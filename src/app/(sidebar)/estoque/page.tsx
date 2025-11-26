@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   TrendingUp,
   Minus,
+  Warehouse,
 } from "lucide-react";
 
 import {
@@ -30,7 +31,13 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Popover } from "@radix-ui/react-popover";
 import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Stock, StockMovement, StockStatistics } from "@/types/stock/stock";
+import { StockStatistics } from "@/types/stock/stock";
+import {
+  StockListModelResponse,
+  MovementListModelResponse,
+  StockModel,
+  StockMovementModel,
+} from "@/types/models/stock";
 import { StockService } from "@/lib/services/client/stock-service";
 
 export default function EstoquePage() {
@@ -40,14 +47,14 @@ export default function EstoquePage() {
   const [carregandoStats, setCarregandoStats] = useState(true);
 
   // Estoque
-  const [estoqueData, setEstoqueData] = useState<Stock[]>([]);
+  const [estoqueData, setEstoqueData] = useState<StockModel[]>([]);
   const [carregandoEstoque, setCarregandoEstoque] = useState(true);
   const [itemsPerPageEstoque, setItemsPerPageEstoque] = useState(10);
 
   // Movimentações
-  const [movimentacoesData, setMovimentacoesData] = useState<StockMovement[]>(
-    []
-  );
+  const [movimentacoesData, setMovimentacoesData] = useState<
+    StockMovementModel[]
+  >([]);
   const [carregandoMovimentacoes, setCarregandoMovimentacoes] = useState(true);
   const [itemsPerPageMovimentacoes, setItemsPerPageMovimentacoes] =
     useState(10);
@@ -68,7 +75,7 @@ export default function EstoquePage() {
   const carregarEstoque = async () => {
     setCarregandoEstoque(true);
     try {
-      const response = await StockService.listStock({
+      const response: StockListModelResponse = await StockService.listStock({
         page: 1,
         pageSize: itemsPerPageEstoque,
       });
@@ -84,10 +91,11 @@ export default function EstoquePage() {
   const carregarMovimentacoes = async () => {
     setCarregandoMovimentacoes(true);
     try {
-      const response = await StockService.listMovements({
-        page: 1,
-        pageSize: itemsPerPageMovimentacoes,
-      });
+      const response: MovementListModelResponse =
+        await StockService.listMovements({
+          page: 1,
+          pageSize: itemsPerPageMovimentacoes,
+        });
       setMovimentacoesData(response.data || []);
     } catch (error) {
       console.error("Erro ao carregar movimentações:", error);
@@ -168,9 +176,9 @@ export default function EstoquePage() {
     );
   };
 
-  const formatarData = (data: string) => {
+  const formatarData = (data: string | Date) => {
     try {
-      const date = new Date(data);
+      const date = data instanceof Date ? data : new Date(data);
       return date.toLocaleString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
@@ -185,7 +193,7 @@ export default function EstoquePage() {
   };
 
   // Colunas da tabela de estoque
-  const estoqueColumns: GenericTableColumn<Stock>[] = [
+  const estoqueColumns: GenericTableColumn<StockModel>[] = [
     {
       id: "product_name",
       key: "product.name",
@@ -198,7 +206,7 @@ export default function EstoquePage() {
       id: "current_quantity",
       key: "current_quantity",
       label: "Quantidade",
-      accessor: (row) => row.current_quantity,
+      accessor: (row) => row.currentQuantity,
       visible: true,
       render: (value) => (
         <div className="font-mono text-foreground">
@@ -206,21 +214,28 @@ export default function EstoquePage() {
         </div>
       ),
     },
+    // {
+    //   id: "status",
+    //   key: "status",
+    //   label: "Status",
+    //   accessor: (row) => row.current_quantity,
+    //   visible: true,
+    //   render: (value) => (
+    //     <div className="">{getStatusBadge(value as number)}</div>
+    //   ),
+    // },
     {
-      id: "status",
-      key: "status",
-      label: "Status",
-      accessor: (row) => row.current_quantity,
+      id: "unit_of_measure_code",
+      key: "unitOfMeasureCode",
+      label: "Unidade de Medida",
+      accessor: (row) => row?.unitOfMeasureCode || "N/A",
       visible: true,
-      render: (value) => (
-        <div className="">{getStatusBadge(value as number)}</div>
-      ),
     },
     {
       id: "ultima_atualizacao",
       key: "ultima_atualizacao",
       label: "Última Atualização",
-      accessor: (row) => row.updated_at,
+      accessor: (row) => row.updatedAt,
       visible: true,
       render: (value) => (
         <div className="text-sm">{formatarData(value as string)}</div>
@@ -229,16 +244,23 @@ export default function EstoquePage() {
   ];
 
   // Colunas da tabela de movimentações
-  const movimentacoesColumns: GenericTableColumn<StockMovement>[] = [
+  const movimentacoesColumns: GenericTableColumn<StockMovementModel>[] = [
     {
       id: "tipo",
       key: "tipo",
       label: "Tipo",
-      accessor: (row) => row.movement_type,
+      accessor: (row) => row.movementType,
       visible: true,
       render: (value) => (
         <div className="flex justify-center">
-          <Badge variant={value === "ENTRADA" ? "default" : "destructive"}>
+          <Badge
+            variant={value === "ENTRADA" ? "outline" : "destructive"}
+            className={
+              value === "ENTRADA"
+                ? "bg-green-100 text-green-800 border border-green-200"
+                : undefined
+            }
+          >
             {value === "ENTRADA" ? "Entrada" : "Saída"}
           </Badge>
         </div>
@@ -276,7 +298,7 @@ export default function EstoquePage() {
       id: "usuario",
       key: "usuario",
       label: "Usuário",
-      accessor: (row) => row.user?.user_metadata?.full_name || "N/A",
+      accessor: (row) => row.user?.fullName || row.user?.name || "N/A",
       visible: true,
       render: (value) => (
         <div className="text-center text-sm">{value as string}</div>
@@ -286,7 +308,7 @@ export default function EstoquePage() {
       id: "data",
       key: "data",
       label: "Data",
-      accessor: (row) => row.created_at,
+      accessor: (row) => row.movementDate,
       visible: true,
       render: (value) => (
         <div className="text-sm text-center">
@@ -309,16 +331,21 @@ export default function EstoquePage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6">
+    <div className="flex-1 space-y-6">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Controle de Estoque
-          </h1>
-          <p className="text-muted-foreground">
-            Gerencie o estoque de produtos e acompanhe movimentações
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+            <Warehouse className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Controle de Estoque
+            </h1>
+            <p className="text-muted-foreground">
+              Gerencie o estoque de produtos e acompanhe movimentações
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <EntradaRapidaDialog
@@ -363,7 +390,7 @@ export default function EstoquePage() {
         </TabsList>
 
         <TabsContent value="estoque" className="space-y-4">
-          <GenericTable<Stock>
+          <GenericTable<StockModel>
             title="Estoque de Produtos"
             description="Visualize e gerencie o estoque atual de todos os produtos"
             columns={estoqueColumns}
@@ -378,7 +405,7 @@ export default function EstoquePage() {
         </TabsContent>
 
         <TabsContent value="movimentacoes" className="space-y-4">
-          <GenericTable<StockMovement>
+          <GenericTable<StockMovementModel>
             title="Histórico de Movimentações"
             description="Acompanhe todas as entradas e saídas de estoque"
             columns={movimentacoesColumns}

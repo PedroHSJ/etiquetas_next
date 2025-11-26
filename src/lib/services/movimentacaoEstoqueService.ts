@@ -7,12 +7,20 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   StockMovement,
   Stock,
-  ProductSelect,
   UnitOfMeasureCode,
+  STOCK_MESSAGES,
 } from "@/types/stock/stock";
+import {
+  QuickEntryResponseDto,
+  ProductStockResponseDto,
+  StockMovementResponseDto,
+  StockResponseDto,
+} from "@/types/dto/stock/response";
+import { Product } from "@/types/stock/product";
 
 export interface MovimentacaoEstoqueRequest {
-  produto_id: number;
+  produto_id?: number;
+  productId?: number;
   quantidade: number;
   observacao?: string;
 }
@@ -23,6 +31,45 @@ export interface MovimentacaoEstoqueResponse {
   movimentacao?: StockMovement;
   estoque_atualizado?: Stock;
 }
+
+const toStockMovementFromDto = (
+  dto?: StockMovementResponseDto
+): StockMovement | undefined => {
+  if (!dto) return undefined;
+
+  return {
+    ...dto,
+    movement_type: dto.movementType,
+    unit_of_measure_code: dto.unitOfMeasureCode,
+    movement_date: dto.movementDate,
+    created_at: dto.createdAt,
+    product: toProductFromDto(dto.product),
+  };
+};
+
+const toStockFromDto = (dto?: StockResponseDto): Stock | undefined => {
+  if (!dto) return undefined;
+
+  return {
+    ...dto,
+    current_quantity: dto.currentQuantity,
+    unit_of_measure_code: dto.unitOfMeasureCode,
+    created_at: dto.createdAt,
+    updated_at: dto.updatedAt,
+    product: toProductFromDto(dto.product),
+  };
+};
+
+const toProductFromDto = (
+  product?: ProductStockResponseDto
+): Product | undefined =>
+  product
+    ? {
+        id: product.id,
+        name: product.name,
+        group_id: product.groupId ?? null,
+      }
+    : undefined;
 
 /**
  * Tipos de movimentação suportadas
@@ -62,21 +109,47 @@ export class MovimentacaoEstoqueService {
     request: MovimentacaoEstoqueRequest
   ): Promise<MovimentacaoEstoqueResponse> {
     try {
+      const payload = {
+        productId: request.productId ?? request.produto_id,
+        quantity: request.quantidade,
+        observation: request.observacao,
+      };
+
       const response = await fetchWithAuth("/api/estoque/entrada-rapida", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "Erro ao registrar entrada");
+        throw new Error(
+          result.error || result.message || "Erro ao registrar entrada"
+        );
       }
 
-      return result;
+      if (result?.data) {
+        const payload = result.data as QuickEntryResponseDto;
+        return {
+          success: true,
+          message:
+            payload.message ||
+            result.message ||
+            STOCK_MESSAGES.ENTRY_SUCCESS,
+          movimentacao: toStockMovementFromDto(payload.movement),
+          estoque_atualizado: toStockFromDto(payload.updatedStock),
+        };
+      }
+
+      return {
+        success: result.success ?? true,
+        message: result.message || STOCK_MESSAGES.ENTRY_SUCCESS,
+        movimentacao: result.movimentacao,
+        estoque_atualizado: result.estoque_atualizado,
+      };
     } catch (error) {
       console.error("Erro ao registrar entrada:", error);
       throw error;
@@ -92,21 +165,47 @@ export class MovimentacaoEstoqueService {
     request: MovimentacaoEstoqueRequest
   ): Promise<MovimentacaoEstoqueResponse> {
     try {
+      const payload = {
+        productId: request.productId ?? request.produto_id,
+        quantity: request.quantidade,
+        observation: request.observacao,
+      };
+
       const response = await fetchWithAuth("/api/estoque/saida-rapida", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "Erro ao registrar saída");
+        throw new Error(
+          result.error || result.message || "Erro ao registrar saída"
+        );
       }
 
-      return result;
+      if (result?.data) {
+        const payload = result.data as QuickEntryResponseDto;
+        return {
+          success: true,
+          message:
+            payload.message ||
+            result.message ||
+            STOCK_MESSAGES.EXIT_SUCCESS,
+          movimentacao: toStockMovementFromDto(payload.movement),
+          estoque_atualizado: toStockFromDto(payload.updatedStock),
+        };
+      }
+
+      return {
+        success: result.success ?? true,
+        message: result.message || STOCK_MESSAGES.EXIT_SUCCESS,
+        movimentacao: result.movimentacao,
+        estoque_atualizado: result.estoque_atualizado,
+      };
     } catch (error) {
       console.error("Erro ao registrar saída:", error);
       throw error;
@@ -150,13 +249,17 @@ export class MovimentacaoEstoqueService {
       const response = await fetchWithAuth(`/api/estoque/produtos?${params}`);
       const data = await response.json();
 
-      if (data.success) {
-        let produtos = data.data as ProdutoComEstoque[];
+      if (response.ok) {
+        const payload: ProdutoComEstoque[] =
+          (data?.data as ProdutoComEstoque[]) ||
+          (Array.isArray(data) ? data : []);
+        let produtos = payload;
 
         // Filtrar apenas produtos com estoque > 0 se solicitado
         if (apenasComEstoque) {
           produtos = produtos.filter((p) => {
-            const estoqueAtual = p.estoque_atual || p.current_quantity || 0;
+            const estoqueAtual =
+              p.estoque_atual || p.current_quantity || p.current_stock || 0;
             return estoqueAtual > 0;
           });
         }
