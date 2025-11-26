@@ -13,6 +13,7 @@ export type UnitOfMeasureCode = "un" | "kg" | "g" | "l" | "ml" | "cx" | "pct";
 export interface Stock {
   id: string;
   productId: number;
+  organization_id?: string | null;
   current_quantity: number;
   unit_of_measure_code: UnitOfMeasureCode;
   userId: string;
@@ -37,6 +38,7 @@ export interface Stock {
 export interface StockMovement {
   id: string;
   productId: number;
+  organization_id?: string | null;
   userId: string;
   movement_type: MovementType;
   quantity: number;
@@ -63,6 +65,7 @@ export interface StockMovement {
 export interface QuickEntryRequest {
   productId: number;
   quantity: number;
+  organizationId?: string;
   unit_of_measure_code?: UnitOfMeasureCode;
   observation?: string;
 }

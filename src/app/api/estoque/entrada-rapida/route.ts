@@ -34,12 +34,19 @@ export async function POST(request: NextRequest) {
 
       const body: QuickEntryRequest = await request.json();
       const stockService = new StockBackendService(supabase);
+      if (!body.organizationId) {
+        const errorResponse: ApiErrorResponse = {
+          error: "organizationId is required",
+        };
+        return NextResponse.json(errorResponse, { status: 400 });
+      }
       const result = await stockService.registerQuickEntry({
         productId: body.productId,
         quantity: body.quantity,
         unitOfMeasureCode: body.unit_of_measure_code,
         observation: body.observation,
         userId: user.id,
+        organizationId: body.organizationId,
       });
 
       const response: ApiSuccessResponse<QuickEntryResponseDto> = {

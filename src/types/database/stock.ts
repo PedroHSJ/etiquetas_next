@@ -16,6 +16,7 @@ export interface UnitOfMeasureEntity {
 export interface StockEntity {
   id: string;
   productId: number;
+  organization_id?: string | null;
   unit_of_measure_code: string;
   current_quantity: number;
   userId: string;
@@ -29,6 +30,7 @@ export interface StockEntity {
 export interface StockMovementEntity {
   id: string;
   productId: number;
+  organization_id?: string | null;
   userId: string;
   movement_type: "ENTRADA" | "SAIDA";
   quantity: number;

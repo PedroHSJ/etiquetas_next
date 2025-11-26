@@ -18,6 +18,7 @@ export interface ProductStockModel {
 export interface StockModel {
   id: string;
   productId: number;
+  organizationId?: string | null;
   currentQuantity: number;
   unitOfMeasureCode: UnitOfMeasureCode;
   userId: string;
@@ -29,6 +30,7 @@ export interface StockModel {
 export interface StockMovementModel {
   id: string;
   productId: number;
+  organizationId?: string | null;
   userId: string;
   movementType: MovementType;
   quantity: number;

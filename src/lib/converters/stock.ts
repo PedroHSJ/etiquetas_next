@@ -55,6 +55,7 @@ export function toStockResponseDto(
   return {
     id: entity.id,
     productId: entity.productId,
+    organizationId: entity.organization_id ?? null,
     currentQuantity: parseQuantity(entity.current_quantity),
     unitOfMeasureCode: (entity.unit_of_measure_code ||
       "un") as UnitOfMeasureCode,
@@ -74,6 +75,7 @@ export function toStockMovementResponseDto(
   return {
     id: entity.id,
     productId: entity.productId,
+    organizationId: entity.organization_id ?? null,
     userId: entity.userId,
     movementType: entity.movement_type,
     quantity: parseQuantity(entity.quantity),
@@ -123,6 +125,7 @@ export function toStockModel(
   return {
     id: baseDto.id,
     productId: baseDto.productId,
+    organizationId: baseDto.organizationId ?? null,
     currentQuantity: baseDto.currentQuantity,
     unitOfMeasureCode: baseDto.unitOfMeasureCode,
     userId: baseDto.userId,
@@ -143,6 +146,7 @@ export function toStockMovementModel(
   return {
     id: baseDto.id,
     productId: baseDto.productId,
+    organizationId: baseDto.organizationId ?? null,
     userId: baseDto.userId,
     movementType: baseDto.movementType,
     quantity: baseDto.quantity,

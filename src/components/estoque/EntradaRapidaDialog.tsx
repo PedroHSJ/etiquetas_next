@@ -56,6 +56,7 @@ import {
 import { StockService } from "@/lib/services/client/stock-service";
 import { UNIT_OF_MEASURE_OPTIONS } from "@/types/stock/product";
 import { cn } from "@/lib/utils";
+import { useProfile } from "@/contexts/ProfileContext";
 
 const quickEntrySchema = z.object({
   productId: z.string().min(1, "Select a product"),
@@ -86,20 +87,35 @@ const getUnitLabel = (unit?: string | null) => {
 
 // Hooks customizados para React Query
 const useProducts = (searchTerm = "", enabled = true) => {
+  const { activeProfile } = useProfile();
+  const organizationId =
+    activeProfile?.userOrganization?.organizationId || undefined;
+
   return useQuery({
-    queryKey: ["products", { search: searchTerm }],
-    queryFn: () => StockService.listProducts({ q: searchTerm, limit: 50 }),
-    enabled,
+    queryKey: ["products", { search: searchTerm, organizationId }],
+    queryFn: () =>
+      StockService.listProducts({
+        q: searchTerm,
+        limit: 50,
+        organizationId: organizationId!,
+      }),
+    enabled: enabled && !!organizationId,
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 };
 
 const useQuickEntry = () => {
+  const { activeProfile } = useProfile();
+  const organizationId =
+    activeProfile?.userOrganization?.organizationId || undefined;
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (request: QuickEntryRequest) =>
-      StockService.quickEntry(request),
+      StockService.quickEntry({
+        ...request,
+        organizationId: organizationId!,
+      }),
     onSuccess: () => {
       // Invalida queries relacionadas ao estoque
       queryClient.invalidateQueries({ queryKey: ["stock"] });
@@ -113,6 +129,9 @@ export function EntradaRapidaDialog({
   trigger,
   selectedProductId,
 }: QuickEntryDialogProps) {
+  const { activeProfile } = useProfile();
+  const organizationId =
+    activeProfile?.userOrganization?.organizationId || undefined;
   const [open, setOpen] = useState(false);
   const [isComboboxOpen, setIsComboboxOpen] = useState(false);
 
@@ -153,6 +172,13 @@ export function EntradaRapidaDialog({
     }
   }, [selectedProductId, form]);
 
+  useEffect(() => {
+    if (open && !organizationId) {
+      // ainda permite listar produtos globais se organização não estiver selecionada
+      return;
+    }
+  }, [open, organizationId]);
+
   const onSubmit = async (data: QuickEntryFormData) => {
     try {
       const request: QuickEntryRequest = {
@@ -160,6 +186,7 @@ export function EntradaRapidaDialog({
         quantity: parseFloat(data.quantity),
         unit_of_measure_code: data.unitOfMeasure as UnitOfMeasureCode,
         observation: data.observation,
+        organizationId,
       };
 
       const result = await quickEntryMutation.mutateAsync(request);

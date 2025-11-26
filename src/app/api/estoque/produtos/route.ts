@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     // Stock metadata per product
     const { data: stockRows, error: stockError } = await supabase
       .from("stock")
-      .select("productId, current_quantity, unit_of_measure_code");
+      .select("productId, current_quantity, unit_of_measure_code, organization_id");
 
     if (stockError) {
       console.error("Error fetching stock info:", stockError);

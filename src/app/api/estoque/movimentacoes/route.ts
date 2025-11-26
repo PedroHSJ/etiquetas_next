@@ -35,6 +35,14 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "20");
+    const organizationId = searchParams.get("organizationId");
+
+    if (!organizationId) {
+      const errorResponse: ApiErrorResponse = {
+        error: "organizationId is required",
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
 
     const filtros: MovimentacoesFiltros = {
       productId: searchParams.get("productId")
@@ -55,6 +63,7 @@ export async function GET(request: NextRequest) {
       page,
       pageSize,
       filters: filtros,
+      organizationId,
     });
 
     const successResponse: ApiSuccessResponse<MovimentacoesListResponse> = {

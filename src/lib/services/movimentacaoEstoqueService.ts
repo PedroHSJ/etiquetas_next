@@ -21,6 +21,7 @@ import { Product } from "@/types/stock/product";
 export interface MovimentacaoEstoqueRequest {
   produto_id?: number;
   productId?: number;
+  organizationId?: string;
   quantidade: number;
   observacao?: string;
 }
@@ -109,10 +110,15 @@ export class MovimentacaoEstoqueService {
     request: MovimentacaoEstoqueRequest
   ): Promise<MovimentacaoEstoqueResponse> {
     try {
+      if (!request.organizationId) {
+        throw new Error("organizationId é obrigatório");
+      }
+
       const payload = {
         productId: request.productId ?? request.produto_id,
         quantity: request.quantidade,
         observation: request.observacao,
+        organizationId: request.organizationId,
       };
 
       const response = await fetchWithAuth("/api/estoque/entrada-rapida", {
@@ -165,10 +171,15 @@ export class MovimentacaoEstoqueService {
     request: MovimentacaoEstoqueRequest
   ): Promise<MovimentacaoEstoqueResponse> {
     try {
+      if (!request.organizationId) {
+        throw new Error("organizationId é obrigatório");
+      }
+
       const payload = {
         productId: request.productId ?? request.produto_id,
         quantity: request.quantidade,
         observation: request.observacao,
+        organizationId: request.organizationId,
       };
 
       const response = await fetchWithAuth("/api/estoque/saida-rapida", {
@@ -239,12 +250,14 @@ export class MovimentacaoEstoqueService {
   static async listarProdutos(
     termo = "",
     limit = 50,
-    apenasComEstoque = false
+    apenasComEstoque = false,
+    organizationId?: string
   ): Promise<ProdutoComEstoque[]> {
     try {
       const params = new URLSearchParams();
       if (termo) params.append("q", termo);
       params.append("limit", limit.toString());
+      if (organizationId) params.append("organizationId", organizationId);
 
       const response = await fetchWithAuth(`/api/estoque/produtos?${params}`);
       const data = await response.json();

@@ -22,23 +22,30 @@ import { toStockModel, toStockMovementModel } from "@/lib/converters/stock";
 interface ListStockParams extends Partial<EstoqueFiltros> {
   page?: number;
   pageSize?: number;
+  organizationId: string;
 }
 
 interface ListMovementsParams extends Partial<MovimentacoesFiltros> {
   page?: number;
   pageSize?: number;
+  organizationId: string;
 }
 
 interface ListProductsParams {
   q?: string;
   limit?: number;
+  organizationId?: string;
 }
 
 export const StockService = {
   async listStock(
     params: ListStockParams = {}
   ): Promise<StockListModelResponse> {
-    const { page = 1, pageSize = 20, ...filters } = params;
+    const { page = 1, pageSize = 20, organizationId, ...filters } = params;
+
+    if (!organizationId) {
+      throw new Error("organizationId é obrigatório");
+    }
 
     const { data } = await api.get<ApiResponse<EstoqueListResponse>>(
       "/estoque",
@@ -46,6 +53,7 @@ export const StockService = {
         params: {
           page,
           pageSize,
+          organizationId,
           ...filters,
         },
       }
@@ -64,7 +72,11 @@ export const StockService = {
   async listMovements(
     params: ListMovementsParams = {}
   ): Promise<MovementListModelResponse> {
-    const { page = 1, pageSize = 20, ...filters } = params;
+    const { page = 1, pageSize = 20, organizationId, ...filters } = params;
+
+    if (!organizationId) {
+      throw new Error("organizationId é obrigatório");
+    }
 
     const { data } = await api.get<ApiResponse<MovimentacoesListResponse>>(
       "/estoque/movimentacoes",
@@ -72,6 +84,7 @@ export const StockService = {
         params: {
           page,
           pageSize,
+          organizationId,
           ...filters,
         },
       }
@@ -87,9 +100,17 @@ export const StockService = {
     };
   },
 
-  async getStockStatistics(): Promise<StockStatistics> {
+  async getStockStatistics(
+    organizationId: string
+  ): Promise<StockStatistics> {
+    if (!organizationId) {
+      throw new Error("organizationId é obrigatório");
+    }
     const { data } = await api.get<ApiResponse<StockStatistics>>(
-      "/estoque/stats"
+      "/estoque/stats",
+      {
+        params: { organizationId },
+      }
     );
 
     if (!data?.data) {
@@ -119,6 +140,10 @@ export const StockService = {
   async quickEntry(
     request: QuickEntryRequest
   ): Promise<QuickEntryResponseDto> {
+    if (!request.organizationId) {
+      throw new Error("organizationId é obrigatório");
+    }
+
     const { data } = await api.post<
       ApiSuccessResponse<QuickEntryResponseDto>
     >(

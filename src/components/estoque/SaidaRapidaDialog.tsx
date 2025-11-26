@@ -35,6 +35,7 @@ import { Minus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ESTOQUE_MESSAGES } from "@/types/estoque";
 import { useEffect } from "react";
+import { useProfile } from "@/contexts/ProfileContext";
 import {
   MovimentacaoEstoqueService,
   type MovimentacaoEstoqueRequest,
@@ -66,6 +67,9 @@ export function SaidaRapidaDialog({
   trigger,
   produtoIdSelecionado,
 }: SaidaRapidaDialogProps) {
+  const { activeProfile } = useProfile();
+  const organizationId =
+    activeProfile?.userOrganization?.organizationId || undefined;
   const [open, setOpen] = useState(false);
   const [produtos, setProdutos] = useState<ProdutoComEstoque[]>([]);
   const [carregandoProdutos, setCarregandoProdutos] = useState(false);
@@ -88,7 +92,8 @@ export function SaidaRapidaDialog({
       const produtos = await MovimentacaoEstoqueService.listarProdutos(
         termo,
         50,
-        true
+        true,
+        organizationId
       );
       setProdutos(produtos);
     } catch (error) {
@@ -103,7 +108,7 @@ export function SaidaRapidaDialog({
     if (open) {
       carregarProdutos();
     }
-  }, [open]);
+  }, [open, organizationId]);
 
   // Definir produto selecionado se foi passado como prop
   useEffect(() => {
@@ -139,6 +144,7 @@ export function SaidaRapidaDialog({
         produto_id: parseInt(data.produto_id),
         quantidade: parseFloat(data.quantidade),
         observacao: data.observacao,
+        organizationId,
       };
 
       const result = await MovimentacaoEstoqueService.registrarSaida(request);

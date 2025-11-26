@@ -45,12 +45,14 @@ interface ListStockParams {
   page: number;
   pageSize: number;
   filters?: EstoqueFiltros;
+  organizationId: string;
 }
 
 interface ListMovementsParams {
   page: number;
   pageSize: number;
   filters?: MovimentacoesFiltros;
+  organizationId: string;
 }
 
 /**
@@ -67,6 +69,7 @@ export class StockBackendService {
     page,
     pageSize,
     filters,
+    organizationId,
   }: ListStockParams): Promise<EstoqueListResponse> {
     const offset = (page - 1) * pageSize;
 
@@ -79,6 +82,7 @@ export class StockBackendService {
       `,
         { count: "exact" }
       )
+      .eq("organization_id", organizationId)
       .order("updated_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
 
@@ -123,6 +127,7 @@ export class StockBackendService {
     page,
     pageSize,
     filters,
+    organizationId,
   }: ListMovementsParams): Promise<MovimentacoesListResponse> {
     const offset = (page - 1) * pageSize;
 
@@ -135,6 +140,7 @@ export class StockBackendService {
       `,
         { count: "exact" }
       )
+      .eq("organization_id", organizationId)
       .order("movement_date", { ascending: false })
       .range(offset, offset + pageSize - 1);
 
@@ -229,10 +235,11 @@ export class StockBackendService {
   /**
    * Calcula estatísticas básicas do estoque.
    */
-  async getStatistics(): Promise<StockStatistics> {
+  async getStatistics(organizationId: string): Promise<StockStatistics> {
     const { data, error } = await this.supabase
       .from("stock")
-      .select("current_quantity");
+      .select("current_quantity")
+      .eq("organization_id", organizationId);
 
     if (error) {
       throw new Error(
@@ -268,11 +275,18 @@ export class StockBackendService {
     productId: number;
     quantity: number;
     userId: string;
+    organizationId: string;
     unitOfMeasureCode?: UnitOfMeasureCode;
     observation?: string;
   }): Promise<QuickEntryResponseDto> {
-    const { productId, quantity, userId, unitOfMeasureCode, observation } =
-      params;
+    const {
+      productId,
+      quantity,
+      userId,
+      organizationId,
+      unitOfMeasureCode,
+      observation,
+    } = params;
 
     if (!productId || !quantity) {
       throw new Error("Produto e quantidade são obrigatórios");
@@ -284,7 +298,7 @@ export class StockBackendService {
 
     const { data: product, error: productError } = await this.supabase
       .from("products")
-      .select("id, name, group_id, unit_of_measure_code")
+      .select("id, name, group_id")
       .eq("id", productId)
       .single();
 
@@ -296,6 +310,7 @@ export class StockBackendService {
       .from("stock")
       .select("unit_of_measure_code")
       .eq("productId", productId)
+      .eq("organization_id", organizationId)
       .maybeSingle();
 
     const unitCode =
@@ -310,6 +325,7 @@ export class StockBackendService {
       .insert({
         productId,
         userId,
+        organization_id: organizationId,
         movement_type: "ENTRADA",
         quantity,
         unit_of_measure_code: unitCode,
@@ -318,7 +334,7 @@ export class StockBackendService {
       .select(
         `
         *,
-        product:products(id, name, group_id, unit_of_measure_code)
+        product:products(id, name, group_id)
       `
       )
       .single();
@@ -340,10 +356,11 @@ export class StockBackendService {
       .select(
         `
         *,
-        product:products(id, name, group_id, unit_of_measure_code)
+        product:products(id, name, group_id)
       `
       )
       .eq("productId", productId)
+      .eq("organization_id", organizationId)
       .single();
 
     let updatedStockDto: StockResponseDto | undefined;
@@ -370,11 +387,18 @@ export class StockBackendService {
     productId: number;
     quantity: number;
     userId: string;
+    organizationId: string;
     unitOfMeasureCode?: UnitOfMeasureCode;
     observation?: string;
   }): Promise<QuickEntryResponseDto> {
-    const { productId, quantity, userId, unitOfMeasureCode, observation } =
-      params;
+    const {
+      productId,
+      quantity,
+      userId,
+      organizationId,
+      unitOfMeasureCode,
+      observation,
+    } = params;
 
     if (!productId || !quantity) {
       throw new Error("Produto e quantidade são obrigatórios");
@@ -398,6 +422,7 @@ export class StockBackendService {
       .from("stock")
       .select("id, current_quantity, unit_of_measure_code")
       .eq("productId", productId)
+      .eq("organization_id", organizationId)
       .single();
 
     if (stockError || !stockRow) {
@@ -421,6 +446,7 @@ export class StockBackendService {
       .insert({
         productId,
         userId,
+        organization_id: organizationId,
         movement_type: "SAIDA",
         quantity,
         unit_of_measure_code: unitCode,
@@ -455,6 +481,7 @@ export class StockBackendService {
       `
       )
       .eq("productId", productId)
+      .eq("organization_id", organizationId)
       .single();
 
     let updatedStockDto: StockResponseDto | undefined;

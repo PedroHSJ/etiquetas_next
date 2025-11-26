@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover } from "@radix-ui/react-popover";
 import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StockStatistics } from "@/types/stock/stock";
+import { useProfile } from "@/contexts/ProfileContext";
 import {
   StockListModelResponse,
   MovementListModelResponse,
@@ -41,6 +42,9 @@ import {
 import { StockService } from "@/lib/services/client/stock-service";
 
 export default function EstoquePage() {
+  const { activeProfile } = useProfile();
+  const organizationId =
+    activeProfile?.userOrganization?.organizationId || "";
   const [estatisticas, setEstatisticas] = useState<StockStatistics | null>(
     null
   );
@@ -58,11 +62,16 @@ export default function EstoquePage() {
   const [carregandoMovimentacoes, setCarregandoMovimentacoes] = useState(true);
   const [itemsPerPageMovimentacoes, setItemsPerPageMovimentacoes] =
     useState(10);
+  const [estoquesZerados, setEstoquesZerados] = useState<StockModel[]>([]);
+  const [estoquesBaixos, setEstoquesBaixos] = useState<StockModel[]>([]);
+  const [carregandoZerados, setCarregandoZerados] = useState(false);
+  const [carregandoBaixos, setCarregandoBaixos] = useState(false);
 
   const carregarEstatisticas = async () => {
+    if (!organizationId) return;
     setCarregandoStats(true);
     try {
-      const stats = await StockService.getStockStatistics();
+      const stats = await StockService.getStockStatistics(organizationId);
       setEstatisticas(stats);
     } catch (error) {
       console.error("Erro ao carregar estatísticas:", error);
@@ -73,11 +82,13 @@ export default function EstoquePage() {
   };
 
   const carregarEstoque = async () => {
+    if (!organizationId) return;
     setCarregandoEstoque(true);
     try {
       const response: StockListModelResponse = await StockService.listStock({
         page: 1,
         pageSize: itemsPerPageEstoque,
+        organizationId,
       });
       setEstoqueData(response.data || []);
     } catch (error) {
@@ -89,12 +100,14 @@ export default function EstoquePage() {
   };
 
   const carregarMovimentacoes = async () => {
+    if (!organizationId) return;
     setCarregandoMovimentacoes(true);
     try {
       const response: MovementListModelResponse =
         await StockService.listMovements({
           page: 1,
           pageSize: itemsPerPageMovimentacoes,
+          organizationId,
         });
       setMovimentacoesData(response.data || []);
     } catch (error) {
@@ -106,16 +119,60 @@ export default function EstoquePage() {
   };
 
   useEffect(() => {
-    carregarEstatisticas();
+    if (organizationId) {
+      carregarEstatisticas();
+      carregarAlertas();
+    }
+  }, [organizationId]);
+
+  useEffect(() => {
+    if (organizationId) {
+      carregarEstoque();
+    }
+  }, [itemsPerPageEstoque, organizationId]);
+
+  useEffect(() => {
+    if (organizationId) {
+      carregarMovimentacoes();
+    }
+  }, [itemsPerPageMovimentacoes, organizationId]);
+
+  const carregarAlertas = async () => {
+    if (!organizationId) return;
+    setCarregandoZerados(true);
+    setCarregandoBaixos(true);
+
+    try {
+      const [zerados, baixos] = await Promise.all([
+        StockService.listStock({
+          page: 1,
+          pageSize: 50,
+          estoque_zerado: true,
+          organizationId,
+        }),
+        StockService.listStock({
+          page: 1,
+          pageSize: 50,
+          estoque_baixo: true,
+          quantidade_minima: 10,
+          organizationId,
+        }),
+      ]);
+
+      setEstoquesZerados(zerados.data || []);
+      setEstoquesBaixos(baixos.data || []);
+    } catch (error) {
+      console.error("Erro ao carregar alertas de estoque:", error);
+      toast.error("Erro ao carregar alertas de estoque");
+    } finally {
+      setCarregandoZerados(false);
+      setCarregandoBaixos(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarAlertas();
   }, []);
-
-  useEffect(() => {
-    carregarEstoque();
-  }, [itemsPerPageEstoque]);
-
-  useEffect(() => {
-    carregarMovimentacoes();
-  }, [itemsPerPageMovimentacoes]);
 
   const formatarQuantidade = (quantidade: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -322,12 +379,14 @@ export default function EstoquePage() {
     carregarEstatisticas();
     carregarEstoque();
     carregarMovimentacoes();
+    carregarAlertas();
   };
 
   const handleSuccessSaida = () => {
     carregarEstatisticas();
     carregarEstoque();
     carregarMovimentacoes();
+    carregarAlertas();
   };
 
   return (
@@ -432,26 +491,29 @@ export default function EstoquePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-4">
-                  <div className="text-2xl font-bold text-red-600">
-                    {estatisticas?.products_out_of_stock || 0}
+                {carregandoZerados ? (
+                  <div className="text-sm text-muted-foreground py-2">
+                    Carregando produtos...
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    produtos em falta
-                  </p>
-                  {(estatisticas?.products_out_of_stock || 0) > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-3"
-                      onClick={() => {
-                        toast.info("Funcionalidade em desenvolvimento");
-                      }}
-                    >
-                      Ver Produtos
-                    </Button>
-                  )}
-                </div>
+                ) : estoquesZerados.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-2">
+                    Nenhum produto com estoque zerado.
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {estoquesZerados.map((item) => (
+                      <li
+                        key={item.id}
+                        className="flex items-center justify-between rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm"
+                      >
+                        <span className="font-medium text-red-700">
+                          {item.product?.name || "Produto"}
+                        </span>
+                        <Badge variant="destructive">Zerado</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </CardContent>
             </Card>
 
@@ -466,26 +528,38 @@ export default function EstoquePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-4">
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {estatisticas?.products_low_stock || 0}
+                {carregandoBaixos ? (
+                  <div className="text-sm text-muted-foreground py-2">
+                    Carregando produtos...
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    produtos com estoque baixo
-                  </p>
-                  {(estatisticas?.products_low_stock || 0) > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-3"
-                      onClick={() => {
-                        toast.info("Funcionalidade em desenvolvimento");
-                      }}
-                    >
-                      Ver Produtos
-                    </Button>
-                  )}
-                </div>
+                ) : estoquesBaixos.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-2">
+                    Nenhum produto com estoque baixo.
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {estoquesBaixos.map((item) => (
+                      <li
+                        key={item.id}
+                        className="flex items-center justify-between rounded-md border border-yellow-100 bg-yellow-50 px-3 py-2 text-sm"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium text-yellow-800">
+                            {item.product?.name || "Produto"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {`Em estoque: ${formatarQuantidade(
+                              item.currentQuantity
+                            )}`}
+                          </span>
+                        </div>
+                        <Badge variant="outline" className="border-yellow-200 text-yellow-800">
+                          Baixo
+                        </Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </CardContent>
             </Card>
           </div>

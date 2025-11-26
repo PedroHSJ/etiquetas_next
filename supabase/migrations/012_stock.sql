@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.unit_of_measure (
 CREATE TABLE IF NOT EXISTS "public"."stock" (
     "id" uuid DEFAULT gen_random_uuid() NOT NULL,
     "productId" integer NOT NULL,
+    "organization_id" uuid,
     "unit_of_measure_code" character varying(10) DEFAULT 'un' NOT NULL,
     "current_quantity" numeric(10,3) DEFAULT 0 NOT NULL,
     "userId" uuid NOT NULL,
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS "public"."stock" (
 CREATE TABLE IF NOT EXISTS "public"."stock_movements" (
     "id" uuid DEFAULT gen_random_uuid() NOT NULL,
     "productId" integer NOT NULL,
+    "organization_id" uuid,
     "userId" uuid NOT NULL,
     "movement_type" text NOT NULL,
     "quantity" numeric(10,3) NOT NULL,
@@ -45,8 +47,10 @@ CREATE TABLE IF NOT EXISTS "public"."stock_movements" (
 
 CREATE INDEX IF NOT EXISTS "idx_stock_productId" ON "public"."stock" ("productId");
 CREATE INDEX IF NOT EXISTS "idx_stock_userId" ON "public"."stock" ("userId");
+CREATE INDEX IF NOT EXISTS "idx_stock_organization_id" ON "public"."stock" ("organization_id");
 CREATE INDEX IF NOT EXISTS "idx_stock_movements_productId" ON "public"."stock_movements" ("productId");
 CREATE INDEX IF NOT EXISTS "idx_stock_movements_userId" ON "public"."stock_movements" ("userId");
+CREATE INDEX IF NOT EXISTS "idx_stock_movements_organization_id" ON "public"."stock_movements" ("organization_id");
 CREATE INDEX IF NOT EXISTS "idx_stock_movements_date" ON "public"."stock_movements" ("movement_date");
 CREATE INDEX IF NOT EXISTS "idx_stock_movements_type" ON "public"."stock_movements" ("movement_type");
 
@@ -59,9 +63,17 @@ ALTER TABLE "public"."stock"
 ADD CONSTRAINT "stock_productId_fkey" 
 FOREIGN KEY ("productId") REFERENCES "public"."products" ("id") ON DELETE CASCADE;
 
+ALTER TABLE "public"."stock" 
+ADD CONSTRAINT "stock_organization_id_fkey" 
+FOREIGN KEY ("organization_id") REFERENCES "public"."organizations" ("id") ON DELETE CASCADE;
+
 ALTER TABLE "public"."stock_movements" 
 ADD CONSTRAINT "stock_movements_productId_fkey" 
 FOREIGN KEY ("productId") REFERENCES "public"."products" ("id") ON DELETE CASCADE;
+
+ALTER TABLE "public"."stock_movements" 
+ADD CONSTRAINT "stock_movements_organization_id_fkey" 
+FOREIGN KEY ("organization_id") REFERENCES "public"."organizations" ("id") ON DELETE CASCADE;
 
 -- FK to users (assuming auth.users table exists)
 ALTER TABLE "public"."stock" 
@@ -108,7 +120,8 @@ BEGIN
         SELECT current_quantity, unit_of_measure_code
         INTO v_current_quantity, v_current_unit
         FROM public.stock 
-        WHERE "productId" = NEW."productId";
+        WHERE "productId" = NEW."productId"
+          AND organization_id = NEW.organization_id;
         
         -- If stock record doesn't exist, create one
         IF v_current_quantity IS NULL THEN
@@ -116,11 +129,11 @@ BEGIN
                 v_new_quantity := NEW.quantity;
             ELSE
                 -- Don't allow exit without prior stock
-                RAISE EXCEPTION 'Cannot perform exit without prior stock for product ID: %', NEW."productId";
+                RAISE EXCEPTION 'Cannot perform exit without prior stock for product ID: % and organization: %', NEW."productId", NEW.organization_id;
             END IF;
             
-            INSERT INTO public.stock ("productId", current_quantity, unit_of_measure_code, "userId")
-            VALUES (NEW."productId", v_new_quantity, NEW.unit_of_measure_code, NEW."userId");
+            INSERT INTO public.stock ("productId", current_quantity, unit_of_measure_code, "userId", organization_id)
+            VALUES (NEW."productId", v_new_quantity, NEW.unit_of_measure_code, NEW."userId", NEW.organization_id);
         ELSE
             IF v_current_unit IS NOT NULL AND v_current_unit <> NEW.unit_of_measure_code THEN
                 RAISE EXCEPTION 'Unit mismatch for product ID %, expected %, received %', NEW."productId", v_current_unit, NEW.unit_of_measure_code;
@@ -142,8 +155,10 @@ BEGIN
             SET current_quantity = v_new_quantity,
                 unit_of_measure_code = COALESCE(v_current_unit, NEW.unit_of_measure_code),
                 "userId" = NEW."userId",
+                organization_id = NEW.organization_id,
                 updated_at = now()
-            WHERE "productId" = NEW."productId";
+            WHERE "productId" = NEW."productId"
+              AND organization_id = NEW.organization_id;
         END IF;
         
         RETURN NEW;
@@ -166,11 +181,13 @@ COMMENT ON TABLE "public"."stock" IS 'Current product stock';
 COMMENT ON COLUMN "public"."stock"."productId" IS 'Product reference';
 COMMENT ON COLUMN "public"."stock"."current_quantity" IS 'Current quantity in stock';
 COMMENT ON COLUMN "public"."stock"."userId" IS 'User responsible for last update';
+COMMENT ON COLUMN "public"."stock"."organization_id" IS 'Organization owner of this stock record';
 
 COMMENT ON TABLE "public"."stock_movements" IS 'Stock movement history';
 COMMENT ON COLUMN "public"."stock_movements"."movement_type" IS 'Type: ENTRADA (entry) or SAIDA (exit)';
 COMMENT ON COLUMN "public"."stock_movements"."quantity" IS 'Quantity moved';
 COMMENT ON COLUMN "public"."stock_movements"."movement_date" IS 'Movement date/time';
+COMMENT ON COLUMN "public"."stock_movements"."organization_id" IS 'Organization owner of this stock movement';
 
 -- =============================================================================
 -- RLS (ROW LEVEL SECURITY) - IF NEEDED

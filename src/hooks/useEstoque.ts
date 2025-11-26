@@ -14,7 +14,7 @@ import {
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { StockService } from "@/lib/services/client/stock-service";
 
-export function useEstoque() {
+export function useEstoque(organizationId?: string) {
   const [carregandoEstoque, setCarregandoEstoque] = useState(false);
   const [carregandoMovimentacoes, setCarregandoMovimentacoes] = useState(false);
   const [carregandoProdutos, setCarregandoProdutos] = useState(false);
@@ -26,11 +26,16 @@ export function useEstoque() {
       page = 1,
       pageSize = 20
     ): Promise<EstoqueListResponse | null> => {
+      if (!organizationId) {
+        toast.error("Organização não selecionada");
+        return null;
+      }
       setCarregandoEstoque(true);
       try {
         const params = new URLSearchParams({
           page: page.toString(),
           pageSize: pageSize.toString(),
+          organizationId,
         });
 
         // Adicionar filtros
@@ -74,11 +79,16 @@ export function useEstoque() {
       page = 1,
       pageSize = 20
     ): Promise<MovimentacoesListResponse | null> => {
+      if (!organizationId) {
+        toast.error("Organização não selecionada");
+        return null;
+      }
       setCarregandoMovimentacoes(true);
       try {
         const params = new URLSearchParams({
           page: page.toString(),
           pageSize: pageSize.toString(),
+          organizationId,
         });
 
         // Adicionar filtros
@@ -118,10 +128,15 @@ export function useEstoque() {
   // Buscar produtos para seleção
   const buscarProdutos = useCallback(
     async (termo = "", limit = 50): Promise<ProductSelect[]> => {
+      if (!organizationId) {
+        toast.error("Organização não selecionada");
+        return [];
+      }
       setCarregandoProdutos(true);
       try {
         const params = new URLSearchParams({
           limit: limit.toString(),
+          organizationId,
         });
 
         if (termo) params.append("q", termo);
@@ -149,8 +164,15 @@ export function useEstoque() {
   // Realizar entrada rápida
   const entradaRapida = useCallback(
     async (request: QuickEntryRequest): Promise<boolean> => {
+      if (!organizationId) {
+        toast.error("Organização não selecionada");
+        return false;
+      }
       try {
-        const result = await StockService.quickEntry(request);
+        const result = await StockService.quickEntry({
+          ...request,
+          organizationId,
+        });
         const message = result.message || STOCK_MESSAGES.ENTRY_SUCCESS;
         toast.success(message);
         return true;

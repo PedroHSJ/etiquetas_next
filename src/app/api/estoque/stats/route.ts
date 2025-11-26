@@ -29,8 +29,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
+    const organizationId = request.nextUrl.searchParams.get("organizationId");
+
+    if (!organizationId) {
+      const errorResponse: ApiErrorResponse = {
+        error: "organizationId is required",
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
     const stockService = new StockBackendService(supabase);
-    const stats = await stockService.getStatistics();
+    const stats = await stockService.getStatistics(organizationId);
 
     const successResponse: ApiSuccessResponse<StockStatistics> = {
       data: stats,

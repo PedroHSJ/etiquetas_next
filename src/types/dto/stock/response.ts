@@ -22,6 +22,7 @@ export interface ProductStockResponseDto {
 export interface StockResponseDto {
   id: string;
   productId: number;
+  organizationId?: string | null;
   currentQuantity: number;
   unitOfMeasureCode: UnitOfMeasureCode;
   userId: string;
@@ -33,6 +34,7 @@ export interface StockResponseDto {
 export interface StockMovementResponseDto {
   id: string;
   productId: number;
+  organizationId?: string | null;
   userId: string;
   movementType: MovementType;
   quantity: number;
