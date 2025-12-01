@@ -33,6 +33,8 @@ import {
   Edit,
   Eye,
   Filter,
+  LayoutGrid,
+  List as ListIcon,
   Plus,
   Trash2,
   Users,
@@ -55,6 +57,7 @@ export default function TechnicalSheetsListPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const pageSize = 9; // 3x3 grid
 
@@ -197,25 +200,62 @@ export default function TechnicalSheetsListPage() {
         <div className="text-sm text-muted-foreground">
           {total} fichas técnicas encontradas
         </div>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant={viewMode === "grid" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("grid")}
+          >
+            <LayoutGrid className="h-4 w-4 mr-1" />
+            Grade
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+          >
+            <ListIcon className="h-4 w-4 mr-1" />
+            Lista
+          </Button>
+        </div>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="h-3 bg-gray-200 rounded"></div>
-                  <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-200 rounded"></div>
+                    <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-200 rounded"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )
       ) : sheets.length === 0 ? (
         <div className="text-center py-12">
           <ChefHat className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -236,100 +276,203 @@ export default function TechnicalSheetsListPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sheets.map((sheet) => (
-              <Card
-                key={sheet.id}
-                className="hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{sheet.dishName}</CardTitle>
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sheets.map((sheet) => (
+                <Card
+                  key={sheet.id}
+                  className="hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">
+                        {sheet.dishName}
+                      </CardTitle>
+                      <Badge className={getDifficultyColor(sheet.difficulty)}>
+                        {sheet.difficulty || "N/A"}
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      Criado em {formatDate(sheet.createdAt)}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span>{sheet.servings} porções</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>{sheet.preparationTime || "N/A"}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium mb-2">Ingredientes:</p>
+                      <div className="text-xs text-muted-foreground">
+                        {sheet.ingredients.slice(0, 3).map((ing, i) => (
+                          <span key={i}>
+                            {ing.name}
+                            {i < Math.min(sheet.ingredients.length - 1, 2) &&
+                              ", "}
+                          </span>
+                        ))}
+                        {sheet.ingredients.length > 3 && (
+                          <span> e mais {sheet.ingredients.length - 3}...</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Eye className="h-4 w-4 mr-1" />
+                        Ver
+                      </Button>
+                      <Link
+                        href={`/technical-sheets/edit/${sheet.id}`}
+                        className="flex-1"
+                      >
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                      </Link>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            disabled={deleting === sheet.id}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Remover Ficha Técnica
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja remover a ficha técnica{" "}
+                              {sheet.dishName}? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(sheet.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remover
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sheets.map((sheet) => (
+                <Card
+                  key={sheet.id}
+                  className="hover:shadow-sm transition"
+                >
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0 py-3">
+                    <div>
+                      <CardTitle className="text-base">
+                        {sheet.dishName}
+                      </CardTitle>
+                      <CardDescription>
+                        Criado em {formatDate(sheet.createdAt)}
+                      </CardDescription>
+                    </div>
                     <Badge className={getDifficultyColor(sheet.difficulty)}>
                       {sheet.difficulty || "N/A"}
                     </Badge>
-                  </div>
-                  <CardDescription>
-                    Criado em {formatDate(sheet.createdAt)}
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>{sheet.servings} porções</span>
+                  </CardHeader>
+                  <CardContent className="space-y-3 py-3">
+                    <div className="flex flex-wrap gap-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span>{sheet.servings} porções</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>{sheet.preparationTime || "N/A"}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{sheet.preparationTime || "N/A"}</span>
-                    </div>
-                  </div>
 
-                  <div>
-                    <p className="text-sm font-medium mb-2">Ingredientes:</p>
-                    <div className="text-xs text-muted-foreground">
-                      {sheet.ingredients.slice(0, 3).map((ing, i) => (
-                        <span key={i}>
-                          {ing.name}
-                          {i < Math.min(sheet.ingredients.length - 1, 2) &&
-                            ", "}
-                        </span>
-                      ))}
-                      {sheet.ingredients.length > 3 && (
-                        <span> e mais {sheet.ingredients.length - 3}...</span>
-                      )}
+                    <div>
+                      <p className="text-sm font-medium mb-2">Ingredientes:</p>
+                      <div className="text-xs text-muted-foreground">
+                        {sheet.ingredients.slice(0, 3).map((ing, i) => (
+                          <span key={i}>
+                            {ing.name}
+                            {i < Math.min(sheet.ingredients.length - 1, 2) &&
+                              ", "}
+                          </span>
+                        ))}
+                        {sheet.ingredients.length > 3 && (
+                          <span> e mais {sheet.ingredients.length - 3}...</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver
-                    </Button>
-                    <Link href={`/technical-sheets/edit/${sheet.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Editar
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-1" />
+                        Ver
                       </Button>
-                    </Link>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          disabled={deleting === sheet.id}
-                        >
-                          <Trash2 className="h-4 w-4" />
+                      <Link href={`/technical-sheets/edit/${sheet.id}`}>
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Remover Ficha Técnica
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja remover a ficha técnica{" "}
-                            {sheet.dishName}? Esta ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(sheet.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      </Link>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            disabled={deleting === sheet.id}
                           >
-                            Remover
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Remover Ficha Técnica
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja remover a ficha técnica{" "}
+                              {sheet.dishName}? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(sheet.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remover
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           {total > pageSize && (
             <div className="flex justify-center items-center gap-2 mt-8">
