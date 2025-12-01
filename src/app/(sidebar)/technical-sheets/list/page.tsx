@@ -108,7 +108,7 @@ export default function TechnicalSheetsListPage() {
     }
   };
 
-  const getDifficultyColor = (difficulty?: string) => {
+  const getDifficultyColor = (difficulty?: string | null) => {
     switch (difficulty) {
       case "fácil":
         return "bg-green-100 text-green-800";
