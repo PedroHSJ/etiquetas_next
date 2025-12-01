@@ -423,7 +423,9 @@ export default function ConvitesPage() {
               <CardContent className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Destinatário</p>
+                    <p className="text-sm text-muted-foreground">
+                      Destinatário
+                    </p>
                     <h3 className="text-base font-semibold">{invite.email}</h3>
                     <p className="text-sm text-muted-foreground">
                       Perfil: {invite.profile?.name ?? "—"}
@@ -567,14 +569,8 @@ export default function ConvitesPage() {
           {/* Cabeçalho */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg
-                  className="w-7 h-7 text-white"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-                </svg>
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Mail className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold">Convites</h1>

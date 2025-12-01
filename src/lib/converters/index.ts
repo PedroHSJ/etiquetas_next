@@ -6,3 +6,4 @@
 
 export * from "./organization";
 export * from "./stock";
+export * from "./technical-sheet";

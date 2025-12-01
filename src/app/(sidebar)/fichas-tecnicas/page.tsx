@@ -23,7 +23,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { TechnicalSheet } from "@/types/technical-sheet";
-import { TechnicalSheetService } from "@/lib/services/technicalSheetService";
+import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
 import { toast } from "sonner";
 import Link from "next/link";
 import {
@@ -66,28 +66,24 @@ export default function TechnicalSheetsListPage() {
 
     setLoading(true);
     try {
-      const result =
-        await TechnicalSheetService.getTechnicalSheetsByOrganization(
-          selectedOrganization.id,
-          page,
-          pageSize
+      const result = await TechnicalSheetService.list({
+        organizationId: selectedOrganization.id,
+        page,
+        pageSize,
+        difficulty: difficultyFilter !== "all" ? difficultyFilter : undefined,
+      });
+
+      let filteredSheets = result.data;
+
+      // Aplicar filtro de dificuldade no frontend
+      if (difficultyFilter !== "all") {
+        filteredSheets = result.data.filter(
+          (sheet) => sheet.difficulty === difficultyFilter
         );
-
-      if (result.success && result.data) {
-        let filteredSheets = result.data;
-
-        // Aplicar filtro de dificuldade no frontend
-        if (difficultyFilter !== "all") {
-          filteredSheets = result.data.filter(
-            (sheet) => sheet.difficulty === difficultyFilter
-          );
-        }
-
-        setSheets(filteredSheets);
-        setTotal(result.total || 0);
-      } else {
-        toast.error(result.error || "Erro ao carregar fichas técnicas");
       }
+
+      setSheets(filteredSheets);
+      setTotal(result.total || 0);
     } catch (error) {
       console.error("Erro ao carregar fichas técnicas:", error);
       toast.error("Erro inesperado ao carregar fichas técnicas");
@@ -97,16 +93,13 @@ export default function TechnicalSheetsListPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!selectedOrganization) return;
+
     setDeleting(id);
     try {
-      const result = await TechnicalSheetService.deleteTechnicalSheet(id);
-
-      if (result.success) {
-        toast.success("Ficha técnica removida com sucesso!");
-        await loadTechnicalSheets(); // Recarregar a lista
-      } else {
-        toast.error(result.error || "Erro ao remover ficha técnica");
-      }
+      await TechnicalSheetService.remove(id, selectedOrganization.id);
+      toast.success("Ficha técnica removida com sucesso!");
+      await loadTechnicalSheets(); // Recarregar a lista
     } catch (error) {
       console.error("Erro ao remover ficha técnica:", error);
       toast.error("Erro inesperado ao remover ficha técnica");
@@ -128,8 +121,8 @@ export default function TechnicalSheetsListPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
+  const formatDate = (date: string | Date) => {
+    return new Date(date).toLocaleDateString("pt-BR");
   };
 
   if (!user) {

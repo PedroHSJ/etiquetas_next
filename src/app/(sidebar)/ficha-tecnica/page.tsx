@@ -7,7 +7,8 @@ import { ChefHat, Users, Clock, Calculator } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { TechnicalSheetResponse, EditableIngredient } from "@/types/technical-sheet";
-import { TechnicalSheetService, SaveTechnicalSheetData } from "@/lib/services/technicalSheetService";
+import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
+import { CreateTechnicalSheetDto } from "@/types/dto/technical-sheet/request";
 import { toast } from "sonner";
 
 export default function TechnicalSheetPage() {
@@ -55,35 +56,33 @@ export default function TechnicalSheetPage() {
 
     try {
       // Preparar dados para salvamento
-      const saveData: SaveTechnicalSheetData = {
-        nome_prato: sheet.dishName,
-        numero_porcoes: sheet.servings,
-        tempo_preparo: sheet.preparationTime,
-        tempo_cozimento: sheet.cookingTime,
-        dificuldade: sheet.difficulty,
-        etapas_preparo: sheet.preparationSteps,
-        informacoes_nutricionais: sheet.nutritionalInsights,
-        organizacao_id: selectedOrganization.id,
-        ingredientes: sheet.ingredients.map((ingredient, index) => ({
-          nome_ingrediente: ingredient.name,
-          quantidade: ingredient.quantity,
-          unidade: ingredient.unit,
-          quantidade_original: (ingredient as EditableIngredient).originalQuantity || ingredient.quantity,
-          product_id: (ingredient as EditableIngredient).productId ? parseInt((ingredient as EditableIngredient).productId!) : undefined,
-          ordem: index
-        }))
+      const saveData: CreateTechnicalSheetDto = {
+        dishName: sheet.dishName,
+        servings: sheet.servings,
+        preparationTime: sheet.preparationTime,
+        cookingTime: sheet.cookingTime,
+        difficulty: sheet.difficulty,
+        preparationSteps: sheet.preparationSteps,
+        nutritionalInsights: sheet.nutritionalInsights,
+        organizationId: selectedOrganization.id,
+        ingredients: sheet.ingredients.map((ingredient, index) => ({
+          ingredientName: ingredient.name,
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+          originalQuantity:
+            (ingredient as EditableIngredient).originalQuantity ||
+            ingredient.quantity,
+          productId: (ingredient as EditableIngredient).productId
+            ? parseInt((ingredient as EditableIngredient).productId!, 10)
+            : undefined,
+          sortOrder: index,
+        })),
       };
 
       // Salvar no banco de dados
-      const result = await TechnicalSheetService.saveTechnicalSheet(saveData);
-
-      if (result.success) {
-        toast.success("Ficha técnica salva com sucesso!");
-        console.log("Ficha técnica salva:", result.data);
-      } else {
-        toast.error(result.error || "Erro ao salvar ficha técnica");
-        console.error("Erro ao salvar ficha técnica:", result.error);
-      }
+      const created = await TechnicalSheetService.create(saveData);
+      toast.success("Ficha técnica salva com sucesso!");
+      console.log("Ficha técnica salva:", created);
 
     } catch (error) {
       console.error("Erro inesperado ao salvar ficha técnica:", error);

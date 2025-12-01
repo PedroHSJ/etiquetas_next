@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import type { Database } from "@/types/database";
 
 /**
  * Cria um cliente Supabase para uso em rotas API/server
@@ -8,7 +9,7 @@ import { createServerClient } from "@supabase/ssr";
  */
 export function getSupabaseServerClient(
   request: NextRequest,
-  response: NextResponse,
+  response: NextResponse
 ) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseAnonKey =
@@ -33,7 +34,7 @@ export function getSupabaseBearerClient(token: string) {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
-      "Supabase não configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+      "Supabase não configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY."
     );
   }
 
@@ -51,3 +52,23 @@ export function getSupabaseBearerClient(token: string) {
     },
   });
 }
+
+/**
+ * Supabase service-role client (sem contexto de requisição)
+ * Usado para operações internas/automatizadas como cache de IA.
+ */
+// export function getSupabaseServiceClient() {
+//   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+//   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+//   if (!supabaseUrl || !serviceKey) {
+//     return null;
+//   }
+
+//   return createClient<Database>(supabaseUrl, serviceKey, {
+//     auth: {
+//       persistSession: false,
+//       autoRefreshToken: false,
+//     },
+//   });
+// }

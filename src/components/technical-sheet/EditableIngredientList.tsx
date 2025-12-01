@@ -14,14 +14,9 @@ import {
 import { Edit2, Check, X, Trash2, Search, Package } from "lucide-react";
 import { EditableIngredient } from "@/types/technical-sheet";
 import { UNIT_OF_MEASURE_OPTIONS } from "@/types/stock/product";
-import { TechnicalSheetService } from "@/lib/services/technicalSheetService";
+import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
 import { cn } from "@/lib/utils";
-
-interface SimpleProduct {
-  id: string;
-  name: string;
-  category?: string;
-}
+import { ProductSelect } from "@/types/stock/stock";
 
 interface EditableIngredientListProps {
   ingredients: EditableIngredient[];
@@ -35,7 +30,7 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
   onChange,
 }) => {
   const [searchingProducts, setSearchingProducts] = useState<
-    Record<string, SimpleProduct[]>
+    Record<string, ProductSelect[]>
   >({});
 
   const updateIngredient = (
@@ -100,7 +95,7 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
     }
   };
 
-  const selectProduct = (ingredientId: string, product: SimpleProduct) => {
+  const selectProduct = (ingredientId: string, product: ProductSelect) => {
     updateIngredient(ingredientId, {
       name: product.name,
       productId: product.id,
@@ -155,9 +150,9 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
                       >
                         <Package className="w-3 h-3" />
                         <span className="truncate">{product.name}</span>
-                        {product.category && (
+                        {product.group?.name && (
                           <span className="text-xs text-muted-foreground">
-                            ({product.category})
+                            ({product.group.name})
                           </span>
                         )}
                       </button>

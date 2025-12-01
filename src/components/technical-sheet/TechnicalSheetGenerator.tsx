@@ -19,7 +19,7 @@ import {
   Calculator
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { TechnicalSheetService } from "@/lib/services/technicalSheetService";
+import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
 import { 
   TechnicalSheetRequest,
   TechnicalSheetResponse,

@@ -1,0 +1,142 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod/v4";
+import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
+import { TechnicalSheetBackendService } from "@/lib/services/server/technicalSheetService";
+
+const ingredientSchema = z.object({
+  ingredientName: z.string().min(1),
+  quantity: z.string().min(1),
+  unit: z.string().min(1),
+  originalQuantity: z.string().min(1),
+  productId: z.number().int().optional(),
+  sortOrder: z.number().int().min(0).optional(),
+});
+
+const createSchema = z.object({
+  dishName: z.string().min(1),
+  servings: z.number().int().positive(),
+  preparationTime: z.string().optional(),
+  cookingTime: z.string().optional(),
+  difficulty: z.string().optional(),
+  preparationSteps: z.array(z.string()).optional(),
+  nutritionalInsights: z.record(z.string(), z.any()).optional(),
+  organizationId: z.string().uuid(),
+  ingredients: z.array(ingredientSchema).optional(),
+});
+
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
+
+  if (!token) {
+    const errorResponse: ApiErrorResponse = {
+      error: "Access token not provided",
+    };
+    return NextResponse.json(errorResponse, { status: 401 });
+  }
+
+  const searchParams = request.nextUrl.searchParams;
+  const organizationId = searchParams.get("organizationId");
+
+  if (!organizationId) {
+    const errorResponse: ApiErrorResponse = {
+      error: "organizationId is required",
+    };
+    return NextResponse.json(errorResponse, { status: 400 });
+  }
+
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const pageSize = parseInt(searchParams.get("pageSize") || "12", 10);
+  const difficulty = searchParams.get("difficulty") || undefined;
+
+  try {
+    const supabase = getSupabaseBearerClient(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      const errorResponse: ApiErrorResponse = {
+        error: "User not authenticated",
+      };
+      return NextResponse.json(errorResponse, { status: 401 });
+    }
+
+    const service = new TechnicalSheetBackendService(supabase);
+    const result = await service.list({
+      page,
+      pageSize,
+      organizationId,
+      difficulty,
+    });
+
+    const successResponse: ApiSuccessResponse<typeof result> = {
+      data: result,
+    };
+
+    return NextResponse.json(successResponse, { status: 200 });
+  } catch (err) {
+    console.error("Erro ao listar fichas técnicas:", err);
+    const errorResponse: ApiErrorResponse = {
+      error: "Internal error while fetching technical sheets",
+      details: err instanceof Error ? { message: err.message } : undefined,
+    };
+    return NextResponse.json(errorResponse, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
+
+  if (!token) {
+    const errorResponse: ApiErrorResponse = {
+      error: "Access token not provided",
+    };
+    return NextResponse.json(errorResponse, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const parsed = createSchema.safeParse(body);
+
+    if (!parsed.success) {
+      const errorResponse: ApiErrorResponse = {
+        error: "Invalid request body",
+        details: parsed.error.flatten().fieldErrors,
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
+    const supabase = getSupabaseBearerClient(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      const errorResponse: ApiErrorResponse = {
+        error: "User not authenticated",
+      };
+      return NextResponse.json(errorResponse, { status: 401 });
+    }
+
+    const service = new TechnicalSheetBackendService(supabase);
+    const created = await service.create(parsed.data, user.id);
+
+    const successResponse: ApiSuccessResponse<typeof created> = {
+      data: created,
+    };
+
+    return NextResponse.json(successResponse, { status: 201 });
+  } catch (err) {
+    console.error("Erro ao criar ficha técnica:", err);
+    const errorResponse: ApiErrorResponse = {
+      error: "Internal error while creating technical sheet",
+      details: err instanceof Error ? { message: err.message } : undefined,
+    };
+    return NextResponse.json(errorResponse, { status: 500 });
+  }
+}
