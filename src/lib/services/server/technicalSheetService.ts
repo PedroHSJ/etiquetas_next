@@ -18,6 +18,7 @@ interface ListParams {
   pageSize: number;
   organizationId: string;
   difficulty?: string;
+  active?: boolean;
 }
 
 export class TechnicalSheetBackendService {
@@ -28,6 +29,7 @@ export class TechnicalSheetBackendService {
     pageSize,
     organizationId,
     difficulty,
+    active = true,
   }: ListParams): Promise<TechnicalSheetListResponseDto> {
     const offset = (page - 1) * pageSize;
 
@@ -41,6 +43,7 @@ export class TechnicalSheetBackendService {
         { count: "exact" }
       )
       .eq("organization_id", organizationId)
+      .eq("active", active)
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
 
@@ -70,9 +73,10 @@ export class TechnicalSheetBackendService {
 
   async getById(
     id: string,
-    organizationId: string
+    organizationId: string,
+    includeInactive = false
   ): Promise<TechnicalSheetResponseDto | null> {
-    const { data, error } = await this.supabase
+    let query = this.supabase
       .from("technical_sheets")
       .select(
         `
@@ -81,8 +85,13 @@ export class TechnicalSheetBackendService {
       `
       )
       .eq("id", id)
-      .eq("organization_id", organizationId)
-      .single();
+      .eq("organization_id", organizationId);
+
+    if (!includeInactive) {
+      query = query.eq("active", true);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) {
       if (error.code === "PGRST116") {
@@ -112,6 +121,7 @@ export class TechnicalSheetBackendService {
         nutritional_insights: dto.nutritionalInsights,
         organization_id: dto.organizationId,
         created_by: userId,
+        active: dto.active ?? true,
       })
       .select()
       .single();
@@ -170,6 +180,7 @@ export class TechnicalSheetBackendService {
       updatePayload.preparation_steps = dto.preparationSteps;
     if (dto.nutritionalInsights !== undefined)
       updatePayload.nutritional_insights = dto.nutritionalInsights;
+    if (dto.active !== undefined) updatePayload.active = dto.active;
 
     const { error } = await this.supabase
       .from("technical_sheets")
@@ -219,7 +230,11 @@ export class TechnicalSheetBackendService {
       }
     }
 
-    const updated = await this.getById(id, dto.organizationId);
+    const updated = await this.getById(
+      id,
+      dto.organizationId,
+      dto.active === false
+    );
     if (!updated) {
       throw new Error("Technical sheet not found after update");
     }
@@ -230,7 +245,7 @@ export class TechnicalSheetBackendService {
   async delete(id: string, organizationId: string): Promise<void> {
     const { error } = await this.supabase
       .from("technical_sheets")
-      .delete()
+      .update({ active: false })
       .eq("id", id)
       .eq("organization_id", organizationId);
 

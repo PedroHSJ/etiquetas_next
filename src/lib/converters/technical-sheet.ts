@@ -36,6 +36,7 @@ export const toTechnicalSheetResponseDto = (
   createdBy: entity.created_by,
   createdAt: entity.created_at,
   updatedAt: entity.updated_at,
+  active: entity.active ?? true,
   ingredients: (entity.ingredients ?? [])
     .map(mapIngredientToResponse)
     .sort((a, b) => a.sortOrder - b.sortOrder),
@@ -60,6 +61,7 @@ export const toTechnicalSheetModel = (
     createdBy: baseDto.createdBy,
     createdAt: new Date(baseDto.createdAt),
     updatedAt: new Date(baseDto.updatedAt),
+    active: baseDto.active ?? true,
     ingredients: baseDto.ingredients.map((ingredient) => ({
       id: ingredient.id,
       name: ingredient.ingredientName,

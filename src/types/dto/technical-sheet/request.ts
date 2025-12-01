@@ -21,6 +21,7 @@ export interface CreateTechnicalSheetDto {
   nutritionalInsights?: Record<string, any>;
   organizationId: string;
   ingredients?: TechnicalSheetIngredientRequestDto[];
+  active?: boolean;
 }
 
 export interface UpdateTechnicalSheetDto

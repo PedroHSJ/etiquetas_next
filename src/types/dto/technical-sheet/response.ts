@@ -27,6 +27,7 @@ export interface TechnicalSheetResponseDto {
   createdAt: string;
   updatedAt: string;
   ingredients: TechnicalSheetIngredientResponseDto[];
+  active?: boolean | null;
 }
 
 export interface TechnicalSheetListResponseDto {

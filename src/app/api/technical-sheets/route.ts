@@ -23,6 +23,7 @@ const createSchema = z.object({
   nutritionalInsights: z.record(z.string(), z.any()).optional(),
   organizationId: z.string().uuid(),
   ingredients: z.array(ingredientSchema).optional(),
+  active: z.boolean().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -49,6 +50,8 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = parseInt(searchParams.get("pageSize") || "12", 10);
   const difficulty = searchParams.get("difficulty") || undefined;
+  const activeParam = searchParams.get("active");
+  const active = activeParam === null ? true : activeParam === "true";
 
   try {
     const supabase = getSupabaseBearerClient(token);
@@ -70,6 +73,7 @@ export async function GET(request: NextRequest) {
       pageSize,
       organizationId,
       difficulty,
+      active,
     });
 
     const successResponse: ApiSuccessResponse<typeof result> = {

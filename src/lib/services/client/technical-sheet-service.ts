@@ -25,6 +25,7 @@ interface ListParams {
   page?: number;
   pageSize?: number;
   difficulty?: string;
+  active?: boolean;
 }
 
 export const TechnicalSheetService = {
@@ -33,21 +34,26 @@ export const TechnicalSheetService = {
     page = 1,
     pageSize = 12,
     difficulty,
+    active = true,
   }: ListParams): Promise<TechnicalSheetListModel> {
     const { data } = await api.get<
       ApiResponse<TechnicalSheetListResponseDto>
     >("/technical-sheets", {
-      params: { organizationId, page, pageSize, difficulty },
+      params: { organizationId, page, pageSize, difficulty, active },
     });
 
     if (!data?.data) {
       throw new Error("Erro ao carregar fichas técnicas");
     }
 
-    return {
+    const mapped = {
       ...data.data,
       data: data.data.data.map(toTechnicalSheetModel),
     };
+
+    mapped.data = mapped.data.filter((sheet) => sheet.active !== false);
+
+    return mapped;
   },
 
   async getById(
@@ -97,10 +103,7 @@ export const TechnicalSheetService = {
   },
 
   async remove(id: string, organizationId: string): Promise<void> {
-    await api.delete<ApiSuccessResponse<{ id: string }>>(
-      `/technical-sheets/${id}`,
-      { params: { organizationId } }
-    );
+    await this.update(id, { organizationId, active: false });
   },
 
   async generateIngredientSuggestions(

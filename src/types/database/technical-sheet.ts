@@ -15,6 +15,7 @@ export interface TechnicalSheetEntity {
   created_by: string;
   created_at: string;
   updated_at: string;
+  active?: boolean | null;
 }
 
 export interface TechnicalSheetIngredientEntity {

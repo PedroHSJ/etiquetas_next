@@ -63,6 +63,7 @@ export interface TechnicalSheetModel {
   createdAt: Date;
   updatedAt: Date;
   ingredients: TechnicalSheetIngredientModel[];
+  active?: boolean | null;
 }
 
 export interface TechnicalSheetListModel {

@@ -24,12 +24,13 @@ const updateSchema = z
     nutritionalInsights: z.record(z.string(), z.any()).optional(),
     organizationId: z.string().uuid(),
     ingredients: z.array(ingredientSchema).optional(),
+    active: z.boolean().optional(),
   })
   .strict();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -64,8 +65,9 @@ export async function GET(
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
+    const { id } = await params;
     const service = new TechnicalSheetBackendService(supabase);
-    const sheet = await service.getById(params.id, organizationId);
+    const sheet = await service.getById(id, organizationId);
 
     if (!sheet) {
       const errorResponse: ApiErrorResponse = {
@@ -91,7 +93,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -128,8 +130,9 @@ export async function PUT(
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
+    const { id } = await params;
     const service = new TechnicalSheetBackendService(supabase);
-    const updated = await service.update(params.id, parsed.data);
+    const updated = await service.update(id, parsed.data);
 
     const successResponse: ApiSuccessResponse<typeof updated> = {
       data: updated,
@@ -148,7 +151,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -183,11 +186,12 @@ export async function DELETE(
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
+    const { id } = await params;
     const service = new TechnicalSheetBackendService(supabase);
-    await service.delete(params.id, organizationId);
+    await service.delete(id, organizationId);
 
     const successResponse: ApiSuccessResponse<{ id: string }> = {
-      data: { id: params.id },
+      data: { id },
     };
 
     return NextResponse.json(successResponse, { status: 200 });

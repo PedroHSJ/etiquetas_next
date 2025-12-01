@@ -20,23 +20,26 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
-import { 
+import {
   TechnicalSheetRequest,
   TechnicalSheetResponse,
-  EditableIngredient 
+  EditableIngredient,
 } from "@/types/technical-sheet";
 import { EditableIngredientList } from "./EditableIngredientList";
+import { TechnicalSheetModel } from "@/types/models/technical-sheet";
 
 interface TechnicalSheetGeneratorProps {
   organizationId: string;
   onSave?: (sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }) => void;
   isSaving?: boolean;
+  initialData?: TechnicalSheetModel | null;
 }
 
 export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = ({
   organizationId,
   onSave,
-  isSaving = false
+  isSaving = false,
+  initialData = null,
 }) => {
   const [dishName, setDishName] = useState("");
   const [servings, setServings] = useState<number>(4);
@@ -46,6 +49,40 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
   const [originalServings, setOriginalServings] = useState<number>(4);
 
   const { toast } = useToast();
+
+  // Preenche dados existentes quando em modo de edição
+  React.useEffect(() => {
+    if (!initialData) return;
+
+    setDishName(initialData.dishName);
+    setServings(initialData.servings);
+    setOriginalServings(initialData.servings);
+    setTechnicalSheet({
+      dishName: initialData.dishName,
+      servings: initialData.servings,
+      ingredients: initialData.ingredients.map((ingredient) => ({
+        name: ingredient.name,
+        quantity: ingredient.quantity,
+        unit: ingredient.unit,
+      })),
+      preparationTime: initialData.preparationTime ?? undefined,
+      cookingTime: initialData.cookingTime ?? undefined,
+      difficulty: initialData.difficulty ?? undefined,
+      preparationSteps: initialData.preparationSteps,
+      nutritionalInsights: initialData.nutritionalInsights ?? undefined,
+    });
+    setEditableIngredients(
+      initialData.ingredients.map((ingredient) => ({
+        id: ingredient.id,
+        name: ingredient.name,
+        quantity: ingredient.quantity,
+        unit: ingredient.unit,
+        originalQuantity: ingredient.originalQuantity,
+        productId: ingredient.productId ? String(ingredient.productId) : undefined,
+        isEditing: false,
+      }))
+    );
+  }, [initialData]);
 
   const handleGenerate = async () => {
     if (!dishName.trim()) {
@@ -131,6 +168,38 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
   };
 
   const handleReset = () => {
+    if (initialData) {
+      setDishName(initialData.dishName);
+      setServings(initialData.servings);
+      setTechnicalSheet({
+        dishName: initialData.dishName,
+        servings: initialData.servings,
+        ingredients: initialData.ingredients.map((ingredient) => ({
+          name: ingredient.name,
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+        })),
+        preparationTime: initialData.preparationTime ?? undefined,
+        cookingTime: initialData.cookingTime ?? undefined,
+        difficulty: initialData.difficulty ?? undefined,
+        preparationSteps: initialData.preparationSteps,
+        nutritionalInsights: initialData.nutritionalInsights ?? undefined,
+      });
+      setEditableIngredients(
+        initialData.ingredients.map((ingredient) => ({
+          id: ingredient.id,
+          name: ingredient.name,
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+          originalQuantity: ingredient.originalQuantity,
+          productId: ingredient.productId ? String(ingredient.productId) : undefined,
+          isEditing: false,
+        }))
+      );
+      setOriginalServings(initialData.servings);
+      return;
+    }
+
     setDishName("");
     setServings(4);
     setTechnicalSheet(null);

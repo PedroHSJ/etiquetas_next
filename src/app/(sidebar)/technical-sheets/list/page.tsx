@@ -82,8 +82,12 @@ export default function TechnicalSheetsListPage() {
         );
       }
 
-      setSheets(filteredSheets);
-      setTotal(result.total || 0);
+      const activeSheets = filteredSheets.filter(
+        (sheet) => sheet.active !== false
+      );
+
+      setSheets(activeSheets);
+      setTotal(activeSheets.length);
     } catch (error) {
       console.error("Erro ao carregar fichas técnicas:", error);
       toast.error("Erro inesperado ao carregar fichas técnicas");
@@ -283,10 +287,12 @@ export default function TechnicalSheetsListPage() {
                       <Eye className="h-4 w-4 mr-1" />
                       Ver
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Edit className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
+                    <Link href={`/technical-sheets/edit/${sheet.id}`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Edit className="h-4 w-4 mr-1" />
+                        Editar
+                      </Button>
+                    </Link>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
