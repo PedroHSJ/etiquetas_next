@@ -30,11 +30,13 @@ import { EditableIngredientList } from "./EditableIngredientList";
 interface TechnicalSheetGeneratorProps {
   organizationId: string;
   onSave?: (sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }) => void;
+  isSaving?: boolean;
 }
 
 export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = ({
   organizationId,
-  onSave
+  onSave,
+  isSaving = false
 }) => {
   const [dishName, setDishName] = useState("");
   const [servings, setServings] = useState<number>(4);
@@ -400,9 +402,18 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Limpar
               </Button>
-              <Button onClick={handleSave}>
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Ficha Técnica
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Salvar Ficha Técnica
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>

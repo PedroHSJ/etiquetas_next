@@ -100,8 +100,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       // },
       {
         title: "Fichas Técnicas",
-        url: "/fichas-tecnicas",
-        isActive: pathname.startsWith("/ficha"),
+        url: "/technical-sheets/list",
+        isActive: pathname.startsWith("/technical-sheets"),
         icon: Package,
       },
     ],

@@ -1,30 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  PlusCircle,
-  ChefHat,
-  Users,
-  Clock,
-  Trash2,
-  Edit,
-  Eye,
-  Filter,
-} from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useOrganization } from "@/contexts/OrganizationContext";
-import { TechnicalSheet } from "@/types/technical-sheet";
-import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
-import { toast } from "sonner";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -37,6 +13,31 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { NavigationButton } from "@/components/ui/navigation-button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { TechnicalSheet } from "@/types/technical-sheet";
+import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
+import {
+  ChefHat,
+  Clock,
+  Edit,
+  Eye,
+  Filter,
+  Plus,
+  Trash2,
+  Users,
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -75,7 +76,6 @@ export default function TechnicalSheetsListPage() {
 
       let filteredSheets = result.data;
 
-      // Aplicar filtro de dificuldade no frontend
       if (difficultyFilter !== "all") {
         filteredSheets = result.data.filter(
           (sheet) => sheet.difficulty === difficultyFilter
@@ -99,7 +99,7 @@ export default function TechnicalSheetsListPage() {
     try {
       await TechnicalSheetService.remove(id, selectedOrganization.id);
       toast.success("Ficha técnica removida com sucesso!");
-      await loadTechnicalSheets(); // Recarregar a lista
+      await loadTechnicalSheets();
     } catch (error) {
       console.error("Erro ao remover ficha técnica:", error);
       toast.error("Erro inesperado ao remover ficha técnica");
@@ -156,24 +156,25 @@ export default function TechnicalSheetsListPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Fichas Técnicas</h1>
-          <p className="text-muted-foreground">
-            Gerencie suas fichas técnicas de pratos e receitas.
-          </p>
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <ChefHat className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Fichas Técnicas</h1>
+            <p className="text-muted-foreground">
+              Visualize e gerencie todas as suas fichas técnicas
+            </p>
+          </div>
         </div>
-        <Link href="/technical-sheets/create">
-          <Button>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Nova Ficha Técnica
-          </Button>
-        </Link>
+        <NavigationButton href="/technical-sheets/create">
+          <Plus className="mr-2 h-4 w-4" />
+          Nova ficha técnica
+        </NavigationButton>
       </div>
 
-      {/* Filtros */}
       <div className="flex gap-4 items-center">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
@@ -194,7 +195,6 @@ export default function TechnicalSheetsListPage() {
         </div>
       </div>
 
-      {/* Loading State */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -225,14 +225,13 @@ export default function TechnicalSheetsListPage() {
           </p>
           <Link href="/technical-sheets/create">
             <Button>
-              <PlusCircle className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
               Criar Primeira Ficha
             </Button>
           </Link>
         </div>
       ) : (
         <>
-          {/* Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sheets.map((sheet) => (
               <Card
@@ -252,7 +251,6 @@ export default function TechnicalSheetsListPage() {
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  {/* Informações básicas */}
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
@@ -264,7 +262,6 @@ export default function TechnicalSheetsListPage() {
                     </div>
                   </div>
 
-                  {/* Ingredientes preview */}
                   <div>
                     <p className="text-sm font-medium mb-2">Ingredientes:</p>
                     <div className="text-xs text-muted-foreground">
@@ -281,7 +278,6 @@ export default function TechnicalSheetsListPage() {
                     </div>
                   </div>
 
-                  {/* Ações */}
                   <div className="flex gap-2 pt-2">
                     <Button variant="outline" size="sm" className="flex-1">
                       <Eye className="h-4 w-4 mr-1" />
@@ -329,7 +325,6 @@ export default function TechnicalSheetsListPage() {
             ))}
           </div>
 
-          {/* Paginação */}
           {total > pageSize && (
             <div className="flex justify-center items-center gap-2 mt-8">
               <Button
