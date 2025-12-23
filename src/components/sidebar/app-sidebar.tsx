@@ -14,6 +14,7 @@ import {
   LayoutGrid,
   Building,
   UserCog,
+  MapPin,
 } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -77,6 +78,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             url: "/members/list",
             isActive: pathname.startsWith("/members"),
             icon: UserCog,
+          },
+          {
+            title: "Endereçamento",
+            url: "/enderecamento",
+            isActive: pathname.startsWith("/enderecamento"),
+            icon: MapPin,
           },
         ],
       },
