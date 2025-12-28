@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "./OrganizationContext";
-import { InviteService } from "@/lib/services/inviteService";
+import { InviteService } from "@/lib/services/client/invite-service";
 import { useAuth } from "./AuthContext";
 import { Invite } from "@/types/models/invite";
 

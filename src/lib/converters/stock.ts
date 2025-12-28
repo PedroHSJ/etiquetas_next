@@ -93,9 +93,9 @@ export function toStockMovementResponseDto(
 // DTO -> Model converters (frontend camelCase + Date)
 // ============================================================
 
-const toProductModel = (
+export function toProductStockModel(
   product?: ProductStockResponseDto
-): ProductStockModel | undefined => {
+): ProductStockModel | undefined {
   if (!product) return undefined;
   return {
     id: product.id,
@@ -104,7 +104,7 @@ const toProductModel = (
     unitOfMeasureCode: product.unitOfMeasureCode,
     currentQuantity: product.currentQuantity,
   };
-};
+}
 
 const toUserModel = (
   user?: StockMovementResponseDto["user"]
@@ -164,7 +164,7 @@ export function toStockModel(
     userId: baseDto.userId,
     createdAt: new Date(baseDto.createdAt),
     updatedAt: new Date(baseDto.updatedAt),
-    product: toProductModel(baseDto.product),
+    product: toProductStockModel(baseDto.product),
     storageLocation,
   };
 }
@@ -194,7 +194,7 @@ export function toStockMovementModel(
     observation: baseDto.observation,
     movementDate: new Date(baseDto.movementDate),
     createdAt: new Date(baseDto.createdAt),
-    product: toProductModel(baseDto.product),
+    product: toProductStockModel(baseDto.product),
     user: toUserModel(baseDto.user),
   };
 }

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { InviteService } from "@/lib/services/inviteService";
+import { InviteService } from "@/lib/services/client/invite-service";
 import { Invite } from "@/types/models/invite";
 
 interface OnboardingStatus {

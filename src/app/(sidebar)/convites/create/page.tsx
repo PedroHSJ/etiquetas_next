@@ -31,7 +31,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {} from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
-import { InviteService } from "@/lib/services/inviteService";
+import { InviteService } from "@/lib/services/client/invite-service";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -84,11 +84,11 @@ export default function CreateConvitePage() {
 
     setLoading(true);
     try {
-      await InviteService.createInvite(
-        email.trim(),
-        selectedOrganization.id,
-        perfilId
-      );
+      await InviteService.createInvite({
+        email: email.trim(),
+        organizationId: selectedOrganization.id,
+        profileId: perfilId,
+      });
 
       toast.success("Convite enviado com sucesso!");
       router.push("/convites");

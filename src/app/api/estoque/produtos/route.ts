@@ -46,6 +46,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const searchTerm = searchParams.get("q") || "";
     const limit = parseInt(searchParams.get("limit") || "50", 10);
+    const organizationId = searchParams.get("organizationId");
+    const onlyWithStock =
+      searchParams.get("onlyWithStock") === "true" ? true : false;
 
     // Query products
     let query = supabase.from("products").select(`
@@ -73,13 +76,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Stock metadata per product
-    const { data: stockRows, error: stockError } = await supabase
+    let queryStock = supabase
       .from("stock")
-      .select("productId, current_quantity, unit_of_measure_code, organization_id");
+      .select(
+        "productId, current_quantity, unit_of_measure_code, organization_id"
+      );
 
-    if (stockError) {
-      console.error("Error fetching stock info:", stockError);
+    if (organizationId) {
+      queryStock = queryStock.eq("organization_id", organizationId);
     }
+
+    if (onlyWithStock) {
+      queryStock = queryStock.gt("current_quantity", 0);
+    }
+
+    const { data: stockRows, error: stockError } = await queryStock;
 
     const stockMap = (stockRows || []).reduce(
       (acc: Record<number, StockRecord>, e) => {
@@ -90,22 +101,27 @@ export async function GET(request: NextRequest) {
       {}
     );
 
-    const productsWithStock: ProductWithStock[] = (
-      (products || []) as unknown as ProductWithGroup[]
-    ).map((produto) => {
+    const productsWithStock: ProductWithStock[] = [];
+
+    for (const produto of (products || []) as unknown as ProductWithGroup[]) {
       const stockInfo = stockMap[produto.id];
       const quantity = stockInfo?.current_quantity || 0;
+
+      if (onlyWithStock && quantity <= 0) {
+        continue;
+      }
+
       const unit = stockInfo?.unit_of_measure_code || "un";
 
-      return {
+      productsWithStock.push({
         id: produto.id,
         name: produto.name,
         group_id: produto.group_id,
         group: produto.group,
         unit_of_measure_code: unit,
         current_quantity: quantity,
-      };
-    });
+      });
+    }
 
     const successResponse: ApiSuccessResponse<ProductWithStock[]> = {
       data: productsWithStock,

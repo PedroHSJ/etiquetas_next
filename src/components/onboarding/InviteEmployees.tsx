@@ -29,7 +29,7 @@ import {
   Package,
   CheckCircle,
 } from "lucide-react";
-import { InviteService } from "@/lib/services/inviteService";
+import { InviteService } from "@/lib/services/client/invite-service";
 import { Profile } from "@/types/models/profile";
 import { toast } from "sonner";
 import { useNavigation } from "@/contexts/NavigationContext";
@@ -120,11 +120,11 @@ export function InviteEmployees({
 
       // Enviar todos os convites
       for (const invite of invites) {
-        await InviteService.createInvite(
-          invite.email,
+        await InviteService.createInvite({
+          email: invite.email,
           organizationId,
-          invite.perfil
-        );
+          profileId: invite.perfil,
+        });
       }
 
       toast.success(`${invites.length} convite(s) enviado(s) com sucesso!`);

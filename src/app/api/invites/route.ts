@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseBearerClient } from "@/lib/supabaseServer";
 import { InviteBackendService } from "@/lib/services/server/inviteService";
 import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
-import { InviteWithRelationsResponseDto } from "@/types/dto/invite";
+import {
+  InviteWithRelationsResponseDto,
+  CreateInviteDto,
+  ListInvitesDto,
+} from "@/types/dto/invite";
 
 /**
  * GET /api/invites
@@ -65,11 +69,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    const invites = await inviteService.listInvites({
+    const filters: ListInvitesDto = {
       email: scope === "organization" ? undefined : email || user.email,
       status,
       organizationId,
-    });
+    };
+
+    const invites = await inviteService.listInvites(filters);
     console.log("Found invites:", invites.length);
 
     const successResponse: ApiSuccessResponse<
@@ -118,7 +124,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
-    const body = await request.json();
+    const body: CreateInviteDto = await request.json();
     const { email, organizationId, profileId } = body;
 
     if (!email || !organizationId || !profileId) {

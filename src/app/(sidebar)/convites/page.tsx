@@ -41,7 +41,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { InviteService } from "@/lib/services/inviteService";
+import { InviteService } from "@/lib/services/client/invite-service";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { toast } from "sonner";
 import { Invite } from "@/types/models/invite";

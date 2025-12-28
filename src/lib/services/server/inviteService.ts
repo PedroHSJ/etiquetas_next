@@ -2,29 +2,18 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { InviteEntity } from "@/types/database/invite";
 import crypto from "crypto";
 import {
+  AcceptInviteDto,
+  CreateInviteDto,
   InviteWithRelationsResponseDto,
+  ListInvitesDto,
 } from "@/types/dto/invite";
 import { toInviteWithRelationsResponseDto } from "@/lib/converters/invite";
-interface ListInvitesOptions {
-  email?: string;
-  status?: string;
-  organizationId?: string;
-}
 
-interface CreateInviteData {
-  email: string;
-  organizationId: string;
-  profileId: string;
-  invitedBy: string;
+type CreateInviteWithMetadata = CreateInviteDto & {
   invitedByName?: string | null;
   invitedByEmail?: string | null;
   invitedByAvatarUrl?: string | null;
-}
-
-interface AcceptInviteData {
-  inviteToken: string;
-  userId: string;
-}
+};
 
 /**
  * Service layer for invite management (backend)
@@ -36,7 +25,7 @@ export class InviteBackendService {
    * List invites with filters
    */
   async listInvites(
-    options: ListInvitesOptions = {}
+    options: ListInvitesDto = {}
   ): Promise<InviteWithRelationsResponseDto[]> {
     const { email, status, organizationId } = options;
 
@@ -105,7 +94,7 @@ export class InviteBackendService {
    * Create a new invite
    */
   async createInvite(
-    inviteData: CreateInviteData
+    inviteData: CreateInviteWithMetadata
   ): Promise<InviteWithRelationsResponseDto> {
     const inviteToken =
       crypto?.randomUUID?.() ||
@@ -142,7 +131,7 @@ export class InviteBackendService {
   /**
    * Accept an invite
    */
-  async acceptInvite(acceptData: AcceptInviteData): Promise<boolean> {
+  async acceptInvite(acceptData: AcceptInviteDto): Promise<boolean> {
     const { inviteToken, userId } = acceptData;
 
     // First, fetch the invite

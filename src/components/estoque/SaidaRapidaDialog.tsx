@@ -19,7 +19,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -36,11 +35,14 @@ import { toast } from "sonner";
 import { ESTOQUE_MESSAGES } from "@/types/estoque";
 import { useEffect } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
+import { StockMovementService } from "@/lib/services/client/stock-movement-service";
+import { ProductStockModel } from "@/types/models/stock";
+import { QuickEntryRequest } from "@/types/stock/stock";
 import {
-  MovimentacaoEstoqueService,
-  type MovimentacaoEstoqueRequest,
-  type ProdutoComEstoque,
-} from "@/lib/services/movimentacaoEstoqueService";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 // Schema de validação
 const saidaRapidaSchema = z.object({
@@ -71,10 +73,6 @@ export function SaidaRapidaDialog({
   const organizationId =
     activeProfile?.userOrganization?.organizationId || undefined;
   const [open, setOpen] = useState(false);
-  const [produtos, setProdutos] = useState<ProdutoComEstoque[]>([]);
-  const [carregandoProdutos, setCarregandoProdutos] = useState(false);
-  const [enviando, setEnviando] = useState(false);
-
   const form = useForm<SaidaRapidaFormData>({
     resolver: zodResolver(saidaRapidaSchema),
     defaultValues: {
@@ -83,18 +81,28 @@ export function SaidaRapidaDialog({
       observacao: "",
     },
   });
+  const [produtos, setProdutos] = useState<ProductStockModel[]>([]);
+  const [carregandoProdutos, setCarregandoProdutos] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const produtoSelecionadoId = form.watch("produto_id");
+  const produtoSelecionado = produtos.find(
+    (p) => p.id === Number(produtoSelecionadoId)
+  );
+  const unidadeMedida = (
+    produtoSelecionado?.unitOfMeasureCode || "un"
+  ).toUpperCase();
 
   // Carregar produtos ao abrir o dialog
   const carregarProdutos = async (termo = "") => {
     setCarregandoProdutos(true);
     try {
       // Para saída, carregar apenas produtos com estoque > 0
-      const produtos = await MovimentacaoEstoqueService.listarProdutos(
-        termo,
-        50,
-        true,
-        organizationId
-      );
+      const produtos = await StockMovementService.listProducts({
+        q: termo,
+        limit: 50,
+        organizationId,
+        onlyWithStock: true,
+      });
       setProdutos(produtos);
     } catch (error) {
       console.error("Erro ao carregar produtos:", error);
@@ -124,30 +132,33 @@ export function SaidaRapidaDialog({
       const produtoSelecionado = produtos.find(
         (p) => p.id === parseInt(data.produto_id)
       );
-      const estoqueAtual =
-        produtoSelecionado?.estoque_atual ||
-        produtoSelecionado?.current_quantity ||
-        0;
+      const estoqueAtual = produtoSelecionado?.currentQuantity ?? 0;
 
-      const validacao = MovimentacaoEstoqueService.validarQuantidade(
+      const validacao = StockMovementService.validateQuantity(
         parseFloat(data.quantidade),
         estoqueAtual
       );
 
-      if (!validacao.valida) {
-        toast.error(validacao.erro || "Erro na validação");
+      if (!validacao.valid) {
+        toast.error(validacao.error || "Erro na validação");
         setEnviando(false);
         return;
       }
 
-      const request: MovimentacaoEstoqueRequest = {
-        produto_id: parseInt(data.produto_id),
-        quantidade: parseFloat(data.quantidade),
-        observacao: data.observacao,
+      if (!organizationId) {
+        toast.error("Organização não selecionada");
+        setEnviando(false);
+        return;
+      }
+
+      const request: QuickEntryRequest = {
+        productId: parseInt(data.produto_id),
+        quantity: parseFloat(data.quantidade),
+        observation: data.observacao,
         organizationId,
       };
 
-      const result = await MovimentacaoEstoqueService.registrarSaida(request);
+      const result = await StockMovementService.quickExit(request);
 
       if (result.success) {
         toast.success(result.message || ESTOQUE_MESSAGES.SAIDA_SUCESSO);
@@ -211,12 +222,12 @@ export function SaidaRapidaDialog({
                         >
                           <div className="flex items-center gap-2">
                             <span>{produto.name}</span>
-                            {(produto.estoque_atual !== undefined ||
-                              produto.current_quantity !== undefined) && (
+                            {(produto.currentQuantity !== undefined ||
+                              produto.currentQuantity !== undefined) && (
                               <span className="text-xs text-muted-foreground">
                                 (Est:{" "}
-                                {produto.estoque_atual ||
-                                  produto.current_quantity ||
+                                {produto.currentQuantity ||
+                                  produto.currentQuantity ||
                                   0}
                                 )
                               </span>
@@ -238,14 +249,19 @@ export function SaidaRapidaDialog({
                 <FormItem>
                   <FormLabel>Quantidade *</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0.000"
-                      step="0.001"
-                      min="0"
-                      {...field}
-                      disabled={enviando}
-                    />
+                    <InputGroup>
+                      <InputGroupInput
+                        type="number"
+                        placeholder="0.000"
+                        step="0.001"
+                        min="0"
+                        {...field}
+                        disabled={enviando}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        {unidadeMedida}
+                      </InputGroupAddon>
+                    </InputGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

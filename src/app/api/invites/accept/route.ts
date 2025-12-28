@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseBearerClient } from "@/lib/supabaseServer";
 import { InviteBackendService } from "@/lib/services/server/inviteService";
 import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
+import { AcceptInviteDto } from "@/types/dto/invite";
 
 /**
  * POST /api/invites/accept
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
-    const body = await request.json();
+    const body: Pick<AcceptInviteDto, "inviteToken"> = await request.json();
     const { inviteToken } = body;
 
     if (!inviteToken) {
