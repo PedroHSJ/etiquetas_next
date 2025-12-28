@@ -8,7 +8,15 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, Folder, MapPin } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  Pencil,
+  Trash2,
+  Folder,
+  MapPin,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StorageLocationService } from "@/lib/services/client/storage-location-service";
 import { toast } from "sonner";
@@ -33,7 +41,10 @@ interface StorageLocationTreeProps {
 
 // Convert flat list to tree
 function buildTree(locations: StorageLocation[]): StorageLocation[] {
-  const map = new Map<string, StorageLocation & { children: StorageLocation[] }>();
+  const map = new Map<
+    string,
+    StorageLocation & { children: StorageLocation[] }
+  >();
   const roots: (StorageLocation & { children: StorageLocation[] })[] = [];
 
   // Initialize map
@@ -86,7 +97,13 @@ interface TreeNodeProps {
   onRefresh: () => void;
 }
 
-function TreeNode({ node, level, onAddChild, onEdit, onRefresh }: TreeNodeProps) {
+function TreeNode({
+  node,
+  level,
+  onAddChild,
+  onEdit,
+  onRefresh,
+}: TreeNodeProps) {
   const [isOpen, setIsOpen] = useState(false);
   const hasChildren = node.children && node.children.length > 0;
 
@@ -166,7 +183,11 @@ function TreeNode({ node, level, onAddChild, onEdit, onRefresh }: TreeNodeProps)
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive/80">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-destructive hover:text-destructive/80"
+              >
                 <Trash2 className="h-3 w-3" />
               </Button>
             </AlertDialogTrigger>
@@ -174,12 +195,16 @@ function TreeNode({ node, level, onAddChild, onEdit, onRefresh }: TreeNodeProps)
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir Localização</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Você tem certeza que deseja excluir "{node.name}"? Esta ação não pode ser desfeita.
+                  Você tem certeza que deseja excluir {node.name}? Esta ação não
+                  pode ser desfeita.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
                   Excluir
                 </AlertDialogAction>
               </AlertDialogFooter>
