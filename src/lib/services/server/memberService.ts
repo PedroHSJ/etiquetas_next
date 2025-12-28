@@ -55,7 +55,7 @@ export class MemberBackendService {
       new Set(entities.map((entity) => entity.user_id))
     );
 
-    let usersMap = new Map<string, BasicUserInfo>();
+    const usersMap = new Map<string, BasicUserInfo>();
     if (uniqueUserIds.length > 0) {
       const { data: usersData, error: usersError } = await this.supabase.rpc(
         "get_multiple_users_data",

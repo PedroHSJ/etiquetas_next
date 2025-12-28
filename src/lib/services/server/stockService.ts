@@ -184,7 +184,7 @@ export class StockBackendService {
       new Set(movements.map((movement) => movement.userId).filter(Boolean))
     );
 
-    let usersMap = new Map<string, UserWithName>();
+    const usersMap = new Map<string, UserWithName>();
 
     if (uniqueUserIds.length > 0) {
       const { data: usersData, error: usersError } = await this.supabase.rpc(
