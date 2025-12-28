@@ -21,7 +21,7 @@ export async function setCurrentSession(sessionId: string) {
   // typed Database.Functions is empty; cast args to any to avoid type errors here
   const { error } = await supabase.rpc("set_session_context", {
     session_id: sessionId,
-  } as any);
+  });
 
   if (error) {
     console.warn("Erro ao definir contexto de sessão:", error);

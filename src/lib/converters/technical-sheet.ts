@@ -22,7 +22,9 @@ const mapIngredientToResponse = (
 });
 
 export const toTechnicalSheetResponseDto = (
-  entity: TechnicalSheetEntity & { ingredients?: TechnicalSheetIngredientEntity[] }
+  entity: TechnicalSheetEntity & {
+    ingredients?: TechnicalSheetIngredientEntity[];
+  }
 ): TechnicalSheetResponseDto => ({
   id: entity.id,
   dishName: entity.dish_name,
@@ -43,10 +45,20 @@ export const toTechnicalSheetResponseDto = (
 });
 
 export const toTechnicalSheetModel = (
-  dto: TechnicalSheetResponseDto | (TechnicalSheetEntity & { ingredients?: TechnicalSheetIngredientEntity[] })
+  dto:
+    | TechnicalSheetResponseDto
+    | (TechnicalSheetEntity & {
+        ingredients?: TechnicalSheetIngredientEntity[];
+      })
 ): TechnicalSheetModel => {
   const baseDto =
-    "dishName" in dto ? dto : toTechnicalSheetResponseDto(dto as any);
+    "dishName" in dto
+      ? dto
+      : toTechnicalSheetResponseDto(
+          dto as TechnicalSheetEntity & {
+            ingredients?: TechnicalSheetIngredientEntity[];
+          }
+        );
 
   return {
     id: baseDto.id,

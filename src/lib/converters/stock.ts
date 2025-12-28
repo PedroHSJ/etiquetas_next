@@ -42,10 +42,10 @@ export function toProductStockResponseDto(
       product.current_quantity !== undefined
         ? parseQuantity(product.current_quantity)
         : product.current_stock !== undefined
-          ? parseQuantity(product.current_stock)
-          : product.estoque_atual !== undefined
-            ? parseQuantity(product.estoque_atual)
-            : undefined,
+        ? parseQuantity(product.current_stock)
+        : product.estoque_atual !== undefined
+        ? parseQuantity(product.estoque_atual)
+        : undefined,
   };
 }
 
@@ -106,7 +106,9 @@ const toProductModel = (
   };
 };
 
-const toUserModel = (user?: StockMovementResponseDto["user"]): MovementUserModel | undefined => {
+const toUserModel = (
+  user?: StockMovementResponseDto["user"]
+): MovementUserModel | undefined => {
   if (!user) return undefined;
   return {
     id: user.id,
@@ -117,13 +119,33 @@ const toUserModel = (user?: StockMovementResponseDto["user"]): MovementUserModel
 };
 
 export function toStockModel(
-  dto: StockResponseDto | (StockEntity & { product?: ProductEntityLike; storage_location?: { id: string; name: string; parent_id?: string | null } | null })
+  dto:
+    | StockResponseDto
+    | (StockEntity & {
+        product?: ProductEntityLike;
+        storage_location?: {
+          id: string;
+          name: string;
+          parent_id?: string | null;
+        } | null;
+      })
 ): StockModel {
   const baseDto =
-    "currentQuantity" in dto ? dto : toStockResponseDto(dto as any);
+    "currentQuantity" in dto
+      ? dto
+      : toStockResponseDto(
+          dto as unknown as StockEntity & { product?: ProductEntityLike }
+        );
 
   // Handle storage_location from raw entity
-  const rawEntity = dto as any;
+  const rawEntity = dto as StockEntity & {
+    product?: ProductEntityLike;
+    storage_location?: {
+      id: string;
+      name: string;
+      parent_id?: string | null;
+    } | null;
+  };
   const storageLocation = rawEntity.storage_location
     ? {
         id: rawEntity.storage_location.id,
@@ -153,7 +175,13 @@ export function toStockMovementModel(
     | (StockMovementEntity & { product?: ProductEntityLike })
 ): StockMovementModel {
   const baseDto =
-    "movementType" in dto ? dto : toStockMovementResponseDto(dto as any);
+    "movementType" in dto
+      ? dto
+      : toStockMovementResponseDto(
+          dto as unknown as StockMovementEntity & {
+            product?: ProductEntityLike;
+          }
+        );
 
   return {
     id: baseDto.id,

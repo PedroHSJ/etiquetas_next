@@ -25,8 +25,11 @@ export async function GET(request: NextRequest) {
     const service = new ProductBackendService(supabase);
     const products = await service.getProducts(organizationId);
     return NextResponse.json(products);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -46,7 +49,10 @@ export async function POST(request: NextRequest) {
     const service = new ProductBackendService(supabase);
     const product = await service.createProduct(body);
     return NextResponse.json(product);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }

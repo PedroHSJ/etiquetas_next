@@ -134,8 +134,7 @@ export async function POST(request: NextRequest) {
     const invitedByName =
       metadata.name || metadata.full_name || user.email || null;
     const invitedByEmail = user.email ?? null;
-    const invitedByAvatarUrl =
-      metadata.avatar_url || metadata.picture || null;
+    const invitedByAvatarUrl = metadata.avatar_url || metadata.picture || null;
 
     const invite = await inviteService.createInvite({
       email,
@@ -147,11 +146,10 @@ export async function POST(request: NextRequest) {
       invitedByAvatarUrl,
     });
 
-    const successResponse: ApiSuccessResponse<
-      InviteWithRelationsResponseDto
-    > = {
-      data: invite,
-    };
+    const successResponse: ApiSuccessResponse<InviteWithRelationsResponseDto> =
+      {
+        data: invite,
+      };
     return NextResponse.json(successResponse, { status: 201 });
   } catch (error) {
     console.error("Error on POST /api/invites route:", error);

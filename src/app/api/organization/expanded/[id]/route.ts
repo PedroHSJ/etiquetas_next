@@ -30,9 +30,9 @@ export async function GET(
         data: org,
       };
     return NextResponse.json(successResponse, { status: 200 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     const errorResponse: ApiErrorResponse = {
-      error: err.message || "Error fetching organization",
+      error: err instanceof Error ? err.message : "Error fetching organization",
     };
     return NextResponse.json(errorResponse, { status: 500 });
   }
@@ -66,9 +66,9 @@ export async function PUT(
         data: updated,
       };
     return NextResponse.json(successResponse, { status: 200 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     const errorResponse: ApiErrorResponse = {
-      error: err.message || "Error updating organization",
+      error: err instanceof Error ? err.message : "Error updating organization",
     };
     return NextResponse.json(errorResponse, { status: 500 });
   }

@@ -21,7 +21,7 @@ export interface TechnicalSheetResponseDto {
   cookingTime?: string | null;
   difficulty?: string | null;
   preparationSteps?: string[];
-  nutritionalInsights?: Record<string, any> | null;
+  nutritionalInsights?: Record<string, unknown> | null;
   organizationId: string;
   createdBy: string;
   createdAt: string;

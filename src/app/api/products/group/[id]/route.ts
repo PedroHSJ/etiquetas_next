@@ -20,8 +20,11 @@ export async function PUT(
     const service = new ProductBackendService(supabase);
     const updated = await service.updateGroup(Number(params.id), body);
     return NextResponse.json(updated);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -42,7 +45,10 @@ export async function DELETE(
     const service = new ProductBackendService(supabase);
     await service.deleteGroup(Number(params.id));
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }

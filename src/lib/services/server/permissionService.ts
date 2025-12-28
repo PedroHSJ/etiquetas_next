@@ -135,7 +135,7 @@ export class PermissionBackendService {
     const profileIds: string[] = [];
 
     for (const userProfile of userProfiles || []) {
-      const p = userProfile.profile as any;
+      const p = userProfile.profile as ProfileEntity | ProfileEntity[];
       if (p && !Array.isArray(p)) {
         perfis.push({
           id: p.id,
@@ -178,7 +178,9 @@ export class PermissionBackendService {
     }
 
     const permissoes: PermissionEntity[] = (permissions || []).map((perm) => {
-      const func = perm.functionality as any;
+      const func = perm.functionality as
+        | FunctionalityEntity
+        | FunctionalityEntity[];
       return {
         id: perm.id,
         functionality_id: perm.functionality_id || "",
@@ -192,7 +194,6 @@ export class PermissionBackendService {
                 id: func.id,
                 name: func.name,
                 description: func.description,
-                category: func.category,
                 route: func.route,
                 active: func.active,
                 created_at: func.created_at,
@@ -400,10 +401,10 @@ export class PermissionBackendService {
         return false;
       }
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(
         "Erro ao atribuir perfil ao usuário:",
-        error.message || error
+        error instanceof Error ? error.message : String(error)
       );
       return false;
     }
@@ -427,8 +428,12 @@ export class PermissionBackendService {
         throw new Error(error.message);
       }
       return true;
-    } catch (error: any) {
-      throw new Error(error.message || "Erro ao remover perfil do usuário");
+    } catch (error: unknown) {
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Erro ao remover perfil do usuário"
+      );
     }
   }
 }

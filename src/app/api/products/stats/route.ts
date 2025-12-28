@@ -25,7 +25,10 @@ export async function GET(request: NextRequest) {
     const service = new ProductBackendService(supabase);
     const stats = await service.getProductStats(organizationId);
     return NextResponse.json(stats);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }

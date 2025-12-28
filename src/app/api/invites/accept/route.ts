@@ -53,10 +53,14 @@ export async function POST(request: NextRequest) {
       message: "Invite accepted successfully",
     };
     return NextResponse.json(successResponse, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error on POST /api/invites/accept route:", error);
+
     const errorResponse: ApiErrorResponse = {
-      error: error.message || "Internal error while accepting invite",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Internal error while accepting invite",
     };
     return NextResponse.json(errorResponse, { status: 500 });
   }

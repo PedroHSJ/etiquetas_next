@@ -30,9 +30,10 @@ export async function GET(
       data: orgs,
     };
     return NextResponse.json(successResponse, { status: 200 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     const errorResponse: ApiErrorResponse = {
-      error: err.message || "Error fetching organizations",
+      error:
+        err instanceof Error ? err.message : "Error fetching organizations",
     };
     return NextResponse.json(errorResponse, { status: 500 });
   }

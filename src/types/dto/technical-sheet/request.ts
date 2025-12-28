@@ -18,7 +18,7 @@ export interface CreateTechnicalSheetDto {
   cookingTime?: string;
   difficulty?: string;
   preparationSteps?: string[];
-  nutritionalInsights?: Record<string, any>;
+  nutritionalInsights?: Record<string, unknown>;
   organizationId: string;
   ingredients?: TechnicalSheetIngredientRequestDto[];
   active?: boolean;

@@ -20,8 +20,11 @@ export async function GET(
     const product = await service.getProduct(Number(params.id));
     if (!product) return NextResponse.json(null, { status: 404 });
     return NextResponse.json(product);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -43,8 +46,11 @@ export async function PUT(
     const service = new ProductBackendService(supabase);
     const updated = await service.updateProduct(Number(params.id), body);
     return NextResponse.json(updated);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -65,7 +71,10 @@ export async function DELETE(
     const service = new ProductBackendService(supabase);
     await service.deleteProduct(Number(params.id));
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }

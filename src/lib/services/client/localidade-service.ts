@@ -45,7 +45,7 @@ export const LocationService = {
   },
 
   async searchCitiesByName(name: string, stateId?: number): Promise<City[]> {
-    const params: any = { name };
+    const params: { name: string; stateId?: number } = { name };
     if (stateId) params.stateId = stateId;
     const { data } = await axios.get<City[]>(`${API_BASE}/cities`, {
       params,

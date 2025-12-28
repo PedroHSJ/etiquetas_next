@@ -10,7 +10,7 @@ export interface TechnicalSheetEntity {
   cooking_time?: string | null;
   difficulty?: string | null;
   preparation_steps?: string[] | null;
-  nutritional_insights?: Record<string, any> | null;
+  nutritional_insights?: Record<string, unknown> | null;
   organization_id: string;
   created_by: string;
   created_at: string;
@@ -34,6 +34,6 @@ export interface TechnicalSheetAICacheEntity {
   id: string;
   dish_name: string;
   servings: number;
-  json_response: Record<string, any>;
+  json_response: Record<string, unknown>;
   created_at: string;
 }

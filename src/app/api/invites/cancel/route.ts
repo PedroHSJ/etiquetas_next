@@ -50,12 +50,14 @@ export async function POST(request: NextRequest) {
       message: "Invite canceled successfully",
     };
     return NextResponse.json(successResponse, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error on POST /api/invites/cancel route:", error);
     const errorResponse: ApiErrorResponse = {
-      error: error.message || "Internal error while canceling invite",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Internal error while canceling invite",
     };
     return NextResponse.json(errorResponse, { status: 500 });
   }
 }
-

@@ -53,7 +53,7 @@ export class OrganizationBackendService {
     }
 
     const memberOrgIds = (memberships ?? []).map(
-      (m: any) => m.organization_id as string
+      (m: { organization_id: string }) => m.organization_id
     );
 
     let memberOrgs: OrganizationEntity[] = [];
@@ -233,7 +233,7 @@ export class OrganizationBackendService {
     }
 
     const memberOrgIds = (memberships ?? []).map(
-      (m: any) => m.organization_id as string
+      (m: { organization_id: string }) => m.organization_id
     );
 
     type ExpandedEntity = OrganizationEntity & {
