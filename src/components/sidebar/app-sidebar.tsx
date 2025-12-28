@@ -79,12 +79,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             isActive: pathname.startsWith("/members"),
             icon: UserCog,
           },
-          {
-            title: "Endereçamento",
-            url: "/enderecamento",
-            isActive: pathname.startsWith("/enderecamento"),
-            icon: MapPin,
-          },
         ],
       },
       {
@@ -97,7 +91,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Estoque",
         url: "/estoque",
         icon: Warehouse,
-        isActive: pathname.startsWith("/estoque"),
+        isActive:
+          pathname.startsWith("/estoque") ||
+          pathname.startsWith("/enderecamento"),
+        items: [
+          {
+            title: "Estoque",
+            url: "/estoque",
+            isActive: pathname.startsWith("/estoque"),
+            icon: Warehouse,
+          },
+          {
+            title: "Endereçamento",
+            url: "/enderecamento",
+            isActive: pathname.startsWith("/enderecamento"),
+            icon: MapPin,
+          },
+        ],
       },
       // {
       //   title: "Etiquetas",
@@ -105,12 +115,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       //   icon: Tags,
       //   isActive: pathname.startsWith("/etiquetas"),
       // },
-      {
-        title: "Fichas Técnicas",
-        url: "/technical-sheets/list",
-        isActive: pathname.startsWith("/technical-sheets"),
-        icon: Package,
-      },
+      // {
+      //   title: "Fichas Técnicas",
+      //   url: "/technical-sheets/list",
+      //   isActive: pathname.startsWith("/technical-sheets"),
+      //   icon: Package,
+      // },
     ],
   };
   return (

@@ -20,6 +20,7 @@ export interface StockEntity {
   unit_of_measure_code: string;
   current_quantity: number;
   userId: string;
+  storage_location_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -36,6 +37,7 @@ export interface StockMovementEntity {
   quantity: number;
   unit_of_measure_code: string;
   observation: string | null;
+  storage_location_id?: string | null;
   movement_date: string;
   created_at: string;
 }

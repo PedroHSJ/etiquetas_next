@@ -16,12 +16,18 @@ export interface Stock {
   organization_id?: string | null;
   current_quantity: number;
   unit_of_measure_code: UnitOfMeasureCode;
+  storage_location_id?: string | null;
   userId: string;
   created_at: string;
   updated_at: string;
 
   // Related data (joins)
   product?: Product;
+  storage_location?: {
+    id: string;
+    name: string;
+    parent_id?: string | null;
+  } | null;
   user?: {
     id: string;
     email?: string;
@@ -43,6 +49,7 @@ export interface StockMovement {
   movement_type: MovementType;
   quantity: number;
   unit_of_measure_code: UnitOfMeasureCode;
+  storage_location_id?: string | null;
   observation?: string;
   movement_date: string;
   created_at: string;
@@ -67,6 +74,7 @@ export interface QuickEntryRequest {
   quantity: number;
   organizationId?: string;
   unit_of_measure_code?: UnitOfMeasureCode;
+  storage_location_id?: string;
   observation?: string;
 }
 

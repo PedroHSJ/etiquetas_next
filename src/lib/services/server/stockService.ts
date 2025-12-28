@@ -78,7 +78,8 @@ export class StockBackendService {
       .select(
         `
         *,
-        product:products(*)
+        product:products(*),
+        storage_location:storage_locations(id, name, parent_id)
       `,
         { count: "exact" }
       )
@@ -277,6 +278,7 @@ export class StockBackendService {
     userId: string;
     organizationId: string;
     unitOfMeasureCode?: UnitOfMeasureCode;
+    storageLocationId?: string;
     observation?: string;
   }): Promise<QuickEntryResponseDto> {
     const {
@@ -285,6 +287,7 @@ export class StockBackendService {
       userId,
       organizationId,
       unitOfMeasureCode,
+      storageLocationId,
       observation,
     } = params;
 
@@ -329,6 +332,7 @@ export class StockBackendService {
         movement_type: "ENTRADA",
         quantity,
         unit_of_measure_code: unitCode,
+        storage_location_id: storageLocationId || null,
         observation: observation || `Entrada rápida - ${product.name}`,
       })
       .select(
@@ -351,12 +355,22 @@ export class StockBackendService {
       movement as MovementWithRelations
     );
 
+    // Update storage_location_id on stock table if provided
+    if (storageLocationId) {
+      await this.supabase
+        .from("stock")
+        .update({ storage_location_id: storageLocationId })
+        .eq("productId", productId)
+        .eq("organization_id", organizationId);
+    }
+
     const { data: updatedStock, error: stockError } = await this.supabase
       .from("stock")
       .select(
         `
         *,
-        product:products(id, name, group_id)
+        product:products(id, name, group_id),
+        storage_location:storage_locations(id, name, parent_id)
       `
       )
       .eq("productId", productId)

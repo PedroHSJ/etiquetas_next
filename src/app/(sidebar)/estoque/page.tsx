@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -40,11 +40,12 @@ import {
   StockMovementModel,
 } from "@/types/models/stock";
 import { StockService } from "@/lib/services/client/stock-service";
+import { useStorageLocationsQuery } from "@/hooks/useStorageLocationsQuery";
+import type { StorageLocation } from "@/types/models/storage-location";
 
 export default function EstoquePage() {
   const { activeProfile } = useProfile();
-  const organizationId =
-    activeProfile?.userOrganization?.organizationId || "";
+  const organizationId = activeProfile?.userOrganization?.organizationId || "";
   const [estatisticas, setEstatisticas] = useState<StockStatistics | null>(
     null
   );
@@ -66,6 +67,36 @@ export default function EstoquePage() {
   const [estoquesBaixos, setEstoquesBaixos] = useState<StockModel[]>([]);
   const [carregandoZerados, setCarregandoZerados] = useState(false);
   const [carregandoBaixos, setCarregandoBaixos] = useState(false);
+
+  // Fetch storage locations for path building
+  const { data: storageLocations = [] } = useStorageLocationsQuery({
+    organizationId,
+    enabled: !!organizationId,
+  });
+
+  const locationMapRef = useRef<Map<string, StorageLocation>>(new Map());
+
+  useEffect(() => {
+    locationMapRef.current = new Map(
+      storageLocations.map((location) => [location.id, location])
+    );
+  }, [storageLocations]);
+
+  const buildLocationPath = (
+    locationId: string | null | undefined
+  ): string => {
+    if (!locationId) return "-";
+
+    const paths: string[] = [];
+    let current = locationMapRef.current.get(locationId);
+    while (current) {
+      paths.unshift(current.name);
+      current = current.parentId
+        ? locationMapRef.current.get(current.parentId)
+        : undefined;
+    }
+    return paths.length > 0 ? paths.join(" > ") : "-";
+  };
 
   const carregarEstatisticas = async () => {
     if (!organizationId) return;
@@ -287,6 +318,23 @@ export default function EstoquePage() {
       label: "Unidade de Medida",
       accessor: (row) => row?.unitOfMeasureCode || "N/A",
       visible: true,
+    },
+    {
+      id: "storage_location",
+      key: "storageLocation",
+      label: "Localização Física",
+      accessor: (row) => row.storageLocation?.name || "-",
+      visible: true,
+      render: (value, row) => {
+        const fullPath = buildLocationPath(
+          row.storageLocationId || row.storageLocation?.id
+        );
+        if (fullPath === "-") {
+          return <span className="text-muted-foreground">-</span>;
+        }
+
+        return <span title={fullPath}>{fullPath}</span>;
+      },
     },
     {
       id: "ultima_atualizacao",
@@ -553,7 +601,10 @@ export default function EstoquePage() {
                             )}`}
                           </span>
                         </div>
-                        <Badge variant="outline" className="border-yellow-200 text-yellow-800">
+                        <Badge
+                          variant="outline"
+                          className="border-yellow-200 text-yellow-800"
+                        >
                           Baixo
                         </Badge>
                       </li>

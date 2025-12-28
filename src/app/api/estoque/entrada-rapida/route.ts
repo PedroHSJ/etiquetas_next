@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
         productId: body.productId,
         quantity: body.quantity,
         unitOfMeasureCode: body.unit_of_measure_code,
+        storageLocationId: body.storage_location_id,
         observation: body.observation,
         userId: user.id,
         organizationId: body.organizationId,

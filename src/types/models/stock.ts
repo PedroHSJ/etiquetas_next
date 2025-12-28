@@ -15,16 +15,24 @@ export interface ProductStockModel {
   currentQuantity?: number;
 }
 
+export interface StorageLocationStockModel {
+  id: string;
+  name: string;
+  parentId?: string | null;
+}
+
 export interface StockModel {
   id: string;
   productId: number;
   organizationId?: string | null;
   currentQuantity: number;
   unitOfMeasureCode: UnitOfMeasureCode;
+  storageLocationId?: string | null;
   userId: string;
   createdAt: Date;
   updatedAt: Date;
   product?: ProductStockModel;
+  storageLocation?: StorageLocationStockModel | null;
 }
 
 export interface StockMovementModel {

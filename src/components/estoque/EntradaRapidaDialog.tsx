@@ -57,16 +57,18 @@ import { StockService } from "@/lib/services/client/stock-service";
 import { UNIT_OF_MEASURE_OPTIONS } from "@/types/stock/product";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useStorageLocationsQuery } from "@/hooks/useStorageLocationsQuery";
 
 const quickEntrySchema = z.object({
-  productId: z.string().min(1, "Select a product"),
+  productId: z.string().min(1, "Selecione um produto"),
   quantity: z
     .string()
-    .min(1, "Quantity is required")
+    .min(1, "Quantidade é obrigatória")
     .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-      message: "Quantity must be greater than zero",
+      message: "A quantidade deve ser maior que zero",
     }),
-  unitOfMeasure: z.string().min(1, "Select a unit of measure"),
+  unitOfMeasure: z.string().min(1, "Selecione a unidade de medida"),
+  storageLocationId: z.string().optional(),
   observation: z.string().optional(),
 });
 
@@ -141,6 +143,7 @@ export function EntradaRapidaDialog({
       productId: selectedProductId ? selectedProductId.toString() : "",
       quantity: "",
       unitOfMeasure: "un", // Valor padrão
+      storageLocationId: "",
       observation: "",
     },
   });
@@ -150,6 +153,35 @@ export function EntradaRapidaDialog({
     "",
     open
   );
+  const { data: storageLocations = [], isLoading: isLoadingLocations } =
+    useStorageLocationsQuery({
+      organizationId,
+      enabled: open && !!organizationId,
+    });
+
+  // Build location paths for display (e.g., "Rua 01 > Estante A > Caixa 01")
+  const locationOptionsWithPath = useMemo(() => {
+    const locationMap = new Map(storageLocations.map((loc) => [loc.id, loc]));
+
+    const buildPath = (locationId: string): string => {
+      const paths: string[] = [];
+      let current = locationMap.get(locationId);
+      while (current) {
+        paths.unshift(current.name);
+        current = current.parentId
+          ? locationMap.get(current.parentId)
+          : undefined;
+      }
+      return paths.join(" > ");
+    };
+
+    return storageLocations.map((loc) => ({
+      id: loc.id,
+      name: loc.name,
+      fullPath: buildPath(loc.id),
+    }));
+  }, [storageLocations]);
+
   const quickEntryMutation = useQuickEntry();
 
   const selectedProductIdValue = form.watch("productId");
@@ -185,6 +217,7 @@ export function EntradaRapidaDialog({
         productId: parseInt(data.productId),
         quantity: parseFloat(data.quantity),
         unit_of_measure_code: data.unitOfMeasure as UnitOfMeasureCode,
+        storage_location_id: data.storageLocationId || undefined,
         observation: data.observation,
         organizationId,
       };
@@ -196,13 +229,14 @@ export function EntradaRapidaDialog({
         productId: "",
         quantity: "",
         unitOfMeasure: "un",
+        storageLocationId: "",
         observation: "",
       });
       setOpen(false);
       onSuccess?.();
     } catch (error) {
       console.error("Error while recording stock entry:", error);
-      toast.error("Error while recording stock entry");
+      toast.error("Erro ao registrar entrada de estoque");
     }
   };
 
@@ -211,7 +245,7 @@ export function EntradaRapidaDialog({
   const defaultTrigger = (
     <Button size="sm" className="gap-2">
       <PlusCircle className="h-4 w-4" />
-      Quick Entry
+      Entrada rápida
     </Button>
   );
 
@@ -220,9 +254,10 @@ export function EntradaRapidaDialog({
       <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Quick Stock Entry</DialogTitle>
+          <DialogTitle>Entrada rápida de estoque</DialogTitle>
           <DialogDescription>
-            Register product entries quickly to keep your stock updated.
+            Registre entradas de produtos rapidamente para manter seu estoque
+            atualizado.
           </DialogDescription>
         </DialogHeader>
 
@@ -233,7 +268,7 @@ export function EntradaRapidaDialog({
               name="productId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product *</FormLabel>
+                  <FormLabel>Produto *</FormLabel>
 
                   <Popover
                     open={isComboboxOpen}
@@ -258,12 +293,12 @@ export function EntradaRapidaDialog({
                                 {selected.name}
                                 {selected.current_stock !== undefined && (
                                   <span className="text-muted-foreground ml-2">
-                                    (Stock: {selected.current_stock})
+                                    (Estoque: {selected.current_stock})
                                   </span>
                                 )}
                               </span>
                             ) : (
-                              "Select a product"
+                              "Selecione um produto"
                             );
                           })()}
                           <ChevronsUpDown className="opacity-50" />
@@ -279,7 +314,7 @@ export function EntradaRapidaDialog({
                     >
                       <Command className="w-full">
                         <CommandInput
-                          placeholder="Filter products..."
+                          placeholder="Filtrar produtos..."
                           autoFocus
                           className="w-full"
                         />
@@ -288,11 +323,11 @@ export function EntradaRapidaDialog({
                           className="max-h-72 overflow-y-auto overscroll-contain"
                           onWheelCapture={(e) => e.stopPropagation()}
                         >
-                          <CommandEmpty>No products found</CommandEmpty>
+                          <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
 
                           {isLoadingProducts ? (
                             <CommandItem disabled value="loading">
-                              Loading products...
+                              Carregando produtos...
                             </CommandItem>
                           ) : (
                             (() => {
@@ -303,7 +338,7 @@ export function EntradaRapidaDialog({
                               for (const p of products) {
                                 const gid = p.group_id
                                   ? String(p.group_id)
-                                  : "No group";
+                                  : "Sem grupo";
                                 (byGroup[gid] ||= []).push(p);
                                 if (p?.group?.name)
                                   groupNames[gid] = p.group.name ?? "";
@@ -368,7 +403,7 @@ export function EntradaRapidaDialog({
                 name="quantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quantity *</FormLabel>
+                    <FormLabel>Quantidade *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -389,14 +424,14 @@ export function EntradaRapidaDialog({
                 name="unitOfMeasure"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit *</FormLabel>
+                    <FormLabel>Unidade *</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select unit" />
+                          <SelectValue placeholder="Selecione a unidade" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -415,13 +450,38 @@ export function EntradaRapidaDialog({
 
             <FormField
               control={form.control}
+              name="storageLocationId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Localização Física</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger disabled={isLoadingLocations}>
+                        <SelectValue placeholder="Selecione uma localização (opcional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {locationOptionsWithPath.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.fullPath}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="observation"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Observation</FormLabel>
+                  <FormLabel>Observação</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Notes about this entry (optional)"
+                      placeholder="Anotações sobre esta entrada (opcional)"
                       className="resize-none"
                       {...field}
                     />
@@ -438,13 +498,13 @@ export function EntradaRapidaDialog({
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Record Entry
+                Registrar entrada
               </Button>
             </DialogFooter>
           </form>

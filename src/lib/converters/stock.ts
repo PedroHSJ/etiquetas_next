@@ -117,10 +117,20 @@ const toUserModel = (user?: StockMovementResponseDto["user"]): MovementUserModel
 };
 
 export function toStockModel(
-  dto: StockResponseDto | (StockEntity & { product?: ProductEntityLike })
+  dto: StockResponseDto | (StockEntity & { product?: ProductEntityLike; storage_location?: { id: string; name: string; parent_id?: string | null } | null })
 ): StockModel {
   const baseDto =
     "currentQuantity" in dto ? dto : toStockResponseDto(dto as any);
+
+  // Handle storage_location from raw entity
+  const rawEntity = dto as any;
+  const storageLocation = rawEntity.storage_location
+    ? {
+        id: rawEntity.storage_location.id,
+        name: rawEntity.storage_location.name,
+        parentId: rawEntity.storage_location.parent_id ?? null,
+      }
+    : null;
 
   return {
     id: baseDto.id,
@@ -128,10 +138,12 @@ export function toStockModel(
     organizationId: baseDto.organizationId ?? null,
     currentQuantity: baseDto.currentQuantity,
     unitOfMeasureCode: baseDto.unitOfMeasureCode,
+    storageLocationId: rawEntity.storage_location_id ?? null,
     userId: baseDto.userId,
     createdAt: new Date(baseDto.createdAt),
     updatedAt: new Date(baseDto.updatedAt),
     product: toProductModel(baseDto.product),
+    storageLocation,
   };
 }
 
