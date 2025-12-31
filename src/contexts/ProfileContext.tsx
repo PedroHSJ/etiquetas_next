@@ -9,8 +9,11 @@ import React, {
 } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserPermissions, UserProfile } from "@/types/models/profile";
-import { ProfileService } from "@/lib/services/client/profile-service";
 import { PermissionService } from "@/lib/services/client/permission-service";
+import {
+  useUserProfilesQuery,
+  useInvalidateUserProfiles,
+} from "@/hooks/useUserProfilesQuery";
 
 interface ProfileContextType {
   activeProfile: UserProfile | null;
@@ -40,49 +43,16 @@ interface ProfileProviderProps {
 export function ProfileProvider({ children }: ProfileProviderProps) {
   const { user } = useAuth();
   const [activeProfile, setActiveProfile] = useState<UserProfile | null>(null);
-  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
   const [userPermissions, setUserPermissions] =
     useState<UserPermissions | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // Carregar perfis do usuário
-  const loadProfiles = async () => {
-    try {
-      console.log("⚙️ Carregando perfis para o usuário:", user?.id);
-      setLoading(true);
-      if (!user?.id) {
-        setUserProfiles([]);
-        setLoading(false);
-        return;
-      }
-      const profiles = await ProfileService.getAvailableProfiles();
-      setUserProfiles(profiles);
-
-      // Restaurar perfil ativo do localStorage se existir
-      const savedProfileId =
-        typeof window !== "undefined"
-          ? localStorage.getItem("activeProfileId")
-          : null;
-      if (savedProfileId && profiles.length > 0) {
-        const savedProfile = profiles.find(
-          (p: UserProfile) => p.id === savedProfileId
-        );
-        if (savedProfile) {
-          setActiveProfile(savedProfile);
-        } else {
-          // Se o perfil salvo não existe mais, usar o primeiro disponível
-          setActiveProfile(profiles[0]);
-        }
-      } else if (profiles.length > 0) {
-        // Se não há perfil salvo, usar o primeiro disponível
-        setActiveProfile(profiles[0]);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar perfis:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Usar React Query para gerenciar perfis
+  const {
+    userProfiles,
+    isLoading: profilesLoading,
+    refetch: refetchProfiles,
+  } = useUserProfilesQuery();
+  const invalidateProfiles = useInvalidateUserProfiles();
 
   // Carregar permissões do usuário
   const loadPermissions = async () => {
@@ -110,11 +80,34 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     refreshPermissions();
   };
 
-  // Carregar perfis quando o usuário autenticado mudar (ou na montagem)
+  // Atualizar perfil ativo quando perfis carregarem ou mudarem
   useEffect(() => {
-    if (!user?.id) return;
-    loadProfiles();
-  }, [user?.id]);
+    if (userProfiles.length === 0) return;
+
+    // Restaurar perfil ativo do localStorage se existir
+    const savedProfileId =
+      typeof window !== "undefined"
+        ? localStorage.getItem("activeProfileId")
+        : null;
+
+    if (savedProfileId) {
+      const savedProfile = userProfiles.find(
+        (p: UserProfile) => p.id === savedProfileId
+      );
+      if (savedProfile) {
+        setActiveProfile(savedProfile);
+        return;
+      }
+    }
+
+    // Se não há perfil salvo ou não existe mais, usar o primeiro disponível
+    if (
+      !activeProfile ||
+      !userProfiles.find((p) => p.id === activeProfile.id)
+    ) {
+      setActiveProfile(userProfiles[0]);
+    }
+  }, [userProfiles]);
 
   // Carregar permissões quando o perfil ativo mudar
   useEffect(() => {
@@ -132,7 +125,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   }, [activeProfile]);
 
   const refreshProfiles = async () => {
-    await loadProfiles();
+    await invalidateProfiles();
+    await refetchProfiles();
   };
 
   const refreshPermissions = async () => {
@@ -143,7 +137,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     activeProfile,
     userProfiles,
     userPermissions,
-    loading,
+    loading: profilesLoading,
     setActiveProfile,
     refreshProfiles,
     refreshPermissions,

@@ -11,7 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LocationService } from "@/lib/services/client/localidade-service";
-import { Estado, Municipio, ViaCEPResponse } from "@/types/localidade";
+import {
+  City,
+  CityWithState,
+  State as StateModel,
+} from "@/types/models/location";
+import { ViaCepResponseDto } from "@/types/dto/location/response";
 import { useToast } from "@/hooks/use-toast";
 import { formatCEP, unformatCEP } from "@/utils/masks";
 
@@ -47,10 +52,10 @@ export function LocalidadeSelector({
   const { toast } = useToast();
 
   // Estados e municípios
-  const [estados, setEstados] = useState<Estado[]>([]);
-  const [municipios, setMunicipios] = useState<Municipio[]>([]);
+  const [estados, setEstados] = useState<StateModel[]>([]);
+  const [municipios, setMunicipios] = useState<City[]>([]);
   const [municipioSelecionado, setMunicipioSelecionado] =
-    useState<Municipio | null>(null);
+    useState<CityWithState | null>(null);
 
   // Loading states
   const [loadingEstados, setLoadingEstados] = useState(true);
@@ -141,6 +146,11 @@ export function LocalidadeSelector({
         return;
       }
 
+      if (!municipioResponse.state) {
+        toast.error("Estado não encontrado para este CEP");
+        return;
+      }
+
       // Busca dados completos do CEP
       const dadosCEP = await LocationService.fetchCEP(cep);
 
@@ -152,7 +162,7 @@ export function LocalidadeSelector({
         // Atualiza a seleção
         onChange({
           ...value,
-          estado_id: municipioResponse.estado.id,
+          estado_id: municipioResponse.state.id,
           municipio_id: municipioResponse.id,
           cep: cep, // Já está sem formatação
           endereco: dadosCEP.logradouro,
@@ -162,7 +172,7 @@ export function LocalidadeSelector({
         });
 
         toast.success(
-          `CEP encontrado! ${municipioResponse.nome} - ${municipioResponse.estado.codigo}`
+          `CEP encontrado! ${municipioResponse.name} - ${municipioResponse.state.code}`
         );
       }
     } catch (error) {

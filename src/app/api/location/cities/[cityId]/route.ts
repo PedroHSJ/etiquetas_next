@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
+import { CityResponseDto } from "@/types/dto/location/response";
+import { CityEntity, StateEntity } from "@/types/database/location";
+import { toCityResponseDto } from "@/lib/converters/location";
 
-/**
- * GET /api/location/cities/[cityId]
- * Returns city by ID with state information
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: { cityId: string } }
@@ -12,14 +12,17 @@ export async function GET(
   const response = NextResponse.next();
   const supabase = getSupabaseServerClient(request, response);
 
+  const cityId = Number(params.cityId);
+
+  if (!Number.isFinite(cityId)) {
+    const errorResponse: ApiErrorResponse = {
+      error: "cityId must be a number",
+    };
+    return NextResponse.json(errorResponse, { status: 400 });
+  }
+
   try {
-    const cityId = parseInt(params.cityId);
-
-    if (isNaN(cityId)) {
-      return NextResponse.json({ error: "Invalid city ID" }, { status: 400 });
-    }
-
-    const { data: city, error } = await supabase
+    const { data, error } = await supabase
       .from("cities")
       .select(
         `
@@ -31,39 +34,35 @@ export async function GET(
       .single();
 
     if (error) {
-      console.error("Error fetching city:", error);
-      return NextResponse.json({ error: "City not found" }, { status: 404 });
+      const errorResponse: ApiErrorResponse = {
+        error: "Failed to fetch city",
+        details: { message: error.message },
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
     }
 
-    // Convert to DTO format (camelCase)
-    const cityDTO = {
-      id: city.id,
-      stateId: city.state_id,
-      ibgeCode: city.ibge_code,
-      name: city.name,
-      zipCodeStart: city.zip_code_start,
-      zipCodeEnd: city.zip_code_end,
-      latitude: city.latitude,
-      longitude: city.longitude,
-      createdAt: city.created_at,
-      updatedAt: city.updated_at,
-      state: city.state
-        ? {
-            id: city.state.id,
-            code: city.state.code,
-            name: city.state.name,
-            region: city.state.region,
-            createdAt: city.state.created_at,
-          }
-        : null,
+    if (!data) {
+      const errorResponse: ApiErrorResponse = {
+        error: "City not found",
+      };
+      return NextResponse.json(errorResponse, { status: 404 });
+    }
+
+    type CityWithState = CityEntity & { state?: StateEntity };
+    const dto: CityResponseDto = toCityResponseDto(
+      data as unknown as CityWithState
+    );
+
+    const success: ApiSuccessResponse<CityResponseDto> = {
+      data: dto,
     };
 
-    return NextResponse.json(cityDTO);
-  } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json(success, { status: 200 });
+  } catch (err) {
+    console.error("Error on /api/location/cities/[cityId]:", err);
+    const errorResponse: ApiErrorResponse = {
+      error: "Internal server error",
+    };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }

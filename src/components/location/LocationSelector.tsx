@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LocationService } from "@/lib/services/client/localidade-service";
-import { Estado, Municipio } from "@/types/localidade";
+import { City, CityWithState, State } from "@/types/models/location";
 import { useToast } from "@/hooks/use-toast";
 import { formatCEP, unformatCEP } from "@/utils/masks";
 
@@ -47,9 +47,9 @@ export function LocationSelector({
   const { toast } = useToast();
 
   // States and cities
-  const [states, setStates] = useState<Estado[]>([]);
-  const [cities, setCities] = useState<Municipio[]>([]);
-  const [selectedCity, setSelectedCity] = useState<Municipio | null>(null);
+  const [states, setStates] = useState<State[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [selectedCity, setSelectedCity] = useState<CityWithState | null>(null);
 
   // Loading states
   const [loadingStates, setLoadingStates] = useState(true);
@@ -137,6 +137,22 @@ export function LocationSelector({
         return;
       }
 
+      if (!cityResponse.state) {
+        toast.error("State not found for this ZIP code");
+        return;
+      }
+
+      // Check if state is in the list, if not, add it and reload states
+      const stateExists = states.some((s) => s.id === cityResponse.state!.id);
+      if (!stateExists) {
+        // Reload states to include the new one
+        const updatedStates = await LocationService.listStates();
+        setStates(updatedStates);
+      }
+
+      // Load cities for this state
+      await loadCities(cityResponse.state.id);
+
       // Fetch complete ZIP code data
       const zipCodeData = await LocationService.fetchCEP(zipCode);
 
@@ -148,7 +164,7 @@ export function LocationSelector({
         // Update selection
         onChange({
           ...value,
-          estado_id: cityResponse.estado.id,
+          estado_id: cityResponse.state.id,
           municipio_id: cityResponse.id,
           cep: zipCode, // Already unformatted
           endereco: zipCodeData.logradouro,
@@ -158,10 +174,11 @@ export function LocationSelector({
         });
 
         toast.success(
-          `ZIP code found! ${cityResponse.nome} - ${cityResponse.estado.codigo}`
+          `ZIP code found! ${cityResponse.name} - ${cityResponse.state.code}`
         );
       }
     } catch (error) {
+      console.error(error);
       toast.error("Error searching ZIP code");
     } finally {
       setLoadingZipCode(false);
@@ -179,7 +196,7 @@ export function LocationSelector({
     loadCities(newStateId);
   };
 
-  const handleCityChange = (city: Municipio) => {
+  const handleCityChange = (city: City) => {
     setSelectedCity(city);
     onChange({
       ...value,
@@ -204,7 +221,7 @@ export function LocationSelector({
       <div className="flex gap-2">
         <div className="flex-1">
           <Label htmlFor="zipCode" className="mb-2">
-            ZIP Code
+            CEP
           </Label>
           <Input
             id="zipCode"
@@ -234,7 +251,7 @@ export function LocationSelector({
       {/* State and City */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label className="mb-2">State</Label>
+          <Label className="mb-2">UF</Label>
           <Select
             value={value.estado_id?.toString()}
             onValueChange={handleStateChange}
@@ -246,7 +263,7 @@ export function LocationSelector({
             <SelectContent>
               {states.map((state) => (
                 <SelectItem key={state.id} value={state.id.toString()}>
-                  {state.nome} ({state.codigo})
+                  {state.name} ({state.code})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -254,7 +271,7 @@ export function LocationSelector({
         </div>
 
         <div>
-          <Label className="mb-2">City</Label>
+          <Label className="mb-2">Município</Label>
           <Select
             value={value.municipio_id?.toString()}
             onValueChange={(value) => {
@@ -280,7 +297,7 @@ export function LocationSelector({
                   <SelectItem key={city.id} value={city.id.toString()}>
                     <div className="flex items-center">
                       <MapPin className="mr-2 h-4 w-4" />
-                      {city.nome}
+                      {city.name}
                     </div>
                   </SelectItem>
                 ))
@@ -295,11 +312,11 @@ export function LocationSelector({
         <div className="space-y-4">
           <div>
             <Label htmlFor="address" className="mb-2">
-              Address
+              Endereço
             </Label>
             <Input
               id="address"
-              placeholder="Street, Avenue, etc."
+              placeholder="Rua, Avenida, etc."
               value={address}
               onChange={(e) => {
                 setAddress(e.target.value);
@@ -312,7 +329,7 @@ export function LocationSelector({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="number" className="mb-2">
-                Number
+                Número
               </Label>
               <Input
                 id="number"
@@ -328,7 +345,7 @@ export function LocationSelector({
 
             <div>
               <Label htmlFor="complement" className="mb-2">
-                Complement
+                Complemento
               </Label>
               <Input
                 id="complement"

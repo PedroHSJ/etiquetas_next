@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
+import { CityResponseDto } from "@/types/dto/location/response";
+import { CityEntity } from "@/types/database/location";
+import { toCityResponseDto } from "@/lib/converters/location";
 
 /**
  * GET /api/location/cities?name=...&stateId=...
@@ -15,10 +19,10 @@ export async function GET(request: NextRequest) {
     const stateIdParam = searchParams.get("stateId");
 
     if (!name) {
-      return NextResponse.json(
-        { error: "Name parameter is required" },
-        { status: 400 }
-      );
+      const errorResponse: ApiErrorResponse = {
+        error: "Name parameter is required",
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
     let query = supabase
@@ -39,33 +43,28 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("Error searching cities:", error);
-      return NextResponse.json(
-        { error: "Failed to search cities" },
-        { status: 500 }
-      );
+      const errorResponse: ApiErrorResponse = {
+        error: "Failed to search cities",
+        details: { message: error.message },
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
     }
 
-    // Convert to DTO format (camelCase)
-    const citiesDTO = cities.map((city) => ({
-      id: city.id,
-      stateId: city.state_id,
-      ibgeCode: city.ibge_code,
-      name: city.name,
-      zipCodeStart: city.zip_code_start,
-      zipCodeEnd: city.zip_code_end,
-      latitude: city.latitude,
-      longitude: city.longitude,
-      createdAt: city.created_at,
-      updatedAt: city.updated_at,
-    }));
+    const citiesDTO: CityResponseDto[] = (cities || []).map((city) =>
+      toCityResponseDto(city as CityEntity)
+    );
 
-    return NextResponse.json(citiesDTO);
+    const successResponse: ApiSuccessResponse<CityResponseDto[]> = {
+      data: citiesDTO,
+    };
+
+    return NextResponse.json(successResponse);
   } catch (error) {
     console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    const errorResponse: ApiErrorResponse = {
+      error: "Internal server error",
+    };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
 

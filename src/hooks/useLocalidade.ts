@@ -1,5 +1,8 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { LocationService } from "@/lib/services/client/localidade-service";
+import { CityWithState } from "@/types/models/location";
+import { ViaCepResponseDto } from "@/types/dto/location/response";
 
 export function useFetchCEP(cep: string) {
   return useQuery({
@@ -44,4 +47,44 @@ export function useSearchCitiesByName(name: string, stateId?: number) {
     queryFn: () => LocationService.searchCitiesByName(name, stateId),
     enabled: !!name,
   });
+}
+
+/**
+ * Legacy helper hook used by example components
+ */
+export function useLocalidade() {
+  const [loading, setLoading] = useState(false);
+
+  const buscarCEP = async (
+    cep: string
+  ): Promise<ViaCepResponseDto | null> => {
+    try {
+      setLoading(true);
+      return await LocationService.fetchCEP(cep);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const buscarOuCriarMunicipioPorCEP = async (cep: string) => {
+    try {
+      setLoading(true);
+      const municipio = await LocationService.fetchOrCreateCity(cep);
+      const dadosCEP = await LocationService.fetchCEP(cep);
+      return { municipio, dadosCEP };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validarCEP = (cep: string) => LocationService.validateCEP(cep);
+  const formatarCEP = (cep: string) => LocationService.formatCEP(cep);
+
+  return {
+    buscarCEP,
+    buscarOuCriarMunicipioPorCEP,
+    validarCEP,
+    formatarCEP,
+    loading,
+  };
 }

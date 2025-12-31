@@ -1,27 +1,37 @@
 "use client";
 import { OrganizationWizard } from "@/components/wizard/OrganizationWizard";
-import { supabase } from "@/lib/supabaseClient";
-import { redirect, useRouter } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Suspense } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { USER_PROFILES_QUERY_KEY } from "@/hooks/useUserProfilesQuery";
 
 export default function Page() {
   const { userId } = useAuth();
   const { refetchOrganizations } = useOrganization();
+  const { refreshProfiles } = useProfile();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const handleWizardComplete = async () => {
     try {
+      // Invalidar todas as queries relacionadas
+      await queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      await queryClient.invalidateQueries({
+        queryKey: USER_PROFILES_QUERY_KEY,
+      });
+
       // Recarregar as organizações para atualizar o TeamSwitcher
       await refetchOrganizations();
+
+      // Refresh dos perfis no contexto também
+      await refreshProfiles();
+
       toast.success("Organização criada com sucesso!");
-      //Invalid query keys
-      await queryClient.invalidateQueries({ queryKey: ["profiles"] });
-      await queryClient.invalidateQueries({ queryKey: ["organizations"] });
+
       // Usar router.push em vez de redirect para melhor UX
       router.push("/organizations/list");
     } catch (error) {

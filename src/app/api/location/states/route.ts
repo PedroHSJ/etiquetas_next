@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
+import { StateResponseDto } from "@/types/dto/location/response";
+import { toStateResponseDto } from "@/lib/converters/location";
 
 /**
  * GET /api/location/states
@@ -17,27 +20,27 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("Error fetching states:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch states" },
-        { status: 500 }
-      );
+      const errorResponse: ApiErrorResponse = {
+        error: "Failed to fetch states",
+        details: { message: error.message },
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
     }
 
-    // Convert to DTO format (camelCase)
-    const statesDTO = states.map((state) => ({
-      id: state.id,
-      code: state.code,
-      name: state.name,
-      region: state.region,
-      createdAt: state.created_at,
-    }));
+    const statesDTO: StateResponseDto[] = (states || []).map(
+      toStateResponseDto
+    );
 
-    return NextResponse.json(statesDTO);
+    const successResponse: ApiSuccessResponse<StateResponseDto[]> = {
+      data: statesDTO,
+    };
+
+    return NextResponse.json(successResponse);
   } catch (error) {
     console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    const errorResponse: ApiErrorResponse = {
+      error: "Internal server error",
+    };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }

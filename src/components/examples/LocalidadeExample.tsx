@@ -10,7 +10,8 @@ import { Separator } from '@/components/ui/separator'
 import { Search, MapPin, RefreshCw } from 'lucide-react'
 import { LocalidadeSelector } from '@/components/localidade'
 import { useLocalidade } from '@/hooks/useLocalidade'
-import { MunicipioResponse, ViaCEPResponse } from '@/types/localidade'
+import { CityWithState } from '@/types/models/location'
+import { ViaCepResponseDto } from '@/types/dto/location/response'
 
 export function LocalidadeExample() {
   const {
@@ -23,8 +24,8 @@ export function LocalidadeExample() {
 
   const [cepTeste, setCepTeste] = useState('')
   const [resultadoCEP, setResultadoCEP] = useState<{ 
-    municipio?: MunicipioResponse; 
-    dadosCEP?: ViaCEPResponse | null; 
+    municipio?: CityWithState; 
+    dadosCEP?: ViaCepResponseDto | null; 
   } | null>(null)
   const [localidadeSelecionada, setLocalidadeSelecionada] = useState({})
 
@@ -142,11 +143,14 @@ export function LocalidadeExample() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge>Nome</Badge>
-                      <span>{resultadoCEP.municipio.nome}</span>
+                      <span>{resultadoCEP.municipio.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge>Estado</Badge>
-                      <span>{resultadoCEP.municipio.estado.nome} ({resultadoCEP.municipio.estado.codigo})</span>
+                      <span>
+                        {resultadoCEP.municipio.state?.name} (
+                        {resultadoCEP.municipio.state?.code})
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -494,7 +494,7 @@ export function OrganizationWizard({
                   ].map((dept, index) => (
                     <div key={index} className="border-l-2 border-primary pl-3">
                       <div className="flex justify-between items-start mb-1">
-                        <span className="font-medium">{dept.nome}</span>
+                        <span className="font-medium text-xs">{dept.nome}</span>
                       </div>
                     </div>
                   ))}

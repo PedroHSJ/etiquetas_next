@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
+import { CityResponseDto } from "@/types/dto/location/response";
+import { CityEntity } from "@/types/database/location";
+import { toCityResponseDto } from "@/lib/converters/location";
 
-/**
- * GET /api/location/states/[stateId]/cities
- * Returns all cities from a specific state
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: { stateId: string } }
@@ -12,47 +12,44 @@ export async function GET(
   const response = NextResponse.next();
   const supabase = getSupabaseServerClient(request, response);
 
+  const stateId = Number(params.stateId);
+
+  if (!Number.isFinite(stateId)) {
+    const errorResponse: ApiErrorResponse = {
+      error: "stateId must be a number",
+    };
+    return NextResponse.json(errorResponse, { status: 400 });
+  }
+
   try {
-    const stateId = parseInt(params.stateId);
-
-    if (isNaN(stateId)) {
-      return NextResponse.json({ error: "Invalid state ID" }, { status: 400 });
-    }
-
-    const { data: cities, error } = await supabase
+    const { data, error } = await supabase
       .from("cities")
       .select("*")
       .eq("state_id", stateId)
       .order("name");
 
     if (error) {
-      console.error("Error fetching cities:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch cities" },
-        { status: 500 }
-      );
+      const errorResponse: ApiErrorResponse = {
+        error: "Failed to fetch cities",
+        details: { message: error.message },
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
     }
 
-    // Convert to DTO format (camelCase)
-    const citiesDTO = cities.map((city) => ({
-      id: city.id,
-      stateId: city.state_id,
-      ibgeCode: city.ibge_code,
-      name: city.name,
-      zipCodeStart: city.zip_code_start,
-      zipCodeEnd: city.zip_code_end,
-      latitude: city.latitude,
-      longitude: city.longitude,
-      createdAt: city.created_at,
-      updatedAt: city.updated_at,
-    }));
-
-    return NextResponse.json(citiesDTO);
-  } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+    const dtos: CityResponseDto[] = (data || []).map((city) =>
+      toCityResponseDto(city as CityEntity)
     );
+
+    const success: ApiSuccessResponse<CityResponseDto[]> = {
+      data: dtos,
+    };
+
+    return NextResponse.json(success, { status: 200 });
+  } catch (err) {
+    console.error("Error on /api/location/states/[stateId]/cities:", err);
+    const errorResponse: ApiErrorResponse = {
+      error: "Internal server error",
+    };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
