@@ -6,10 +6,7 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -33,10 +30,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function PUT(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -60,10 +54,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");

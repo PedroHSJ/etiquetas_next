@@ -9,10 +9,7 @@ type RouteContext = {
   params: Promise<{ cityId: string }>;
 };
 
-export async function GET(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const { cityId: cityIdParam } = await context.params;
   const response = NextResponse.next();
   const supabase = getSupabaseServerClient(request, response);

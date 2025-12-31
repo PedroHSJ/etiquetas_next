@@ -138,9 +138,13 @@ export async function POST(request: NextRequest) {
 
     const metadata = (user.user_metadata || {}) as Record<string, unknown>;
     const invitedByName =
-      (metadata.name as string) || (metadata.full_name as string) || user.email || null;
+      (metadata.name as string) ||
+      (metadata.full_name as string) ||
+      user.email ||
+      null;
     const invitedByEmail = user.email ?? null;
-    const invitedByAvatarUrl = (metadata.avatar_url as string) || (metadata.picture as string) || null;
+    const invitedByAvatarUrl =
+      (metadata.avatar_url as string) || (metadata.picture as string) || null;
 
     const invite = await inviteService.createInvite({
       email,
