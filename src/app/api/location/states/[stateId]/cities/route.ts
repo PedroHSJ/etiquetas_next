@@ -5,14 +5,19 @@ import { CityResponseDto } from "@/types/dto/location/response";
 import { CityEntity } from "@/types/database/location";
 import { toCityResponseDto } from "@/lib/converters/location";
 
+type RouteContext = {
+  params: Promise<{ stateId: string }>;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { stateId: string } }
+  context: RouteContext
 ) {
+  const { stateId: stateIdParam } = await context.params;
   const response = NextResponse.next();
   const supabase = getSupabaseServerClient(request, response);
 
-  const stateId = Number(params.stateId);
+  const stateId = Number(stateIdParam);
 
   if (!Number.isFinite(stateId)) {
     const errorResponse: ApiErrorResponse = {

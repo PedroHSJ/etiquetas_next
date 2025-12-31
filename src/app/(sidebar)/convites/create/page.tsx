@@ -88,6 +88,7 @@ export default function CreateConvitePage() {
         email: email.trim(),
         organizationId: selectedOrganization.id,
         profileId: perfilId,
+        invitedBy: userId,
       });
 
       toast.success("Convite enviado com sucesso!");

@@ -7,16 +7,15 @@ import {
 } from "@/types/common/api";
 import { UpdateDepartmentDto } from "@/types/dto/department";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
 
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteContext
 ) {
+  const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
 
@@ -40,8 +39,6 @@ export async function GET(
       };
       return NextResponse.json(errorResponse, { status: 401 });
     }
-
-    const { id } = params;
 
     const service = new DepartmentBackendService(supabase);
     const department = await service.getDepartmentById(id);
@@ -69,8 +66,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteContext
 ) {
+  const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
 
@@ -97,7 +95,6 @@ export async function PUT(
 
     const body = await request.json();
     const dto: UpdateDepartmentDto = body;
-    const { id } = params;
 
     const service = new DepartmentBackendService(supabase);
     const updated = await service.updateDepartment(id, dto);
@@ -121,8 +118,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteContext
 ) {
+  const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
 
@@ -146,8 +144,6 @@ export async function DELETE(
       };
       return NextResponse.json(errorResponse, { status: 401 });
     }
-
-    const { id } = params;
 
     const service = new DepartmentBackendService(supabase);
     await service.deleteDepartment(id);

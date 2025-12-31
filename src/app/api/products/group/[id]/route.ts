@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseBearerClient } from "@/lib/supabaseServer";
 import { ProductBackendService } from "@/lib/services/server/productService";
 
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
+  const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
   if (!token) {
@@ -18,7 +23,7 @@ export async function PUT(
     const body = await request.json();
     const supabase = getSupabaseBearerClient(token);
     const service = new ProductBackendService(supabase);
-    const updated = await service.updateGroup(Number(params.id), body);
+    const updated = await service.updateGroup(Number(id), body);
     return NextResponse.json(updated);
   } catch (err: unknown) {
     return NextResponse.json(
@@ -30,8 +35,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
+  const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
   if (!token) {
@@ -43,7 +49,7 @@ export async function DELETE(
   try {
     const supabase = getSupabaseBearerClient(token);
     const service = new ProductBackendService(supabase);
-    await service.deleteGroup(Number(params.id));
+    await service.deleteGroup(Number(id));
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return NextResponse.json(

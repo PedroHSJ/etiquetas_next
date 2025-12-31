@@ -28,7 +28,7 @@ export const LocationService = {
     const { data } = await axios.get<ViaCepResponseDto>(
       `https://viacep.com.br/ws/${cleanCep}/json/`
     );
-    if (!data || (data as any).erro) return null;
+    if (!data || "erro" in data) return null;
     return data;
   },
 
@@ -82,10 +82,7 @@ export const LocationService = {
     return toCityWithStateModel(data.data);
   },
 
-  async searchCitiesByName(
-    name: string,
-    stateId?: number
-  ): Promise<City[]> {
+  async searchCitiesByName(name: string, stateId?: number): Promise<City[]> {
     const params: SearchCitiesByNameDto = { name };
     if (stateId) params.stateId = stateId;
 

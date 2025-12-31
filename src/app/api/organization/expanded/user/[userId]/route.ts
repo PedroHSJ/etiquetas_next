@@ -4,10 +4,15 @@ import { OrganizationBackendService } from "@/lib/services/server/organizationSe
 import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
 import { OrganizationExpandedResponseDto } from "@/types/dto/organization/response";
 
+type RouteContext = {
+  params: Promise<{ userId: string }>;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: RouteContext
 ) {
+  const { userId } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
 
@@ -21,7 +26,6 @@ export async function GET(
   try {
     const supabase = getSupabaseBearerClient(token);
     const service = new OrganizationBackendService(supabase);
-    const { userId } = await params;
     const orgs = await service.listByUserIdExpanded(userId);
 
     const successResponse: ApiSuccessResponse<

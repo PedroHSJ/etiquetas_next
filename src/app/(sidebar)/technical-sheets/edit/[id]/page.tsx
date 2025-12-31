@@ -11,7 +11,10 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { TechnicalSheetModel } from "@/types/models/technical-sheet";
 import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
 import { TechnicalSheetGenerator } from "@/components/technical-sheet/TechnicalSheetGenerator";
-import { EditableIngredient, TechnicalSheetResponse } from "@/types/technical-sheet";
+import {
+  EditableIngredient,
+  TechnicalSheetResponse,
+} from "@/types/technical-sheet";
 
 export default function EditTechnicalSheetPage() {
   const { id } = useParams();
@@ -19,7 +22,8 @@ export default function EditTechnicalSheetPage() {
   const { user } = useAuth();
   const { selectedOrganization } = useOrganization();
 
-  const [technicalSheet, setTechnicalSheet] = useState<TechnicalSheetModel | null>(null);
+  const [technicalSheet, setTechnicalSheet] =
+    useState<TechnicalSheetModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -74,8 +78,10 @@ export default function EditTechnicalSheetPage() {
           ingredientName: ingredient.name,
           quantity: ingredient.quantity,
           unit: ingredient.unit,
-          originalQuantity: ingredient.originalQuantity,
-          productId: ingredient.productId ? parseInt(ingredient.productId, 10) : undefined,
+          originalQuantity: ingredient.quantity,
+          productId: ingredient.productId
+            ? parseInt(ingredient.productId, 10)
+            : undefined,
           sortOrder: index,
         })),
       });
@@ -169,7 +175,9 @@ export default function EditTechnicalSheetPage() {
               <ChefHat className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Ficha técnica não encontrada</h1>
+              <h1 className="text-3xl font-bold">
+                Ficha técnica não encontrada
+              </h1>
               <p className="text-muted-foreground">
                 A ficha técnica solicitada não existe.
               </p>

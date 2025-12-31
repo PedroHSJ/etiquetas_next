@@ -38,7 +38,10 @@ export function TeamSwitcher() {
         selectedOrganization.id !==
           singleProfile.userOrganization?.organizationId
       ) {
-        setSelectedOrganization(singleProfile.userOrganization?.organization!);
+        const org = singleProfile.userOrganization?.organization;
+        if (org) {
+          setSelectedOrganization(org);
+        }
       }
     }
   }, [
@@ -57,7 +60,10 @@ export function TeamSwitcher() {
         selectedOrganization.id !==
           activeProfile.userOrganization?.organizationId)
     ) {
-      setSelectedOrganization(activeProfile.userOrganization?.organization!);
+      const org = activeProfile.userOrganization?.organization;
+      if (org) {
+        setSelectedOrganization(org);
+      }
     }
   }, [activeProfile, selectedOrganization, setSelectedOrganization]);
 
@@ -137,7 +143,10 @@ export function TeamSwitcher() {
             key={profile.id}
             className="cursor-pointer"
             onClick={() => {
-              setSelectedOrganization(profile.userOrganization?.organization!);
+              const org = profile.userOrganization?.organization;
+              if (org) {
+                setSelectedOrganization(org);
+              }
               handleProfileChange(profile);
             }}
           >

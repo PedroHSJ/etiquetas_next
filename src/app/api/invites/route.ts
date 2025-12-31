@@ -136,11 +136,11 @@ export async function POST(request: NextRequest) {
 
     const inviteService = new InviteBackendService(supabase);
 
-    const metadata = (user.user_metadata || {}) as Record<string, any>;
+    const metadata = (user.user_metadata || {}) as Record<string, unknown>;
     const invitedByName =
-      metadata.name || metadata.full_name || user.email || null;
+      (metadata.name as string) || (metadata.full_name as string) || user.email || null;
     const invitedByEmail = user.email ?? null;
-    const invitedByAvatarUrl = metadata.avatar_url || metadata.picture || null;
+    const invitedByAvatarUrl = (metadata.avatar_url as string) || (metadata.picture as string) || null;
 
     const invite = await inviteService.createInvite({
       email,

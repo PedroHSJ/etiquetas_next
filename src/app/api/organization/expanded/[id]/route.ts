@@ -5,10 +5,15 @@ import { UpdateOrganizationDto } from "@/types/dto/organization/request";
 import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
 import { OrganizationExpandedResponseDto } from "@/types/dto/organization/response";
 
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
+  const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
 
@@ -22,7 +27,6 @@ export async function GET(
   try {
     const supabase = getSupabaseBearerClient(token);
     const service = new OrganizationBackendService(supabase);
-    const { id } = await params;
     const org = await service.getByIdExpanded(id);
 
     const successResponse: ApiSuccessResponse<OrganizationExpandedResponseDto> =
@@ -40,8 +44,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
+  const { id } = await context.params;
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
 
@@ -58,7 +63,6 @@ export async function PUT(
 
     const supabase = getSupabaseBearerClient(token);
     const service = new OrganizationBackendService(supabase);
-    const { id } = await params;
     const updated = await service.updateExpanded(id, dto);
 
     const successResponse: ApiSuccessResponse<OrganizationExpandedResponseDto> =
