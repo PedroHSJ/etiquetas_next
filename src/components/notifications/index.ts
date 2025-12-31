@@ -1,2 +1,2 @@
 export { NotificationBell } from "./NotificationBell";
-export { ConviteManager } from "./InviteManager";
+export { InviteManager } from "./InviteManager";

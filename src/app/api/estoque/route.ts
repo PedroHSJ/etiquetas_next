@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseBearerClient } from "@/lib/supabaseServer";
 import { StockBackendService } from "@/lib/services/server/stockService";
-import { EstoqueFiltros, EstoqueListResponse } from "@/types/estoque";
+import { EstoqueFiltros } from "@/types/estoque";
+import { StockListResponseDto } from "@/types/dto/stock/response";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 
 export async function GET(request: NextRequest) {
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
       organizationId,
     });
 
-    const successResponse: ApiSuccessResponse<EstoqueListResponse> = {
+    const successResponse: ApiSuccessResponse<StockListResponseDto> = {
       data: result,
     };
 

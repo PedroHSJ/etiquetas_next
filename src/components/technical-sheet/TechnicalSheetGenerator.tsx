@@ -1,22 +1,28 @@
 "use client";
 
 import React, { useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  ChefHat, 
-  Users, 
-  Clock, 
-  Loader2, 
+import {
+  ChefHat,
+  Users,
+  Clock,
+  Loader2,
   Plus,
   Save,
   RotateCcw,
-  Calculator
+  Calculator,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
@@ -30,22 +36,24 @@ import { TechnicalSheetModel } from "@/types/models/technical-sheet";
 
 interface TechnicalSheetGeneratorProps {
   organizationId: string;
-  onSave?: (sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }) => void;
+  onSave?: (
+    sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }
+  ) => void;
   isSaving?: boolean;
   initialData?: TechnicalSheetModel | null;
 }
 
-export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = ({
-  organizationId,
-  onSave,
-  isSaving = false,
-  initialData = null,
-}) => {
+export const TechnicalSheetGenerator: React.FC<
+  TechnicalSheetGeneratorProps
+> = ({ organizationId, onSave, isSaving = false, initialData = null }) => {
   const [dishName, setDishName] = useState("");
   const [servings, setServings] = useState<number>(4);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [technicalSheet, setTechnicalSheet] = useState<TechnicalSheetResponse | null>(null);
-  const [editableIngredients, setEditableIngredients] = useState<EditableIngredient[]>([]);
+  const [technicalSheet, setTechnicalSheet] =
+    useState<TechnicalSheetResponse | null>(null);
+  const [editableIngredients, setEditableIngredients] = useState<
+    EditableIngredient[]
+  >([]);
   const [originalServings, setOriginalServings] = useState<number>(4);
 
   const { toast } = useToast();
@@ -69,7 +77,8 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
       cookingTime: initialData.cookingTime ?? undefined,
       difficulty: initialData.difficulty ?? undefined,
       preparationSteps: initialData.preparationSteps,
-      nutritionalInsights: initialData.nutritionalInsights ?? undefined,
+      nutritionalInsights:
+        initialData.nutritionalInsights as TechnicalSheetResponse["nutritionalInsights"],
     });
     setEditableIngredients(
       initialData.ingredients.map((ingredient) => ({
@@ -78,7 +87,9 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
         quantity: ingredient.quantity,
         unit: ingredient.unit,
         originalQuantity: ingredient.originalQuantity,
-        productId: ingredient.productId ? String(ingredient.productId) : undefined,
+        productId: ingredient.productId
+          ? String(ingredient.productId)
+          : undefined,
         isEditing: false,
       }))
     );
@@ -96,30 +107,37 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
     }
 
     setIsGenerating(true);
-    
+
     try {
       const request: TechnicalSheetRequest = {
         dishName: dishName.trim(),
-        servings
+        servings,
       };
 
-      const response = await TechnicalSheetService.generateIngredientSuggestions(request);
-      
+      const response =
+        await TechnicalSheetService.generateIngredientSuggestions(request);
+
       // Buscar produtos correspondentes
-      const matchedIngredients = await TechnicalSheetService.matchIngredientsWithProducts(
-        response.ingredients,
-        organizationId
-      );
+      const matchedIngredients =
+        await TechnicalSheetService.matchIngredientsWithProducts(
+          response.ingredients,
+          organizationId
+        );
 
       setTechnicalSheet(response);
       setEditableIngredients(matchedIngredients);
       setOriginalServings(response.servings);
 
-      toast.success(`Ficha técnica gerada! ${response.ingredients.length} ingredientes sugeridos para ${response.dishName}.`);
-
+      toast.success(
+        `Ficha técnica gerada! ${response.ingredients.length} ingredientes sugeridos para ${response.dishName}.`
+      );
     } catch (error) {
       console.error("Erro ao gerar ficha técnica:", error);
-      toast.error(error instanceof Error ? error.message : "Erro ao gerar ficha técnica. Tente novamente em alguns instantes.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erro ao gerar ficha técnica. Tente novamente em alguns instantes."
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -128,17 +146,20 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
   const handleServingsChange = (newServings: number) => {
     if (!technicalSheet || newServings <= 0) return;
 
-    const proportionalIngredients = TechnicalSheetService.calculateProportionalQuantities(
-      editableIngredients,
-      originalServings,
-      newServings
-    );
+    const proportionalIngredients =
+      TechnicalSheetService.calculateProportionalQuantities(
+        editableIngredients,
+        originalServings,
+        newServings
+      );
 
     setEditableIngredients(proportionalIngredients);
     setServings(newServings);
   };
 
-  const handleIngredientsChange = (updatedIngredients: EditableIngredient[]) => {
+  const handleIngredientsChange = (
+    updatedIngredients: EditableIngredient[]
+  ) => {
     setEditableIngredients(updatedIngredients);
   };
 
@@ -149,7 +170,7 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
       quantity: "1",
       unit: "un",
       originalQuantity: "1",
-      isEditing: true
+      isEditing: true,
     };
 
     setEditableIngredients([...editableIngredients, newIngredient]);
@@ -161,7 +182,7 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
     const finalSheet = {
       ...technicalSheet,
       servings,
-      ingredients: editableIngredients
+      ingredients: editableIngredients,
     };
 
     onSave?.(finalSheet);
@@ -183,7 +204,8 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
         cookingTime: initialData.cookingTime ?? undefined,
         difficulty: initialData.difficulty ?? undefined,
         preparationSteps: initialData.preparationSteps,
-        nutritionalInsights: initialData.nutritionalInsights ?? undefined,
+        nutritionalInsights:
+          initialData.nutritionalInsights as TechnicalSheetResponse["nutritionalInsights"],
       });
       setEditableIngredients(
         initialData.ingredients.map((ingredient) => ({
@@ -192,7 +214,9 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
           quantity: ingredient.quantity,
           unit: ingredient.unit,
           originalQuantity: ingredient.originalQuantity,
-          productId: ingredient.productId ? String(ingredient.productId) : undefined,
+          productId: ingredient.productId
+            ? String(ingredient.productId)
+            : undefined,
           isEditing: false,
         }))
       );
@@ -209,10 +233,14 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
 
   const getDifficultyColor = (difficulty?: string) => {
     switch (difficulty) {
-      case "fácil": return "bg-green-100 text-green-800";
-      case "médio": return "bg-yellow-100 text-yellow-800";
-      case "difícil": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "fácil":
+        return "bg-green-100 text-green-800";
+      case "médio":
+        return "bg-yellow-100 text-yellow-800";
+      case "difícil":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -253,8 +281,8 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
           </div>
 
           <div className="flex gap-2">
-            <Button 
-              onClick={handleGenerate} 
+            <Button
+              onClick={handleGenerate}
               disabled={isGenerating || !dishName.trim()}
               className="flex-1"
             >
@@ -270,10 +298,10 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
                 </>
               )}
             </Button>
-            
+
             {technicalSheet && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleReset}
                 disabled={isGenerating}
               >
@@ -295,13 +323,15 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
               </CardTitle>
               <div className="flex items-center gap-2">
                 {technicalSheet.difficulty && (
-                  <Badge className={getDifficultyColor(technicalSheet.difficulty)}>
+                  <Badge
+                    className={getDifficultyColor(technicalSheet.difficulty)}
+                  >
                     {technicalSheet.difficulty}
                   </Badge>
                 )}
               </div>
             </div>
-            
+
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
@@ -310,19 +340,21 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
                   min="1"
                   max="1000"
                   value={servings}
-                  onChange={(e) => handleServingsChange(parseInt(e.target.value) || 1)}
+                  onChange={(e) =>
+                    handleServingsChange(parseInt(e.target.value) || 1)
+                  }
                   className="w-20 h-6 text-xs"
                 />
                 <span>porções</span>
               </div>
-              
+
               {technicalSheet.preparationTime && (
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
                   <span>Preparo: {technicalSheet.preparationTime}</span>
                 </div>
               )}
-              
+
               {technicalSheet.cookingTime && (
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
@@ -331,7 +363,7 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
               )}
             </div>
           </CardHeader>
-          
+
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Ingredientes</h3>
@@ -364,27 +396,30 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
             />
 
             {/* Modo de Preparo */}
-            {technicalSheet.preparationSteps && technicalSheet.preparationSteps.length > 0 && (
-              <div className="space-y-3">
-                <Separator />
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <ChefHat className="w-5 h-5" />
-                  Modo de Preparo
-                </h3>
-                <div className="space-y-2">
-                  {technicalSheet.preparationSteps.map((step: string, index: number) => (
-                    <div key={index} className="flex gap-3 items-start">
-                      <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                        {index + 1}
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {step}
-                      </p>
-                    </div>
-                  ))}
+            {technicalSheet.preparationSteps &&
+              technicalSheet.preparationSteps.length > 0 && (
+                <div className="space-y-3">
+                  <Separator />
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <ChefHat className="w-5 h-5" />
+                    Modo de Preparo
+                  </h3>
+                  <div className="space-y-2">
+                    {technicalSheet.preparationSteps.map(
+                      (step: string, index: number) => (
+                        <div key={index} className="flex gap-3 items-start">
+                          <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
+                            {index + 1}
+                          </div>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {step}
+                          </p>
+                        </div>
+                      )
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Insights Nutricionais */}
             {technicalSheet.nutritionalInsights && (
@@ -442,25 +477,32 @@ export const TechnicalSheetGenerator: React.FC<TechnicalSheetGeneratorProps> = (
                       </div>
                     </CardContent>
                     <CardFooter className="flex flex-col p-1 h-full">
-                      <Badge className="text-xs">
-                       Fibras
-                      </Badge>
+                      <Badge className="text-xs">Fibras</Badge>
                     </CardFooter>
                   </Card>
                 </div>
 
-                {technicalSheet.nutritionalInsights.highlights && technicalSheet.nutritionalInsights.highlights.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-sm">Destaques Nutricionais:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {technicalSheet.nutritionalInsights.highlights.map((highlight: string, index: number) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {highlight}
-                        </Badge>
-                      ))}
+                {technicalSheet.nutritionalInsights.highlights &&
+                  technicalSheet.nutritionalInsights.highlights.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">
+                        Destaques Nutricionais:
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {technicalSheet.nutritionalInsights.highlights.map(
+                          (highlight: string, index: number) => (
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {highlight}
+                            </Badge>
+                          )
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             )}
 

@@ -98,7 +98,7 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
   const selectProduct = (ingredientId: string, product: ProductSelect) => {
     updateIngredient(ingredientId, {
       name: product.name,
-      productId: product.id,
+      productId: String(product.id),
     });
     setSearchingProducts((prev) => ({ ...prev, [ingredientId]: [] }));
   };

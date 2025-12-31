@@ -1,17 +1,23 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Search, MapPin, RefreshCw } from 'lucide-react'
-import { LocalidadeSelector } from '@/components/localidade'
-import { useLocalidade } from '@/hooks/useLocalidade'
-import { CityWithState } from '@/types/models/location'
-import { ViaCepResponseDto } from '@/types/dto/location/response'
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Search, MapPin, RefreshCw } from "lucide-react";
+import { LocalidadeSelector } from "@/components/localidade";
+import { useLocalidade } from "@/hooks/useLocalidade";
+import { CityWithState } from "@/types/models/location";
+import { ViaCepResponseDto } from "@/types/dto/location/response";
 
 export function LocalidadeExample() {
   const {
@@ -19,33 +25,33 @@ export function LocalidadeExample() {
     buscarOuCriarMunicipioPorCEP,
     validarCEP,
     formatarCEP,
-    loading
-  } = useLocalidade()
+    loading,
+  } = useLocalidade();
 
-  const [cepTeste, setCepTeste] = useState('')
-  const [resultadoCEP, setResultadoCEP] = useState<{ 
-    municipio?: CityWithState; 
-    dadosCEP?: ViaCepResponseDto | null; 
-  } | null>(null)
-  const [localidadeSelecionada, setLocalidadeSelecionada] = useState({})
+  const [cepTeste, setCepTeste] = useState("");
+  const [resultadoCEP, setResultadoCEP] = useState<{
+    municipio?: CityWithState | null;
+    dadosCEP?: ViaCepResponseDto | null;
+  } | null>(null);
+  const [localidadeSelecionada, setLocalidadeSelecionada] = useState({});
 
   const testarCEP = async () => {
     if (!validarCEP(cepTeste)) {
-      return
+      return;
     }
 
-    const resultado = await buscarOuCriarMunicipioPorCEP(cepTeste)
-    setResultadoCEP(resultado)
-  }
+    const resultado = await buscarOuCriarMunicipioPorCEP(cepTeste);
+    setResultadoCEP(resultado);
+  };
 
   const testarBuscaCEP = async () => {
     if (!validarCEP(cepTeste)) {
-      return
+      return;
     }
 
-    const dadosCEP = await buscarCEP(cepTeste)
-    setResultadoCEP({ dadosCEP })
-  }
+    const dadosCEP = await buscarCEP(cepTeste);
+    setResultadoCEP({ dadosCEP });
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -80,19 +86,27 @@ export function LocalidadeExample() {
               />
             </div>
             <div className="flex items-end gap-2">
-              <Button 
+              <Button
                 onClick={testarBuscaCEP}
                 disabled={loading || !validarCEP(cepTeste)}
                 variant="outline"
               >
-                {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                {loading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
                 Buscar
               </Button>
-              <Button 
+              <Button
                 onClick={testarCEP}
                 disabled={loading || !validarCEP(cepTeste)}
               >
-                {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+                {loading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MapPin className="h-4 w-4" />
+                )}
                 Criar Município
               </Button>
             </div>
@@ -101,7 +115,7 @@ export function LocalidadeExample() {
           {resultadoCEP && (
             <div className="mt-4 p-4 bg-muted rounded-lg">
               <h4 className="font-medium mb-2">Resultado:</h4>
-              
+
               {resultadoCEP.dadosCEP && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -191,5 +205,5 @@ export function LocalidadeExample() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -29,14 +29,16 @@ export interface InviteEntity {
   };
 }
 
-export interface InviteInviteWithRelationsEntity extends InviteEntity {
+export interface InviteInviteWithRelationsEntity
+  extends Omit<InviteEntity, "organization" | "profile"> {
   organization?: {
+    id: string;
     name: string;
-    type: string;
+    type: string | null;
   };
   profile?: {
     id: string;
     name: string;
-    description?: string;
+    description?: string | null;
   };
 }

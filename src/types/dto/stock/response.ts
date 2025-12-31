@@ -46,6 +46,28 @@ export interface StockMovementResponseDto {
   product?: ProductStockResponseDto;
 }
 
+/**
+ * Paginated list response for stock items
+ */
+export interface StockListResponseDto {
+  data: StockResponseDto[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+/**
+ * Paginated list response for stock movements
+ */
+export interface MovementListResponseDto {
+  data: StockMovementResponseDto[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export interface QuickEntryResponseDto {
   message: string;
   movement: StockMovementResponseDto;

@@ -1,4 +1,4 @@
-import { OrganizationTemplate } from "@/types/organization";
+import { OrganizationTemplate } from "@/types/models/organization";
 
 export const organizationTemplates: Record<string, OrganizationTemplate> = {
   uan: {

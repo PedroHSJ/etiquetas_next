@@ -1,4 +1,4 @@
-export {
+export type {
   EditableIngredient,
   IngredientSuggestion,
   TechnicalSheetAIRequest as TechnicalSheetRequest,

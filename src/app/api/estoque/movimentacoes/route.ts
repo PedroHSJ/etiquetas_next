@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseBearerClient } from "@/lib/supabaseServer";
 import { StockBackendService } from "@/lib/services/server/stockService";
-import {
-  MovimentacoesFiltros,
-  MovimentacoesListResponse,
-} from "@/types/estoque";
+import { MovimentacoesFiltros } from "@/types/estoque";
+import { MovementListResponseDto } from "@/types/dto/stock/response";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 
 export async function GET(request: NextRequest) {
@@ -66,7 +64,7 @@ export async function GET(request: NextRequest) {
       organizationId,
     });
 
-    const successResponse: ApiSuccessResponse<MovimentacoesListResponse> = {
+    const successResponse: ApiSuccessResponse<MovementListResponseDto> = {
       data: result,
     };
 
@@ -159,7 +157,9 @@ export async function POST(request: NextRequest) {
       if (!estoque || estoque.current_quantity < quantidade) {
         return NextResponse.json(
           {
-            error: `Quantidade insuficiente em estoque. Disponível: ${estoque?.current_quantity || 0}`,
+            error: `Quantidade insuficiente em estoque. Disponível: ${
+              estoque?.current_quantity || 0
+            }`,
           },
           { status: 400 }
         );
@@ -196,7 +196,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `${tipo_movimentacao === "ENTRADA" ? "Entrada" : "Saída"} registrada com sucesso!`,
+      message: `${
+        tipo_movimentacao === "ENTRADA" ? "Entrada" : "Saída"
+      } registrada com sucesso!`,
       data: movimentacao,
     });
   } catch (error) {

@@ -1,18 +1,17 @@
 import { api } from "@/lib/apiClient";
 import { ApiResponse, ApiSuccessResponse } from "@/types/common";
-import {
-  EstoqueListResponse,
-  MovimentacoesListResponse,
-  EstoqueFiltros,
-  MovimentacoesFiltros,
-} from "@/types/estoque";
+import { EstoqueFiltros, MovimentacoesFiltros } from "@/types/estoque";
 import {
   StockStatistics,
   ProductSelect,
   QuickEntryRequest,
   STOCK_MESSAGES,
 } from "@/types/stock/stock";
-import { QuickEntryResponseDto } from "@/types/dto/stock/response";
+import {
+  QuickEntryResponseDto,
+  StockListResponseDto,
+  MovementListResponseDto,
+} from "@/types/dto/stock/response";
 import {
   StockListModelResponse,
   MovementListModelResponse,
@@ -38,16 +37,14 @@ interface ListProductsParams {
 }
 
 export const StockService = {
-  async listStock(
-    params: ListStockParams = {}
-  ): Promise<StockListModelResponse> {
+  async listStock(params: ListStockParams): Promise<StockListModelResponse> {
     const { page = 1, pageSize = 20, organizationId, ...filters } = params;
 
     if (!organizationId) {
       throw new Error("organizationId é obrigatório");
     }
 
-    const { data } = await api.get<ApiResponse<EstoqueListResponse>>(
+    const { data } = await api.get<ApiResponse<StockListResponseDto>>(
       "/estoque",
       {
         params: {
@@ -70,7 +67,7 @@ export const StockService = {
   },
 
   async listMovements(
-    params: ListMovementsParams = {}
+    params: ListMovementsParams
   ): Promise<MovementListModelResponse> {
     const { page = 1, pageSize = 20, organizationId, ...filters } = params;
 
@@ -78,7 +75,7 @@ export const StockService = {
       throw new Error("organizationId é obrigatório");
     }
 
-    const { data } = await api.get<ApiResponse<MovimentacoesListResponse>>(
+    const { data } = await api.get<ApiResponse<MovementListResponseDto>>(
       "/estoque/movimentacoes",
       {
         params: {
@@ -100,9 +97,7 @@ export const StockService = {
     };
   },
 
-  async getStockStatistics(
-    organizationId: string
-  ): Promise<StockStatistics> {
+  async getStockStatistics(organizationId: string): Promise<StockStatistics> {
     if (!organizationId) {
       throw new Error("organizationId é obrigatório");
     }
@@ -137,16 +132,12 @@ export const StockService = {
     return data.data;
   },
 
-  async quickEntry(
-    request: QuickEntryRequest
-  ): Promise<QuickEntryResponseDto> {
+  async quickEntry(request: QuickEntryRequest): Promise<QuickEntryResponseDto> {
     if (!request.organizationId) {
       throw new Error("organizationId é obrigatório");
     }
 
-    const { data } = await api.post<
-      ApiSuccessResponse<QuickEntryResponseDto>
-    >(
+    const { data } = await api.post<ApiSuccessResponse<QuickEntryResponseDto>>(
       "/estoque/entrada-rapida",
       request
     );
@@ -157,7 +148,8 @@ export const StockService = {
 
     return {
       ...data.data,
-      message: data.data.message || data.message || STOCK_MESSAGES.ENTRY_SUCCESS,
+      message:
+        data.data.message || data.message || STOCK_MESSAGES.ENTRY_SUCCESS,
     };
   },
 };

@@ -74,16 +74,19 @@ export default function EditTechnicalSheetPage() {
         preparationSteps: sheet.preparationSteps,
         nutritionalInsights: sheet.nutritionalInsights,
         organizationId: selectedOrganization.id,
-        ingredients: sheet.ingredients.map((ingredient, index) => ({
-          ingredientName: ingredient.name,
-          quantity: ingredient.quantity,
-          unit: ingredient.unit,
-          originalQuantity: ingredient.quantity,
-          productId: ingredient.productId
-            ? parseInt(ingredient.productId, 10)
-            : undefined,
-          sortOrder: index,
-        })),
+        ingredients: sheet.ingredients.map((ingredient, index) => {
+          const editableIngredient = ingredient as EditableIngredient;
+          return {
+            ingredientName: ingredient.name,
+            quantity: ingredient.quantity,
+            unit: ingredient.unit,
+            originalQuantity: ingredient.quantity,
+            productId: editableIngredient.productId
+              ? parseInt(editableIngredient.productId, 10)
+              : undefined,
+            sortOrder: index,
+          };
+        }),
       });
 
       toast.success("Ficha técnica atualizada com sucesso!");

@@ -124,6 +124,7 @@ export function InviteEmployees({
           email: invite.email,
           organizationId,
           profileId: invite.perfil,
+          invitedBy: userId,
         });
       }
 

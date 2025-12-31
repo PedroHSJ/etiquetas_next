@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 async function isUserAuthenticated(req: NextRequest): Promise<boolean> {
-  const supabase = getSupabaseServerClient(req);
+  const response = NextResponse.next();
+  const supabase = getSupabaseServerClient(req, response);
   const {
     data: { user },
     error,

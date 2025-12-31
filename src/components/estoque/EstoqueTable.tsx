@@ -207,8 +207,8 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
             filtros.estoque_zerado
               ? "zerado"
               : filtros.estoque_baixo
-                ? "baixo"
-                : "todos"
+              ? "baixo"
+              : "todos"
           }
           onValueChange={(value) => {
             if (value === "zerado") {
@@ -288,7 +288,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <EntradaRapidaDialog
-                          produtoIdSelecionado={item.productId}
+                          selectedProductId={item.productId}
                           onSuccess={carregarDados}
                           trigger={
                             <DropdownMenuItem

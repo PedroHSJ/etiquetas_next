@@ -1,13 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { EstoqueFiltros, MovimentacoesFiltros } from "@/types/estoque";
 import {
-  EstoqueListResponse,
-  MovimentacoesListResponse,
-  EstoqueFiltros,
-  MovimentacoesFiltros,
-} from "@/types/estoque";
-import {
-  Stock,
-  StockMovement,
   StockStatistics,
   STOCK_MESSAGES,
   UnitOfMeasureCode,
@@ -16,6 +9,8 @@ import {
   QuickEntryResponseDto,
   StockMovementResponseDto,
   StockResponseDto,
+  StockListResponseDto,
+  MovementListResponseDto,
 } from "@/types/dto/stock/response";
 import { StockEntity, StockMovementEntity } from "@/types/database/stock";
 import {
@@ -70,7 +65,7 @@ export class StockBackendService {
     pageSize,
     filters,
     organizationId,
-  }: ListStockParams): Promise<EstoqueListResponse> {
+  }: ListStockParams): Promise<StockListResponseDto> {
     const offset = (page - 1) * pageSize;
 
     let query = this.supabase
@@ -112,8 +107,17 @@ export class StockBackendService {
       throw new Error(error.message || "Error while fetching stock items");
     }
 
+    const stockItems = (data ?? []) as (StockEntity & {
+      product?: ProductJoin | null;
+      storage_location?: {
+        id: string;
+        name: string;
+        parent_id?: string | null;
+      } | null;
+    })[];
+
     return {
-      data: (data ?? []) as Stock[],
+      data: stockItems.map((item) => toStockResponseDto(item)),
       total: count || 0,
       page,
       pageSize,
@@ -129,7 +133,7 @@ export class StockBackendService {
     pageSize,
     filters,
     organizationId,
-  }: ListMovementsParams): Promise<MovimentacoesListResponse> {
+  }: ListMovementsParams): Promise<MovementListResponseDto> {
     const offset = (page - 1) * pageSize;
 
     let query = this.supabase
@@ -225,7 +229,7 @@ export class StockBackendService {
     });
 
     return {
-      data: enriched as unknown as StockMovement[],
+      data: enriched,
       total: count || 0,
       page,
       pageSize,

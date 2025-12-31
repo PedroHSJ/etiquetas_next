@@ -37,7 +37,7 @@ export function toInviteWithRelationsResponseDto(
         id: entity.organization.id,
         name: entity.organization.name,
         type: entity.organization.type,
-        userId: null,
+        createdBy: null,
         createdAt: "",
         updatedAt: "",
         cnpj: null,
@@ -90,10 +90,7 @@ export function toInviteModel(dto: InviteWithRelationsResponseDto): Invite {
     expiresAt: new Date(dto.expiresAt),
     invitedBy: {
       id: dto.invitedBy,
-      name:
-        dto.invitedByName ??
-        dto.invitedByEmail ??
-        dto.email, // fallback razoável
+      name: dto.invitedByName ?? dto.invitedByEmail ?? dto.email, // fallback razoável
       email: dto.invitedByEmail ?? undefined,
       avatarUrl: dto.invitedByAvatarUrl ?? undefined,
     },
