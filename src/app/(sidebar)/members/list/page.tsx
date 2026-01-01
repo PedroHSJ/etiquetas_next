@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Member } from "@/types/models/member";
 import { MemberService } from "@/lib/services/client/member-service";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { useProfile } from "@/contexts/ProfileContext";
+import { ReadGuard } from "@/components/auth/PermissionGuard";
 
 function getInitials(name: string) {
   if (!name) return "US";
@@ -30,11 +30,6 @@ function getInitials(name: string) {
 
 export default function MembersListPage() {
   const { selectedOrganization } = useOrganization();
-  const { activeProfile } = useProfile();
-
-  const canAccess =
-    activeProfile?.profile?.name?.toLowerCase() === "gestor" ||
-    activeProfile?.profile?.name?.toLowerCase() === "master";
 
   const organizationId = selectedOrganization?.id;
 
@@ -44,7 +39,7 @@ export default function MembersListPage() {
       if (!organizationId) return [];
       return MemberService.listByOrganization(organizationId);
     },
-    enabled: !!organizationId && canAccess,
+    enabled: !!organizationId,
   });
 
   const columns = useMemo<GenericTableColumn<Member>[]>(() => {
@@ -181,50 +176,35 @@ export default function MembersListPage() {
     );
   }
 
-  if (!canAccess) {
-    return (
-      <div>
-        <Card>
-          <CardContent className="py-10 text-center space-y-2">
-            <p className="text-lg font-semibold text-muted-foreground">
-              Acesse com o perfil Gestor para visualizar os integrantes.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Alterar o perfil ativo habilita os recursos de gestão de membros.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-            <Users className="h-6 w-6 text-primary" />
+    <ReadGuard module="MEMBERS">
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Users className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Integrantes</h1>
+              <p className="text-muted-foreground">
+                Gerencie os membros vinculados a {selectedOrganization.name}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">Integrantes</h1>
-            <p className="text-muted-foreground">
-              Gerencie os membros vinculados a {selectedOrganization.name}
-            </p>
-          </div>
+          <Badge variant="secondary" className="text-base py-2 px-4">
+            {members.length} membro(s)
+          </Badge>
         </div>
-        <Badge variant="secondary" className="text-base py-2 px-4">
-          {members.length} membro(s)
-        </Badge>
-      </div>
 
-      <GenericTable<Member>
-        title="Lista de membros"
-        description="Visualize todos os integrantes ativos e inativos da organização"
-        columns={columns}
-        data={members}
-        loading={isLoading}
-        searchPlaceholder="Buscar por nome, e-mail ou perfil..."
-      />
-    </div>
+        <GenericTable<Member>
+          title="Lista de membros"
+          description="Visualize todos os integrantes ativos e inativos da organização"
+          columns={columns}
+          data={members}
+          loading={isLoading}
+          searchPlaceholder="Buscar por nome, e-mail ou perfil..."
+        />
+      </div>
+    </ReadGuard>
   );
 }

@@ -27,6 +27,7 @@ import { capitalize } from "@/lib/utils";
 import { DepartmentWithOrganization } from "@/types/models/department";
 import { DepartmentService } from "@/lib/services/client/department-service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ReadGuard } from "@/components/auth/PermissionGuard";
 
 export default function DepartmentsListPage() {
   const { userId } = useAuth();
@@ -166,121 +167,123 @@ export default function DepartmentsListPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6">
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-            <svg
-              className="w-7 h-7 text-white"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
+    <ReadGuard module="DEPARTMENTS">
+      <div className="flex flex-1 flex-col gap-6">
+        {/* Cabeçalho */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg
+                className="w-7 h-7 text-white"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Departamentos</h1>
+              <p className="text-muted-foreground">
+                Gerencie os departamentos das suas organizações
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">Departamentos</h1>
-            <p className="text-muted-foreground">
-              Gerencie os departamentos das suas organizações
-            </p>
-          </div>
+          <NavigationButton href="/departments/create">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Departamento
+          </NavigationButton>
         </div>
-        <NavigationButton href="/departments/create">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Departamento
-        </NavigationButton>
+
+        {/* Lista de Departamentos */}
+        {departments.length === 0 ? (
+          <Card className="p-12">
+            <div className="text-center">
+              <Building2 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                Nenhum departamento cadastrado
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Comece criando seu primeiro departamento
+              </p>
+              <NavigationButton href="/departments/create">
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Departamento
+              </NavigationButton>
+            </div>
+          </Card>
+        ) : (
+          <GenericTable
+            data={departments}
+            columns={departmentColumns}
+            searchable
+            searchPlaceholder="Buscar departamentos..."
+            // rowActions={(row) => (
+            //   <div className="flex gap-1">
+            //     <NavigationButton
+            //       href={`/departments/edit/${row.id}`}
+            //       variant="outline"
+            //       size="sm"
+            //     >
+            //       <Edit className="h-4 w-4" />
+            //     </NavigationButton>
+            //     {/* <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => handleDeleteClick(row)}
+            //     >
+            //       <Trash2 className="h-4 w-4" />
+            //     </Button> */}
+            //   </div>
+            // )}
+          />
+        )}
+
+        {/* Dialog de Confirmação de Exclusão */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                Confirmar Exclusão
+              </DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja excluir o departamento{" "}
+                <strong>{deletingDepartment?.name}</strong>?
+                <br />
+                <br />
+                Esta ação não pode ser desfeita e todos os integrantes e dados
+                relacionados a este departamento serão afetados.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+                disabled={deleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Excluindo...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir Departamento
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Lista de Departamentos */}
-      {departments.length === 0 ? (
-        <Card className="p-12">
-          <div className="text-center">
-            <Building2 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium mb-2">
-              Nenhum departamento cadastrado
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Comece criando seu primeiro departamento
-            </p>
-            <NavigationButton href="/departments/create">
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Departamento
-            </NavigationButton>
-          </div>
-        </Card>
-      ) : (
-        <GenericTable
-          data={departments}
-          columns={departmentColumns}
-          searchable
-          searchPlaceholder="Buscar departamentos..."
-          // rowActions={(row) => (
-          //   <div className="flex gap-1">
-          //     <NavigationButton
-          //       href={`/departments/edit/${row.id}`}
-          //       variant="outline"
-          //       size="sm"
-          //     >
-          //       <Edit className="h-4 w-4" />
-          //     </NavigationButton>
-          //     {/* <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => handleDeleteClick(row)}
-          //     >
-          //       <Trash2 className="h-4 w-4" />
-          //     </Button> */}
-          //   </div>
-          // )}
-        />
-      )}
-
-      {/* Dialog de Confirmação de Exclusão */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Confirmar Exclusão
-            </DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja excluir o departamento{" "}
-              <strong>{deletingDepartment?.name}</strong>?
-              <br />
-              <br />
-              Esta ação não pode ser desfeita e todos os integrantes e dados
-              relacionados a este departamento serão afetados.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-              disabled={deleting}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Excluindo...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir Departamento
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </ReadGuard>
   );
 }

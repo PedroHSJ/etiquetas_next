@@ -40,11 +40,12 @@ CREATE TABLE IF NOT EXISTS public.functionalities (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     description text,
-    route character varying(255),
+    code character varying(100) NOT NULL,
     active boolean DEFAULT true,
     created_at timestamp with time zone DEFAULT now(),
     CONSTRAINT functionalities_pkey PRIMARY KEY (id),
-    CONSTRAINT functionalities_name_key UNIQUE (name)
+    CONSTRAINT functionalities_name_key UNIQUE (name),
+    CONSTRAINT functionalities_code_key UNIQUE (code)
 );
 
 -- Profiles (User access profiles/roles)

@@ -42,6 +42,7 @@ import {
 import { StockService } from "@/lib/services/client/stock-service";
 import { useStorageLocationsQuery } from "@/hooks/useStorageLocationsQuery";
 import type { StorageLocation } from "@/types/models/storage-location";
+import { ReadGuard } from "@/components/auth/PermissionGuard";
 
 export default function EstoquePage() {
   const { activeProfile } = useProfile();
@@ -82,9 +83,7 @@ export default function EstoquePage() {
     );
   }, [storageLocations]);
 
-  const buildLocationPath = (
-    locationId: string | null | undefined
-  ): string => {
+  const buildLocationPath = (locationId: string | null | undefined): string => {
     if (!locationId) return "-";
 
     const paths: string[] = [];
@@ -438,184 +437,190 @@ export default function EstoquePage() {
   };
 
   return (
-    <div className="flex-1 space-y-6">
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-            <Warehouse className="h-6 w-6 text-primary" />
+    <ReadGuard module="STOCK">
+      <div className="flex-1 space-y-6">
+        {/* Cabeçalho */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Warehouse className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Controle de Estoque
+              </h1>
+              <p className="text-muted-foreground">
+                Gerencie o estoque de produtos e acompanhe movimentações
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Controle de Estoque
-            </h1>
-            <p className="text-muted-foreground">
-              Gerencie o estoque de produtos e acompanhe movimentações
-            </p>
+          <div className="flex gap-2">
+            <EntradaRapidaDialog
+              onSuccess={handleSuccessEntrada}
+              trigger={
+                <Button size="sm" className="gap-2">
+                  <PlusCircle className="h-4 w-4" />
+                  Entrada Rápida
+                </Button>
+              }
+            />
+            <SaidaRapidaDialog
+              onSuccess={handleSuccessSaida}
+              trigger={
+                <Button size="sm" variant="destructive" className="gap-2">
+                  <Minus className="h-4 w-4" />
+                  Saída Rápida
+                </Button>
+              }
+            />
           </div>
         </div>
-        <div className="flex gap-2">
-          <EntradaRapidaDialog
-            onSuccess={handleSuccessEntrada}
-            trigger={
-              <Button size="sm" className="gap-2">
-                <PlusCircle className="h-4 w-4" />
-                Entrada Rápida
-              </Button>
-            }
-          />
-          <SaidaRapidaDialog
-            onSuccess={handleSuccessSaida}
-            trigger={
-              <Button size="sm" variant="destructive" className="gap-2">
-                <Minus className="h-4 w-4" />
-                Saída Rápida
-              </Button>
-            }
-          />
-        </div>
-      </div>
 
-      {/* Estatísticas */}
-      <EstoqueStats estatisticas={estatisticas} carregando={carregandoStats} />
+        {/* Estatísticas */}
+        <EstoqueStats
+          estatisticas={estatisticas}
+          carregando={carregandoStats}
+        />
 
-      {/* Conteúdo Principal */}
-      <Tabs defaultValue="estoque" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="estoque" className="gap-2">
-            <Package className="h-4 w-4" />
-            Estoque Atual
-          </TabsTrigger>
-          <TabsTrigger value="movimentacoes" className="gap-2">
-            <History className="h-4 w-4" />
-            Movimentações
-          </TabsTrigger>
-          <TabsTrigger value="alertas" className="gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            Alertas
-          </TabsTrigger>
-        </TabsList>
+        {/* Conteúdo Principal */}
+        <Tabs defaultValue="estoque" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="estoque" className="gap-2">
+              <Package className="h-4 w-4" />
+              Estoque Atual
+            </TabsTrigger>
+            <TabsTrigger value="movimentacoes" className="gap-2">
+              <History className="h-4 w-4" />
+              Movimentações
+            </TabsTrigger>
+            <TabsTrigger value="alertas" className="gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Alertas
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="estoque" className="space-y-4">
-          <GenericTable<StockModel>
-            title="Estoque de Produtos"
-            description="Visualize e gerencie o estoque atual de todos os produtos"
-            columns={estoqueColumns}
-            data={estoqueData}
-            loading={carregandoEstoque}
-            searchable={true}
-            searchPlaceholder="Buscar produto..."
-            itemsPerPage={itemsPerPageEstoque}
-            onItemsPerPageChange={setItemsPerPageEstoque}
-            showAdvancedPagination={true}
-          />
-        </TabsContent>
+          <TabsContent value="estoque" className="space-y-4">
+            <GenericTable<StockModel>
+              title="Estoque de Produtos"
+              description="Visualize e gerencie o estoque atual de todos os produtos"
+              columns={estoqueColumns}
+              data={estoqueData}
+              loading={carregandoEstoque}
+              searchable={true}
+              searchPlaceholder="Buscar produto..."
+              itemsPerPage={itemsPerPageEstoque}
+              onItemsPerPageChange={setItemsPerPageEstoque}
+              showAdvancedPagination={true}
+            />
+          </TabsContent>
 
-        <TabsContent value="movimentacoes" className="space-y-4">
-          <GenericTable<StockMovementModel>
-            title="Histórico de Movimentações"
-            description="Acompanhe todas as entradas e saídas de estoque"
-            columns={movimentacoesColumns}
-            data={movimentacoesData}
-            loading={carregandoMovimentacoes}
-            searchable={true}
-            searchPlaceholder="Buscar movimentação..."
-            itemsPerPage={itemsPerPageMovimentacoes}
-            onItemsPerPageChange={setItemsPerPageMovimentacoes}
-            showAdvancedPagination={true}
-          />
-        </TabsContent>
+          <TabsContent value="movimentacoes" className="space-y-4">
+            <GenericTable<StockMovementModel>
+              title="Histórico de Movimentações"
+              description="Acompanhe todas as entradas e saídas de estoque"
+              columns={movimentacoesColumns}
+              data={movimentacoesData}
+              loading={carregandoMovimentacoes}
+              searchable={true}
+              searchPlaceholder="Buscar movimentação..."
+              itemsPerPage={itemsPerPageMovimentacoes}
+              onItemsPerPageChange={setItemsPerPageMovimentacoes}
+              showAdvancedPagination={true}
+            />
+          </TabsContent>
 
-        <TabsContent value="alertas" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-600">
-                  <AlertTriangle className="h-5 w-5" />
-                  Produtos com Estoque Zerado
-                </CardTitle>
-                <CardDescription>
-                  Produtos que estão em falta e precisam de reposição urgente
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {carregandoZerados ? (
-                  <div className="text-sm text-muted-foreground py-2">
-                    Carregando produtos...
-                  </div>
-                ) : estoquesZerados.length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-2">
-                    Nenhum produto com estoque zerado.
-                  </div>
-                ) : (
-                  <ul className="space-y-2">
-                    {estoquesZerados.map((item) => (
-                      <li
-                        key={item.id}
-                        className="flex items-center justify-between rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm"
-                      >
-                        <span className="font-medium text-red-700">
-                          {item.product?.name || "Produto"}
-                        </span>
-                        <Badge variant="destructive">Zerado</Badge>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-yellow-600">
-                  <TrendingUp className="h-5 w-5" />
-                  Produtos com Estoque Baixo
-                </CardTitle>
-                <CardDescription>
-                  Produtos que estão com quantidade baixa e precisam de atenção
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {carregandoBaixos ? (
-                  <div className="text-sm text-muted-foreground py-2">
-                    Carregando produtos...
-                  </div>
-                ) : estoquesBaixos.length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-2">
-                    Nenhum produto com estoque baixo.
-                  </div>
-                ) : (
-                  <ul className="space-y-2">
-                    {estoquesBaixos.map((item) => (
-                      <li
-                        key={item.id}
-                        className="flex items-center justify-between rounded-md border border-yellow-100 bg-yellow-50 px-3 py-2 text-sm"
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium text-yellow-800">
+          <TabsContent value="alertas" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-red-600">
+                    <AlertTriangle className="h-5 w-5" />
+                    Produtos com Estoque Zerado
+                  </CardTitle>
+                  <CardDescription>
+                    Produtos que estão em falta e precisam de reposição urgente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {carregandoZerados ? (
+                    <div className="text-sm text-muted-foreground py-2">
+                      Carregando produtos...
+                    </div>
+                  ) : estoquesZerados.length === 0 ? (
+                    <div className="text-sm text-muted-foreground py-2">
+                      Nenhum produto com estoque zerado.
+                    </div>
+                  ) : (
+                    <ul className="space-y-2">
+                      {estoquesZerados.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex items-center justify-between rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm"
+                        >
+                          <span className="font-medium text-red-700">
                             {item.product?.name || "Produto"}
                           </span>
-                          <span className="text-xs text-muted-foreground">
-                            {`Em estoque: ${formatarQuantidade(
-                              item.currentQuantity
-                            )}`}
-                          </span>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className="border-yellow-200 text-yellow-800"
+                          <Badge variant="destructive">Zerado</Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-yellow-600">
+                    <TrendingUp className="h-5 w-5" />
+                    Produtos com Estoque Baixo
+                  </CardTitle>
+                  <CardDescription>
+                    Produtos que estão com quantidade baixa e precisam de
+                    atenção
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {carregandoBaixos ? (
+                    <div className="text-sm text-muted-foreground py-2">
+                      Carregando produtos...
+                    </div>
+                  ) : estoquesBaixos.length === 0 ? (
+                    <div className="text-sm text-muted-foreground py-2">
+                      Nenhum produto com estoque baixo.
+                    </div>
+                  ) : (
+                    <ul className="space-y-2">
+                      {estoquesBaixos.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex items-center justify-between rounded-md border border-yellow-100 bg-yellow-50 px-3 py-2 text-sm"
                         >
-                          Baixo
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-yellow-800">
+                              {item.product?.name || "Produto"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {`Em estoque: ${formatarQuantidade(
+                                item.currentQuantity
+                              )}`}
+                            </span>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className="border-yellow-200 text-yellow-800"
+                          >
+                            Baixo
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ReadGuard>
   );
 }

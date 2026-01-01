@@ -11,7 +11,7 @@ export interface FunctionalityResponseDto {
   id: string;
   name: string;
   description: string | null;
-  route: string | null;
+  code: string;
   active: boolean;
   createdAt: string;
 }

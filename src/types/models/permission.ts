@@ -18,7 +18,7 @@ export interface PermissionWithRelations extends Permission {
     id: string;
     name: string;
     description: string | null;
-    route: string | null;
+    code: string;
     active: boolean;
   };
   profile?: {
@@ -27,4 +27,12 @@ export interface PermissionWithRelations extends Permission {
     description: string | null;
     active: boolean;
   };
+}
+
+/**
+ * Helper type for checking permissions by code
+ */
+export interface PermissionCheck {
+  code: string;
+  action?: string;
 }

@@ -8,40 +8,64 @@ VALUES
 ('Cozinheiro', 'Acesso de cozinha', true);
 
 -- ===== FUNCTIONALITIES =====
-INSERT INTO public.functionalities (name, description, route, active) 
+INSERT INTO public.functionalities (name, description, code, active) 
 VALUES 
-('Membros', 'Gerenciamento de membros da organização', '/members', true), 
-('Dashboard Cozinheiro', 'Visualização do painel principal', '/dashboard', true), 
-('Convites', 'Gerenciamento de convites', '/convites', true), 
-('Dashboard Estoquista', 'Visualização do painel principal', '/dashboard', true), 
-('Etiquetas', 'Geração e impressão de etiquetas', '/etiquetas', true), 
-('Departamentos', 'Gerenciamento de departamentos', '/departments', true), 
-('Dashboard Gestor', 'Visualização do painel principal', '/dashboard', true), 
-('Organizações', 'Gerenciamento de organizações', '/organizations', true);
+-- Dashboard
+('Dashboard Gestor', 'Visualização do painel do gestor', 'DASHBOARD:MANAGER', true),
+('Dashboard Estoquista', 'Visualização do painel do estoquista', 'DASHBOARD:STOCK', true),
+('Dashboard Cozinheiro', 'Visualização do painel do cozinheiro', 'DASHBOARD:KITCHEN', true),
+-- Membros
+('Membros - Visualizar', 'Visualização de membros da organização', 'MEMBERS:READ', true),
+('Membros - Gerenciar', 'Gerenciamento de membros da organização', 'MEMBERS:WRITE', true),
+-- Convites
+('Convites - Visualizar', 'Visualização de convites', 'INVITES:READ', true),
+('Convites - Gerenciar', 'Gerenciamento de convites', 'INVITES:WRITE', true),
+-- Organizações
+('Organizações - Visualizar', 'Visualização de organizações', 'ORGANIZATIONS:READ', true),
+('Organizações - Gerenciar', 'Gerenciamento de organizações', 'ORGANIZATIONS:WRITE', true),
+-- Departamentos
+('Departamentos - Visualizar', 'Visualização de departamentos', 'DEPARTMENTS:READ', true),
+('Departamentos - Gerenciar', 'Gerenciamento de departamentos', 'DEPARTMENTS:WRITE', true),
+-- Etiquetas
+('Etiquetas - Visualizar', 'Visualização de etiquetas', 'LABELS:READ', true),
+('Etiquetas - Gerenciar', 'Geração e impressão de etiquetas', 'LABELS:WRITE', true),
+-- Estoque
+('Estoque - Visualizar', 'Visualização do estoque', 'STOCK:READ', true),
+('Estoque - Gerenciar', 'Gerenciamento de estoque', 'STOCK:WRITE', true),
+-- Fichas Técnicas
+('Fichas Técnicas - Visualizar', 'Visualização de fichas técnicas', 'TECHNICAL_SHEETS:READ', true),
+('Fichas Técnicas - Gerenciar', 'Gerenciamento de fichas técnicas', 'TECHNICAL_SHEETS:WRITE', true);
 
 -- ===== PERMISSIONS =====
+-- Usando o campo code para referenciar funcionalidades
 INSERT INTO public.permissions (functionality_id, profile_id, action, active) 
 VALUES 
--- Estoquista
-((SELECT id FROM public.functionalities WHERE name = 'Etiquetas'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'liberado', true),
-((SELECT id FROM public.functionalities WHERE name = 'Dashboard Estoquista'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'liberado', true),
+-- Estoquista - Acesso apenas ao estoque
+((SELECT id FROM public.functionalities WHERE code = 'STOCK:READ'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'STOCK:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'DASHBOARD:STOCK'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'granted', true),
 
--- Cozinheiro
-((SELECT id FROM public.functionalities WHERE name = 'Dashboard Cozinheiro'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'liberado', true),
-((SELECT id FROM public.functionalities WHERE name = 'Etiquetas'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'liberado', true),
+-- Cozinheiro - Acesso apenas ao estoque
+((SELECT id FROM public.functionalities WHERE code = 'STOCK:READ'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'STOCK:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'DASHBOARD:KITCHEN'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'granted', true),
 
--- Gestor - Acesso completo
-((SELECT id FROM public.functionalities WHERE name = 'Dashboard Gestor'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
-((SELECT id FROM public.functionalities WHERE name = 'Etiquetas'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
-((SELECT id FROM public.functionalities WHERE name = 'Convites'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
-((SELECT id FROM public.functionalities WHERE name = 'Organizações'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
-((SELECT id FROM public.functionalities WHERE name = 'Departamentos'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
-((SELECT id FROM public.functionalities WHERE name = 'Membros'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'liberado', true),
--- Permissões de visualização para Gestor
-((SELECT id FROM public.functionalities WHERE name = 'Convites'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'visualizar', true),
-((SELECT id FROM public.functionalities WHERE name = 'Organizações'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'visualizar', true),
-((SELECT id FROM public.functionalities WHERE name = 'Departamentos'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'visualizar', true),
-((SELECT id FROM public.functionalities WHERE name = 'Membros'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'visualizar', true);
+-- Gestor - Acesso completo a todas as funcionalidades
+((SELECT id FROM public.functionalities WHERE code = 'DASHBOARD:MANAGER'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'MEMBERS:READ'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'MEMBERS:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'INVITES:READ'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'INVITES:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'ORGANIZATIONS:READ'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'ORGANIZATIONS:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'DEPARTMENTS:READ'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'DEPARTMENTS:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'LABELS:READ'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'LABELS:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'STOCK:READ'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'STOCK:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'TECHNICAL_SHEETS:READ'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'TECHNICAL_SHEETS:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true);
 
 -- ===== PRODUCT GROUPS =====
 INSERT INTO public.groups (id, name) VALUES 

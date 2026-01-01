@@ -163,7 +163,7 @@ export class PermissionBackendService {
           id,
           name,
           description,
-          route,
+          code,
           active,
           created_at
         )
@@ -194,7 +194,7 @@ export class PermissionBackendService {
                 id: func.id,
                 name: func.name,
                 description: func.description,
-                route: func.route,
+                code: func.code,
                 active: func.active,
                 created_at: func.created_at,
               }
@@ -280,8 +280,7 @@ export class PermissionBackendService {
               id,
               name,
               description,
-              category,
-              route,
+              code,
               active
             ),
             profile:profiles (

@@ -42,7 +42,7 @@ import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { InviteService } from "@/lib/services/client/invite-service";
-import { PermissionGuard } from "@/components/auth/PermissionGuard";
+import { ReadGuard } from "@/components/auth/PermissionGuard";
 import { toast } from "sonner";
 import { Invite } from "@/types/models/invite";
 
@@ -564,7 +564,7 @@ export default function ConvitesPage() {
         </div>
       }
     >
-      <PermissionGuard funcionalidade="Convites" acao="visualizar">
+      <ReadGuard module="INVITES">
         <div className="flex flex-1 flex-col gap-6">
           {/* Cabeçalho */}
           <div className="flex items-center justify-between">
@@ -1007,7 +1007,7 @@ export default function ConvitesPage() {
             </DialogContent>
           </Dialog>
         </div>
-      </PermissionGuard>
+      </ReadGuard>
     </Suspense>
   );
 }

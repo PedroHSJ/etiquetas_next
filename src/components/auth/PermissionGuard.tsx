@@ -2,7 +2,7 @@
 
 import React from "react";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Spinner } from "../ui/spinner";
+import { FunctionalityCodeType } from "@/types/models/functionality";
 
 interface PermissionGuardProps {
   funcionalidade: string;
@@ -12,27 +12,116 @@ interface PermissionGuardProps {
   loadingFallback?: React.ReactNode;
 }
 
+interface CodePermissionGuardProps {
+  code: FunctionalityCodeType | string;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  loadingFallback?: React.ReactNode;
+}
+
+/**
+ * Guard baseado em código de funcionalidade (recomendado)
+ * Usa o novo sistema de permissões com códigos como 'STOCK:READ', 'MEMBERS:WRITE'
+ */
+export function CodePermissionGuard({
+  code,
+  children,
+  fallback,
+  loadingFallback,
+}: CodePermissionGuardProps) {
+  const { hasPermissionByCode, loading } = usePermissions();
+
+  if (loading) {
+    return loadingFallback ? <>{loadingFallback}</> : null;
+  }
+
+  if (!hasPermissionByCode(code)) {
+    return fallback ? (
+      <>{fallback}</>
+    ) : (
+      <div className="flex items-center justify-center p-4 text-center">
+        <div className="space-y-2">
+          <div className="text-lg font-semibold text-red-600">
+            Acesso Negado
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Você não tem permissão para acessar esta funcionalidade.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
+/**
+ * Guard de leitura para um módulo
+ * @example <ReadGuard module="STOCK">...</ReadGuard>
+ */
+export function ReadGuard({
+  module,
+  children,
+  fallback,
+  loadingFallback,
+}: {
+  module: string;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  loadingFallback?: React.ReactNode;
+}) {
+  return (
+    <CodePermissionGuard
+      code={`${module}:READ`}
+      fallback={fallback}
+      loadingFallback={loadingFallback}
+    >
+      {children}
+    </CodePermissionGuard>
+  );
+}
+
+/**
+ * Guard de escrita para um módulo
+ * @example <WriteGuard module="STOCK">...</WriteGuard>
+ */
+export function WriteGuard({
+  module,
+  children,
+  fallback,
+  loadingFallback,
+}: {
+  module: string;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  loadingFallback?: React.ReactNode;
+}) {
+  return (
+    <CodePermissionGuard
+      code={`${module}:WRITE`}
+      fallback={fallback}
+      loadingFallback={loadingFallback}
+    >
+      {children}
+    </CodePermissionGuard>
+  );
+}
+
+// ========== LEGACY GUARDS (mantidos para compatibilidade) ==========
+
+/**
+ * @deprecated Use CodePermissionGuard ou ReadGuard/WriteGuard
+ */
 export function PermissionGuard({
   funcionalidade,
   acao,
   children,
   fallback,
-  loadingFallback,
 }: PermissionGuardProps) {
   const { hasPermission, loading } = usePermissions();
 
   if (loading) {
     return null;
-    // return (
-    //   loadingFallback || (
-    //     <div className="flex items-center justify-center p-4">
-    //       <Spinner />
-    //       <span className="ml-2 text-sm text-muted-foreground">
-    //         Verificando permissões...
-    //       </span>
-    //     </div>
-    //   )
-    // );
   }
 
   if (!hasPermission(funcionalidade, acao)) {

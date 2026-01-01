@@ -1,7 +1,7 @@
 "use client";
 
 import { OrganizationWizard } from "@/components/wizard/OrganizationWizard";
-import { PermissionGuard } from "@/components/auth/PermissionGuard";
+import { WriteGuard } from "@/components/auth/PermissionGuard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -38,13 +38,13 @@ export default function EditOrganizationPage({
   };
 
   return (
-    <PermissionGuard funcionalidade="Organizações" acao="editar">
+    <WriteGuard module="ORGANIZATIONS">
       <OrganizationWizard
         userId={userId}
         onComplete={() => {
           handleWizardComplete();
         }}
       />
-    </PermissionGuard>
+    </WriteGuard>
   );
 }

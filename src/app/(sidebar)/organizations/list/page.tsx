@@ -16,7 +16,7 @@ import { AlertTriangle, Trash2, Plus, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
-import { PermissionGuard } from "@/components/auth/PermissionGuard";
+import { ReadGuard } from "@/components/auth/PermissionGuard";
 import {
   GenericTable,
   GenericTableColumn,
@@ -260,7 +260,7 @@ export default function Page() {
         </div>
       }
     >
-      <PermissionGuard funcionalidade="Organizações" acao="visualizar">
+      <ReadGuard module="ORGANIZATIONS">
         <div className="flex flex-1 flex-col gap-6">
           {/* Cabeçalho */}
           <div className="flex items-center justify-between">
@@ -386,7 +386,7 @@ export default function Page() {
             </DialogContent>
           </Dialog>
         </div>
-      </PermissionGuard>
+      </ReadGuard>
     </Suspense>
   );
 }

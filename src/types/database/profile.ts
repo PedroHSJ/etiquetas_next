@@ -20,7 +20,7 @@ export interface FunctionalityEntity {
   id: string;
   name: string;
   description: string | null;
-  route: string | null;
+  code: string;
   active: boolean;
   created_at: string;
 }
@@ -35,6 +35,17 @@ export interface PermissionEntity {
   action: string | null;
   active: boolean;
   created_at: string;
+  // Relations (optional, populated by joins)
+  functionality?: FunctionalityEntity;
+  profile?: ProfileEntity;
+}
+
+/**
+ * Permission with relations populated
+ */
+export interface PermissionWithRelationsEntity extends PermissionEntity {
+  functionality: FunctionalityEntity;
+  profile: ProfileEntity;
 }
 
 /**

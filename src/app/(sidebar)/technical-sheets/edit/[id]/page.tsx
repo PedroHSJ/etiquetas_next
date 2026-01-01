@@ -15,6 +15,7 @@ import {
   EditableIngredient,
   TechnicalSheetResponse,
 } from "@/types/technical-sheet";
+import { WriteGuard } from "@/components/auth/PermissionGuard";
 
 export default function EditTechnicalSheetPage() {
   const { id } = useParams();
@@ -192,34 +193,36 @@ export default function EditTechnicalSheetPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <NavigationButton
-          href="/technical-sheets/list"
-          variant="outline"
-          size="sm"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-        </NavigationButton>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-            <ChefHat className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Editar Ficha Técnica</h1>
-            <p className="text-muted-foreground">
-              Atualize os dados da ficha técnica
-            </p>
+    <WriteGuard module="TECHNICAL_SHEETS">
+      <div className="flex flex-1 flex-col gap-6">
+        <div className="flex items-center gap-4">
+          <NavigationButton
+            href="/technical-sheets/list"
+            variant="outline"
+            size="sm"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+          </NavigationButton>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <ChefHat className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Editar Ficha Técnica</h1>
+              <p className="text-muted-foreground">
+                Atualize os dados da ficha técnica
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <TechnicalSheetGenerator
-        organizationId={selectedOrganization.id}
-        onSave={handleSave}
-        isSaving={saving}
-        initialData={technicalSheet}
-      />
-    </div>
+        <TechnicalSheetGenerator
+          organizationId={selectedOrganization.id}
+          onSave={handleSave}
+          isSaving={saving}
+          initialData={technicalSheet}
+        />
+      </div>
+    </WriteGuard>
   );
 }
