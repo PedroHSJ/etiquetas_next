@@ -186,7 +186,7 @@ export function useEstoque(organizationId?: string) {
         return false;
       }
     },
-    []
+    [organizationId]
   );
 
   // Criar movimentação manual
@@ -226,7 +226,7 @@ export function useEstoque(organizationId?: string) {
         return false;
       }
     },
-    []
+    [organizationId]
   );
 
   return {

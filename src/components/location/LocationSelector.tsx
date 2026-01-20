@@ -49,10 +49,10 @@ export function LocationSelector({
   // States and cities
   const [states, setStates] = useState<State[]>([]);
   const [cities, setCities] = useState<City[]>([]);
-  const [selectedCity, setSelectedCity] = useState<CityWithState | null>(null);
+  // const [selectedCity, setSelectedCity] = useState<CityWithState | null>(null);
 
   // Loading states
-  const [loadingStates, setLoadingStates] = useState(true);
+  const [, setLoadingStates] = useState(true);
   const [loadingCities, setLoadingCities] = useState(false);
   const [loadingZipCode, setLoadingZipCode] = useState(false);
 
@@ -74,19 +74,19 @@ export function LocationSelector({
       loadCities(value.estado_id);
     } else {
       setCities([]);
-      setSelectedCity(null);
+      // setSelectedCity(null);
     }
   }, [value.estado_id]);
 
   // Update selected city when value changes
-  useEffect(() => {
-    if (value.municipio_id && cities.length > 0) {
-      const city = cities.find((c) => c.id === value.municipio_id);
-      setSelectedCity(city || null);
-    } else {
-      setSelectedCity(null);
-    }
-  }, [value.municipio_id, cities]);
+  // useEffect(() => {
+  //   if (value.municipio_id && cities.length > 0) {
+  //     const city = cities.find((c) => c.id === value.municipio_id);
+  //     setSelectedCity(city || null);
+  //   } else {
+  //     setSelectedCity(null);
+  //   }
+  // }, [value.municipio_id, cities]);
 
   // Sync local fields with value
   useEffect(() => {
@@ -143,12 +143,12 @@ export function LocationSelector({
       }
 
       // Check if state is in the list, if not, add it and reload states
-      const stateExists = states.some((s) => s.id === cityResponse.state!.id);
-      if (!stateExists) {
-        // Reload states to include the new one
-        const updatedStates = await LocationService.listStates();
-        setStates(updatedStates);
-      }
+      // const stateExists = states.some((s) => s.id === cityResponse.state!.id);
+      // if (!stateExists) {
+      //   // Reload states to include the new one
+      //   const updatedStates = await LocationService.listStates();
+      //   setStates(updatedStates);
+      // }
 
       // Load cities for this state
       await loadCities(cityResponse.state.id);
@@ -192,12 +192,12 @@ export function LocationSelector({
       estado_id: newStateId,
       municipio_id: undefined, // Reset city when state changes
     });
-    setSelectedCity(null);
+    // setSelectedCity(null);
     loadCities(newStateId);
   };
 
   const handleCityChange = (city: City) => {
-    setSelectedCity(city);
+    // setSelectedCity(city);
     onChange({
       ...value,
       municipio_id: city.id,

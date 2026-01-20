@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronsUpDown, Building2, User } from "lucide-react";
+import { ChevronsUpDown, User } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { UserProfile } from "@/types/models/profile";
 

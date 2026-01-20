@@ -1,10 +1,10 @@
 "use client";
 
-import { Building2, MapPin, Phone, Mail, Clock, Users } from "lucide-react";
+import { Building2, MapPin, Phone, Mail, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { TIPOS_UAN } from "@/types/uan";
+// import { TIPOS_UAN } from "@/types/uan";
 import { Organization } from "@/types/models/organization";
 
 interface OrganizationDetailsProps {

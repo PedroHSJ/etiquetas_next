@@ -172,7 +172,7 @@ export function OrganizationProvider({
     }
   }, [
     activeProfile?.userOrganization?.organizationId,
-    organizations.length,
+    organizations, // Changed from organizations.length to organizations to fix dependency warning
     selectedOrganization?.id,
   ]);
 
@@ -198,7 +198,7 @@ export function OrganizationProvider({
         setSelectedOrganization(organizations[0]);
       }
     }
-  }, [organizations]);
+  }, [organizations, selectedOrganization]); // Added selectedOrganization
 
   const value = {
     organizations,

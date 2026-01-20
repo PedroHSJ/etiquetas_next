@@ -1,10 +1,12 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/database";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-url.com";
 const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUB_KEY!;
+  process.env.NEXT_PUBLIC_SUPABASE_PUB_KEY ||
+  "placeholder-key";
 
 // Browser client usando cookies compatíveis com createServerClient (middleware/API)
 export const supabase = createBrowserClient<Database>(

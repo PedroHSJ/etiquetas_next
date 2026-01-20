@@ -3,14 +3,14 @@
 import * as React from "react";
 import {
   GalleryVerticalEnd,
-  SquareTerminal,
-  Package,
+  // SquareTerminal,
+  // Package,
   Mail,
   Warehouse,
-  Building2,
-  House,
-  FolderTree,
-  Tags,
+  // Building2,
+  // House,
+  // FolderTree,
+  // Tags,
   LayoutGrid,
   Building,
   UserCog,
@@ -44,7 +44,7 @@ const ROUTE_PERMISSION_MAP: Record<string, string> = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user, userId, loading } = useAuth();
+  const { user, loading } = useAuth();
   const { canRead, loading: permissionsLoading } = usePermissions();
   const pathname = usePathname();
 

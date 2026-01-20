@@ -32,8 +32,8 @@ import {
   Building2,
   MapPin,
   Phone,
-  Mail,
-  Users,
+  // Mail,
+  // Users,
   Save,
   Loader2,
 } from "lucide-react";

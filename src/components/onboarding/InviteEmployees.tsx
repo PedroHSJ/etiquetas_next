@@ -66,7 +66,7 @@ export function InviteEmployees({
 
   const {
     data: profiles,
-    isLoading: isProfilesLoading,
+    // isLoading: isProfilesLoading,
     error: profilesError,
   } = useProfilesQuery();
 
