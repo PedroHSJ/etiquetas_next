@@ -134,7 +134,7 @@ export function OrganizationProvider({
           filter: `created_by=eq.${userId}`,
         },
         (payload) => {
-          console.log("Mudança detectada na tabela organizacoes:", payload);
+          // console.log("Mudança detectada na tabela organizacoes:", payload);
           fetchOrganizations();
         }
       )
