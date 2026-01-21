@@ -11,10 +11,12 @@ export function getSupabaseServerClient(
   request: NextRequest,
   response: NextResponse
 ) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-url.com";
   const supabaseAnonKey =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_PUB_KEY!;
+    process.env.NEXT_PUBLIC_SUPABASE_PUB_KEY ||
+    "placeholder-key";
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {

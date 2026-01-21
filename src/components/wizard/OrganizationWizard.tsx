@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -93,7 +93,7 @@ export function OrganizationWizard({
   const {
     data: profilesData,
     isLoading: isProfilesLoading,
-    error: profilesError,
+    // error: profilesError,
   } = useProfilesQuery();
   const profiles = profilesData ?? [];
 
@@ -197,7 +197,7 @@ export function OrganizationWizard({
   };
 
   const removeCustomDepartment = (index: number) => {
-    const deptToRemove = wizardData.customDepartments[index];
+    // const deptToRemove = wizardData.customDepartments[index];
     const updated = wizardData.customDepartments.filter((_, i) => i !== index);
 
     updateWizardData({

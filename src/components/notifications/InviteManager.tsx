@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useNotifications } from "../../contexts/NotificationContext";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+// import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";

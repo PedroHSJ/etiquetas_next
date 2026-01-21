@@ -5,7 +5,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { type VariantProps } from "class-variance-authority";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
-import { Loader2 } from "lucide-react";
+// import { Loader2 } from "lucide-react";
 
 interface NavigationButtonProps
   extends React.ComponentProps<"button">,
@@ -22,7 +22,7 @@ export function NavigationButton({
   onClick,
   disabled,
   children,
-  showLoader = true,
+  // showLoader = true,
   variant,
   size,
   className,

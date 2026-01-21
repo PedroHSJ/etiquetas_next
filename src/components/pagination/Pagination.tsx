@@ -15,10 +15,10 @@ interface PaginationProps {
 export default function Pagination({
   currentPage,
   totalPages,
-  totalItems,
-  itemsPerPage,
+  // totalItems,
+  // itemsPerPage,
   onPageChange,
-  onItemsPerPageChange,
+  // onItemsPerPageChange,
   className = '',
 }: PaginationProps) {
   if (totalPages <= 1) return null;

@@ -53,8 +53,10 @@ export default function Page() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Supabase client
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-url.com";
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   // Buscar etiquetas

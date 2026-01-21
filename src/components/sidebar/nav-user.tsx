@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, LogOut, Settings, User, Building2 } from "lucide-react";
+import { LogOut, Settings, User, Building2 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {

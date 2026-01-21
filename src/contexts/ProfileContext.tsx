@@ -71,6 +71,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
       );
       setUserPermissions(permissions);
     } catch (error) {
+      console.error(error);
       setUserPermissions(null);
     }
   };
@@ -113,6 +114,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   useEffect(() => {
     if (!activeProfile) return;
     loadPermissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeProfile]);
 
   // Salvar perfil ativo no localStorage

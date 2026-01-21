@@ -8,18 +8,18 @@ import { Badge } from "../ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
-import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
+import { Dialog, DialogContent } from "../ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { InviteManager } from "./InviteManager";
 import { Invite } from "@/types/models/invite";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 
 export const NotificationBell: React.FC = () => {
   const {
-    acceptInvite,
-    rejectInvite,
-    refreshInvites,
+    // acceptInvite,
+    // rejectInvite,
+    // refreshInvites,
     pendingInvites,
     pendingInviteCount,
     isLoading,

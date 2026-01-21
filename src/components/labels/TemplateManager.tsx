@@ -47,9 +47,6 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
   const [selectedTemplate, setSelectedTemplate] =
     useState<LabelTemplate | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [selectedLabelType, setSelectedLabelType] = useState<LabelType | null>(
-    null
-  );
   const [isNewTemplateDialogOpen, setIsNewTemplateDialogOpen] = useState(false);
 
   const createNewTemplate = (labelType: LabelType) => {

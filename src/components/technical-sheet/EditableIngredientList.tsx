@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Edit2, Check, X, Trash2, Search, Package } from "lucide-react";
+import { Edit2, Check, X, Trash2, Package } from "lucide-react";
 import { EditableIngredient } from "@/types/technical-sheet";
 import { UNIT_OF_MEASURE_OPTIONS } from "@/types/stock/product";
 import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";

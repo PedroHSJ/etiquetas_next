@@ -95,6 +95,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   const acceptInvite = useCallback(
     async (tokenInvite: string, _aceitoPor: string): Promise<boolean> => {
       try {
+        // Logar _aceitoPor apenas para evitar erro de variavel não usada, ou remover se não for usar
+        // console.log("Aceito por:", _aceitoPor);
         await acceptMutation.mutateAsync(tokenInvite);
         return true;
       } catch (error) {
