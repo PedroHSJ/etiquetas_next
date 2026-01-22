@@ -1,0 +1,5 @@
+{
+  "printerName": "LABEL PRINTER",
+  "language": "TSPL",
+  "printData": "SIZE 60 mm, 60 mm\r\nGAP 3 mm, 0 mm\r\nDIRECTION 0\r\nCLS\r\n\r\nBOX 10,10,450,450,3\r\n\r\nTEXT 20,20,\"2\",0,1,1,\"RESTAURANTE VILLA GOURMET\"\r\nBOX 15,45,435,48,2\r\n\r\nTEXT 20,60,\"2\",0,1,1,\"PRODUTO:\"\r\nTEXT 20,85,\"3\",0,2,2,\"FILE FRANGO\"\r\n\r\nTEXT 20,145,\"1\",0,1,1,\"Cod: FRA-2401-001\"\r\nTEXT 20,165,\"1\",0,1,1,\"Lote: L20250117-A\"\r\nTEXT 20,185,\"1\",0,1,1,\"Peso: 2.5 Kg\"\r\n\r\nBARCODE 20,210,\"128\",60,1,0,2,2,\"FRA2401001\"\r\n\r\nBOX 15,285,435,288,2\r\n\r\nTEXT 20,295,\"2\",0,1,1,\"VAL: 17/01/2025\"\r\nTEXT 20,320,\"1\",0,1,1,\"Armazenamento: REFRIGERADO\"\r\nTEXT 20,340,\"1\",0,1,1,\"Temp: 0C a 4C\"\r\nTEXT 20,360,\"1\",0,1,1,\"Resp: Chef Mario\"\r\n\r\nQRCODE 350,295,H,3,A,0,\"FRA-2401-001|L20250117-A|17/01/2025\"\r\n\r\nPRINT 1\r\n"
+}

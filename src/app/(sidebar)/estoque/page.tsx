@@ -13,12 +13,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Package,
   PlusCircle,
-  History,
+  History as HistoryIcon,
   AlertTriangle,
   TrendingUp,
   Minus,
   Warehouse,
+  Boxes,
+  Printer,
 } from "lucide-react";
+import Link from "next/link";
 
 import {
   GenericTable,
@@ -48,7 +51,7 @@ export default function EstoquePage() {
   const { activeProfile } = useProfile();
   const organizationId = activeProfile?.userOrganization?.organizationId || "";
   const [estatisticas, setEstatisticas] = useState<StockStatistics | null>(
-    null
+    null,
   );
   const [carregandoStats, setCarregandoStats] = useState(true);
 
@@ -79,7 +82,7 @@ export default function EstoquePage() {
 
   useEffect(() => {
     locationMapRef.current = new Map(
-      storageLocations.map((location) => [location.id, location])
+      storageLocations.map((location) => [location.id, location]),
     );
   }, [storageLocations]);
 
@@ -326,7 +329,7 @@ export default function EstoquePage() {
       visible: true,
       render: (value, row) => {
         const fullPath = buildLocationPath(
-          row.storageLocationId || row.storageLocation?.id
+          row.storageLocationId || row.storageLocation?.id,
         );
         if (fullPath === "-") {
           return <span className="text-muted-foreground">-</span>;
@@ -455,6 +458,12 @@ export default function EstoquePage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Link href="/estoque/transito">
+              <Button size="sm" variant="outline" className="gap-2">
+                <Printer className="h-4 w-4" />
+                Imprimir Etiqueta
+              </Button>
+            </Link>
             <EntradaRapidaDialog
               onSuccess={handleSuccessEntrada}
               trigger={
@@ -490,7 +499,7 @@ export default function EstoquePage() {
               Estoque Atual
             </TabsTrigger>
             <TabsTrigger value="movimentacoes" className="gap-2">
-              <History className="h-4 w-4" />
+              <HistoryIcon className="h-4 w-4" />
               Movimentações
             </TabsTrigger>
             <TabsTrigger value="alertas" className="gap-2">
@@ -601,7 +610,7 @@ export default function EstoquePage() {
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {`Em estoque: ${formatarQuantidade(
-                                item.currentQuantity
+                                item.currentQuantity,
                               )}`}
                             </span>
                           </div>

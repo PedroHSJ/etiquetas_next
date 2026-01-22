@@ -1,0 +1,5 @@
+{
+  "printerName": "LABEL PRINTER",
+  "language": "TSPL",
+  "printData": "SIZE 60 mm, 60 mm\r\nGAP 3 mm, 0 mm\r\nDIRECTION 0\r\nCLS\r\n\r\nBOX 10,10,450,450,3\r\n\r\nTEXT 20,25,\"TSS24.BF2\",0,2,2,\"RESTAURANTE\"\r\nTEXT 20,65,\"TSS24.BF2\",0,2,2,\"VILLA GOURMET\"\r\nBOX 15,100,435,103,2\r\n\r\nTEXT 20,115,\"3\",0,1,1,\"PRODUTO:\"\r\nTEXT 20,145,\"4\",0,2,2,\"PICANHA\"\r\n\r\nTEXT 20,210,\"2\",0,1,1,\"Codigo: CAR-2401-005\"\r\nTEXT 20,235,\"2\",0,1,1,\"Lote: L20250117-B\"\r\nTEXT 20,260,\"2\",0,1,1,\"Peso: 1.8 Kg\"\r\n\r\nBOX 15,285,435,288,2\r\n\r\nTEXT 20,300,\"3\",0,1,1,\"VALIDADE:\"\r\nTEXT 20,330,\"4\",0,2,2,\"20/01/2025\"\r\n\r\nTEXT 20,385,\"1\",0,1,1,\"Armazenamento: CONGELADO\"\r\nTEXT 20,405,\"1\",0,1,1,\"Temperatura: -18C\"\r\nTEXT 20,425,\"1\",0,1,1,\"Resp: Chef Mario Silva\"\r\n\r\nPRINT 1\r\n"
+}

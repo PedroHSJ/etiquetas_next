@@ -1,0 +1,4 @@
+{
+  "printerName": "LABEL PRINTER",
+  "printData": "SIZE 60 mm, 60 mm\r\nGAP 3 mm, 0 mm\r\nCLS\r\nTEXT 176,100,\"3\",0,1,1,\"AGORA VAI!\"\r\nPRINT 1\r\n"
+}

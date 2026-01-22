@@ -123,7 +123,7 @@ export function LocationSelector({
 
   const searchByZipCode = useCallback(async () => {
     if (!LocationService.validateCEP(zipCode)) {
-      toast.error("Invalid ZIP code - Enter a valid 8-digit ZIP code");
+      toast.error("CEP inválido - Digite um CEP válido com 8 dígitos");
       return;
     }
 
@@ -133,22 +133,22 @@ export function LocationSelector({
       const cityResponse = await LocationService.fetchOrCreateCity(zipCode);
 
       if (!cityResponse) {
-        toast.error("ZIP code not found - Verify if the ZIP code is correct");
+        toast.error("CEP não encontrado - Verifique se o CEP está correto");
         return;
       }
 
       if (!cityResponse.state) {
-        toast.error("State not found for this ZIP code");
+        toast.error("Estado não encontrado para este CEP");
         return;
       }
 
       // Check if state is in the list, if not, add it and reload states
-      // const stateExists = states.some((s) => s.id === cityResponse.state!.id);
-      // if (!stateExists) {
-      //   // Reload states to include the new one
-      //   const updatedStates = await LocationService.listStates();
-      //   setStates(updatedStates);
-      // }
+      const stateExists = states.some((s) => s.id === cityResponse.state!.id);
+      if (!stateExists) {
+        // Reload states to include the new one
+        const updatedStates = await LocationService.listStates();
+        setStates(updatedStates);
+      }
 
       // Load cities for this state
       await loadCities(cityResponse.state.id);
@@ -174,12 +174,12 @@ export function LocationSelector({
         });
 
         toast.success(
-          `ZIP code found! ${cityResponse.name} - ${cityResponse.state.code}`
+          `CEP encontrado! ${cityResponse.name} - ${cityResponse.state.code}`,
         );
       }
     } catch (error) {
       console.error(error);
-      toast.error("Error searching ZIP code");
+      toast.error("Erro ao buscar CEP");
     } finally {
       setLoadingZipCode(false);
     }
@@ -361,11 +361,11 @@ export function LocationSelector({
 
             <div>
               <Label htmlFor="district" className="mb-2">
-                District
+                Bairro
               </Label>
               <Input
                 id="district"
-                placeholder="Downtown, etc."
+                placeholder="Bairro"
                 value={district}
                 onChange={(e) => {
                   setDistrict(e.target.value);

@@ -4,17 +4,15 @@ import { Product, ProductGroup } from "@/types/stock/product";
 export class ProductBackendService {
   constructor(private readonly supabase: SupabaseClient) {}
 
-  async getProducts(organizationId: string): Promise<Product[]> {
+  async getProducts(): Promise<Product[]> {
     const { data, error } = await this.supabase
       .from("products")
       .select(
         `
         *,
         group:groups(*)
-      `
+      `,
       )
-      .eq("organization_id", organizationId)
-      .eq("is_active", true)
       .order("name");
     if (error) throw error;
     return data || [];
@@ -27,7 +25,7 @@ export class ProductBackendService {
         `
         *,
         group:groups(*)
-      `
+      `,
       )
       .eq("id", id)
       .single();
@@ -36,7 +34,7 @@ export class ProductBackendService {
   }
 
   async createProduct(
-    product: Omit<Product, "id" | "group">
+    product: Omit<Product, "id" | "group">,
   ): Promise<Product> {
     const { data, error } = await this.supabase
       .from("products")
@@ -45,7 +43,7 @@ export class ProductBackendService {
         `
         *,
         group:groups(*)
-      `
+      `,
       )
       .single();
     if (error) throw error;
@@ -61,7 +59,7 @@ export class ProductBackendService {
         `
         *,
         group:groups(*)
-      `
+      `,
       )
       .single();
     if (error) throw error;
@@ -78,7 +76,7 @@ export class ProductBackendService {
 
   async searchProducts(
     organizationId: string,
-    query: string
+    query: string,
   ): Promise<Product[]> {
     const { data, error } = await this.supabase
       .from("products")
@@ -86,7 +84,7 @@ export class ProductBackendService {
         `
         *,
         group:groups(*)
-      `
+      `,
       )
       .eq("organization_id", organizationId)
       .eq("is_active", true)
@@ -102,8 +100,8 @@ export class ProductBackendService {
     const { data, error } = await this.supabase
       .from("groups")
       .select("*")
-      .eq("organization_id", organizationId)
-      .eq("is_active", true)
+      // .eq("organization_id", organizationId)
+      // .eq("is_active", true)
       .order("name");
     if (error) throw error;
     return data || [];
@@ -121,7 +119,7 @@ export class ProductBackendService {
 
   async updateGroup(
     id: number,
-    updates: Partial<ProductGroup>
+    updates: Partial<ProductGroup>,
   ): Promise<ProductGroup> {
     const { data, error } = await this.supabase
       .from("groups")
@@ -167,7 +165,7 @@ export class ProductBackendService {
         group: group.name,
         count:
           products?.filter(
-            (p: { group_id: number | null }) => p.group_id === group.id
+            (p: { group_id: number | null }) => p.group_id === group.id,
           ).length || 0,
       })) || [];
 

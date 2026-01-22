@@ -1,0 +1,5 @@
+{
+  "printerName": "LABEL PRINTER",
+  "language": "TSPL",
+  "printData": "SIZE 60 mm, 60 mm\r\nGAP 3 mm, 0 mm\r\nDIRECTION 0\r\nCLS\r\n\r\nBOX 10,10,450,450,3\r\n\r\nTEXT 20,20,\"2\",0,1,1,\"RESTAURANTE VILLA GOURMET\"\r\nBOX 15,45,435,48,2\r\n\r\nTEXT 20,60,\"2\",0,1,1,\"PRODUTO:\"\r\nTEXT 20,85,\"2\",0,1,1,\"PEITO FRANGO DEFUMADO\"\r\n\r\nTEXT 20,125,\"1\",0,1,1,\"Codigo: FRA-2401-001\"\r\nTEXT 20,145,\"1\",0,1,1,\"Lote: L20250117-A\"\r\nTEXT 20,165,\"1\",0,1,1,\"Peso: 2.5 Kg\"\r\n\r\nBOX 15,185,435,188,2\r\n\r\nTEXT 20,198,\"2\",0,1,1,\"VALIDADE: 17/01/2025\"\r\n\r\nBOX 15,228,435,231,2\r\n\r\nTEXT 20,243,\"1\",0,1,1,\"Armazenamento: REFRIGERADO\"\r\nTEXT 20,263,\"1\",0,1,1,\"Temperatura: 0C a 4C\"\r\nTEXT 20,283,\"1\",0,1,1,\"Resp: Chef Mario Silva\"\r\n\r\nBARCODE 20,310,\"128\",50,1,0,1,2,\"FRA2401001\"\r\n\r\nQRCODE 320,310,H,3,A,0,\"FRA-2401-001\"\r\n\r\nPRINT 1\r\n"
+}

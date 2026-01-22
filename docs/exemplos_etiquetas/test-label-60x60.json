@@ -1,0 +1,5 @@
+{
+  "printerName": "LABEL PRINTER",
+  "language": "TSPL",
+  "printData": "SIZE 60 mm, 60 mm\r\nGAP 3 mm, 0 mm\r\nDIRECTION 0\r\nCLS\r\n\r\nTEXT 30,30,\"3\",0,1,1,\"RESTAURANTE XYZ\"\r\nBOX 25,60,435,63,2\r\n\r\nTEXT 30,80,\"2\",0,1,1,\"PRODUTO:\"\r\nTEXT 30,110,\"4\",0,2,2,\"FRANGO\"\r\n\r\nTEXT 30,180,\"2\",0,1,1,\"Codigo: FRA-001\"\r\nTEXT 30,210,\"2\",0,1,1,\"Lote: L20240115\"\r\n\r\nBARCODE 30,250,\"128\",80,1,0,2,2,\"FRA001\"\r\n\r\nTEXT 30,350,\"2\",0,1,1,\"Validade: 5 dias\"\r\nTEXT 30,380,\"2\",0,1,1,\"Refrigerado (0-4C)\"\r\n\r\nQRCODE 350,250,H,4,A,0,\"FRA-001\"\r\n\r\nPRINT 1\r\n"
+}

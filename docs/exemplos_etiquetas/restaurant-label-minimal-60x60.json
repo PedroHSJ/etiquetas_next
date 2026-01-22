@@ -1,0 +1,5 @@
+{
+  "printerName": "LABEL PRINTER",
+  "language": "TSPL",
+  "printData": "SIZE 60 mm, 60 mm\r\nGAP 3 mm, 0 mm\r\nDIRECTION 0\r\nCLS\r\n\r\nTEXT 20,20,\"2\",0,1,1,\"VILLA GOURMET\"\r\nBOX 15,45,435,47,2\r\n\r\nTEXT 20,60,\"3\",0,2,1,\"FILE FRANGO\"\r\n\r\nTEXT 20,105,\"1\",0,1,1,\"FRA-2401-001 | L20250117-A\"\r\nTEXT 20,125,\"1\",0,1,1,\"Peso: 2.5 Kg\"\r\n\r\nTEXT 20,150,\"2\",0,1,1,\"VAL: 17/01/2025\"\r\n\r\nBOX 15,178,435,180,2\r\n\r\nTEXT 20,190,\"1\",0,1,1,\"REFRIGERADO (0-4C)\"\r\nTEXT 20,210,\"1\",0,1,1,\"Chef Mario Silva\"\r\n\r\nBARCODE 20,235,\"128\",60,1,0,2,2,\"FRA2401001\"\r\n\r\nQRCODE 320,235,H,4,A,0,\"FRA-2401-001|L20250117-A|17/01/2025\"\r\n\r\nPRINT 1\r\n"
+}

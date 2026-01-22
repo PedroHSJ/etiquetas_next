@@ -1,0 +1,5 @@
+{
+  "printerName": "LABEL PRINTER",
+  "language": "TSPL",
+  "printData": "SIZE 60 mm, 60 mm\r\nGAP 3 mm, 0 mm\r\nDIRECTION 0\r\nCLS\r\n\r\nTEXT 30,30,\"3\",0,1,1,\"TESTE 60x60\"\r\nTEXT 30,80,\"2\",0,1,1,\"Etiqueta OK!\"\r\n\r\nPRINT 1\r\n"
+}
