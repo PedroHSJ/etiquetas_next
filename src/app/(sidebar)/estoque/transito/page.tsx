@@ -888,7 +888,7 @@ export default function EstoqueTransitoPage() {
       </div>
 
       {/* Fixed Mobile Footer */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex gap-3 z-10 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex gap-3 z-10 shadow-lg md:static md:bg-transparent md:border-none md:shadow-none md:p-4 md:mt-4">
         <Button
           variant="outline"
           className="flex-1 h-12 gap-2"

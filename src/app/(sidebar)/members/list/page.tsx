@@ -129,20 +129,6 @@ export default function MembersListPage() {
         ),
       },
       {
-        id: "exitDate",
-        key: "exitDate",
-        label: "Saída",
-        accessor: (row) => row.exitDate?.toISOString() ?? "",
-        visible: true,
-        render: (_value, row) => (
-          <span className="text-sm">
-            {row.exitDate
-              ? format(row.exitDate, "dd/MM/yyyy", { locale: ptBR })
-              : "—"}
-          </span>
-        ),
-      },
-      {
         id: "createdAt",
         key: "createdAt",
         label: "Vinculado em",

@@ -77,12 +77,11 @@ export default function ConvitesPage() {
     setLoading(true);
     try {
       const allInvites = await InviteService.getInvitesByEmail(
-        user?.email || ""
+        user?.email || "",
       );
       setInvites(allInvites);
-      const organizationInvites = await InviteService.getInvitesByOrganization(
-        organizacaoId
-      );
+      const organizationInvites =
+        await InviteService.getInvitesByOrganization(organizacaoId);
       setSentInvites(organizationInvites);
       // Separar por status
       setPendingInvites(allInvites.filter((c) => c.status === "pending"));
@@ -185,7 +184,6 @@ export default function ConvitesPage() {
 
   const getStatusBadge = (status: Invite["status"]) => {
     const statusInfo = InviteService.getStatusInfo(status);
-    console.log("Status Info:", status);
     return (
       <Badge
         variant={
@@ -205,7 +203,7 @@ export default function ConvitesPage() {
 
   const renderInvitesTable = (
     invites: Invite[],
-    showActions: boolean = false
+    showActions: boolean = false,
   ) => {
     if (invites.length === 0) {
       return (
@@ -500,7 +498,7 @@ export default function ConvitesPage() {
                             {getInitials(
                               invite.invitedBy.name ??
                                 invite.invitedBy.email ??
-                                "U"
+                                "U",
                             )}
                           </AvatarFallback>
                         </Avatar>
@@ -914,8 +912,8 @@ export default function ConvitesPage() {
                   {actionDialog.action === "aceitar"
                     ? "Aceitação"
                     : actionDialog.action === "rejeitar"
-                    ? "Rejeição"
-                    : "Cancelamento"}
+                      ? "Rejeição"
+                      : "Cancelamento"}
                 </DialogTitle>
                 <DialogDescription>
                   {actionDialog.action === "aceitar" &&
@@ -946,7 +944,7 @@ export default function ConvitesPage() {
                           <Avatar className="h-4 w-4">
                             <AvatarFallback className="h-4 w-4 text-xs bg-gray-100 text-gray-600">
                               {getInitials(
-                                actionDialog.invite.invitedBy.name ?? ""
+                                actionDialog.invite.invitedBy.name ?? "",
                               )}
                             </AvatarFallback>
                           </Avatar>
@@ -973,8 +971,8 @@ export default function ConvitesPage() {
                     actionDialog.action === "aceitar"
                       ? "default"
                       : actionDialog.action === "rejeitar"
-                      ? "destructive"
-                      : "secondary"
+                        ? "destructive"
+                        : "secondary"
                   }
                   onClick={confirmAction}
                   disabled={actionDialog.isProcessing}
@@ -998,8 +996,8 @@ export default function ConvitesPage() {
                       {actionDialog.action === "aceitar"
                         ? "Aceitar"
                         : actionDialog.action === "rejeitar"
-                        ? "Rejeitar"
-                        : "Cancelar"}
+                          ? "Rejeitar"
+                          : "Cancelar"}
                     </>
                   )}
                 </Button>

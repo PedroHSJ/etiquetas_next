@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Package,
@@ -22,7 +21,6 @@ import {
   Printer,
 } from "lucide-react";
 import Link from "next/link";
-
 import {
   GenericTable,
   GenericTableColumn,
@@ -46,6 +44,7 @@ import { StockService } from "@/lib/services/client/stock-service";
 import { useStorageLocationsQuery } from "@/hooks/useStorageLocationsQuery";
 import type { StorageLocation } from "@/types/models/storage-location";
 import { ReadGuard } from "@/components/auth/PermissionGuard";
+import { Button } from "@/components/ui/button";
 
 export default function EstoquePage() {
   const { activeProfile } = useProfile();
@@ -459,7 +458,7 @@ export default function EstoquePage() {
           </div>
           <div className="flex gap-2">
             <Link href="/estoque/transito">
-              <Button size="sm" variant="outline" className="gap-2">
+              <Button size="sm" variant="default" className="gap-2">
                 <Printer className="h-4 w-4" />
                 Imprimir Etiqueta
               </Button>
@@ -467,7 +466,12 @@ export default function EstoquePage() {
             <EntradaRapidaDialog
               onSuccess={handleSuccessEntrada}
               trigger={
-                <Button size="sm" className="gap-2">
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  color="green"
+                  variant="outline"
+                >
                   <PlusCircle className="h-4 w-4" />
                   Entrada Rápida
                 </Button>

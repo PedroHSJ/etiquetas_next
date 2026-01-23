@@ -12,9 +12,7 @@ export class InviteService {
   /**
    * Lista convites com filtros opcionais
    */
-  static async listInvites(
-    params: ListInvitesDto = {}
-  ): Promise<Invite[]> {
+  static async listInvites(params: ListInvitesDto = {}): Promise<Invite[]> {
     const { data, status } = await api.get<
       ApiResponse<InviteWithRelationsResponseDto[]>
     >("/invites", {
@@ -56,9 +54,7 @@ export class InviteService {
   /**
    * Cria um novo convite
    */
-  static async createInvite(
-    dto: CreateInviteDto
-  ): Promise<Invite> {
+  static async createInvite(dto: CreateInviteDto): Promise<Invite> {
     const { data, status } = await api.post<
       ApiResponse<InviteWithRelationsResponseDto>
     >("/invites", dto);
@@ -91,7 +87,7 @@ export class InviteService {
    * Lista convites enviados por uma organização
    */
   static async getInvitesByOrganization(
-    organizationId: string
+    organizationId: string,
   ): Promise<Invite[]> {
     if (!organizationId) return [];
 
@@ -132,7 +128,7 @@ export class InviteService {
       "/user-organizations",
       {
         params: { userId },
-      }
+      },
     );
 
     if (!data || !Array.isArray(data.data) || status !== 200) {

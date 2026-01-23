@@ -27,6 +27,7 @@ import { formatCNPJ, formatPhone } from "@/lib/converters";
 
 export default function DashboardPage() {
   const { activeOrganizationDetails, detailsLoading } = useOrganization();
+  const { user } = useAuth();
   const { session } = useAuth();
   const accessToken = session?.access_token;
   const { isLoading } = useQuery({
@@ -41,9 +42,14 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance text-primary">
+          Dashboard
+        </h1>
         <p className="text-muted-foreground">
-          Bem-vindo ao seu sistema de gestão de UAN
+          Bem-vindo,{" "}
+          {user?.user_metadata?.name.split(" ")[0] +
+            " " +
+            user?.user_metadata?.name.split(" ")[1]}
         </p>
       </div>
 
