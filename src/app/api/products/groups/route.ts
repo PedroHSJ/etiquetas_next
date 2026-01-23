@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
     const groups = await service.getGroups(organizationId);
     return NextResponse.json(groups);
   } catch (err: unknown) {
-    console.log(err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Internal server error" },
       { status: 500 },

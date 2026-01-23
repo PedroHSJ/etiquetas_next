@@ -9,6 +9,10 @@ export interface ProductEntity {
   id: number;
   name: string;
   group_id: number | null;
+  organization_id: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 /**

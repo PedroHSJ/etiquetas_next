@@ -1,10 +1,29 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Product, ProductGroup } from "@/types/stock/product";
+import { ProductEntity } from "@/types/database/product";
+import { GroupEntity } from "@/types/database/group";
+import {
+  ProductResponseDto,
+  ProductGroupResponseDto,
+} from "@/types/dto/product/response";
+import {
+  CreateProductDto,
+  UpdateProductDto,
+  CreateProductGroupDto,
+  UpdateProductGroupDto,
+} from "@/types/dto/product/request";
+import {
+  toProductResponseDto,
+  toProductGroupResponseDto,
+  toProductEntityForCreate,
+  toProductEntityForUpdate,
+  toGroupEntityForCreate,
+  toGroupEntityForUpdate,
+} from "@/lib/converters/product";
 
 export class ProductBackendService {
   constructor(private readonly supabase: SupabaseClient) {}
 
-  async getProducts(): Promise<Product[]> {
+  async getProducts(): Promise<ProductResponseDto[]> {
     const { data, error } = await this.supabase
       .from("products")
       .select(
@@ -14,11 +33,17 @@ export class ProductBackendService {
       `,
       )
       .order("name");
+
     if (error) throw error;
-    return data || [];
+
+    const products = data as unknown as (ProductEntity & {
+      group: GroupEntity | null;
+    })[];
+
+    return products.map((p) => toProductResponseDto(p, p.group));
   }
 
-  async getProduct(id: number): Promise<Product | null> {
+  async getProduct(id: number): Promise<ProductResponseDto | null> {
     const { data, error } = await this.supabase
       .from("products")
       .select(
@@ -29,16 +54,22 @@ export class ProductBackendService {
       )
       .eq("id", id)
       .single();
+
     if (error) throw error;
-    return data;
+    if (!data) return null;
+
+    const product = data as unknown as ProductEntity & {
+      group: GroupEntity | null;
+    };
+    return toProductResponseDto(product, product.group);
   }
 
-  async createProduct(
-    product: Omit<Product, "id" | "group">,
-  ): Promise<Product> {
+  async createProduct(dto: CreateProductDto): Promise<ProductResponseDto> {
+    const payload = toProductEntityForCreate(dto);
+
     const { data, error } = await this.supabase
       .from("products")
-      .insert(product)
+      .insert(payload)
       .select(
         `
         *,
@@ -46,14 +77,24 @@ export class ProductBackendService {
       `,
       )
       .single();
+
     if (error) throw error;
-    return data;
+
+    const created = data as unknown as ProductEntity & {
+      group: GroupEntity | null;
+    };
+    return toProductResponseDto(created, created.group);
   }
 
-  async updateProduct(id: number, updates: Partial<Product>): Promise<Product> {
+  async updateProduct(
+    id: number,
+    dto: UpdateProductDto,
+  ): Promise<ProductResponseDto> {
+    const payload = toProductEntityForUpdate(dto);
+
     const { data, error } = await this.supabase
       .from("products")
-      .update(updates)
+      .update(payload)
       .eq("id", id)
       .select(
         `
@@ -62,8 +103,13 @@ export class ProductBackendService {
       `,
       )
       .single();
+
     if (error) throw error;
-    return data;
+
+    const updated = data as unknown as ProductEntity & {
+      group: GroupEntity | null;
+    };
+    return toProductResponseDto(updated, updated.group);
   }
 
   async deleteProduct(id: number): Promise<void> {
@@ -77,7 +123,7 @@ export class ProductBackendService {
   async searchProducts(
     organizationId: string,
     query: string,
-  ): Promise<Product[]> {
+  ): Promise<ProductResponseDto[]> {
     const { data, error } = await this.supabase
       .from("products")
       .select(
@@ -91,44 +137,62 @@ export class ProductBackendService {
       .ilike("name", `%${query}%`)
       .order("name")
       .limit(20);
+
     if (error) throw error;
-    return data || [];
+
+    const products = data as unknown as (ProductEntity & {
+      group: GroupEntity | null;
+    })[];
+    return products.map((p) => toProductResponseDto(p, p.group));
   }
 
   // Product Groups
-  async getGroups(organizationId: string): Promise<ProductGroup[]> {
+  async getGroups(organizationId: string): Promise<ProductGroupResponseDto[]> {
     const { data, error } = await this.supabase
       .from("groups")
       .select("*")
-      // .eq("organization_id", organizationId)
-      // .eq("is_active", true)
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
       .order("name");
+
     if (error) throw error;
-    return data || [];
+
+    const groups = data as unknown as GroupEntity[];
+    return groups.map(toProductGroupResponseDto);
   }
 
-  async createGroup(group: Omit<ProductGroup, "id">): Promise<ProductGroup> {
+  async createGroup(
+    dto: CreateProductGroupDto,
+  ): Promise<ProductGroupResponseDto> {
+    const payload = toGroupEntityForCreate(dto);
+
     const { data, error } = await this.supabase
       .from("groups")
-      .insert(group)
+      .insert(payload)
       .select()
       .single();
+
     if (error) throw error;
-    return data;
+
+    return toProductGroupResponseDto(data as GroupEntity);
   }
 
   async updateGroup(
     id: number,
-    updates: Partial<ProductGroup>,
-  ): Promise<ProductGroup> {
+    dto: UpdateProductGroupDto,
+  ): Promise<ProductGroupResponseDto> {
+    const payload = toGroupEntityForUpdate(dto);
+
     const { data, error } = await this.supabase
       .from("groups")
-      .update(updates)
+      .update(payload)
       .eq("id", id)
       .select()
       .single();
+
     if (error) throw error;
-    return data;
+
+    return toProductGroupResponseDto(data as GroupEntity);
   }
 
   async deleteGroup(id: number): Promise<void> {
@@ -140,7 +204,9 @@ export class ProductBackendService {
   }
 
   // Statistics
-  async getProductStats(organizationId: string) {
+  async getProductStats(
+    organizationId: string,
+  ): Promise<import("@/types/dto/product/response").ProductStatsResponseDto> {
     const { data: products, error: productsError } = await this.supabase
       .from("products")
       .select("id, group_id")

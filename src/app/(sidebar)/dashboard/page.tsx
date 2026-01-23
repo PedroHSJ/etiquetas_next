@@ -175,14 +175,14 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ChefHat className="h-5 w-5" />
-              Etiquetas
+              Estoque
             </CardTitle>
-            <CardDescription>Gerencie etiquetas de alimentos</CardDescription>
+            <CardDescription>Gerencie seu estoque</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/etiquetas">
+            <Link href="/estoque">
               <Button variant="outline" className="w-full">
-                Ver Etiquetas
+                Ver Estoque
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -198,7 +198,7 @@ export default function DashboardPage() {
             <CardDescription>Gerencie membros da equipe</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/members">
+            <Link href="/members/list">
               <Button variant="outline" className="w-full">
                 Ver Membros
                 <ArrowRight className="ml-2 h-4 w-4" />

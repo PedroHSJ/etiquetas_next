@@ -1,36 +1,43 @@
 import { api } from "@/lib/apiClient";
 import { Product, ProductGroup } from "@/types/models/product";
+import {
+  ProductGroupResponseDto,
+  ProductResponseDto,
+} from "@/types/dto/product/response";
 
 const API_URL = "/products";
 
 export class ProductService {
   static async getProducts(organizationId: string): Promise<Product[]> {
-    const response = await api.get<any[]>(API_URL, {
+    const response = await api.get<ProductResponseDto[]>(API_URL, {
       params: { organizationId },
     });
-
-    return response.data.map((p: any) => ({
+    console.table(response.data);
+    return response.data.map((p) => ({
       id: p.id,
       name: p.name,
-      groupId: p.groupId || p.group_id || null,
-      organizationId: p.organizationId || p.organization_id || null,
-      isActive: p.isActive !== undefined ? p.isActive : p.is_active,
-      createdAt: new Date(p.createdAt || p.created_at),
-      updatedAt: new Date(p.updatedAt || p.updated_at),
+      groupId: p.groupId,
+      organizationId: p.organizationId,
+      isActive: p.isActive,
+      createdAt: new Date(p.createdAt),
+      updatedAt: new Date(p.updatedAt),
     })) as Product[];
   }
 
   static async getGroups(organizationId: string): Promise<ProductGroup[]> {
-    const response = await api.get<any[]>(`${API_URL}/groups`, {
-      params: { organizationId },
-    });
+    const response = await api.get<ProductGroupResponseDto[]>(
+      `${API_URL}/groups`,
+      {
+        params: { organizationId },
+      },
+    );
 
-    return response.data.map((g: any) => ({
+    return response.data.map((g) => ({
       id: g.id,
       name: g.name,
       description: g.description,
-      organizationId: g.organizationId || g.organization_id || null,
-      isActive: g.isActive !== undefined ? g.isActive : g.is_active,
+      organizationId: g.organizationId,
+      isActive: g.isActive,
     })) as ProductGroup[];
   }
 }

@@ -30,6 +30,16 @@ import { StockService } from "@/lib/services/client/stock-service";
 import { Product, ProductGroup } from "@/types/models/product";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { Member } from "@/types/models/member";
+import { MemberService } from "@/lib/services/client/member-service";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ConservationMode = "REFRIGERADO" | "CONGELADO" | "AMBIENTE";
 
@@ -143,8 +153,6 @@ export default function EstoqueTransitoPage() {
   const router = useRouter();
   const { activeProfile } = useProfile();
   const organizationId = activeProfile?.userOrganization?.organizationId || "";
-  const userName =
-    activeProfile?.userOrganization?.profile?.name || "Responsável";
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"amostras" | "produtos">(
@@ -165,45 +173,57 @@ export default function EstoqueTransitoPage() {
     unit: string;
   } | null>(null);
 
-  // ====== AMOSTRAS - Form State ======
-  const [amostraName, setAmostraName] = useState<string>("");
-  const [amostraHorario, setAmostraHorario] = useState<string>("");
-  const [amostraDataColeta, setAmostraDataColeta] = useState<string>(
-    new Date().toISOString().split("T")[0],
-  );
-  const [amostraDataDescarte, setAmostraDataDescarte] = useState<string>("");
-  const [amostraResponsavel, setAmostraResponsavel] = useState<string>("");
+  // Filter state
+  const [groupFilter, setGroupFilter] = useState<string>("");
+  const [productFilter, setProductFilter] = useState<string>("");
 
-  // ====== PRODUTOS - Form State ======
-  const [produtoDataFabricacao, setProdutoDataFabricacao] = useState<string>(
+  // Filtered data
+  const filteredGroups = groups.filter((group) =>
+    group.name.toLowerCase().includes(groupFilter.toLowerCase()),
+  );
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(productFilter.toLowerCase()),
+  );
+
+  // ====== SAMPLES - Form State ======
+  const [sampleName, setSampleName] = useState<string>("");
+  const [sampleTime, setSampleTime] = useState<string>("");
+  const [sampleCollectionDate, setSampleCollectionDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
-  const [produtoDataValidade, setProdutoDataValidade] = useState<string>("");
-  const [produtoDataAbertura, setProdutoDataAbertura] = useState<string>(
+  const [sampleDiscardDate, setSampleDiscardDate] = useState<string>("");
+  const [sampleResponsible, setSampleResponsible] = useState<string>("");
+
+  // ====== PRODUCTS - Form State ======
+  const [productManufacturingDate, setProductManufacturingDate] =
+    useState<string>(new Date().toISOString().split("T")[0]);
+  const [productExpiryDate, setProductExpiryDate] = useState<string>("");
+  const [productOpeningDate, setProductOpeningDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
-  const [produtoDataValidadeAbertura, setProdutoDataValidadeAbertura] =
+  const [productExpiryAfterOpeningDate, setProductExpiryAfterOpeningDate] =
     useState<string>("");
-  const [produtoConservacao, setProdutoConservacao] =
+  const [productConservationMode, setProductConservationMode] =
     useState<ConservationMode>("REFRIGERADO");
-  const [produtoResponsavel, setProdutoResponsavel] = useState<string>("");
+  const [productResponsible, setProductResponsible] = useState<string>("");
+
+  const { data: members = [], isLoading } = useQuery<Member[], Error>({
+    queryKey: ["members", organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      return MemberService.listByOrganization(organizationId);
+    },
+    enabled: !!organizationId,
+  });
 
   useEffect(() => {
-    // Set default responsavel from profile
-    if (userName) {
-      setAmostraResponsavel(userName);
-      setProdutoResponsavel(userName);
+    // Calculate discard date (72 hours = 3 days after collection)
+    if (sampleCollectionDate) {
+      const collection = new Date(sampleCollectionDate);
+      collection.setDate(collection.getDate() + 3);
+      setSampleDiscardDate(collection.toISOString().split("T")[0]);
     }
-  }, [userName]);
-
-  useEffect(() => {
-    // Calculate descarte date (72 hours = 3 days after coleta)
-    if (amostraDataColeta) {
-      const coleta = new Date(amostraDataColeta);
-      coleta.setDate(coleta.getDate() + 3);
-      setAmostraDataDescarte(coleta.toISOString().split("T")[0]);
-    }
-  }, [amostraDataColeta]);
+  }, [sampleCollectionDate]);
 
   useEffect(() => {
     if (organizationId && activeTab === "produtos") {
@@ -234,7 +254,7 @@ export default function EstoqueTransitoPage() {
       const data = await ProductService.getGroups(organizationId);
       setGroups(data);
     } catch (error) {
-      console.error("Erro ao carregar grupos:", error);
+      console.error("Error loading groups:", error);
       toast.error("Erro ao carregar grupos de alimentos");
     } finally {
       setLoading(false);
@@ -245,12 +265,13 @@ export default function EstoqueTransitoPage() {
     try {
       setLoading(true);
       const allProducts = await ProductService.getProducts(organizationId);
+      // console.table(allProducts);
       const filtered = allProducts.filter(
         (p) => p.groupId === parseInt(groupId),
       );
       setProducts(filtered);
     } catch (error) {
-      console.error("Erro ao carregar produtos:", error);
+      console.error("Error loading products:", error);
       toast.error("Erro ao carregar produtos");
     } finally {
       setLoading(false);
@@ -275,7 +296,7 @@ export default function EstoqueTransitoPage() {
         setStockInfo({ quantity: 0, unit: "un" });
       }
     } catch (error) {
-      console.error("Erro ao verificar estoque:", error);
+      console.error("Error checking stock:", error);
       setStockInfo(null);
     }
   };
@@ -289,48 +310,48 @@ export default function EstoqueTransitoPage() {
     setSelectedProductId(id === selectedProductId ? "" : id);
   };
 
-  const validateAmostraForm = (): boolean => {
-    if (!amostraName.trim()) {
+  const validateSampleForm = (): boolean => {
+    if (!sampleName.trim()) {
       toast.error("Preencha o nome da amostra");
       return false;
     }
-    if (!amostraHorario) {
+    if (!sampleTime) {
       toast.error("Preencha o horário");
       return false;
     }
-    if (!amostraDataColeta) {
+    if (!sampleCollectionDate) {
       toast.error("Preencha a data da coleta");
       return false;
     }
-    if (!amostraResponsavel.trim()) {
+    if (!sampleResponsible.trim()) {
       toast.error("Preencha o responsável");
       return false;
     }
     return true;
   };
 
-  const validateProdutoForm = (): boolean => {
+  const validateProductForm = (): boolean => {
     if (!selectedProductId) {
       toast.error("Selecione um produto");
       return false;
     }
-    if (!produtoDataFabricacao) {
+    if (!productManufacturingDate) {
       toast.error("Preencha a data de fabricação");
       return false;
     }
-    if (!produtoDataValidade) {
+    if (!productExpiryDate) {
       toast.error("Preencha a data de validade");
       return false;
     }
-    if (!produtoResponsavel.trim()) {
+    if (!productResponsible.trim()) {
       toast.error("Preencha o responsável");
       return false;
     }
     return true;
   };
 
-  const handleSaveAmostra = async (print: boolean = false) => {
-    if (!validateAmostraForm()) return;
+  const handleSaveSample = async (print: boolean = false) => {
+    if (!validateSampleForm()) return;
 
     try {
       setSaving(true);
@@ -346,11 +367,11 @@ export default function EstoqueTransitoPage() {
           );
         } else {
           const printed = await LabelPrinterService.printSampleLabel({
-            sampleName: amostraName,
-            collectionTime: amostraHorario,
-            collectionDate: amostraDataColeta,
-            discardDate: amostraDataDescarte,
-            responsibleName: amostraResponsavel,
+            sampleName: sampleName,
+            collectionTime: sampleTime,
+            collectionDate: sampleCollectionDate,
+            discardDate: sampleDiscardDate,
+            responsibleName: sampleResponsible,
           });
 
           if (printed) {
@@ -365,15 +386,15 @@ export default function EstoqueTransitoPage() {
 
       router.push("/estoque");
     } catch (error) {
-      console.error("Erro ao salvar:", error);
+      console.error("Error saving:", error);
       toast.error("Erro ao processar");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveProduto = async (print: boolean = false) => {
-    if (!validateProdutoForm()) return;
+  const handleSaveProduct = async (print: boolean = false) => {
+    if (!validateProductForm()) return;
 
     try {
       setSaving(true);
@@ -387,8 +408,8 @@ export default function EstoqueTransitoPage() {
         productId: parseInt(selectedProductId),
         quantity: 1,
         unitOfMeasureCode: stockInfo?.unit || "un",
-        expiryDate: produtoDataValidade,
-        observations: `Conservação: ${produtoConservacao}`,
+        expiryDate: productExpiryDate,
+        observations: `Conservação: ${productConservationMode}`,
         organizationId: organizationId,
       });
 
@@ -404,12 +425,12 @@ export default function EstoqueTransitoPage() {
         } else {
           const printed = await LabelPrinterService.printProductLabel({
             productName: product?.name || "Produto",
-            manufacturingDate: produtoDataFabricacao,
-            validityDate: produtoDataValidade,
-            openingDate: produtoDataAbertura,
-            validityAfterOpening: produtoDataValidadeAbertura,
-            conservationMode: produtoConservacao,
-            responsibleName: produtoResponsavel,
+            manufacturingDate: productManufacturingDate,
+            validityDate: productExpiryDate,
+            openingDate: productOpeningDate,
+            validityAfterOpening: productExpiryAfterOpeningDate,
+            conservationMode: productConservationMode,
+            responsibleName: productResponsible,
           });
 
           if (printed) {
@@ -422,7 +443,7 @@ export default function EstoqueTransitoPage() {
 
       router.push("/estoque");
     } catch (error) {
-      console.error("Erro ao salvar:", error);
+      console.error("Error saving:", error);
       toast.error("Erro ao salvar no estoque em trânsito");
     } finally {
       setSaving(false);
@@ -431,26 +452,26 @@ export default function EstoqueTransitoPage() {
 
   const handleSave = (print: boolean = false) => {
     if (activeTab === "amostras") {
-      handleSaveAmostra(print);
+      handleSaveSample(print);
     } else {
-      handleSaveProduto(print);
+      handleSaveProduct(print);
     }
   };
 
   const isFormValid = () => {
     if (activeTab === "amostras") {
       return (
-        amostraName.trim() &&
-        amostraHorario &&
-        amostraDataColeta &&
-        amostraResponsavel.trim()
+        sampleName.trim() &&
+        sampleTime &&
+        sampleCollectionDate &&
+        sampleResponsible.trim()
       );
     } else {
       return (
         selectedProductId &&
-        produtoDataFabricacao &&
-        produtoDataValidade &&
-        produtoResponsavel.trim()
+        productManufacturingDate &&
+        productExpiryDate &&
+        productResponsible.trim()
       );
     }
   };
@@ -464,9 +485,9 @@ export default function EstoqueTransitoPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      {/* Header Mobile */}
-      <div className="flex items-center p-4 bg-white border-b sticky top-0 z-10">
+    <div className="flex flex-col h-full">
+      {/* Mobile Header */}
+      <div className="flex items-center p-4 border-b">
         <Button
           variant="ghost"
           size="icon"
@@ -503,10 +524,10 @@ export default function EstoqueTransitoPage() {
           </TabsList>
 
           <div className="pb-28">
-            {/* TAB AMOSTRAS */}
+            {/* SAMPLES TAB */}
             <TabsContent value="amostras" className="mt-4 space-y-4">
               <Card className="border-none shadow-sm overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 pb-3 border-b">
+                <CardHeader className="pb-3 border-b">
                   <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
                     <FlaskConical className="h-4 w-4 text-purple-600" />
                     Dados da Amostra
@@ -514,48 +535,58 @@ export default function EstoqueTransitoPage() {
                 </CardHeader>
                 <CardContent className="pt-4 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="amostra-name">Nome da Amostra *</Label>
+                    <Label htmlFor="sample-name">
+                      Nome da Amostra{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
                     <Input
-                      id="amostra-name"
+                      id="sample-name"
                       placeholder="Ex: Salada de Frutas"
                       className="h-12"
-                      value={amostraName}
-                      onChange={(e) => setAmostraName(e.target.value)}
+                      value={sampleName}
+                      onChange={(e) => setSampleName(e.target.value)}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="amostra-horario">Horário *</Label>
+                      <Label htmlFor="sample-time">
+                        Horário <span className="text-destructive">*</span>
+                      </Label>
                       <Input
-                        id="amostra-horario"
+                        id="sample-time"
                         type="time"
                         className="h-12"
-                        value={amostraHorario}
-                        onChange={(e) => setAmostraHorario(e.target.value)}
+                        value={sampleTime}
+                        onChange={(e) => setSampleTime(e.target.value)}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="amostra-coleta">Data da Coleta *</Label>
+                      <Label htmlFor="sample-collection">
+                        Data da Coleta{" "}
+                        <span className="text-destructive">*</span>
+                      </Label>
                       <Input
-                        id="amostra-coleta"
+                        id="sample-collection"
                         type="date"
                         className="h-12"
-                        value={amostraDataColeta}
-                        onChange={(e) => setAmostraDataColeta(e.target.value)}
+                        value={sampleCollectionDate}
+                        onChange={(e) =>
+                          setSampleCollectionDate(e.target.value)
+                        }
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="amostra-descarte">Data do Descarte</Label>
+                    <Label htmlFor="sample-discard">Data do Descarte</Label>
                     <Input
-                      id="amostra-descarte"
+                      id="sample-discard"
                       type="date"
                       className="h-12 bg-slate-50"
-                      value={amostraDataDescarte}
-                      onChange={(e) => setAmostraDataDescarte(e.target.value)}
+                      value={sampleDiscardDate}
+                      onChange={(e) => setSampleDiscardDate(e.target.value)}
                     />
                     <p className="text-xs text-slate-500 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
@@ -564,65 +595,110 @@ export default function EstoqueTransitoPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="amostra-responsavel">Responsável *</Label>
-                    <Input
-                      id="amostra-responsavel"
-                      placeholder="Nome do responsável"
-                      className="h-12"
-                      value={amostraResponsavel}
-                      onChange={(e) => setAmostraResponsavel(e.target.value)}
-                    />
+                    <Label htmlFor="sample-responsible">
+                      Responsável <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={sampleResponsible}
+                      onValueChange={setSampleResponsible}
+                    >
+                      <SelectTrigger className="w-full h-12">
+                        <SelectValue placeholder="Selecione o responsável" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {members.map((member) => (
+                          <SelectItem key={member.id} value={member.user.name}>
+                            {member.user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* TAB PRODUTOS */}
+            {/* PRODUCTS TAB */}
             <TabsContent value="produtos" className="space-y-4">
-              {/* Seleção de Grupo */}
-              <Card className="border-none shadow-sm overflow-hidden">
-                <CardHeader className="border-b">
-                  <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                    <Package className="h-4 w-4 text-blue-600" />
-                    1. Selecione o Grupo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
-                    {groups.map((group) => (
-                      <SelectableCard
-                        key={group.id}
-                        id={group.id.toString()}
-                        name={group.name}
-                        isSelected={selectedGroupId === group.id.toString()}
-                        onSelect={handleSelectGroup}
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Seleção de Produto */}
-              {selectedGroupId && (
+              {/* Group Selection - Show only when no group is selected */}
+              {!selectedGroupId && (
                 <Card className="border-none shadow-sm overflow-hidden">
                   <CardHeader className="border-b">
                     <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                      <ShoppingBasket className="h-4 w-4 text-green-600" />
-                      2. Selecione o Produto
+                      <Package className="h-4 w-4 text-blue-600" />
+                      1. Selecione o Grupo
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-4">
+                  <CardContent className="pt-4 space-y-3">
+                    <Input
+                      placeholder="Buscar grupo..."
+                      value={groupFilter}
+                      onChange={(e) => setGroupFilter(e.target.value)}
+                      className="h-10"
+                    />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto">
+                      {filteredGroups.map((group) => (
+                        <SelectableCard
+                          key={group.id}
+                          id={group.id.toString()}
+                          name={group.name}
+                          isSelected={selectedGroupId === group.id.toString()}
+                          onSelect={handleSelectGroup}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Product Selection - Show only when a group is selected AND no product selected */}
+              {selectedGroupId && !selectedProductId && (
+                <Card className="border-none shadow-sm overflow-hidden">
+                  <CardHeader className="border-b">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedGroupId("");
+                          setSelectedProductId("");
+                          setProductFilter("");
+                        }}
+                        className="h-8 px-2"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                        <ShoppingBasket className="h-4 w-4 text-green-600" />
+                        2. Selecione o Produto
+                      </CardTitle>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Grupo:{" "}
+                      {
+                        groups.find((g) => g.id.toString() === selectedGroupId)
+                          ?.name
+                      }
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-3">
+                    <Input
+                      placeholder="Buscar produto..."
+                      value={productFilter}
+                      onChange={(e) => setProductFilter(e.target.value)}
+                      className="h-10"
+                    />
                     {loading ? (
                       <p className="text-center text-slate-500 py-4">
                         Carregando produtos...
                       </p>
-                    ) : products.length === 0 ? (
+                    ) : filteredProducts.length === 0 ? (
                       <p className="text-center text-slate-500 py-4">
-                        Nenhum produto encontrado neste grupo
+                        Nenhum produto encontrado
                       </p>
                     ) : (
-                      <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
-                        {products.map((product) => (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto">
+                        {filteredProducts.map((product) => (
                           <SelectableCard
                             key={product.id}
                             id={product.id.toString()}
@@ -639,7 +715,7 @@ export default function EstoqueTransitoPage() {
                 </Card>
               )}
 
-              {/* Status do Estoque */}
+              {/* Stock Status */}
               {selectedProductId && stockInfo !== null && (
                 <div
                   className={`flex items-center gap-3 p-4 rounded-xl border ${stockInfo.quantity > 0 ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"}`}
@@ -668,76 +744,92 @@ export default function EstoqueTransitoPage() {
                 </div>
               )}
 
-              {/* Formulário de Produto */}
+              {/* Product Form - Show only when a product is selected */}
               {selectedProductId && (
                 <Card className="border-none shadow-sm overflow-hidden">
                   <CardHeader className="border-b">
-                    <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                      📋 3. Informações da Etiqueta
-                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedProductId("")}
+                        className="h-8 px-2"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                        📋 3. Informações da Etiqueta
+                      </CardTitle>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Produto:{" "}
+                      {
+                        products.find(
+                          (p) => p.id.toString() === selectedProductId,
+                        )?.name
+                      }
+                    </p>
                   </CardHeader>
                   <CardContent className="pt-4 space-y-4">
                     <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="produto-fabricacao">
+                        <Label htmlFor="product-manufacturing">
                           Dt. Fabricação *
                         </Label>
                         <Input
-                          id="produto-fabricacao"
+                          id="product-manufacturing"
                           type="date"
                           className="h-12"
-                          value={produtoDataFabricacao}
+                          value={productManufacturingDate}
                           onChange={(e) =>
-                            setProdutoDataFabricacao(e.target.value)
+                            setProductManufacturingDate(e.target.value)
                           }
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="produto-validade">Dt. Validade *</Label>
+                        <Label htmlFor="product-expiry">Dt. Validade *</Label>
                         <Input
-                          id="produto-validade"
+                          id="product-expiry"
                           type="date"
                           className="h-12"
-                          value={produtoDataValidade}
-                          onChange={(e) =>
-                            setProdutoDataValidade(e.target.value)
-                          }
+                          value={productExpiryDate}
+                          onChange={(e) => setProductExpiryDate(e.target.value)}
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="produto-abertura">Dt. Abertura</Label>
+                        <Label htmlFor="product-opening">Dt. Abertura</Label>
                         <Input
-                          id="produto-abertura"
+                          id="product-opening"
                           type="date"
                           className="h-12"
-                          value={produtoDataAbertura}
+                          value={productOpeningDate}
                           onChange={(e) =>
-                            setProdutoDataAbertura(e.target.value)
+                            setProductOpeningDate(e.target.value)
                           }
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="produto-validade-abertura">
+                        <Label htmlFor="product-expiry-after-opening">
                           Validade após Abertura
                         </Label>
                         <Input
-                          id="produto-validade-abertura"
+                          id="product-expiry-after-opening"
                           type="date"
                           className="h-12"
-                          value={produtoDataValidadeAbertura}
+                          value={productExpiryAfterOpeningDate}
                           onChange={(e) =>
-                            setProdutoDataValidadeAbertura(e.target.value)
+                            setProductExpiryAfterOpeningDate(e.target.value)
                           }
                         />
                       </div>
                     </div>
 
-                    {/* Modo de Conservação */}
+                    {/* Conservation Mode */}
                     <div className="space-y-3">
                       <Label>Modo de Conservação *</Label>
                       <div className="grid grid-cols-3 gap-3">
@@ -745,35 +837,47 @@ export default function EstoqueTransitoPage() {
                           mode="REFRIGERADO"
                           label="Refrigerado"
                           icon={<Thermometer className="h-5 w-5" />}
-                          isSelected={produtoConservacao === "REFRIGERADO"}
-                          onSelect={setProdutoConservacao}
+                          isSelected={productConservationMode === "REFRIGERADO"}
+                          onSelect={setProductConservationMode}
                         />
                         <ConservationOption
                           mode="CONGELADO"
                           label="Congelado"
                           icon={<Snowflake className="h-5 w-5" />}
-                          isSelected={produtoConservacao === "CONGELADO"}
-                          onSelect={setProdutoConservacao}
+                          isSelected={productConservationMode === "CONGELADO"}
+                          onSelect={setProductConservationMode}
                         />
                         <ConservationOption
                           mode="AMBIENTE"
                           label="T° Ambiente"
                           icon={<Sun className="h-5 w-5" />}
-                          isSelected={produtoConservacao === "AMBIENTE"}
-                          onSelect={setProdutoConservacao}
+                          isSelected={productConservationMode === "AMBIENTE"}
+                          onSelect={setProductConservationMode}
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="produto-responsavel">Responsável *</Label>
-                      <Input
-                        id="produto-responsavel"
-                        placeholder="Nome do responsável"
-                        className="h-12"
-                        value={produtoResponsavel}
-                        onChange={(e) => setProdutoResponsavel(e.target.value)}
-                      />
+                      <Label htmlFor="product-responsible">Responsável *</Label>
+                      <Select
+                        value={productResponsible}
+                        onValueChange={setProductResponsible}
+                        required
+                      >
+                        <SelectTrigger className="w-full h-12">
+                          <SelectValue placeholder="Selecione o responsável" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {members.map((member) => (
+                            <SelectItem
+                              key={member.id}
+                              value={member.user.name}
+                            >
+                              {member.user.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </CardContent>
                 </Card>
@@ -783,7 +887,7 @@ export default function EstoqueTransitoPage() {
         </Tabs>
       </div>
 
-      {/* Footer Fixo Mobile */}
+      {/* Fixed Mobile Footer */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex gap-3 z-10 shadow-lg">
         <Button
           variant="outline"

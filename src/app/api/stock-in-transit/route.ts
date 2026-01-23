@@ -32,9 +32,12 @@ export async function GET(request: NextRequest) {
     const result = await service.list({ page, pageSize, organizationId });
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      },
       { status: 500 },
     );
   }
@@ -78,9 +81,12 @@ export async function POST(request: NextRequest) {
     const result = await service.create(body, user.id, organizationId);
 
     return NextResponse.json({ success: true, data: result });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      },
       { status: 500 },
     );
   }

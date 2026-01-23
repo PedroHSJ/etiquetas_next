@@ -6,10 +6,11 @@ import {
 } from "@/types/dto/stock-in-transit/request";
 import { StockInTransit } from "@/types/models/stock-in-transit";
 import { toProductStockModel, toProductStockResponseDto } from "./stock";
+import { ProductEntity } from "@/types/database/product";
 
 // ============= Entity → DTO =============
 export function toStockInTransitResponseDto(
-  entity: StockInTransitEntity & { product?: any },
+  entity: StockInTransitEntity & { product?: ProductEntity },
 ): StockInTransitResponseDto {
   return {
     id: entity.id,
@@ -56,9 +57,7 @@ export function toStockInTransitModel(
     observations: dto.observations,
     createdAt: new Date(dto.createdAt),
     updatedAt: new Date(dto.updatedAt),
-    product: dto.product
-      ? (toProductStockModel(dto.product) as any)
-      : undefined,
+    product: dto.product ? toProductStockModel(dto.product) : undefined,
 
     // Computed fields
     isExpired: validityDate ? validityDate < now : false,

@@ -98,7 +98,7 @@ const useProducts = (searchTerm = "", enabled = true) => {
     queryFn: () =>
       StockService.listProducts({
         q: searchTerm,
-        limit: 50,
+        limit: 500,
         organizationId: organizationId!,
       }),
     enabled: enabled && !!organizationId,
@@ -151,7 +151,7 @@ export function EntradaRapidaDialog({
   // React Query hooks
   const { data: products = [], isLoading: isLoadingProducts } = useProducts(
     "",
-    open
+    open,
   );
   const { data: storageLocations = [], isLoading: isLoadingLocations } =
     useStorageLocationsQuery({
@@ -286,7 +286,7 @@ export function EntradaRapidaDialog({
                         >
                           {(() => {
                             const selected = products.find(
-                              (p) => p.id.toString() === (field.value ?? "")
+                              (p) => p.id.toString() === (field.value ?? ""),
                             );
                             return selected ? (
                               <span>
@@ -367,7 +367,7 @@ export function EntradaRapidaDialog({
                                           }}
                                           className={cn(
                                             isSelected &&
-                                              "bg-accent text-accent-foreground"
+                                              "bg-accent text-accent-foreground",
                                           )}
                                         >
                                           {p.name}
@@ -376,14 +376,14 @@ export function EntradaRapidaDialog({
                                               "ml-auto",
                                               isSelected
                                                 ? "opacity-100"
-                                                : "opacity-0"
+                                                : "opacity-0",
                                             )}
                                           />
                                         </CommandItem>
                                       );
                                     })}
                                   </CommandGroup>
-                                )
+                                ),
                               );
                             })()
                           )}
