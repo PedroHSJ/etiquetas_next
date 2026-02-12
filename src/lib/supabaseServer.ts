@@ -9,7 +9,7 @@ import type { Database } from "@/types/database";
  */
 export function getSupabaseServerClient(
   request: NextRequest,
-  response: NextResponse
+  response: NextResponse,
 ) {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-url.com";
@@ -21,7 +21,7 @@ export function getSupabaseServerClient(
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll: () => request.cookies.getAll() || [],
-      setAll: (cookies) => {
+      setAll: (cookies: { name: string; value: string; options: any }[]) => {
         cookies.forEach(({ name, value, options }) => {
           response.cookies.set(name, value, options);
         });
@@ -36,7 +36,7 @@ export function getSupabaseBearerClient(token: string) {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
-      "Supabase não configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY."
+      "Supabase não configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.",
     );
   }
 

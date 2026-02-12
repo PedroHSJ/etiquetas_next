@@ -295,6 +295,16 @@ CREATE TABLE IF NOT EXISTS public.technical_sheet_ai_cache (
     CONSTRAINT technical_sheet_ai_cache_unique UNIQUE (dish_name, servings)
 );
 
+CREATE TABLE IF NOT EXISTS public.organization_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    setting_key VARCHAR(255) NOT NULL,
+    setting_value TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(organization_id, setting_key)
+);
+
 -- 9. FUNCTIONS & TRIGGERS
 CREATE OR REPLACE FUNCTION public.update_updated_at_column() RETURNS trigger
     LANGUAGE plpgsql
@@ -495,6 +505,7 @@ CREATE OR REPLACE TRIGGER update_stock_updated_at BEFORE UPDATE ON public.stock 
 CREATE OR REPLACE TRIGGER trigger_process_stock_movement AFTER INSERT ON public.stock_movements FOR EACH ROW EXECUTE FUNCTION process_stock_movement();
 CREATE OR REPLACE TRIGGER update_technical_sheets_updated_at BEFORE UPDATE ON public.technical_sheets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER update_stock_in_transit_updated_at BEFORE UPDATE ON public.stock_in_transit FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE OR REPLACE TRIGGER update_organization_settings_updated_at BEFORE UPDATE ON public.organization_settings FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- 10. INDEXES
 CREATE INDEX IF NOT EXISTS idx_states_code ON public.states (code);
@@ -561,6 +572,26 @@ CREATE POLICY "Users can delete stock in transit from their organizations" ON pu
         )
     );
 
+ALTER TABLE public.organization_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view settings of their organizations" ON public.organization_settings
+    FOR SELECT USING (
+        organization_id IN (
+            SELECT o.organization_id 
+            FROM public.user_organizations o
+            WHERE o.user_id = auth.uid() AND o.active = true
+        )
+    );
+
+CREATE POLICY "Users can manage settings of their organizations" ON public.organization_settings
+    FOR ALL USING (
+        organization_id IN (
+            SELECT o.organization_id 
+            FROM public.user_organizations o
+            WHERE o.user_id = auth.uid() AND o.active = true
+        )
+    );
+
 -- 12. COMMENTS
 COMMENT ON TABLE public.organizations IS 'Tabela de organizações/empresas que usam o sistema';
 COMMENT ON TABLE public.departments IS 'Departamentos dentro de cada organização';
@@ -571,3 +602,4 @@ COMMENT ON TABLE public.technical_sheets IS 'Technical sheets for recipes/dishes
 COMMENT ON TABLE public.technical_sheet_ingredients IS 'Ingredients linked to a technical sheet';
 COMMENT ON TABLE public.technical_sheet_ai_cache IS 'Caches AI-generated technical sheets to avoid repeated requests';
 COMMENT ON TABLE public.stock_in_transit IS 'Food removed from stock, labeled and stored for later use';
+COMMENT ON TABLE public.organization_settings IS 'Configurações genéricas por organização (ex: nome da impressora)';

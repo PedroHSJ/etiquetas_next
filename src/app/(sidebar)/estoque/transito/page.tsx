@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Member } from "@/types/models/member";
 import { MemberService } from "@/lib/services/client/member-service";
+import { SettingsService } from "@/lib/services/client/settings-service";
 import {
   Select,
   SelectContent,
@@ -216,6 +217,12 @@ export default function EstoqueTransitoPage() {
     enabled: !!organizationId,
   });
 
+  const { data: printerName } = useQuery({
+    queryKey: ["printer-name", organizationId],
+    queryFn: () => SettingsService.getPrinterName(organizationId),
+    enabled: !!organizationId,
+  });
+
   useEffect(() => {
     // Calculate discard date (72 hours = 3 days after collection)
     if (sampleCollectionDate) {
@@ -366,13 +373,16 @@ export default function EstoqueTransitoPage() {
             "Agente de impressão não detectado (localhost:5000). A etiqueta não foi impressa.",
           );
         } else {
-          const printed = await LabelPrinterService.printSampleLabel({
-            sampleName: sampleName,
-            collectionTime: sampleTime,
-            collectionDate: sampleCollectionDate,
-            discardDate: sampleDiscardDate,
-            responsibleName: sampleResponsible,
-          });
+          const printed = await LabelPrinterService.printSampleLabel(
+            {
+              sampleName: sampleName,
+              collectionTime: sampleTime,
+              collectionDate: sampleCollectionDate,
+              discardDate: sampleDiscardDate,
+              responsibleName: sampleResponsible,
+            },
+            printerName || "LABEL PRINTER", // Fallback final se não configurado
+          );
 
           if (printed) {
             toast.success("Etiqueta de amostra enviada para impressão!");
@@ -423,15 +433,18 @@ export default function EstoqueTransitoPage() {
             "Agente de impressão não detectado (localhost:5000). A etiqueta não foi impressa.",
           );
         } else {
-          const printed = await LabelPrinterService.printProductLabel({
-            productName: product?.name || "Produto",
-            manufacturingDate: productManufacturingDate,
-            validityDate: productExpiryDate,
-            openingDate: productOpeningDate,
-            validityAfterOpening: productExpiryAfterOpeningDate,
-            conservationMode: productConservationMode,
-            responsibleName: productResponsible,
-          });
+          const printed = await LabelPrinterService.printProductLabel(
+            {
+              productName: product?.name || "Produto",
+              manufacturingDate: productManufacturingDate,
+              validityDate: productExpiryDate,
+              openingDate: productOpeningDate,
+              validityAfterOpening: productExpiryAfterOpeningDate,
+              conservationMode: productConservationMode,
+              responsibleName: productResponsible,
+            },
+            printerName || "LABEL PRINTER", // Fallback final se não configurado
+          );
 
           if (printed) {
             toast.success("Etiqueta de produto enviada para impressão!");

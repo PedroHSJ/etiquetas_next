@@ -13,23 +13,22 @@ export async function updateSession(request: NextRequest) {
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value);
-          });
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options);
-          });
-        },
+      getAll() {
+        return request.cookies.getAll();
       },
-    }
-  );
+      setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
+        });
+        supabaseResponse = NextResponse.next({
+          request,
+        });
+        cookiesToSet.forEach(({ name, value, options }) => {
+          supabaseResponse.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
 
   // Redirecionar rota raiz para /login
   if (request.nextUrl.pathname === "/") {
@@ -41,7 +40,7 @@ export async function updateSession(request: NextRequest) {
   // Definir rotas públicas que não necessitam autenticação
   const publicRoutes = ["/login", "/auth", "/register"];
   const isPublicRoute = publicRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+    request.nextUrl.pathname.startsWith(route),
   );
 
   // Se for uma rota pública, permitir acesso
@@ -74,7 +73,7 @@ export async function updateSession(request: NextRequest) {
     // Se há usuário autenticado mas está tentando acessar /login, redirecionar para dashboard
     if (user && request.nextUrl.pathname === "/login") {
       console.log(
-        "Authenticated user accessing login, redirecting to dashboard"
+        "Authenticated user accessing login, redirecting to dashboard",
       );
       const dashboardUrl = new URL("/dashboard", request.url);
       return NextResponse.redirect(dashboardUrl);

@@ -11,7 +11,7 @@ const supabaseAnonKey =
 // Browser client usando cookies compatíveis com createServerClient (middleware/API)
 export const supabase = createBrowserClient<Database>(
   supabaseUrl,
-  supabaseAnonKey
+  supabaseAnonKey,
 );
 // Função para definir sessão atual (para RLS)
 export async function setCurrentSession(sessionId: string) {
@@ -21,7 +21,7 @@ export async function setCurrentSession(sessionId: string) {
   }
 
   // typed Database.Functions is empty; cast args to any to avoid type errors here
-  const { error } = await supabase.rpc("set_session_context", {
+  const { error } = await (supabase.rpc as any)("set_session_context", {
     session_id: sessionId,
   });
 
@@ -37,7 +37,7 @@ export function generateSessionId(): string {
 
 // Função para criptografar dados sensíveis
 export async function encryptSensitiveData(
-  data: string
+  data: string,
 ): Promise<{ encrypted: string; hash: string }> {
   // Em produção, use uma chave de criptografia mais robusta
   const encoder = new TextEncoder();

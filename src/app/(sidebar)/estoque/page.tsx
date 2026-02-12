@@ -28,6 +28,7 @@ import {
 import { EstoqueStats } from "@/components/estoque/EstoqueStats";
 import { EntradaRapidaDialog } from "@/components/estoque/EntradaRapidaDialog";
 import { SaidaRapidaDialog } from "@/components/estoque/SaidaRapidaDialog";
+import { PrinterConfigDialog } from "@/components/settings/printer-config-dialog";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Popover } from "@radix-ui/react-popover";
@@ -458,20 +459,16 @@ export default function EstoquePage() {
           </div>
           <div className="flex gap-2">
             <Link href="/estoque/transito">
-              <Button size="sm" variant="default" className="gap-2">
+              <Button variant="default" className="gap-2">
                 <Printer className="h-4 w-4" />
                 Imprimir Etiqueta
               </Button>
             </Link>
+            <PrinterConfigDialog />
             <EntradaRapidaDialog
               onSuccess={handleSuccessEntrada}
               trigger={
-                <Button
-                  size="sm"
-                  className="gap-2"
-                  color="green"
-                  variant="outline"
-                >
+                <Button className="gap-2" color="green" variant="outline">
                   <PlusCircle className="h-4 w-4" />
                   Entrada Rápida
                 </Button>
@@ -480,7 +477,7 @@ export default function EstoquePage() {
             <SaidaRapidaDialog
               onSuccess={handleSuccessSaida}
               trigger={
-                <Button size="sm" variant="destructive" className="gap-2">
+                <Button variant="destructive" className="gap-2">
                   <Minus className="h-4 w-4" />
                   Saída Rápida
                 </Button>
