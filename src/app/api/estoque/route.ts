@@ -1,35 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { StockBackendService } from "@/lib/services/server/stockService";
 import { EstoqueFiltros } from "@/types/estoque";
 import { StockListResponseDto } from "@/types/dto/stock/response";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "20");
@@ -55,7 +43,7 @@ export async function GET(request: NextRequest) {
         : undefined,
     };
 
-    const stockService = new StockBackendService(supabase);
+    const stockService = new StockBackendService();
     const result = await stockService.listStock({
       page,
       pageSize,

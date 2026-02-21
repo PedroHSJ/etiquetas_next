@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { OrganizationBackendService } from "@/lib/services/server/organizationService";
 import { UpdateOrganizationDto } from "@/types/dto/organization/request";
 import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
@@ -11,24 +11,24 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const service = new OrganizationBackendService(supabase);
+    const service = new OrganizationBackendService();
     const org = await service.getByIdExpanded(id);
 
     const successResponse: ApiSuccessResponse<OrganizationExpandedResponseDto> =
       {
-        data: org,
+        data: org as unknown as OrganizationExpandedResponseDto,
       };
     return NextResponse.json(successResponse, { status: 200 });
   } catch (err: unknown) {
@@ -41,12 +41,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PUT(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
@@ -55,13 +56,12 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const body = await request.json();
     const dto: UpdateOrganizationDto = body; // TODO: Add validation (Zod)
 
-    const supabase = getSupabaseBearerClient(token);
-    const service = new OrganizationBackendService(supabase);
+    const service = new OrganizationBackendService();
     const updated = await service.updateExpanded(id, dto);
 
     const successResponse: ApiSuccessResponse<OrganizationExpandedResponseDto> =
       {
-        data: updated,
+        data: updated as unknown as OrganizationExpandedResponseDto,
       };
     return NextResponse.json(successResponse, { status: 200 });
   } catch (err: unknown) {

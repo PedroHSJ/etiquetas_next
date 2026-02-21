@@ -44,18 +44,26 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { InviteService } from "@/lib/services/client/invite-service";
 import { ReadGuard } from "@/components/auth/PermissionGuard";
 import { toast } from "sonner";
-import { Invite } from "@/types/models/invite";
+import { InviteWithRelationsResponseDto } from "@/types/dto/invite";
 
 export default function ConvitesPage() {
   const { userId, user } = useAuth();
   const { selectedOrganization } = useOrganization();
   const organizacaoId = selectedOrganization?.id;
   const organizacaoNome = selectedOrganization?.name || "";
-  const [invites, setInvites] = useState<Invite[]>([]);
-  const [pendingInvites, setPendingInvites] = useState<Invite[]>([]);
-  const [acceptedInvites, setAcceptedInvites] = useState<Invite[]>([]);
-  const [rejectedInvites, setRejectedInvites] = useState<Invite[]>([]);
-  const [sentInvites, setSentInvites] = useState<Invite[]>([]);
+  const [invites, setInvites] = useState<InviteWithRelationsResponseDto[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<
+    InviteWithRelationsResponseDto[]
+  >([]);
+  const [acceptedInvites, setAcceptedInvites] = useState<
+    InviteWithRelationsResponseDto[]
+  >([]);
+  const [rejectedInvites, setRejectedInvites] = useState<
+    InviteWithRelationsResponseDto[]
+  >([]);
+  const [sentInvites, setSentInvites] = useState<
+    InviteWithRelationsResponseDto[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("pendentes");
 
@@ -66,7 +74,7 @@ export default function ConvitesPage() {
   // Dialog de confirmação de ações
   const [actionDialog, setActionDialog] = useState({
     isOpen: false,
-    invite: null as Invite | null,
+    invite: null as InviteWithRelationsResponseDto | null,
     action: "" as "aceitar" | "rejeitar" | "cancelar",
     isProcessing: false,
   });
@@ -102,7 +110,7 @@ export default function ConvitesPage() {
     }
   }, [organizacaoId]);
 
-  const handleAcceptInvite = async (invite: Invite) => {
+  const handleAcceptInvite = async (invite: InviteWithRelationsResponseDto) => {
     if (!userId) return;
 
     setActionDialog({
@@ -113,7 +121,7 @@ export default function ConvitesPage() {
     });
   };
 
-  const handleRejectInvite = async (invite: Invite) => {
+  const handleRejectInvite = async (invite: InviteWithRelationsResponseDto) => {
     if (!userId) return;
 
     setActionDialog({
@@ -124,7 +132,7 @@ export default function ConvitesPage() {
     });
   };
 
-  const handleCancelInvite = async (invite: Invite) => {
+  const handleCancelInvite = async (invite: InviteWithRelationsResponseDto) => {
     setActionDialog({
       isOpen: true,
       invite,
@@ -182,27 +190,17 @@ export default function ConvitesPage() {
       .substring(0, 2);
   };
 
-  const getStatusBadge = (status: Invite["status"]) => {
+  const getStatusBadge = (status: string) => {
     const statusInfo = InviteService.getStatusInfo(status);
     return (
-      <Badge
-        variant={
-          // statusInfo.variant as
-          //   | "default"
-          //   | "secondary"
-          //   | "destructive"
-          //   | "outline"
-          "outline"
-        }
-        className={statusInfo.color}
-      >
+      <Badge variant={statusInfo.variant as any} className={statusInfo.color}>
         {statusInfo.label}
       </Badge>
     );
   };
 
   const renderInvitesTable = (
-    invites: Invite[],
+    invites: InviteWithRelationsResponseDto[],
     showActions: boolean = false,
   ) => {
     if (invites.length === 0) {
@@ -264,26 +262,26 @@ export default function ConvitesPage() {
 
                 {/* Footer do Card com informações de quem convidou */}
                 <div className="p-4 pt-3 bg-muted/30">
-                  {invite.invitedBy && (
+                  {invite.invitedByName && (
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="h-8 w-8 text-xs bg-gray-100 text-gray-600">
-                          {getInitials(invite.invitedBy.name ?? "")}
+                          {getInitials(invite.invitedByName || "U")}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-muted-foreground">
-                          Convidado por {invite.invitedBy.name}
+                          Convidado por {invite.invitedByName}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {invite.invitedBy.email}
+                          {invite.invitedByEmail}
                         </p>
                       </div>
                     </div>
                   )}
 
                   {/* Ações para convites pendentes */}
-                  {showActions && invite.status === "pendente" && (
+                  {showActions && invite.status === "pending" && (
                     <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
                       <Button
                         size="sm"
@@ -338,19 +336,19 @@ export default function ConvitesPage() {
                   </TableCell>
                   <TableCell>{getStatusBadge(invite.status)}</TableCell>
                   <TableCell>
-                    {invite.invitedBy ? (
+                    {invite.invitedByName ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarFallback className="h-6 w-6 text-xs bg-gray-100 text-gray-600">
-                            {getInitials(invite.invitedBy.name ?? "")}
+                            {getInitials(invite.invitedByName || "U")}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="text-sm font-medium">
-                            {invite.invitedBy.name}
+                            {invite.invitedByName}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {invite.invitedBy.email}
+                            {invite.invitedByEmail}
                           </div>
                         </div>
                       </div>
@@ -404,7 +402,9 @@ export default function ConvitesPage() {
     );
   };
 
-  const renderSentInvitesTable = (invitesList: Invite[]) => {
+  const renderSentInvitesTable = (
+    invitesList: InviteWithRelationsResponseDto[],
+  ) => {
     if (invitesList.length === 0) {
       return (
         <div className="text-center py-8 text-muted-foreground">
@@ -428,9 +428,9 @@ export default function ConvitesPage() {
                     <p className="text-sm text-muted-foreground">
                       Perfil: {invite.profile?.name ?? "—"}
                     </p>
-                    {invite.invitedBy?.name && (
+                    {invite.invitedByName && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Enviado por {invite.invitedBy.name}
+                        Enviado por {invite.invitedByName}
                       </p>
                     )}
                   </div>
@@ -439,11 +439,15 @@ export default function ConvitesPage() {
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>
                     Enviado em{" "}
-                    {format(invite.createdAt, "dd/MM/yyyy", { locale: ptBR })}
+                    {format(new Date(invite.createdAt), "dd/MM/yyyy", {
+                      locale: ptBR,
+                    })}
                   </p>
                   <p>
                     Expira em{" "}
-                    {format(invite.expiresAt, "dd/MM/yyyy", { locale: ptBR })}
+                    {format(new Date(invite.expiresAt), "dd/MM/yyyy", {
+                      locale: ptBR,
+                    })}
                   </p>
                 </div>
                 {invite.status === "pending" && (
@@ -491,23 +495,19 @@ export default function ConvitesPage() {
                   <TableCell>{invite.profile?.name ?? "—"}</TableCell>
                   <TableCell>{getStatusBadge(invite.status)}</TableCell>
                   <TableCell>
-                    {invite.invitedBy ? (
+                    {invite.invitedByName ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarFallback className="h-6 w-6 text-xs bg-gray-100 text-gray-600">
-                            {getInitials(
-                              invite.invitedBy.name ??
-                                invite.invitedBy.email ??
-                                "U",
-                            )}
+                            {getInitials(invite.invitedByName || "U")}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="text-sm font-medium">
-                            {invite.invitedBy.name ?? "Usuário"}
+                            {invite.invitedByName || "Usuário"}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {invite.invitedBy.email ?? "—"}
+                            {invite.invitedByEmail || "—"}
                           </div>
                         </div>
                       </div>
@@ -517,12 +517,16 @@ export default function ConvitesPage() {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm">
-                      {format(invite.createdAt, "dd/MM/yyyy", { locale: ptBR })}
+                      {format(new Date(invite.createdAt), "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })}
                     </span>
                   </TableCell>
                   <TableCell>
                     <span className="text-sm">
-                      {format(invite.expiresAt, "dd/MM/yyyy", { locale: ptBR })}
+                      {format(new Date(invite.expiresAt), "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
@@ -939,17 +943,17 @@ export default function ConvitesPage() {
                         {actionDialog.invite.profile?.name} •{" "}
                         {actionDialog.invite.organization?.name}
                       </p>
-                      {actionDialog.invite.invitedBy && (
+                      {actionDialog.invite.invitedByName && (
                         <div className="flex items-center gap-2 mt-1">
                           <Avatar className="h-4 w-4">
                             <AvatarFallback className="h-4 w-4 text-xs bg-gray-100 text-gray-600">
                               {getInitials(
-                                actionDialog.invite.invitedBy.name ?? "",
+                                actionDialog.invite.invitedByName || "U",
                               )}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-xs text-muted-foreground">
-                            Convidado por {actionDialog.invite.invitedBy.name}
+                            Convidado por {actionDialog.invite.invitedByName}
                           </span>
                         </div>
                       )}

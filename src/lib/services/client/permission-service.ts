@@ -9,8 +9,7 @@ export const PermissionService = {
     const { data, status } = await api.get<UserPermissions>(`/permissions`, {
       params: { organizationId },
     });
-    if (status !== 200)
-      throw new Error("Não foi possível buscar permissões");
+    if (status !== 200) throw new Error("Não foi possível buscar permissões");
     // Quando não há permissões, a API pode retornar null; tratamos como "sem permissões"
     return (data as UserPermissions | null) ?? ({} as UserPermissions);
   },
@@ -21,13 +20,13 @@ export const PermissionService = {
   async hasPermission(
     organizationId: string,
     functionalityName: string,
-    action: string
+    action: string,
   ): Promise<boolean> {
     const { data, status } = await api.get<{ allowed: boolean }>(
       `/permissions/check`,
       {
         params: { organizationId, functionalityName, action },
-      }
+      },
     );
     if (!data || status !== 200) return false;
     return data.allowed;
@@ -38,7 +37,7 @@ export const PermissionService = {
    */
   async assignProfileToUser(
     userOrganizationId: string,
-    profileId: string
+    profileId: string,
   ): Promise<boolean> {
     const { data, status } = await api.post(`/permissions/assign-profile`, {
       userOrganizationId,
@@ -52,7 +51,7 @@ export const PermissionService = {
    */
   async removeProfileFromUser(
     userOrganizationId: string,
-    profileId: string
+    profileId: string,
   ): Promise<boolean> {
     const { data, status } = await api.post(`/permissions/remove-profile`, {
       userOrganizationId,

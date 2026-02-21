@@ -1,22 +1,22 @@
-// Database entity types for invites
+// Database entity types for invites - Updated to camelCase for Prisma @map schema
 export interface InviteEntity {
   id: string;
   email: string;
-  organization_id: string;
-  profile_id: string;
+  organizationId: string;
+  profileId: string;
   status: "pending" | "accepted" | "rejected" | "expired" | "canceled";
-  invite_token: string;
-  expires_at: string;
-  invited_by: string;
-  invited_by_name?: string | null;
-  invited_by_email?: string | null;
-  invited_by_avatar_url?: string | null;
-  created_at: string;
-  accepted_at?: string;
-  accepted_by?: string;
-  rejected_at?: string;
-  rejected_by?: string;
-  canceled_at?: string;
+  inviteToken: string;
+  expiresAt: string;
+  invitedBy: string;
+  invitedByName?: string | null;
+  invitedByEmail?: string | null;
+  invitedByAvatarUrl?: string | null;
+  createdAt: string;
+  acceptedAt?: string;
+  acceptedBy?: string;
+  rejectedAt?: string;
+  rejectedBy?: string;
+  canceledAt?: string;
   organization?: {
     id: string;
     name: string;
@@ -29,8 +29,10 @@ export interface InviteEntity {
   };
 }
 
-export interface InviteInviteWithRelationsEntity
-  extends Omit<InviteEntity, "organization" | "profile"> {
+export interface InviteInviteWithRelationsEntity extends Omit<
+  InviteEntity,
+  "organization" | "profile"
+> {
   organization?: {
     id: string;
     name: string;

@@ -1,34 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { StockBackendService } from "@/lib/services/server/stockService";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 import { StockStatistics } from "@/types/stock/stock";
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const organizationId = request.nextUrl.searchParams.get("organizationId");
 
     if (!organizationId) {
@@ -38,7 +26,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    const stockService = new StockBackendService(supabase);
+    const stockService = new StockBackendService();
     const stats = await stockService.getStatistics(organizationId);
 
     const successResponse: ApiSuccessResponse<StockStatistics> = {

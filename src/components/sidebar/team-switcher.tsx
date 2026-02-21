@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronsUpDown, User } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { UserProfile } from "@/types/models/profile";
+import type { Organization } from "@/types/models/organization";
 
 export function TeamSwitcher() {
   const { activeProfile, userProfiles, loading, setActiveProfile } =
@@ -36,11 +37,11 @@ export function TeamSwitcher() {
       if (
         !selectedOrganization ||
         selectedOrganization.id !==
-          singleProfile.userOrganization?.organizationId
+          singleProfile.userOrganization?.organization?.id
       ) {
         const org = singleProfile.userOrganization?.organization;
         if (org) {
-          setSelectedOrganization(org);
+          setSelectedOrganization(org as unknown as Organization);
         }
       }
     }
@@ -58,11 +59,11 @@ export function TeamSwitcher() {
       activeProfile &&
       (!selectedOrganization ||
         selectedOrganization.id !==
-          activeProfile.userOrganization?.organizationId)
+          activeProfile.userOrganization?.organization?.id)
     ) {
       const org = activeProfile.userOrganization?.organization;
       if (org) {
-        setSelectedOrganization(org);
+        setSelectedOrganization(org as unknown as Organization);
       }
     }
   }, [activeProfile, selectedOrganization, setSelectedOrganization]);
@@ -90,7 +91,7 @@ export function TeamSwitcher() {
   }
 
   const handleProfileChange = (profile: UserProfile) => {
-    setActiveProfile(profile);
+    setActiveProfile(profile as unknown as typeof activeProfile);
     setOpen(false);
   };
 
@@ -145,9 +146,9 @@ export function TeamSwitcher() {
             onClick={() => {
               const org = profile.userOrganization?.organization;
               if (org) {
-                setSelectedOrganization(org);
+                setSelectedOrganization(org as unknown as Organization);
               }
-              handleProfileChange(profile);
+              handleProfileChange(profile as unknown as UserProfile);
             }}
           >
             <div className="flex items-center space-x-2 min-w-0 flex-1">

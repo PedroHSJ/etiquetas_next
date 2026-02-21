@@ -60,7 +60,7 @@ export default function TechnicalSheetCreatePage() {
   }
 
   const handleSave = async (
-    sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }
+    sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] },
   ) => {
     if (!selectedOrganization) {
       toast.error("Nenhuma organização selecionada");

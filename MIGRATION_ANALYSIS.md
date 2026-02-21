@@ -139,7 +139,7 @@ export class OrganizationBackendService {
   }
 
   async createOrganization(
-    org: OrganizationCreateInput
+    org: OrganizationCreateInput,
   ): Promise<Organization> {
     const payload = convertKeysToSnake(JSON.parse(JSON.stringify(org))); // ❌ JSON.parse hack
     // ...
@@ -154,7 +154,7 @@ export class OrganizationBackendService {
         *,
         state:states(*),
         city:cities(*, state:states(*))
-      `
+      `,
       )
       .eq("id", id)
       .single();
@@ -176,7 +176,7 @@ export class ProductBackendService {
         `
         *,
         group:groups(*)
-      `
+      `,
       )
       .eq("organization_id", organizationId);
     return data || []; // ❌ Sem conversão de casos
@@ -212,14 +212,13 @@ interface OrganizationApiResponse {
 
 export const OrganizationService = {
   async getOrganizations(): Promise<Organization[]> {
-    const { data: response } = await api.get<OrganizationApiResponse>(
-      "/organization"
-    );
+    const { data: response } =
+      await api.get<OrganizationApiResponse>("/organization");
 
     if (!response.success || !response.data) {
       // ❌ Validação manual
       throw new Error(
-        response.error || "Não foi possível carregar as organizações"
+        response.error || "Não foi possível carregar as organizações",
       );
     }
 
@@ -227,7 +226,7 @@ export const OrganizationService = {
   },
 
   async createOrganization(
-    organization: OrganizationCreateInput
+    organization: OrganizationCreateInput,
   ): Promise<Organization> {
     const { data: response } = await api.post<{
       // ❌ Tipo inline
@@ -318,14 +317,12 @@ export const LocationService = {
 #### Tarefas:
 
 1. **organizationService.ts**
-
    - [ ] Importar `OrganizationEntity` de `/types/database/organization`
    - [ ] Importar DTOs de `/types/dto/organization`
    - [ ] Métodos devem retornar Entities internamente
    - [ ] Criar converters: Entity → ResponseDto
 
 2. **productService.ts**
-
    - [ ] Usar `ProductEntity` de `/types/database/product`
    - [ ] Usar DTOs de `/types/dto/product`
    - [ ] Criar converters
@@ -349,12 +346,10 @@ export const LocationService = {
 #### Tarefas:
 
 1. **Criar validators/parsers de DTOs**
-
    - [ ] Função `validateDto<T>(schema, data): T`
    - [ ] Usar Zod ou class-validator
 
 2. **Padronizar respostas**
-
    - [ ] Todos retornam `ApiResponse<T>`
    - [ ] Usar `ApiErrorResponse` para erros
    - [ ] Helper `createApiResponse<T>(data: T): ApiSuccessResponse<T>`
@@ -385,7 +380,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(
     createApiResponse(response), // ✅ Padronizado
-    { status: 201 }
+    { status: 201 },
   );
 }
 ```
@@ -399,13 +394,11 @@ export async function POST(request: NextRequest) {
 #### Tarefas:
 
 1. **organization-service.ts**
-
    - [ ] Usar `CreateOrganizationDto` para requests
    - [ ] Receber `OrganizationResponseDto` das APIs
    - [ ] Converter para `Organization` (model) para uso no frontend
 
 2. **localidade-service.ts**
-
    - [ ] Migrar para inglês (LocationService já existe)
    - [ ] Usar `CityResponseDto`, `StateResponseDto`
 
@@ -425,15 +418,16 @@ import { ApiSuccessResponse } from "@/types/common/api";
 
 export const OrganizationService = {
   async getOrganizations(): Promise<Organization[]> {
-    const { data } = await api.get<
-      ApiSuccessResponse<OrganizationResponseDto[]>
-    >("/organization");
+    const { data } =
+      await api.get<ApiSuccessResponse<OrganizationResponseDto[]>>(
+        "/organization",
+      );
 
     return data.data.map(toOrganizationModel); // ✅ Converter DTO → Model
   },
 
   async createOrganization(
-    input: CreateOrganizationDto
+    input: CreateOrganizationDto,
   ): Promise<Organization> {
     const { data } = await api.post<
       ApiSuccessResponse<OrganizationResponseDto>
@@ -476,7 +470,7 @@ import { Organization } from "@/types/models/organization";
 
 // Database Entity → Response DTO
 export function toOrganizationResponseDto(
-  entity: OrganizationEntity
+  entity: OrganizationEntity,
 ): OrganizationResponseDto {
   return {
     id: entity.id,
@@ -504,7 +498,7 @@ export function toOrganizationResponseDto(
 
 // Response DTO → Frontend Model
 export function toOrganizationModel(
-  dto: OrganizationResponseDto
+  dto: OrganizationResponseDto,
 ): Organization {
   return {
     ...dto,
@@ -519,7 +513,7 @@ export function toOrganizationModel(
 
 // Request DTO → Database Entity (para insert)
 export function toOrganizationEntity(
-  dto: CreateOrganizationDto
+  dto: CreateOrganizationDto,
 ): Partial<OrganizationEntity> {
   return {
     name: dto.name,
@@ -579,25 +573,21 @@ export function toOrganizationEntity(
 **Checklist do Piloto:**
 
 1. **Backend Service** (`organizationService.ts`)
-
    - [ ] Criar `/lib/converters/organization.ts`
    - [ ] Migrar métodos para usar `OrganizationEntity`
    - [ ] Métodos retornam Entities, não DTOs
 
 2. **API Route** (`/api/organization/route.ts`)
-
    - [ ] Validar entrada com DTOs
    - [ ] Usar converters: Entity → ResponseDto
    - [ ] Padronizar respostas com `ApiResponse<T>`
 
 3. **Frontend Service** (`organization-service.ts`)
-
    - [ ] Usar DTOs em requests/responses
    - [ ] Converter DTOs → Models
    - [ ] Retornar Models para componentes
 
 4. **Hooks** (criar `useOrganizations.ts`)
-
    - [ ] Usar React Query
    - [ ] Retornar `Organization[]` (models)
 

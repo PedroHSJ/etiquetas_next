@@ -1,48 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  getSupabaseBearerClient,
-  getSupabaseServerClient,
-} from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
-import { Product, ProductGroup } from "@/types/stock/product";
-
-interface ProductWithGroup extends Omit<Product, "group"> {
-  group?: ProductGroup | null;
-}
-
-interface StockRecord {
-  productId: number;
-  current_quantity: number;
-  unit_of_measure_code: string | null;
-}
+import { ProductGroup } from "@/types/stock/product";
 
 interface ProductWithStock {
   id: number;
   name: string;
-  group_id?: number | null;
+  groupId?: number | null;
   group?: ProductGroup | null;
-  current_quantity: number;
-  unit_of_measure_code: string;
+  currentQuantity: number;
+  unitOfMeasureCode: string;
 }
 
 // Endpoint to list products with stock metadata for quick entry dialog
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (!token) {
+    if (!session) {
       const errorResponse: ApiErrorResponse = {
-        error: "Access token not provided",
+        error: "Unauthorized",
       };
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
     const { searchParams } = new URL(request.url);
     const searchTerm = searchParams.get("q") || "";
     const limit = parseInt(searchParams.get("limit") || "50", 10);
@@ -50,76 +34,73 @@ export async function GET(request: NextRequest) {
     const onlyWithStock =
       searchParams.get("onlyWithStock") === "true" ? true : false;
 
-    // Query products
-    let query = supabase.from("products").select(`
-        id,
-        name,
-        group_id,
-        group:groups(*)
-      `);
-
+    // Fetch products with optional name filter
+    const whereProducts: any = {};
     if (searchTerm) {
-      query = query.ilike("name", `%${searchTerm}%`);
-    }
-
-    query = query.order("name", { ascending: true }).limit(limit);
-
-    const { data: products, error: productsError } = await query;
-
-    if (productsError) {
-      console.error("Error fetching products:", productsError);
-      const errorResponse: ApiErrorResponse = {
-        error: "Failed to fetch products",
-        details: { message: productsError.message },
+      whereProducts.name = {
+        contains: searchTerm,
+        mode: "insensitive",
       };
-      return NextResponse.json(errorResponse, { status: 500 });
     }
 
-    // Stock metadata per product
-    let queryStock = supabase
-      .from("stock")
-      .select(
-        "productId, current_quantity, unit_of_measure_code, organization_id"
-      );
-
-    if (organizationId) {
-      queryStock = queryStock.eq("organization_id", organizationId);
-    }
-
-    if (onlyWithStock) {
-      queryStock = queryStock.gt("current_quantity", 0);
-    }
-
-    const { data: stockRows, error: stockError } = await queryStock;
-
-    const stockMap = (stockRows || []).reduce(
-      (acc: Record<number, StockRecord>, e) => {
-        const record = e as unknown as StockRecord;
-        acc[record.productId] = record;
-        return acc;
+    const products = await prisma.products.findMany({
+      where: whereProducts,
+      include: {
+        groups: true,
       },
-      {}
-    );
+      orderBy: {
+        name: "asc",
+      },
+      take: limit,
+    });
+
+    // Fetch stock for these products and organization
+    const productIds = products.map((p: any) => p.id);
+    const whereStock: any = {
+      productId: { in: productIds },
+    };
+    if (organizationId) {
+      whereStock.organizationId = organizationId;
+    }
+    if (onlyWithStock) {
+      whereStock.currentQuantity = { gt: 0 };
+    }
+
+    const stockItems = await prisma.stock.findMany({
+      where: whereStock,
+      select: {
+        productId: true,
+        currentQuantity: true,
+        unitOfMeasureCode: true,
+      },
+    });
+
+    const stockMap = stockItems.reduce((acc: any, item: any) => {
+      acc[item.productId] = item;
+      return acc;
+    }, {});
 
     const productsWithStock: ProductWithStock[] = [];
 
-    for (const produto of (products || []) as unknown as ProductWithGroup[]) {
-      const stockInfo = stockMap[produto.id];
-      const quantity = stockInfo?.current_quantity || 0;
+    for (const product of products) {
+      const stockInfo = stockMap[product.id];
+      const quantity = stockInfo?.currentQuantity
+        ? Number(stockInfo.currentQuantity)
+        : 0;
 
       if (onlyWithStock && quantity <= 0) {
         continue;
       }
 
-      const unit = stockInfo?.unit_of_measure_code || "un";
+      const unit = stockInfo?.unitOfMeasureCode || "un";
 
       productsWithStock.push({
-        id: produto.id,
-        name: produto.name,
-        group_id: produto.group_id,
-        group: produto.group,
-        unit_of_measure_code: unit,
-        current_quantity: quantity,
+        id: product.id,
+        name: product.name,
+        groupId: product.groupId,
+        group: product.groups as unknown as ProductGroup,
+        unitOfMeasureCode: unit,
+        currentQuantity: quantity,
       });
     }
 

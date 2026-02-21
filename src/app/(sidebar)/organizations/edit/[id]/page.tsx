@@ -32,7 +32,7 @@ export default function EditOrganizationPage({
       toast.error(
         `Não foi possível editar a organização: ${
           error instanceof Error ? error.message : "Erro desconhecido"
-        }`
+        }`,
       );
     }
   };

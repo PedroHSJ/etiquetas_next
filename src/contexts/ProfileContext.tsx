@@ -8,7 +8,8 @@ import React, {
   ReactNode,
 } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserPermissions, UserProfile } from "@/types/models/profile";
+import { UserProfileResponseDto } from "@/types/dto/profile/response";
+import { UserPermissions } from "@/types/models/profile";
 import { PermissionService } from "@/lib/services/client/permission-service";
 import {
   useUserProfilesQuery,
@@ -16,11 +17,11 @@ import {
 } from "@/hooks/useUserProfilesQuery";
 
 interface ProfileContextType {
-  activeProfile: UserProfile | null;
-  userProfiles: UserProfile[];
+  activeProfile: UserProfileResponseDto | null;
+  userProfiles: UserProfileResponseDto[];
   userPermissions: UserPermissions | null;
   loading: boolean;
-  setActiveProfile: (profile: UserProfile | null) => void;
+  setActiveProfile: (profile: UserProfileResponseDto | null) => void;
   refreshProfiles: () => Promise<void>;
   refreshPermissions: () => Promise<void>;
   refreshAll: () => void;
@@ -42,7 +43,8 @@ interface ProfileProviderProps {
 
 export function ProfileProvider({ children }: ProfileProviderProps) {
   const { user } = useAuth();
-  const [activeProfile, setActiveProfile] = useState<UserProfile | null>(null);
+  const [activeProfile, setActiveProfile] =
+    useState<UserProfileResponseDto | null>(null);
   const [userPermissions, setUserPermissions] =
     useState<UserPermissions | null>(null);
 
@@ -59,7 +61,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     if (
       !activeProfile ||
       !user?.id ||
-      !activeProfile.userOrganization?.organizationId
+      !activeProfile.userOrganization?.organization?.id
     ) {
       setUserPermissions(null);
       return;
@@ -67,7 +69,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
 
     try {
       const permissions = await PermissionService.getUserPermissions(
-        activeProfile.userOrganization.organizationId
+        activeProfile.userOrganization.organization.id,
       );
       setUserPermissions(permissions);
     } catch (error) {
@@ -93,7 +95,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
 
     if (savedProfileId) {
       const savedProfile = userProfiles.find(
-        (p: UserProfile) => p.id === savedProfileId
+        (p: UserProfileResponseDto) => p.id === savedProfileId,
       );
       if (savedProfile) {
         setActiveProfile(savedProfile);

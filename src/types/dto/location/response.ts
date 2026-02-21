@@ -52,10 +52,10 @@ export interface ViaCepResponseDto {
  */
 export interface CityCreationResponseDto {
   id: number;
-  nome: string;
-  estado: {
+  name: string;
+  state: {
     id: number;
-    codigo: string;
-    nome: string;
+    code: string;
+    name: string;
   };
 }

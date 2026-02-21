@@ -107,7 +107,7 @@ export function OrganizationWizard({
         .toLowerCase();
     console.log("⚙️ Perfis disponíveis para o usuário:", profiles);
     const found = profiles.find((profile) =>
-      targets.includes(normalize(profile.name))
+      targets.includes(normalize(profile.name)),
     );
     console.log("⚙️ Perfil de gestor encontrado:", found);
     return found?.id;
@@ -169,7 +169,7 @@ export function OrganizationWizard({
     if (!managerProfileId) {
       toast.error(
         "Erro: Não foi possível carregar os perfis de usuário. " +
-          "Verifique sua conexão e tente novamente."
+          "Verifique sua conexão e tente novamente.",
       );
       return;
     }
@@ -207,12 +207,12 @@ export function OrganizationWizard({
 
   const toggleDepartment = (dept: { nome: string; tipo: string }) => {
     const isSelected = wizardData.selectedDepartments.some(
-      (d) => d.tipo === dept.tipo
+      (d) => d.tipo === dept.tipo,
     );
     if (isSelected) {
       updateWizardData({
         selectedDepartments: wizardData.selectedDepartments.filter(
-          (d) => d.tipo !== dept.tipo
+          (d) => d.tipo !== dept.tipo,
         ),
       });
     } else {
@@ -345,7 +345,7 @@ export function OrganizationWizard({
                         <Checkbox
                           id={dept.tipo}
                           checked={wizardData.selectedDepartments.some(
-                            (d) => d.tipo === dept.tipo
+                            (d) => d.tipo === dept.tipo,
                           )}
                           onCheckedChange={() => toggleDepartment(dept)}
                         />
@@ -353,7 +353,7 @@ export function OrganizationWizard({
                           {dept.nome}
                         </Label>
                       </div>
-                    )
+                    ),
                   )}
                 </div>
               )}
@@ -566,8 +566,8 @@ export function OrganizationWizard({
                       isCompleted
                         ? "bg-primary border-primary text-primary-foreground"
                         : isCurrent
-                        ? "border-primary text-primary"
-                        : "border-muted text-muted-foreground"
+                          ? "border-primary text-primary"
+                          : "border-muted text-muted-foreground"
                     }
                   `}
                   >
@@ -582,8 +582,8 @@ export function OrganizationWizard({
                       isCurrent
                         ? "text-primary"
                         : isCompleted
-                        ? "text-primary"
-                        : "text-muted-foreground"
+                          ? "text-primary"
+                          : "text-muted-foreground"
                     }`}
                   >
                     {step.title}
@@ -647,8 +647,8 @@ export function OrganizationWizard({
               {isLoading
                 ? "Criando..."
                 : isProfilesLoading
-                ? "Carregando perfis..."
-                : "Finalizar e Criar UAN"}
+                  ? "Carregando perfis..."
+                  : "Finalizar e Criar UAN"}
             </Button>
           )}
         </div>

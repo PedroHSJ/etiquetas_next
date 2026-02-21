@@ -75,7 +75,7 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="border-none">
       <CardHeader className="text-center">
         <CardTitle>Fazer Login</CardTitle>
         <CardDescription>Entre com sua conta para continuar</CardDescription>

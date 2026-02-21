@@ -1,5 +1,5 @@
 /**
- * Stock-related database entities
+ * Stock-related database entities - Updated to camelCase to match Prisma @map schema
  */
 
 /**
@@ -16,13 +16,13 @@ export interface UnitOfMeasureEntity {
 export interface StockEntity {
   id: string;
   productId: number;
-  organization_id?: string | null;
-  unit_of_measure_code: string;
-  current_quantity: number;
+  organizationId?: string | null;
+  unitOfMeasureCode: string;
+  currentQuantity: number;
   userId: string;
-  storage_location_id?: string | null;
-  created_at: string;
-  updated_at: string;
+  storageLocationId?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -31,13 +31,13 @@ export interface StockEntity {
 export interface StockMovementEntity {
   id: string;
   productId: number;
-  organization_id?: string | null;
+  organizationId?: string | null;
   userId: string;
-  movement_type: "ENTRADA" | "SAIDA";
+  movementType: "ENTRADA" | "SAIDA";
   quantity: number;
-  unit_of_measure_code: string;
+  unitOfMeasureCode: string;
   observation: string | null;
-  storage_location_id?: string | null;
-  movement_date: string;
-  created_at: string;
+  storageLocationId?: string | null;
+  movementDate: string;
+  createdAt: string;
 }

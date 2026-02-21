@@ -13,7 +13,7 @@ export function useNavigationWithLoading() {
       setIsNavigating(true);
       router.push(url);
     },
-    [router, setIsNavigating]
+    [router, setIsNavigating],
   );
 
   const navigateBack = useCallback(() => {
@@ -26,7 +26,7 @@ export function useNavigationWithLoading() {
       setIsNavigating(true);
       router.replace(url);
     },
-    [router, setIsNavigating]
+    [router, setIsNavigating],
   );
 
   return {

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 import { CityResponseDto } from "@/types/dto/location/response";
-import { CityEntity } from "@/types/database/location";
-import { toCityResponseDto } from "@/lib/converters/location";
+import { LocationService } from "@/lib/services/server/locationService";
 
 type RouteContext = {
   params: Promise<{ stateId: string }>;
@@ -11,9 +9,6 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const { stateId: stateIdParam } = await context.params;
-  const response = NextResponse.next();
-  const supabase = getSupabaseServerClient(request, response);
-
   const stateId = Number(stateIdParam);
 
   if (!Number.isFinite(stateId)) {
@@ -24,26 +19,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const { data, error } = await supabase
-      .from("cities")
-      .select("*")
-      .eq("state_id", stateId)
-      .order("name");
-
-    if (error) {
-      const errorResponse: ApiErrorResponse = {
-        error: "Failed to fetch cities",
-        details: { message: error.message },
-      };
-      return NextResponse.json(errorResponse, { status: 500 });
-    }
-
-    const dtos: CityResponseDto[] = (data || []).map((city) =>
-      toCityResponseDto(city as CityEntity)
-    );
+    const locationService = new LocationService();
+    const result = await locationService.getCitiesByState(stateId);
 
     const success: ApiSuccessResponse<CityResponseDto[]> = {
-      data: dtos,
+      data: result as unknown as CityResponseDto[],
     };
 
     return NextResponse.json(success, { status: 200 });

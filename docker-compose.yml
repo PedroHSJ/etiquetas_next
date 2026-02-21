@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: etiquetas-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: etiquetas_next
+    ports:
+      - "54323:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: etiquetas-app
+    ports:
+      - "3000:3000"
+    environment:
+      # Conexão interna do Docker: hostname 'db', porta 5432
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/etiquetas_next
+      # Better Auth precisa de uma secret key para funcionar
+      - BETTER_AUTH_SECRET=4kg9fMKHBeeXPd0FDGwwROzxU0B91Pem6G0xJhHv5SA=
+      - BETTER_AUTH_URL=http://localhost:3000
+      # Outras variáveis necessárias (copiadas do .env.local para o container)
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - db
+    volumes:
+      # Mapeia o código local para dentro do container para hot-reload
+      - .:/app
+      # Evita que node_modules local sobrescreva o do container
+      - /app/node_modules
+    # Aguarda o banco subir, sincroniza o banco e inicia o servidor
+    command: >
+      sh -c "until nc -z db 5432; do echo 'Aguardando banco...'; sleep 2; done;
+             npx prisma db push --accept-data-loss && 
+             npm run dev"
+
+volumes:
+  postgres_data:

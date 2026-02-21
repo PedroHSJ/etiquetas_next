@@ -18,8 +18,7 @@ export interface TechnicalResponsible {
 /**
  * Technical Responsible with organization relationship
  */
-export interface TechnicalResponsibleWithOrganization
-  extends TechnicalResponsible {
+export interface TechnicalResponsibleWithOrganization extends TechnicalResponsible {
   organization?: {
     id: string;
     name: string;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 import { TechnicalSheetBackendService } from "@/lib/services/server/technicalSheetService";
 
@@ -27,12 +27,13 @@ const createSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
@@ -54,20 +55,8 @@ export async function GET(request: NextRequest) {
   const active = activeParam === null ? true : activeParam === "true";
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    const service = new TechnicalSheetBackendService(supabase);
+    const service = new TechnicalSheetBackendService();
+    // TODO: Verify permissions
     const result = await service.list({
       page,
       pageSize,
@@ -92,12 +81,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
@@ -114,21 +104,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    const service = new TechnicalSheetBackendService(supabase);
-    const created = await service.create(parsed.data, user.id);
+    const service = new TechnicalSheetBackendService();
+    const created = await service.create(parsed.data, session.user.id);
 
     const successResponse: ApiSuccessResponse<typeof created> = {
       data: created,

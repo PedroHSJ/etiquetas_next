@@ -10,8 +10,7 @@ export interface DepartmentResponseDto {
   createdAt: string;
 }
 
-export interface DepartmentWithOrganizationResponseDto
-  extends DepartmentResponseDto {
+export interface DepartmentWithOrganizationResponseDto extends DepartmentResponseDto {
   organization?: {
     id: string;
     name: string;

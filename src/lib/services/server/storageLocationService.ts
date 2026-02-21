@@ -1,141 +1,97 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { StorageLocationEntity } from "@/types/database/storage-location";
+import { prisma } from "@/lib/prisma";
+import { storage_locations } from "@prisma/client";
 import {
   CreateStorageLocationDto,
   UpdateStorageLocationDto,
   ListStorageLocationsDto,
   StorageLocationResponseDto,
 } from "@/types/dto/storage-location";
-import { toStorageLocationResponseDto } from "@/lib/converters/storage-location";
 
 export class StorageLocationBackendService {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor() {}
 
-  /**
-   * List storage locations, optionally building a tree structure if requested?
-   * For now, returns a flat list or filtered list.
-   * Tree construction is usually better handled in frontend or separate util, 
-   * but if we want to return a tree, we'd need a recursive CTE or post-processing.
-   * Sticking to flat list for API efficiency for now, or simple filtering.
-   */
   async listStorageLocations(
-    params: ListStorageLocationsDto = {}
-  ): Promise<StorageLocationResponseDto[]> {
+    params: ListStorageLocationsDto = {},
+  ): Promise<storage_locations[]> {
     const { organizationId, parentId, search } = params;
 
-    let query = this.supabase
-      .from("storage_locations")
-      .select("*")
-      .order("created_at", { ascending: true }); // Order by creation for stability
+    const where: any = {};
 
     if (organizationId) {
-      query = query.eq("organization_id", organizationId);
+      where.organizationId = organizationId;
     }
 
     if (parentId !== undefined) {
-      if (parentId === null) {
-        query = query.is("parent_id", null);
-      } else {
-        query = query.eq("parent_id", parentId);
-      }
+      where.parentId = parentId;
     }
 
     if (search?.trim()) {
-      query = query.ilike("name", `%${search.trim()}%`);
+      where.name = {
+        contains: search.trim(),
+        mode: "insensitive",
+      };
     }
 
-    const { data, error } = await query;
+    const data = await prisma.storage_locations.findMany({
+      where,
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
 
-    if (error) {
-      throw new Error(error.message || "Error while fetching storage locations");
-    }
-
-    return (data as StorageLocationEntity[]).map(toStorageLocationResponseDto);
+    return data;
   }
 
-  async getStorageLocationById(
-    id: string
-  ): Promise<StorageLocationResponseDto | null> {
-    const { data, error } = await this.supabase
-      .from("storage_locations")
-      .select("*")
-      .eq("id", id)
-      .single();
+  async getStorageLocationById(id: string): Promise<storage_locations | null> {
+    const data = await prisma.storage_locations.findUnique({
+      where: { id },
+    });
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return null;
-      }
-      throw new Error(error.message || "Error while fetching storage location");
-    }
+    if (!data) return null;
 
-    return toStorageLocationResponseDto(data as StorageLocationEntity);
+    return data;
   }
 
   async createStorageLocation(
-    dto: CreateStorageLocationDto
-  ): Promise<StorageLocationResponseDto> {
-    const payload = {
-      name: dto.name,
-      organization_id: dto.organizationId,
-      parent_id: dto.parentId ?? null,
-      description: dto.description ?? null,
-      active: dto.active ?? true,
-    };
+    dto: CreateStorageLocationDto,
+  ): Promise<storage_locations> {
+    const data = await prisma.storage_locations.create({
+      data: {
+        name: dto.name,
+        organizationId: dto.organizationId,
+        parentId: dto.parentId ?? null,
+        description: dto.description ?? null,
+        active: dto.active ?? true,
+      },
+    });
 
-    const { data, error } = await this.supabase
-      .from("storage_locations")
-      .insert(payload)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(error.message || "Error while creating storage location");
-    }
-
-    return toStorageLocationResponseDto(data as StorageLocationEntity);
+    return data;
   }
 
   async updateStorageLocation(
     id: string,
-    dto: UpdateStorageLocationDto
-  ): Promise<StorageLocationResponseDto> {
-    const payload: Partial<StorageLocationEntity> = {};
+    dto: UpdateStorageLocationDto,
+  ): Promise<storage_locations> {
+    const updateData: any = {};
 
-    if (dto.name !== undefined) payload.name = dto.name;
-    if (dto.parentId !== undefined) payload.parent_id = dto.parentId;
-    if (dto.description !== undefined) payload.description = dto.description;
-    if (dto.active !== undefined) payload.active = dto.active;
+    if (dto.name !== undefined) updateData.name = dto.name;
+    if (dto.parentId !== undefined) updateData.parentId = dto.parentId;
+    if (dto.description !== undefined) updateData.description = dto.description;
+    if (dto.active !== undefined) updateData.active = dto.active;
 
-    const { data, error } = await this.supabase
-      .from("storage_locations")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+    updateData.updatedAt = new Date();
 
-    if (error) {
-      throw new Error(error.message || "Error while updating storage location");
-    }
+    const data = await prisma.storage_locations.update({
+      where: { id },
+      data: updateData,
+    });
 
-    return toStorageLocationResponseDto(data as StorageLocationEntity);
+    return data;
   }
 
   async deleteStorageLocation(id: string): Promise<void> {
-    // Check for children first?
-    // FK constraint is simple, but Logic might forbid deleting parents with children.
-    // For now, let database throw FK error if restrict, or we configured cascade?
-    // The migration used ON DELETE CASCADE for Organization, but for parent_id? 
-    // Usually we just say "REFERENCES public.storage_locations(id)" -> default is NO ACTION / RESTRICT.
-    // So if there are children, this should fail, which is good.
-    
-    const { error } = await this.supabase
-      .from("storage_locations")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      throw new Error(error.message || "Error while deleting storage location");
-    }
+    await prisma.storage_locations.delete({
+      where: { id },
+    });
   }
 }

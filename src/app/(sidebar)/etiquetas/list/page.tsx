@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { NavigationButton } from "@/components/ui/navigation-button";
 import {
@@ -52,29 +51,34 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Supabase client
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-url.com";
-  const supabaseAnonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
   // Buscar etiquetas
   const fetchEtiquetas = useCallback(async () => {
     setLoading(true);
-    const query = supabase
-      .from("etiquetas")
-      .select("*, product:products(name)")
-      .order("created_at", { ascending: false });
-    // Filtro por usuário logado (opcional)
-    // if (userId) query = query.eq("user_id", userId);
-    const { data, error } = await query;
-    if (!error && data) {
-      setEtiquetas(data);
-      setFilteredEtiquetas(data);
+    try {
+      const queryParams = new URLSearchParams({
+        page: currentPage.toString(),
+        pageSize: itemsPerPage.toString(),
+        // organizationId: "TODO: Pegar do contexto",
+      });
+      if (searchTerm) {
+        queryParams.append("searchTerm", searchTerm);
+      }
+
+      const response = await fetch(`/api/etiquetas?${queryParams.toString()}`);
+      const result = await response.json();
+
+      if (response.ok && result.data) {
+        setEtiquetas(result.data.data);
+        setFilteredEtiquetas(result.data.data); // A filtragem já vem do backend, mas mantemos compatibilidade
+        // TODO: Usar total items para paginação correta vinda do backend
+        // setTotalItems(result.data.total);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar etiquetas:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [supabase]);
+  }, [searchTerm, currentPage, itemsPerPage]);
 
   useEffect(() => {
     fetchEtiquetas();
@@ -89,7 +93,7 @@ export default function Page() {
           // etq.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           etq.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           etq.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          etq.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+          etq.notes?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
     setFilteredEtiquetas(filtered);
@@ -159,11 +163,11 @@ export default function Page() {
                 {loading
                   ? "Carregando..."
                   : totalPages > 1
-                  ? `Mostrando ${startIndex + 1}-${Math.min(
-                      endIndex,
-                      totalItems
-                    )} de ${totalItems} etiquetas`
-                  : `${totalItems} etiqueta(s) encontrada(s)`}
+                    ? `Mostrando ${startIndex + 1}-${Math.min(
+                        endIndex,
+                        totalItems,
+                      )} de ${totalItems} etiquetas`
+                    : `${totalItems} etiqueta(s) encontrada(s)`}
               </CardDescription>
             </CardHeader>
             <CardContent>

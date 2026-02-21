@@ -39,7 +39,7 @@ export default function Page() {
       toast.error(
         `Não foi possível criar a organização: ${
           error instanceof Error ? error.message : "Erro desconhecido"
-        }`
+        }`,
       );
     }
   };

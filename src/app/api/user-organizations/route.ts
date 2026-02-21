@@ -1,29 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get bearer token from Authorization header
-    const authHeader = request.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (!token) {
-      const errorResponse: ApiErrorResponse = {
-        error: "Unauthorized",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    const supabase = getSupabaseBearerClient(token);
-
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!session) {
       const errorResponse: ApiErrorResponse = {
         error: "Unauthorized",
       };
@@ -31,22 +17,20 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId") || user.id;
+    const userId = searchParams.get("userId") || session.user.id;
+
+    // Only allow user to see their own organizations or admin to see others
+    if (userId !== session.user.id) {
+      // TODO: Add admin permission check here
+    }
 
     // Get user organizations
-    const { data, error } = await supabase
-      .from("user_organizations")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("active", true);
-
-    if (error) {
-      console.error("Error fetching user organizations:", error);
-      const errorResponse: ApiErrorResponse = {
-        error: "Error fetching user organizations",
-      };
-      return NextResponse.json(errorResponse, { status: 500 });
-    }
+    const data = await prisma.user_organizations.findMany({
+      where: {
+        userId,
+        active: true,
+      },
+    });
 
     const successResponse: ApiSuccessResponse<typeof data> = {
       data: data,

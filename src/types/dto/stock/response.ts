@@ -15,8 +15,8 @@ export interface ProductStockResponseDto {
   id: number;
   name: string;
   groupId?: number | null;
-  unitOfMeasureCode?: UnitOfMeasureCode;
-  currentQuantity?: number;
+  unitOfMeasureCode?: UnitOfMeasureCode | null;
+  currentQuantity?: number | null;
 }
 
 export interface StockResponseDto {

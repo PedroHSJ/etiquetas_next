@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 import { TechnicalSheetBackendService } from "@/lib/services/server/technicalSheetService";
 
@@ -30,14 +30,15 @@ const updateSchema = z
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
@@ -52,21 +53,9 @@ export async function GET(
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const { id } = await params;
-    const service = new TechnicalSheetBackendService(supabase);
+    const service = new TechnicalSheetBackendService();
+    // TODO: Verify permissions
     const sheet = await service.getById(id, organizationId);
 
     if (!sheet) {
@@ -93,14 +82,15 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
@@ -117,21 +107,9 @@ export async function PUT(
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const { id } = await params;
-    const service = new TechnicalSheetBackendService(supabase);
+    const service = new TechnicalSheetBackendService();
+    // TODO: Verify permissions
     const updated = await service.update(id, parsed.data);
 
     const successResponse: ApiSuccessResponse<typeof updated> = {
@@ -151,14 +129,15 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
@@ -173,21 +152,9 @@ export async function DELETE(
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const { id } = await params;
-    const service = new TechnicalSheetBackendService(supabase);
+    const service = new TechnicalSheetBackendService();
+    // TODO: Verify permissions
     await service.delete(id, organizationId);
 
     const successResponse: ApiSuccessResponse<{ id: string }> = {

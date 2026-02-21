@@ -8,21 +8,20 @@ import {
   OrganizationResponseDto,
   OrganizationExpandedResponseDto,
 } from "@/types/dto/organization/response";
-import { Organization } from "@/types/models/organization";
 import {
-  toOrganizationModel,
-  toOrganizationExpandedModel,
   validateCNPJ,
   formatCNPJ,
   formatPhone,
-} from "@/lib/converters/organization";
+} from "@/lib/utils/organization";
 import { ApiResponse } from "@/types/common";
 
 export const OrganizationService = {
   /**
    * Get organization by ID with expanded state/city
    */
-  async getOrganizationByIdExpanded(id: string): Promise<Organization> {
+  async getOrganizationByIdExpanded(
+    id: string,
+  ): Promise<OrganizationExpandedResponseDto> {
     const { data } = await api.get<
       ApiResponse<OrganizationExpandedResponseDto>
     >(`/organization/expanded/${id}`);
@@ -31,7 +30,7 @@ export const OrganizationService = {
       throw new Error("Organization not found");
     }
 
-    return toOrganizationExpandedModel(data.data);
+    return data.data;
   },
 
   /**
@@ -39,8 +38,8 @@ export const OrganizationService = {
    */
   async updateOrganizationExpanded(
     id: string,
-    update: UpdateOrganizationDto
-  ): Promise<Organization> {
+    update: UpdateOrganizationDto,
+  ): Promise<OrganizationExpandedResponseDto> {
     const { data } = await api.put<
       ApiResponse<OrganizationExpandedResponseDto>
     >(`/organization/expanded/${id}`, update);
@@ -49,15 +48,15 @@ export const OrganizationService = {
       throw new Error("Failed to update organization");
     }
 
-    return toOrganizationExpandedModel(data.data);
+    return data.data;
   },
 
   /**
    * Get all organizations for a user with expanded state/city
    */
   async getOrganizationsByUserIdExpanded(
-    userId: string
-  ): Promise<Organization[]> {
+    userId: string,
+  ): Promise<OrganizationExpandedResponseDto[]> {
     const { data } = await api.get<
       ApiResponse<OrganizationExpandedResponseDto[]>
     >(`/organization/expanded/user/${userId}`);
@@ -66,34 +65,33 @@ export const OrganizationService = {
       throw new Error("No organizations found");
     }
 
-    return data.data.map(toOrganizationExpandedModel);
+    return data.data;
   },
 
-  async getOrganizations(): Promise<Organization[]> {
-    const { data } = await api.get<ApiResponse<OrganizationResponseDto[]>>(
-      "/organization"
-    );
+  async getOrganizations(): Promise<OrganizationResponseDto[]> {
+    const { data } =
+      await api.get<ApiResponse<OrganizationResponseDto[]>>("/organization");
 
     if (!data.data) {
       throw new Error("Não foi possível carregar as organizações");
     }
 
-    return data.data.map(toOrganizationModel);
+    return data.data;
   },
 
   async createOrganization(
-    organization: CreateOrganizationDto
-  ): Promise<Organization> {
+    organization: CreateOrganizationDto,
+  ): Promise<OrganizationResponseDto> {
     const { data } = await api.post<ApiResponse<OrganizationResponseDto>>(
       "/organization",
-      organization
+      organization,
     );
 
     if (!data.data) {
       throw new Error("Erro ao criar organização");
     }
 
-    return toOrganizationModel(data.data);
+    return data.data;
   },
 
   /**
@@ -112,7 +110,7 @@ export const OrganizationService = {
       departments: params.departments,
       managerProfileId: params.managerProfileId,
     });
-    console.log(data);
+
     if (!data.data) {
       throw new Error("Erro ao configurar organização");
     }
@@ -165,17 +163,17 @@ export const OrganizationService = {
     }
   },
 
-  // Validar CNPJ (usa função do converter)
+  // Validar CNPJ
   validarCNPJ(cnpj: string): boolean {
     return validateCNPJ(cnpj);
   },
 
-  // Formatar CNPJ (usa função do converter)
+  // Formatar CNPJ
   formatarCNPJ(cnpj: string): string {
     return formatCNPJ(cnpj);
   },
 
-  // Formatar telefone (usa função do converter)
+  // Formatar telefone
   formatarTelefone(telefone: string): string {
     return formatPhone(telefone);
   },

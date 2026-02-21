@@ -1,80 +1,62 @@
-import type {
-  ProfileEntity,
-  FunctionalityEntity,
-  PermissionEntity,
-} from "@/types/database/profile";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
+import { permissions, profiles, functionalities } from "@prisma/client";
 
 /**
  * Backend service for permission management
- * Returns database entities (snake_case) - conversion to Models happens in API layer
+ * Updated to use camelCase Prisma fields.
  */
 export class PermissionBackendService {
-  constructor(private readonly supabase: SupabaseClient) {}
-
   /**
-   * Verifica se um usuário tem permissão para uma ação específica
+   * Checks if a user has permission for a specific action
    */
   async hasPermission(
     functionalityName: string,
     action: string,
     userId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<boolean | null> {
     try {
-      // Buscar user_organization, perfis e permissões em uma query aninhada
-      const { data: usuarioOrg, error } = await this.supabase
-        .from("user_organizations")
-        .select(
-          `
-          id,
-          user_profiles:user_profiles!user_profiles_user_organization_id_fkey (
-            id,
-            profile:profiles (
-              id,
-              name
-            ),
-            permissions:permissions!permissions_profile_id_fkey (
-              id,
-              action,
-              functionality:functionalities (
-                id,
-                name
-              )
-            )
-          )
-        `
-        )
-        .eq("user_id", userId)
-        .eq("organization_id", organizationId)
-        .eq("active", true)
-        .single();
+      const usuarioOrg = await prisma.user_organizations.findFirst({
+        where: {
+          userId,
+          organizationId,
+          active: true,
+        },
+        include: {
+          user_profiles: {
+            include: {
+              profiles: true,
+            },
+          },
+        },
+      });
 
-      if (error || !usuarioOrg) {
-        console.error(
-          "Erro ao buscar usuário organização/perfis/permissões:",
-          error
-        );
+      if (!usuarioOrg) {
         return false;
       }
 
-      for (const userProfile of usuarioOrg.user_profiles || []) {
-        // Supabase pode retornar profile como array
-        const pArr = userProfile.profile;
-        const p = Array.isArray(pArr) ? pArr[0] : pArr;
-        if (p && p.name === "master") {
+      for (const userProfile of usuarioOrg.user_profiles) {
+        const profile = userProfile.profiles;
+        if (profile.name === "master") {
           return true;
         }
-        for (const perm of userProfile.permissions || []) {
-          const funcArr = perm.functionality;
-          const func = Array.isArray(funcArr) ? funcArr[0] : funcArr;
-          if (
-            perm.action === action &&
-            func &&
-            func.name === functionalityName
-          ) {
-            return true;
-          }
+
+        const perms = await prisma.permissions.findMany({
+          where: {
+            profileId: profile.id,
+            active: true,
+            action: action,
+            functionalities: {
+              name: functionalityName,
+            },
+          },
+          include: {
+            functionalities: true,
+          },
+        });
+
+        if (perms.length > 0) {
+          return true;
         }
       }
       return false;
@@ -86,352 +68,184 @@ export class PermissionBackendService {
 
   async getUserPermissions(
     userId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<{
-    user_id: string;
-    organization_id: string;
-    permissions: PermissionEntity[];
-    profiles: ProfileEntity[];
+    userId: string;
+    organizationId: string;
+    permissions: permissions[];
+    profiles: profiles[];
   } | null> {
-    // First get user_organization
-    const { data: usuarioOrg, error: orgError } = await this.supabase
-      .from("user_organizations")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("organization_id", organizationId)
-      .eq("active", true)
-      .single();
+    const usuarioOrg = await prisma.user_organizations.findFirst({
+      where: {
+        userId,
+        organizationId,
+        active: true,
+      },
+    });
 
-    if (orgError || !usuarioOrg) {
-      console.error("Erro ao buscar user_organization:", orgError);
+    if (!usuarioOrg) {
       return null;
     }
 
-    // Get user_profiles with profiles
-    const { data: userProfiles, error: profilesError } = await this.supabase
-      .from("user_profiles")
-      .select(
-        `
-        id,
-        profile_id,
-        profile:profiles (
-          id,
-          name,
-          description,
-          active,
-          created_at
-        )
-      `
-      )
-      .eq("user_organization_id", usuarioOrg.id)
-      .eq("active", true);
+    const userProfiles = await prisma.user_profiles.findMany({
+      where: {
+        userOrganizationId: usuarioOrg.id,
+        active: true,
+      },
+      include: {
+        profiles: true,
+      },
+    });
 
-    if (profilesError) {
-      console.error("Erro ao buscar perfis:", profilesError);
-      return null;
-    }
+    const profileIds = userProfiles.map((up) => up.profiles.id);
 
-    const perfis: ProfileEntity[] = [];
-    const profileIds: string[] = [];
-
-    for (const userProfile of userProfiles || []) {
-      const p = userProfile.profile as ProfileEntity | ProfileEntity[];
-      if (p && !Array.isArray(p)) {
-        perfis.push({
-          id: p.id,
-          name: p.name,
-          description: p.description,
-          active: p.active,
-          created_at: p.created_at,
-        });
-        profileIds.push(p.id);
-      }
-    }
-
-    // Get permissions for all profiles
-    const { data: permissions, error: permError } = await this.supabase
-      .from("permissions")
-      .select(
-        `
-        id,
-        action,
-        functionality_id,
-        profile_id,
-        active,
-        created_at,
-        functionality:functionalities (
-          id,
-          name,
-          description,
-          code,
-          active,
-          created_at
-        )
-      `
-      )
-      .in("profile_id", profileIds)
-      .eq("active", true);
-
-    if (permError) {
-      console.error("Erro ao buscar permissões:", permError);
-      throw new Error("Erro ao buscar permissões");
-    }
-
-    const permissoes: PermissionEntity[] = (permissions || []).map((perm) => {
-      const func = perm.functionality as
-        | FunctionalityEntity
-        | FunctionalityEntity[];
-      return {
-        id: perm.id,
-        functionality_id: perm.functionality_id || "",
-        profile_id: perm.profile_id || "",
-        action: perm.action,
-        active: perm.active,
-        created_at: perm.created_at,
-        functionality:
-          func && !Array.isArray(func)
-            ? {
-                id: func.id,
-                name: func.name,
-                description: func.description,
-                code: func.code,
-                active: func.active,
-                created_at: func.created_at,
-              }
-            : undefined,
-      };
+    const perms = await prisma.permissions.findMany({
+      where: {
+        profileId: { in: profileIds },
+        active: true,
+      },
+      include: {
+        functionalities: true,
+        profiles: true,
+      },
     });
 
     return {
-      user_id: userId,
-      organization_id: organizationId,
-      permissions: permissoes,
-      profiles: perfis,
+      userId,
+      organizationId,
+      permissions: perms,
+      profiles: userProfiles.map((up) => up.profiles),
     };
   }
 
   async getUserProfiles(
     userId: string,
-    organizationId: string
-  ): Promise<ProfileEntity[]> {
-    const { data, error } = await this.supabase
-      .from("user_organizations")
-      .select(
-        `
-        user_profiles:user_profiles!user_profiles_user_organization_id_fkey (
-          profile:profiles (
-            id,
-            name,
-            description,
-            active,
-            created_at
-          )
-        )
-      `
-      )
-      .eq("user_id", userId)
-      .eq("organization_id", organizationId)
-      .eq("active", true)
-      .single();
+    organizationId: string,
+  ): Promise<profiles[]> {
+    const usuarioOrg = await prisma.user_organizations.findFirst({
+      where: {
+        userId,
+        organizationId,
+        active: true,
+      },
+      include: {
+        user_profiles: {
+          include: {
+            profiles: true,
+          },
+        },
+      },
+    });
 
-    if (error || !data) {
-      console.error("Erro ao buscar perfis do usuário:", error);
+    if (!usuarioOrg) {
       return [];
     }
 
-    const perfis: ProfileEntity[] = [];
-
-    for (const userProfile of data.user_profiles || []) {
-      const pArr = userProfile.profile;
-      const p = Array.isArray(pArr) ? pArr[0] : pArr;
-      if (p) {
-        perfis.push({
-          id: p.id,
-          name: p.name,
-          description: p.description,
-          active: p.active,
-          created_at: p.created_at,
-        });
-      }
-    }
-    return perfis;
+    return usuarioOrg.user_profiles.map((up) => up.profiles);
   }
 
-  async getFunctionalities(): Promise<FunctionalityEntity[]> {
-    const { data, error } = await this.supabase
-      .from("functionalities")
-      .select("*");
+  async getFunctionalities(): Promise<functionalities[]> {
+    const funcs = await prisma.functionalities.findMany();
 
-    if (error) {
-      console.error("Erro ao buscar funcionalidades:", error);
-      throw new Error("Error fetching functionalities");
-    }
-
-    return data ? data : [];
+    return funcs;
   }
 
-  async getPermissions(): Promise<PermissionEntity[]> {
-    const { data, error } = await this.supabase
-      .from("permissions")
-      .select(
-        `
-            *,
-            functionality:functionalities (
-              id,
-              name,
-              description,
-              code,
-              active
-            ),
-            profile:profiles (
-              id,
-              name,
-              description
-            )
-          `
-      )
-      .eq("active", true)
-      .order("functionality_id", { ascending: true })
-      .order("action", { ascending: true });
+  async getPermissions(): Promise<permissions[]> {
+    const perms = await prisma.permissions.findMany({
+      where: { active: true },
+      include: {
+        functionalities: true,
+        profiles: true,
+      },
+      orderBy: [{ functionalityId: "asc" }, { action: "asc" }],
+    });
 
-    if (error) {
-      console.error("Erro ao buscar permissões:", error);
-      throw new Error("Error fetching permissions");
-    }
-
-    return data ? data : [];
+    return perms;
   }
 
   /**
-   * Atualiza as permissões de um perfil
+   * Checks if profile has permission
    */
   async updateProfilePermissions(
     functionalityName: string,
     action: string,
     userId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<boolean | null> {
-    try {
-      // Buscar user_organization, perfis e permissões em uma query aninhada
-      const { data: usuarioOrg, error } = await this.supabase
-        .from("user_organizations")
-        .select(
-          `
-          id,
-          user_profiles:user_profiles!user_profiles_user_organization_id_fkey (
-            id,
-            profile:profiles (
-              id,
-              name
-            ),
-            permissions:permissions!permissions_profile_id_fkey (
-              id,
-              action,
-              functionality:functionalities (
-                id,
-                name
-              )
-            )
-          )
-        `
-        )
-        .eq("user_id", userId)
-        .eq("organization_id", organizationId)
-        .eq("active", true)
-        .single();
-
-      if (error || !usuarioOrg) {
-        console.error(
-          "Erro ao buscar usuário organização/perfis/permissões:",
-          error
-        );
-        return null;
-      }
-
-      for (const userProfile of usuarioOrg.user_profiles || []) {
-        // Supabase pode retornar profile como array
-        const pArr = userProfile.profile;
-        const p = Array.isArray(pArr) ? pArr[0] : pArr;
-        if (p && p.name === "master") {
-          return true;
-        }
-        for (const perm of userProfile.permissions || []) {
-          const funcArr = perm.functionality;
-          const func = Array.isArray(funcArr) ? funcArr[0] : funcArr;
-          if (
-            perm.action === action &&
-            func &&
-            func.name === functionalityName
-          ) {
-            return true;
-          }
-        }
-      }
-      return false;
-    } catch (error) {
-      console.error("Erro ao atualizar permissões do perfil:", error);
-      return null;
-    }
+    return this.hasPermission(
+      functionalityName,
+      action,
+      userId,
+      organizationId,
+    );
   }
 
   /**
-   * Atribui um perfil de usuário a um usuário
+   * Assigns a user profile to a user
    */
   async assignProfileToUser(
     userOrganizationId: string,
-    profileId: string
+    profileId: string,
   ): Promise<boolean> {
     try {
-      const { error } = await this.supabase.from("user_profiles").upsert(
-        {
-          user_organization_id: userOrganizationId,
-          profile_id: profileId,
-          active: true,
-          start_date: new Date().toISOString(),
+      const existing = await prisma.user_profiles.findFirst({
+        where: {
+          userOrganizationId,
+          profileId,
         },
-        { onConflict: "user_organization_id,profile_id" }
-      );
+      });
 
-      if (error) {
-        console.error(
-          "Erro ao atribuir perfil ao usuário:",
-          error.message || error
-        );
-        return false;
+      if (existing) {
+        await prisma.user_profiles.update({
+          where: { id: existing.id },
+          data: {
+            active: true,
+            startDate: new Date(),
+          },
+        });
+      } else {
+        await prisma.user_profiles.create({
+          data: {
+            userOrganizationId,
+            profileId,
+            active: true,
+            startDate: new Date(),
+          },
+        });
       }
       return true;
     } catch (error: unknown) {
       console.error(
         "Erro ao atribuir perfil ao usuário:",
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
       return false;
     }
   }
 
   /**
-   * Remove um perfil de usuário de um usuário
+   * Removes a user profile from a user
    */
   async removeProfileFromUser(
     userOrganizationId: string,
-    profileId: string
+    profileId: string,
   ): Promise<boolean> {
     try {
-      const { error } = await this.supabase
-        .from("user_profiles")
-        .update({ active: false })
-        .eq("user_organization_id", userOrganizationId)
-        .eq("profile_id", profileId);
-
-      if (error) {
-        throw new Error(error.message);
-      }
+      await prisma.user_profiles.updateMany({
+        where: {
+          userOrganizationId,
+          profileId,
+        },
+        data: {
+          active: false,
+        },
+      });
       return true;
     } catch (error: unknown) {
       throw new Error(
         error instanceof Error
           ? error.message
-          : "Erro ao remover perfil do usuário"
+          : "Erro ao remover perfil do usuário",
       );
     }
   }

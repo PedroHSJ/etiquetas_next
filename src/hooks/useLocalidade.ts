@@ -55,9 +55,7 @@ export function useSearchCitiesByName(name: string, stateId?: number) {
 export function useLocalidade() {
   const [loading, setLoading] = useState(false);
 
-  const buscarCEP = async (
-    cep: string
-  ): Promise<ViaCepResponseDto | null> => {
+  const buscarCEP = async (cep: string): Promise<ViaCepResponseDto | null> => {
     try {
       setLoading(true);
       return await LocationService.fetchCEP(cep);

@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StorageLocationService } from "@/lib/services/client/storage-location-service";
-import { StorageLocation } from "@/types/models/storage-location";
+import { StorageLocationResponseDto } from "@/types/dto/storage-location";
 import { toast } from "sonner";
 
 const schema = z.object({
@@ -28,8 +28,8 @@ interface StorageLocationFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   organizationId?: string;
-  editingLocation?: StorageLocation;
-  parentLocation?: StorageLocation;
+  editingLocation?: StorageLocationResponseDto;
+  parentLocation?: StorageLocationResponseDto;
   onSuccess: () => void;
 }
 
@@ -107,17 +107,23 @@ export function StorageLocationForm({
             {editingLocation
               ? "Editar Localização"
               : parentLocation
-              ? `Nova sub-localização em "${parentLocation.name}"`
-              : "Nova Localização Raiz"}
+                ? `Nova sub-localização em "${parentLocation.name}"`
+                : "Nova Localização Raiz"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nome</Label>
-            <Input id="name" {...register("name")} placeholder="Ex: Estante A" />
+            <Input
+              id="name"
+              {...register("name")}
+              placeholder="Ex: Estante A"
+            />
             {errors.name && (
-              <span className="text-sm text-red-500">{errors.name.message}</span>
+              <span className="text-sm text-red-500">
+                {errors.name.message}
+              </span>
             )}
           </div>
 

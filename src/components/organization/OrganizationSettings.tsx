@@ -150,12 +150,12 @@ export function OrganizationSettings({
 
       const updatedOrg = await OrganizationService.updateOrganizationExpanded(
         organization.id,
-        updateData
+        updateData,
       );
 
       toast.success("As informações foram salvas com sucesso.");
 
-      onUpdate?.(updatedOrg);
+      onUpdate?.(updatedOrg as unknown as Organization);
     } catch (error) {
       console.error("Erro ao atualizar organização:", error);
       toast.error("Não foi possível atualizar as informações da organização.");
@@ -214,7 +214,7 @@ export function OrganizationSettings({
                             <SelectItem key={key} value={key}>
                               {label}
                             </SelectItem>
-                          )
+                          ),
                         )}
                       </SelectContent>
                     </Select>
@@ -258,7 +258,7 @@ export function OrganizationSettings({
                         onChange={(e) => {
                           const value = e.target.value;
                           field.onChange(
-                            value ? parseInt(value, 10) : undefined
+                            value ? parseInt(value, 10) : undefined,
                           );
                         }}
                         disabled={readOnly}

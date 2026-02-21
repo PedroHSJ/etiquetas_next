@@ -70,7 +70,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
         params.append("estoque_baixo", "true");
         params.append(
           "quantidade_minima",
-          filtros.quantidade_minima.toString()
+          filtros.quantidade_minima.toString(),
         );
       }
 
@@ -108,7 +108,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
 
   const handleFiltroChange = (
     key: keyof EstoqueFiltros,
-    value: string | boolean | number | undefined
+    value: string | boolean | number | undefined,
   ) => {
     setFiltros((prev) => ({ ...prev, [key]: value }));
     setPaginaAtual(1);
@@ -207,8 +207,8 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
             filtros.estoque_zerado
               ? "zerado"
               : filtros.estoque_baixo
-              ? "baixo"
-              : "todos"
+                ? "baixo"
+                : "todos"
           }
           onValueChange={(value) => {
             if (value === "zerado") {
@@ -303,7 +303,7 @@ export function EstoqueTable({ onViewMovimentacoes }: EstoqueTableProps) {
                           onClick={() =>
                             onViewMovimentacoes?.(
                               item.productId,
-                              item.product?.name || "Produto"
+                              item.product?.name || "Produto",
                             )
                           }
                         >

@@ -1,23 +1,34 @@
-import { supabase } from "@/lib/supabaseClient";
-
 /**
- * Faz uma requisição fetch incluindo o token JWT do usuário autenticado no header Authorization.
- * Reutilizável para rotas protegidas.
- * Inclui credentials: 'include' para enviar cookies de autenticação.
+ * Faz uma requisição fetch protegida.
+ * Utiliza o sistema de cookies do Better Auth para autenticação,
+ * portanto não precisa injetar token Bearer manualmente.
+ *
+ * Mantemos a função para ter um wrapper consistente que pode ser estendido
+ * para tratamento de erros 401, refresh tokens, etc.
  */
-export async function fetchWithAuth(input: RequestInfo, init: RequestInit = {}) {
-  // Obtém o token do usuário logado
-  const { data } = await supabase.auth.getSession();
-  const accessToken = data?.session?.access_token;
+export async function fetchWithAuth(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) {
+  // Configurações padrão
+  const config = {
+    ...init,
+    // Garantir que cookies sejam enviados em requisições same-origin
+    credentials: init?.credentials ?? "include",
+    headers: {
+      ...init?.headers,
+    },
+  };
 
-  // Adiciona o header Authorization se houver token
-  const headers = new Headers(init.headers || {});
-  if (accessToken) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
+  const response = await fetch(input, config);
+
+  // Opcional: Interceptador de 401 para redirecionar login ou tratar expiração
+  if (response.status === 401) {
+    // Pode disparar um evento ou redirecionar
+    if (typeof window !== "undefined") {
+      // window.location.href = "/sign-in";
+    }
   }
 
-  // Garante que os cookies de autenticação sejam enviados
-  const credentials = init.credentials ?? "include";
-
-  return fetch(input, { ...init, headers, credentials });
+  return response;
 }

@@ -24,7 +24,8 @@ export interface CreateTechnicalSheetDto {
   active?: boolean;
 }
 
-export interface UpdateTechnicalSheetDto
-  extends Partial<Omit<CreateTechnicalSheetDto, "organizationId">> {
+export interface UpdateTechnicalSheetDto extends Partial<
+  Omit<CreateTechnicalSheetDto, "organizationId">
+> {
   organizationId: string;
 }

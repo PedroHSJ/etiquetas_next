@@ -1,280 +1,310 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 import { EstoqueFiltros, MovimentacoesFiltros } from "@/types/estoque";
 import {
   StockStatistics,
   STOCK_MESSAGES,
   UnitOfMeasureCode,
 } from "@/types/stock/stock";
-import {
-  QuickEntryResponseDto,
-  StockMovementResponseDto,
-  StockResponseDto,
-  StockListResponseDto,
-  MovementListResponseDto,
-} from "@/types/dto/stock/response";
-import { StockEntity, StockMovementEntity } from "@/types/database/stock";
-import {
-  toStockMovementResponseDto,
-  toStockResponseDto,
-} from "@/lib/converters/stock";
-import { UserWithName } from "@/types/dto/profile/response";
-
-type ProductJoin = {
-  id: number;
-  name: string;
-  group_id?: number | null;
-  unit_of_measure_code?: UnitOfMeasureCode | null;
-};
-
-type MovementWithRelations = StockMovementEntity & {
-  product?: ProductJoin | null;
-  user?: {
-    id: string;
-    email?: string;
-    name?: string;
-    fullName?: string;
-  };
-};
-
-interface ListStockParams {
-  page: number;
-  pageSize: number;
-  filters?: EstoqueFiltros;
-  organizationId: string;
-}
-
-interface ListMovementsParams {
-  page: number;
-  pageSize: number;
-  filters?: MovimentacoesFiltros;
-  organizationId: string;
-}
+import type { Prisma } from "@prisma/client";
 
 /**
- * Backend service responsável por operações de estoque.
- * Implementa o padrão DTO + Services adotado pelo projeto.
+ * Backend service responsible for stock operations using Prisma.
+ * Removed converters to simplify architecture.
  */
 export class StockBackendService {
-  constructor(private readonly supabase: SupabaseClient) {}
-
   /**
-   * Lista itens de estoque com paginação e filtros opcionais.
+   * List stock items with pagination and optional filters.
    */
   async listStock({
     page,
     pageSize,
     filters,
     organizationId,
-  }: ListStockParams): Promise<StockListResponseDto> {
-    const offset = (page - 1) * pageSize;
+  }: {
+    page: number;
+    pageSize: number;
+    filters?: EstoqueFiltros;
+    organizationId: string;
+  }): Promise<any> {
+    const skip = (page - 1) * pageSize;
 
-    let query = this.supabase
-      .from("stock")
-      .select(
-        `
-        *,
-        product:products(*),
-        storage_location:storage_locations(id, name, parent_id)
-      `,
-        { count: "exact" }
-      )
-      .eq("organization_id", organizationId)
-      .order("updated_at", { ascending: false })
-      .range(offset, offset + pageSize - 1);
+    const where: Prisma.stockWhereInput = {
+      organizationId: organizationId,
+    };
 
     if (filters?.productId) {
-      query = query.eq("productId", filters.productId);
+      where.productId = filters.productId;
     }
 
     if (filters?.userId) {
-      query = query.eq("userId", filters.userId);
+      where.userId = filters.userId;
     }
 
     if (filters?.estoque_zerado) {
-      query = query.eq("current_quantity", 0);
+      where.currentQuantity = 0;
     } else if (filters?.estoque_baixo) {
       const minimum = filters.quantidade_minima ?? 10;
-      query = query.gt("current_quantity", 0).lt("current_quantity", minimum);
+      where.currentQuantity = {
+        gt: 0,
+        lt: minimum,
+      };
     }
 
     if (filters?.produto_nome) {
-      query = query.ilike("product.name", `%${filters.produto_nome}%`);
+      where.products = {
+        name: {
+          contains: filters.produto_nome,
+          mode: "insensitive",
+        },
+      };
     }
 
-    const { data, error, count } = await query;
-
-    if (error) {
-      throw new Error(error.message || "Error while fetching stock items");
-    }
-
-    const stockItems = (data ?? []) as (StockEntity & {
-      product?: ProductJoin | null;
-      storage_location?: {
-        id: string;
-        name: string;
-        parent_id?: string | null;
-      } | null;
-    })[];
+    const [data, count] = await Promise.all([
+      prisma.stock.findMany({
+        where,
+        include: {
+          products: {
+            select: {
+              id: true,
+              name: true,
+              groupId: true,
+            },
+          },
+          storage_locations: {
+            select: {
+              id: true,
+              name: true,
+              parentId: true,
+            },
+          },
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        skip,
+        take: pageSize,
+      }),
+      prisma.stock.count({ where }),
+    ]);
 
     return {
-      data: stockItems.map((item) => toStockResponseDto(item)),
-      total: count || 0,
+      data,
+      total: count,
       page,
       pageSize,
-      totalPages: Math.ceil((count || 0) / pageSize),
+      totalPages: Math.ceil(count / pageSize),
     };
   }
 
   /**
-   * Lista movimentações de estoque com paginação e filtros.
+   * List stock movements with pagination and filters.
    */
   async listMovements({
     page,
     pageSize,
     filters,
     organizationId,
-  }: ListMovementsParams): Promise<MovementListResponseDto> {
-    const offset = (page - 1) * pageSize;
+  }: {
+    page: number;
+    pageSize: number;
+    filters?: MovimentacoesFiltros;
+    organizationId: string;
+  }): Promise<any> {
+    const skip = (page - 1) * pageSize;
 
-    let query = this.supabase
-      .from("stock_movements")
-      .select(
-        `
-        *,
-        product:products(*)
-      `,
-        { count: "exact" }
-      )
-      .eq("organization_id", organizationId)
-      .order("movement_date", { ascending: false })
-      .range(offset, offset + pageSize - 1);
+    const where: Prisma.stock_movementsWhereInput = {
+      organizationId: organizationId,
+    };
 
     if (filters?.productId) {
-      query = query.eq("productId", filters.productId);
+      where.productId = filters.productId;
     }
 
     if (filters?.userId) {
-      query = query.eq("userId", filters.userId);
+      where.userId = filters.userId;
     }
 
     if (filters?.tipo_movimentacao) {
-      query = query.eq("movement_type", filters.tipo_movimentacao);
+      where.movementType = filters.tipo_movimentacao;
     }
 
-    if (filters?.data_inicio) {
-      query = query.gte("movement_date", filters.data_inicio);
-    }
-
-    if (filters?.data_fim) {
-      const endDate = new Date(filters.data_fim);
-      endDate.setHours(23, 59, 59, 999);
-      query = query.lte("movement_date", endDate.toISOString());
+    if (filters?.data_inicio || filters?.data_fim) {
+      where.movementDate = {};
+      if (filters.data_inicio) {
+        where.movementDate.gte = new Date(filters.data_inicio);
+      }
+      if (filters.data_fim) {
+        const endDate = new Date(filters.data_fim);
+        endDate.setHours(23, 59, 59, 999);
+        where.movementDate.lte = endDate;
+      }
     }
 
     if (filters?.produto_nome) {
-      query = query.ilike("product.name", `%${filters.produto_nome}%`);
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      throw new Error(error.message || "Error while fetching stock movements");
-    }
-
-    const movements = (data ?? []) as MovementWithRelations[];
-
-    // Enrich with user info
-    const uniqueUserIds = Array.from(
-      new Set(movements.map((movement) => movement.userId).filter(Boolean))
-    );
-
-    const usersMap = new Map<string, UserWithName>();
-
-    if (uniqueUserIds.length > 0) {
-      const { data: usersData, error: usersError } = await this.supabase.rpc(
-        "get_multiple_users_data",
-        { user_ids: uniqueUserIds }
-      );
-
-      if (usersError) {
-        throw new Error(
-          usersError.message || "Error while loading movement user data"
-        );
-      }
-
-      (usersData as UserWithName[] | null)?.forEach((user) => {
-        if (user?.id) {
-          usersMap.set(user.id, user);
-        }
-      });
-    }
-
-    const enriched = movements.map((movement) => {
-      const user = usersMap.get(movement.userId);
-      const movementUser = user
-        ? {
-            id: user.id,
-            email: user.email,
-            name: user.name ?? user.full_name ?? undefined,
-            fullName: user.full_name ?? user.name ?? undefined,
-          }
-        : undefined;
-
-      const movementWithUser: MovementWithRelations = {
-        ...movement,
-        user: movementUser,
+      where.products = {
+        name: {
+          contains: filters.produto_nome,
+          mode: "insensitive",
+        },
       };
+    }
 
-      return toStockMovementResponseDto(movementWithUser);
-    });
+    const [movements, count] = await Promise.all([
+      prisma.stock_movements.findMany({
+        where,
+        include: {
+          products: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: {
+          movementDate: "desc",
+        },
+        skip,
+        take: pageSize,
+      }),
+      prisma.stock_movements.count({ where }),
+    ]);
 
     return {
-      data: enriched,
-      total: count || 0,
+      data: movements,
+      total: count,
       page,
       pageSize,
-      totalPages: Math.ceil((count || 0) / pageSize),
+      totalPages: Math.ceil(count / pageSize),
     };
   }
 
   /**
-   * Calcula estatísticas básicas do estoque.
+   * Calculate basic stock statistics.
    */
   async getStatistics(organizationId: string): Promise<StockStatistics> {
-    const { data, error } = await this.supabase
-      .from("stock")
-      .select("current_quantity")
-      .eq("organization_id", organizationId);
+    const stats = await prisma.stock.findMany({
+      where: { organizationId: organizationId },
+      select: { currentQuantity: true },
+    });
 
-    if (error) {
-      throw new Error(
-        error.message || "Error while calculating stock statistics"
-      );
-    }
-
-    const rows = (data ?? []) as { current_quantity: number }[];
-    const total = rows.length;
-    const productsInStock = rows.filter(
-      (item) => (item.current_quantity ?? 0) > 0
+    const total = stats.length;
+    const productsInStock = stats.filter(
+      (item: any) => Number(item.currentQuantity ?? 0) > 0,
     ).length;
-    const productsOutOfStock = rows.filter(
-      (item) => (item.current_quantity ?? 0) === 0
+    const productsOutOfStock = stats.filter(
+      (item: any) => Number(item.currentQuantity ?? 0) === 0,
     ).length;
-    const productsLowStock = rows.filter(
-      (item) => item.current_quantity > 0 && item.current_quantity < 10
-    ).length;
+    const productsLowStock = stats.filter((item: any) => {
+      const qty = Number(item.currentQuantity ?? 0);
+      return qty > 0 && qty < 10;
+    }).length;
 
     return {
-      total_products: total,
-      products_in_stock: productsInStock,
-      products_out_of_stock: productsOutOfStock,
-      products_low_stock: productsLowStock,
-      last_update: new Date().toISOString(),
+      totalProducts: total,
+      productsInStock: productsInStock,
+      productsOutOfStock: productsOutOfStock,
+      productsLowStock: productsLowStock,
+      lastUpdate: new Date().toISOString(),
     };
   }
 
   /**
-   * Registra uma entrada rápida de estoque e retorna DTOs normalizados
+   * Register a manual stock movement.
+   */
+  async registerMovement(params: {
+    productId: number;
+    movementType: "ENTRADA" | "SAIDA";
+    quantity: number;
+    userId: string;
+    organizationId: string;
+    observation?: string;
+    unitOfMeasureCode?: string;
+  }): Promise<any> {
+    const {
+      productId,
+      movementType,
+      quantity,
+      userId,
+      organizationId,
+      observation,
+      unitOfMeasureCode,
+    } = params;
+
+    // Verificar se o produto existe
+    const product = await prisma.products.findUnique({
+      where: { id: productId },
+      select: { id: true, name: true },
+    });
+
+    if (!product) {
+      throw new Error(STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND);
+    }
+
+    return await prisma.$transaction(async (tx: any) => {
+      // Registrar movimentação
+      const movement = await tx.stock_movements.create({
+        data: {
+          productId,
+          userId,
+          organizationId: organizationId,
+          movementType,
+          quantity,
+          unitOfMeasureCode: unitOfMeasureCode || "un",
+          observation:
+            observation ||
+            `${movementType.toLowerCase()} manual - ${product.name}`,
+        },
+        include: {
+          products: true,
+        },
+      });
+
+      // Atualizar estoque
+      if (movementType === "ENTRADA") {
+        await tx.stock.upsert({
+          where: { productId },
+          create: {
+            productId,
+            userId,
+            organizationId: organizationId,
+            currentQuantity: quantity,
+            unitOfMeasureCode: unitOfMeasureCode || "un",
+          },
+          update: {
+            currentQuantity: { increment: quantity },
+          },
+        });
+      } else {
+        const stockRow = await tx.stock.findUnique({
+          where: { productId },
+        });
+
+        if (!stockRow || Number(stockRow.currentQuantity) < quantity) {
+          throw new Error(STOCK_MESSAGES.ERROR_INSUFFICIENT_QUANTITY);
+        }
+
+        await tx.stock.update({
+          where: { productId },
+          data: {
+            currentQuantity: { decrement: quantity },
+          },
+        });
+      }
+
+      return movement;
+    });
+  }
+
+  /**
+   * Register a quick entry in stock.
    */
   async registerQuickEntry(params: {
     productId: number;
@@ -284,122 +314,34 @@ export class StockBackendService {
     unitOfMeasureCode?: UnitOfMeasureCode;
     storageLocationId?: string;
     observation?: string;
-  }): Promise<QuickEntryResponseDto> {
-    const {
-      productId,
-      quantity,
-      userId,
-      organizationId,
-      unitOfMeasureCode,
-      storageLocationId,
-      observation,
-    } = params;
+  }): Promise<any> {
+    const movement = await this.registerMovement({
+      productId: params.productId,
+      movementType: "ENTRADA",
+      quantity: params.quantity,
+      userId: params.userId,
+      organizationId: params.organizationId,
+      observation: params.observation,
+      unitOfMeasureCode: params.unitOfMeasureCode,
+    });
 
-    if (!productId || !quantity) {
-      throw new Error("Produto e quantidade são obrigatórios");
-    }
-
-    if (quantity <= 0) {
-      throw new Error(STOCK_MESSAGES.ERROR_INVALID_QUANTITY);
-    }
-
-    const { data: product, error: productError } = await this.supabase
-      .from("products")
-      .select("id, name, group_id")
-      .eq("id", productId)
-      .single();
-
-    if (productError || !product) {
-      throw new Error(STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND);
-    }
-
-    const { data: stockExists } = await this.supabase
-      .from("stock")
-      .select("unit_of_measure_code")
-      .eq("productId", productId)
-      .eq("organization_id", organizationId)
-      .maybeSingle();
-
-    const unitCode =
-      unitOfMeasureCode ||
-      (stockExists?.unit_of_measure_code as UnitOfMeasureCode | undefined) ||
-      (product as { unit_of_measure_code?: UnitOfMeasureCode })
-        .unit_of_measure_code ||
-      "un";
-
-    const { data: movement, error: movementError } = await this.supabase
-      .from("stock_movements")
-      .insert({
-        productId,
-        userId,
-        organization_id: organizationId,
-        movement_type: "ENTRADA",
-        quantity,
-        unit_of_measure_code: unitCode,
-        storage_location_id: storageLocationId || null,
-        observation: observation || `Entrada rápida - ${product.name}`,
-      })
-      .select(
-        `
-        *,
-        product:products(id, name, group_id)
-      `
-      )
-      .single();
-
-    if (movementError || !movement) {
-      throw new Error(
-        movementError?.message ||
-          movementError?.details ||
-          "Erro ao registrar movimentação de estoque"
-      );
-    }
-
-    const movementDto: StockMovementResponseDto = toStockMovementResponseDto(
-      movement as MovementWithRelations
-    );
-
-    // Update storage_location_id on stock table if provided
-    if (storageLocationId) {
-      await this.supabase
-        .from("stock")
-        .update({ storage_location_id: storageLocationId })
-        .eq("productId", productId)
-        .eq("organization_id", organizationId);
-    }
-
-    const { data: updatedStock, error: stockError } = await this.supabase
-      .from("stock")
-      .select(
-        `
-        *,
-        product:products(id, name, group_id),
-        storage_location:storage_locations(id, name, parent_id)
-      `
-      )
-      .eq("productId", productId)
-      .eq("organization_id", organizationId)
-      .single();
-
-    let updatedStockDto: StockResponseDto | undefined;
-
-    if (updatedStock) {
-      updatedStockDto = toStockResponseDto(
-        updatedStock as StockEntity & { product?: ProductJoin }
-      );
-    } else if (stockError) {
-      console.warn("Erro ao buscar estoque atualizado:", stockError);
-    }
+    const updatedStock = await prisma.stock.findUnique({
+      where: { productId: params.productId },
+      include: {
+        products: true,
+        storage_locations: true,
+      },
+    });
 
     return {
       message: STOCK_MESSAGES.ENTRY_SUCCESS,
-      movement: movementDto,
-      updatedStock: updatedStockDto,
+      movement,
+      updatedStock,
     };
   }
 
   /**
-   * Registra uma saída rápida de estoque e retorna DTOs normalizados
+   * Register a quick exit from stock.
    */
   async registerQuickExit(params: {
     productId: number;
@@ -408,112 +350,28 @@ export class StockBackendService {
     organizationId: string;
     unitOfMeasureCode?: UnitOfMeasureCode;
     observation?: string;
-  }): Promise<QuickEntryResponseDto> {
-    const {
-      productId,
-      quantity,
-      userId,
-      organizationId,
-      unitOfMeasureCode,
-      observation,
-    } = params;
+  }): Promise<any> {
+    const movement = await this.registerMovement({
+      productId: params.productId,
+      movementType: "SAIDA",
+      quantity: params.quantity,
+      userId: params.userId,
+      organizationId: params.organizationId,
+      observation: params.observation,
+      unitOfMeasureCode: params.unitOfMeasureCode,
+    });
 
-    if (!productId || !quantity) {
-      throw new Error("Produto e quantidade são obrigatórios");
-    }
-
-    if (quantity <= 0) {
-      throw new Error(STOCK_MESSAGES.ERROR_INVALID_QUANTITY);
-    }
-
-    const { data: product, error: productError } = await this.supabase
-      .from("products")
-      .select("id, name, group_id")
-      .eq("id", productId)
-      .single();
-
-    if (productError || !product) {
-      throw new Error(STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND);
-    }
-
-    const { data: stockRow, error: stockError } = await this.supabase
-      .from("stock")
-      .select("id, current_quantity, unit_of_measure_code")
-      .eq("productId", productId)
-      .eq("organization_id", organizationId)
-      .single();
-
-    if (stockError || !stockRow) {
-      throw new Error(STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND);
-    }
-
-    const availableQuantity = Number(stockRow.current_quantity ?? 0);
-    if (availableQuantity < quantity) {
-      throw new Error(STOCK_MESSAGES.ERROR_INSUFFICIENT_QUANTITY);
-    }
-
-    const unitCode =
-      unitOfMeasureCode ||
-      (stockRow.unit_of_measure_code as UnitOfMeasureCode | undefined) ||
-      (product as { unit_of_measure_code?: UnitOfMeasureCode })
-        .unit_of_measure_code ||
-      "un";
-
-    const { data: movement, error: movementError } = await this.supabase
-      .from("stock_movements")
-      .insert({
-        productId,
-        userId,
-        organization_id: organizationId,
-        movement_type: "SAIDA",
-        quantity,
-        unit_of_measure_code: unitCode,
-        observation: observation || `Saída rápida - ${product.name}`,
-      })
-      .select(
-        `
-        *,
-        product:products(id, name, group_id)
-      `
-      )
-      .single();
-
-    if (movementError || !movement) {
-      throw new Error(
-        movementError?.message ||
-          movementError?.details ||
-          "Erro ao registrar movimentação de estoque"
-      );
-    }
-
-    const movementDto: StockMovementResponseDto = toStockMovementResponseDto(
-      movement as MovementWithRelations
-    );
-
-    const { data: updatedStock } = await this.supabase
-      .from("stock")
-      .select(
-        `
-        *,
-        product:products(id, name, group_id)
-      `
-      )
-      .eq("productId", productId)
-      .eq("organization_id", organizationId)
-      .single();
-
-    let updatedStockDto: StockResponseDto | undefined;
-
-    if (updatedStock) {
-      updatedStockDto = toStockResponseDto(
-        updatedStock as StockEntity & { product?: ProductJoin }
-      );
-    }
+    const updatedStock = await prisma.stock.findUnique({
+      where: { productId: params.productId },
+      include: {
+        products: true,
+      },
+    });
 
     return {
       message: STOCK_MESSAGES.EXIT_SUCCESS,
-      movement: movementDto,
-      updatedStock: updatedStockDto,
+      movement,
+      updatedStock,
     };
   }
 }

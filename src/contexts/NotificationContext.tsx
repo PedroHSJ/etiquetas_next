@@ -22,14 +22,14 @@ interface NotificationContextType {
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
     throw new Error(
-      "useNotifications deve ser usado dentro de um NotificationProvider"
+      "useNotifications deve ser usado dentro de um NotificationProvider",
     );
   }
   return context;
@@ -104,7 +104,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         return false;
       }
     },
-    [acceptMutation]
+    [acceptMutation],
   );
 
   const rejectInvite = useCallback(
@@ -117,11 +117,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         return false;
       }
     },
-    [rejectMutation]
+    [rejectMutation],
   );
 
   const value: NotificationContextType = {
-    pendingInvites,
+    pendingInvites: pendingInvites as unknown as Invite[],
     pendingInviteCount: pendingInvites.length,
     isLoading,
     refreshInvites,

@@ -46,7 +46,7 @@ interface UseOrganizationWizardReturn {
   updateWizardData: (data: Partial<WizardData>) => void;
   submitWizard: (
     userId: string,
-    options?: SubmitWizardOptions
+    options?: SubmitWizardOptions,
   ) => Promise<{ success: boolean; organizationId?: string }>;
   getTotalSteps: () => number;
 }
@@ -58,7 +58,7 @@ const sanitizeCnpj = (value?: string | null) => {
 };
 
 const buildOrganizationPayload = (
-  wizardData: WizardData
+  wizardData: WizardData,
 ): CreateOrganizationDto => {
   const { uanData } = wizardData;
 
@@ -99,7 +99,11 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
   const [wizardData, setWizardData] = useState<WizardData>({
     organizationName: "",
     organizationType: "uan",
-    selectedDepartments: [],
+    selectedDepartments: [
+      { nome: "Produção/Cozinha", tipo: "producao" },
+      { nome: "Estoque/Almoxarifado", tipo: "estoque" },
+      { nome: "Administrativo", tipo: "administrativo" },
+    ],
     customDepartments: [],
     template: getTemplate("uan"),
     uanData: {},
@@ -168,7 +172,7 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
   const submitWizard = useCallback(
     async (
       userId: string,
-      options?: SubmitWizardOptions
+      options?: SubmitWizardOptions,
     ): Promise<{ success: boolean; organizationId?: string }> => {
       if (!options?.managerProfileId) {
         toast.error("Não foi possível identificar o perfil de gestor.");
@@ -185,11 +189,11 @@ export const useOrganizationWizard = (): UseOrganizationWizardReturn => {
         return { success: true, organizationId: result.organizationId };
       } catch (error) {
         throw new Error(
-          `${error instanceof Error ? error.message : "Erro desconhecido"}`
+          `${error instanceof Error ? error.message : "Erro desconhecido"}`,
         );
       }
     },
-    [createOrganizationMutation, wizardData]
+    [createOrganizationMutation, wizardData],
   );
 
   const getTotalSteps = useCallback(() => {

@@ -77,7 +77,7 @@ function InputHookForm<T extends FieldValues>({
           <Field
             className={cn(
               "col-span-12 flex flex-col gap-1 p-0",
-              GRID_COL_SPAN_CLASSES[colSpan]
+              GRID_COL_SPAN_CLASSES[colSpan],
             )}
           >
             {label && (
@@ -103,8 +103,8 @@ function InputHookForm<T extends FieldValues>({
                   hasError
                     ? "border-2 border-destructive"
                     : showTip
-                    ? "border-2 border-info"
-                    : ""
+                      ? "border-2 border-info"
+                      : "",
                 )}
               />
             ) : (
@@ -121,8 +121,8 @@ function InputHookForm<T extends FieldValues>({
                   hasError
                     ? "border-2 border-destructive"
                     : showTip
-                    ? "border-2 border-info"
-                    : ""
+                      ? "border-2 border-info"
+                      : "",
                 )}
               />
             )}

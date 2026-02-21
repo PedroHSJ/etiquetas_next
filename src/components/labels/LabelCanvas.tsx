@@ -28,7 +28,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
 
   const handleFieldUpdate = (updatedField: LabelField) => {
     const updatedFields = template.fields.map((field) =>
-      field.id === updatedField.id ? updatedField : field
+      field.id === updatedField.id ? updatedField : field,
     );
 
     onTemplateUpdate({
@@ -41,7 +41,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
     if (!selectedField) return;
 
     const updatedFields = template.fields.filter(
-      (field) => field.id !== selectedField.id
+      (field) => field.id !== selectedField.id,
     );
     onTemplateUpdate({
       ...template,
@@ -63,7 +63,7 @@ export const LabelCanvas: React.FC<LabelCanvasProps> = ({
         className={cn(
           "relative border-2 border-dashed bg-white overflow-hidden",
           isOver ? "border-blue-500 bg-blue-50" : "border-gray-300",
-          showGrid && "bg-grid-pattern"
+          showGrid && "bg-grid-pattern",
         )}
         style={{
           width: template.label_width,

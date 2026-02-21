@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { InviteBackendService } from "@/lib/services/server/inviteService";
 import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
 import {
@@ -13,30 +14,19 @@ import {
  * List invites with optional filters
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) {
-    const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
-    };
-    return NextResponse.json(errorResponse, { status: 401 });
-  }
-
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    if (error || !user) {
-      console.error("Auth error in /api/invites:", error);
+    if (!session || !session.user) {
       const errorResponse: ApiErrorResponse = {
         error: "User not authenticated",
       };
       return NextResponse.json(errorResponse, { status: 401 });
     }
+
+    const user = session.user;
 
     // Get query parameters
     const email = request.nextUrl.searchParams.get("email") ?? undefined;
@@ -46,7 +36,7 @@ export async function GET(request: NextRequest) {
     const pending = request.nextUrl.searchParams.get("pending") === "true";
     const scope = request.nextUrl.searchParams.get("scope") ?? undefined;
 
-    const inviteService = new InviteBackendService(supabase);
+    const inviteService = new InviteBackendService();
 
     // If pending flag is true, get only pending invites for user's email
     if (pending && user.email) {
@@ -70,8 +60,11 @@ export async function GET(request: NextRequest) {
     }
 
     const filters: ListInvitesDto = {
+      // Se scope for organização, não filtra por email pessoal.
+      // Se não, filtra por email (meus convites).
+      // Lógica original: email: scope === "organization" ? undefined : email || user.email
       email: scope === "organization" ? undefined : email || user.email,
-      status,
+      status: status as any, // Cast para tipo status
       organizationId,
     };
 
@@ -86,7 +79,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(successResponse, { status: 200 });
   } catch (error) {
     console.error("Error on /api/invites route:", error);
-    console.error("Error details:", JSON.stringify(error, null, 2));
     const errorResponse: ApiErrorResponse = {
       error: "Internal error while fetching invites",
       details: error instanceof Error ? { message: error.message } : undefined,
@@ -100,30 +92,19 @@ export async function GET(request: NextRequest) {
  * Create a new invite
  */
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) {
-    const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
-    };
-    return NextResponse.json(errorResponse, { status: 401 });
-  }
-
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    if (error || !user) {
+    if (!session || !session.user) {
       const errorResponse: ApiErrorResponse = {
         error: "User not authenticated",
       };
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
+    const user = session.user;
     const body: CreateInviteDto = await request.json();
     const { email, organizationId, profileId } = body;
 
@@ -134,17 +115,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    const inviteService = new InviteBackendService(supabase);
+    const inviteService = new InviteBackendService();
 
-    const metadata = (user.user_metadata || {}) as Record<string, unknown>;
-    const invitedByName =
-      (metadata.name as string) ||
-      (metadata.full_name as string) ||
-      user.email ||
-      null;
-    const invitedByEmail = user.email ?? null;
-    const invitedByAvatarUrl =
-      (metadata.avatar_url as string) || (metadata.picture as string) || null;
+    // Better Auth user object has name, email, image directly
+    const invitedByName = user.name || user.email || null;
+    const invitedByEmail = user.email || null;
+    const invitedByAvatarUrl = user.image || null;
 
     const invite = await inviteService.createInvite({
       email,
@@ -165,6 +141,7 @@ export async function POST(request: NextRequest) {
     console.error("Error on POST /api/invites route:", error);
     const errorResponse: ApiErrorResponse = {
       error: "Internal error while creating invite",
+      details: error instanceof Error ? { message: error.message } : undefined,
     };
     return NextResponse.json(errorResponse, { status: 500 });
   }

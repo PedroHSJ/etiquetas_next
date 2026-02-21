@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { DepartmentBackendService } from "@/lib/services/server/departmentService";
-import {
-  ApiErrorResponse,
-  ApiSuccessResponse,
-} from "@/types/common/api";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 import {
   CreateDepartmentDto,
   ListDepartmentsDto,
@@ -12,35 +9,23 @@ import {
 import { DepartmentWithOrganizationResponseDto } from "@/types/dto/department/response";
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const organizationId = searchParams.get("organizationId") || undefined;
     const search = searchParams.get("search") || undefined;
 
-    const service = new DepartmentBackendService(supabase);
+    const service = new DepartmentBackendService();
     const params: ListDepartmentsDto = {
       organizationId,
       search,
@@ -49,7 +34,9 @@ export async function GET(request: NextRequest) {
 
     const successResponse: ApiSuccessResponse<
       DepartmentWithOrganizationResponseDto[]
-    > = { data: departments };
+    > = {
+      data: departments as unknown as DepartmentWithOrganizationResponseDto[],
+    };
 
     return NextResponse.json(successResponse, { status: 200 });
   } catch (err) {
@@ -62,34 +49,22 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const body = await request.json();
     const dto: CreateDepartmentDto = body;
 
-    const service = new DepartmentBackendService(supabase);
+    const service = new DepartmentBackendService();
     const department = await service.createDepartment(dto);
 
     const successResponse: ApiSuccessResponse<typeof department> = {
@@ -108,4 +83,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(errorResponse, { status: 500 });
   }
 }
-

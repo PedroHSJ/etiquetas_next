@@ -27,14 +27,14 @@ export function usePermissions() {
     if (
       !user ||
       !activeProfile ||
-      !activeProfile.userOrganization?.organizationId
+      !activeProfile.userOrganization?.organization?.id
     )
       return;
 
     try {
       setLoading(true);
       const data = await PermissionService.getUserPermissions(
-        activeProfile.userOrganization?.organizationId
+        activeProfile.userOrganization?.organization?.id,
       );
       setPermissions(data);
     } catch (error) {
@@ -50,14 +50,14 @@ export function usePermissions() {
    * @param functionalityCode - Código da funcionalidade (ex: 'STOCK:READ', 'MEMBERS:WRITE')
    */
   const hasPermissionByCode = (
-    functionalityCode: FunctionalityCodeType | string
+    functionalityCode: FunctionalityCodeType | string,
   ): boolean => {
     //if (process.env.NODE_ENV === "development") return true;
     if (!permissions) return false;
 
     // Usuários Gestor têm acesso total
     const isManager = permissions.profiles.some(
-      (profile) => profile.name.toLowerCase() === "gestor"
+      (profile) => profile.name.toLowerCase() === "gestor",
     );
     if (isManager) return true;
 
@@ -92,7 +92,7 @@ export function usePermissions() {
 
     // Usuários Gestor têm acesso total
     const isManager = permissions.profiles.some(
-      (profile) => profile.name.toLowerCase() === "gestor"
+      (profile) => profile.name.toLowerCase() === "gestor",
     );
     if (isManager) return true;
 
@@ -131,7 +131,7 @@ export function usePermissions() {
   const isMaster = (): boolean => {
     if (!permissions) return false;
     return permissions.profiles.some(
-      (profile) => profile.name.toLowerCase() === "master"
+      (profile) => profile.name.toLowerCase() === "master",
     );
   };
 
@@ -140,21 +140,21 @@ export function usePermissions() {
     return permissions.profiles.some(
       (profile) =>
         profile.name.toLowerCase() === "gestor" ||
-        profile.name.toLowerCase() === "master"
+        profile.name.toLowerCase() === "master",
     );
   };
 
   const isEstoquista = (): boolean => {
     if (!permissions) return false;
     return permissions.profiles.some(
-      (profile) => profile.name.toLowerCase() === "estoquista"
+      (profile) => profile.name.toLowerCase() === "estoquista",
     );
   };
 
   const isCozinheiro = (): boolean => {
     if (!permissions) return false;
     return permissions.profiles.some(
-      (profile) => profile.name.toLowerCase() === "cozinheiro"
+      (profile) => profile.name.toLowerCase() === "cozinheiro",
     );
   };
 

@@ -7,12 +7,12 @@ import { Package, AlertTriangle, TrendingUp, BarChart3 } from "lucide-react";
 import { StockStatistics } from "@/types/stock/stock";
 
 interface EstoqueStatsProps {
-  estatisticas?: StockStatistics | null;
+  stats?: StockStatistics | null;
   carregando?: boolean;
 }
 
-export function EstoqueStats({ estatisticas, carregando }: EstoqueStatsProps) {
-  if (carregando || !estatisticas) {
+export function EstoqueStats({ stats, carregando }: EstoqueStatsProps) {
+  if (carregando || !stats) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -40,28 +40,28 @@ export function EstoqueStats({ estatisticas, carregando }: EstoqueStatsProps) {
   const cards = [
     {
       title: "Total de Produtos",
-      value: estatisticas.total_products,
+      value: stats.totalProducts,
       description: "Produtos cadastrados",
       icon: Package,
       color: "text-blue-600",
     },
     {
       title: "Em Estoque",
-      value: estatisticas.products_in_stock,
+      value: stats.productsInStock,
       description: "Com quantidade > 0",
       icon: BarChart3,
       color: "text-green-600",
     },
     {
       title: "Estoque Zerado",
-      value: estatisticas.products_out_of_stock,
+      value: stats.productsOutOfStock,
       description: "Sem produtos disponíveis",
       icon: AlertTriangle,
       color: "text-red-600",
     },
     {
       title: "Estoque Baixo",
-      value: estatisticas.products_low_stock,
+      value: stats.productsLowStock,
       description: "Precisam de reposição",
       icon: TrendingUp,
       color: "text-yellow-600",

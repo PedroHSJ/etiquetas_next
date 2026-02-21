@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { NavigationButton } from "@/components/ui/navigation-button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { TechnicalSheetModel } from "@/types/models/technical-sheet";
+import { TechnicalSheetResponseDto } from "@/types/dto/technical-sheet/response";
 import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
 import { TechnicalSheetGenerator } from "@/components/technical-sheet/TechnicalSheetGenerator";
 import {
@@ -24,7 +24,7 @@ export default function EditTechnicalSheetPage() {
   const { selectedOrganization } = useOrganization();
 
   const [technicalSheet, setTechnicalSheet] =
-    useState<TechnicalSheetModel | null>(null);
+    useState<TechnicalSheetResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -35,7 +35,7 @@ export default function EditTechnicalSheetPage() {
       try {
         const sheet = await TechnicalSheetService.getById(
           id as string,
-          selectedOrganization.id
+          selectedOrganization.id,
         );
         if (sheet.active === false) {
           toast.error("Ficha técnica inativa");
@@ -56,7 +56,7 @@ export default function EditTechnicalSheetPage() {
   }, [id, selectedOrganization, router]);
 
   const handleSave = async (
-    sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }
+    sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] },
   ) => {
     if (!selectedOrganization) {
       toast.error("Nenhuma organização selecionada");

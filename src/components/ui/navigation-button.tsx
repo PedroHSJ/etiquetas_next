@@ -8,8 +8,7 @@ import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 // import { Loader2 } from "lucide-react";
 
 interface NavigationButtonProps
-  extends React.ComponentProps<"button">,
-    VariantProps<typeof buttonVariants> {
+  extends React.ComponentProps<"button">, VariantProps<typeof buttonVariants> {
   href: string;
   onClick?: () => void;
   disabled?: boolean;

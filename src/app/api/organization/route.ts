@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { OrganizationBackendService } from "@/lib/services/server/organizationService";
 import {
   CreateOrganizationDto,
@@ -9,35 +9,25 @@ import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
 import { OrganizationResponseDto } from "@/types/dto/organization/response";
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    const organizationService = new OrganizationBackendService(supabase);
-    const organizations = await organizationService.listByUserId(user.id);
+    const organizationService = new OrganizationBackendService();
+    const organizations = await organizationService.listByUserId(
+      session.user.id,
+    );
 
     const successResponse: ApiSuccessResponse<OrganizationResponseDto[]> = {
-      data: organizations,
+      data: organizations as unknown as OrganizationResponseDto[],
     };
 
     return NextResponse.json(successResponse, { status: 200 });
@@ -51,41 +41,29 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const body = await request.json();
     const dto: CreateOrganizationDto = body; // TODO: Add validation (Zod)
 
-    const organizationService = new OrganizationBackendService(supabase);
+    const organizationService = new OrganizationBackendService();
     const newOrganization = await organizationService.createOrganization(
       dto,
-      user.id
+      session.user.id,
     );
 
     const successResponse: ApiSuccessResponse<OrganizationResponseDto> = {
-      data: newOrganization,
+      data: newOrganization as unknown as OrganizationResponseDto,
     };
 
     return NextResponse.json(successResponse, { status: 201 });
@@ -102,30 +80,18 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const body = await request.json();
     const { id, ...updates } = body;
     const dto: UpdateOrganizationDto = updates; // TODO: Add validation (Zod)
@@ -137,14 +103,15 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    const organizationService = new OrganizationBackendService(supabase);
+    const organizationService = new OrganizationBackendService();
+    // TODO: Verify if user has permission to update this organization
     const updatedOrganization = await organizationService.updateOrganization(
       id,
-      dto
+      dto,
     );
 
     const successResponse: ApiSuccessResponse<OrganizationResponseDto> = {
-      data: updatedOrganization,
+      data: updatedOrganization as unknown as OrganizationResponseDto,
     };
 
     return NextResponse.json(successResponse, { status: 200 });

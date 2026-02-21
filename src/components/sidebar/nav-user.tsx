@@ -18,8 +18,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 export function NavUser({
   user,
@@ -34,11 +34,16 @@ export function NavUser({
   const router = useRouter();
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/login"); // or sign-in
+          },
+        },
+      });
+    } catch (error) {
       console.error("Erro ao fazer logout:", error);
-    } else {
-      router.push("/login");
     }
   };
 

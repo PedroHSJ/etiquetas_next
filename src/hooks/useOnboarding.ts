@@ -31,7 +31,7 @@ export const useOnboarding = () => {
         InviteService.getPendingInvites(),
       ]);
 
-      return { hasOrganization, invites };
+      return { hasOrganization, invites: invites as unknown as Invite[] };
     },
     staleTime: 60 * 1000,
   });
@@ -53,7 +53,7 @@ export const useOnboarding = () => {
               ...prev,
               invites: prev.invites.filter((invite) => invite.id !== inviteId),
             }
-          : prev
+          : prev,
     );
   };
 

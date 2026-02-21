@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 import { TechnicalSheetAICacheEntity } from "@/types/database/technical-sheet";
 
 interface CacheLookupParams {
@@ -8,28 +8,35 @@ interface CacheLookupParams {
 
 /**
  * Serviço backend para cache de respostas de ficha técnica geradas por IA.
+ * Atualizado para usar camelCase conforme Prisma schema.
  */
 export class TechnicalSheetAIService {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor() {}
 
   async getCachedResponse({
     dishName,
     servings,
   }: CacheLookupParams): Promise<TechnicalSheetAICacheEntity | null> {
-    const { data, error } = await this.supabase
-      .from("technical_sheet_ai_cache")
-      .select("*")
-      .eq("dish_name", dishName)
-      .eq("servings", servings)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const data = await prisma.technical_sheet_ai_cache.findUnique({
+      where: {
+        dishName_servings: {
+          dishName: dishName,
+          servings: servings,
+        },
+      },
+    });
 
-    if (error) {
-      throw new Error(error.message || "Error while reading AI cache");
+    if (!data) {
+      return null;
     }
 
-    return (data as TechnicalSheetAICacheEntity) ?? null;
+    return {
+      id: data.id,
+      dishName: data.dishName,
+      servings: data.servings,
+      jsonResponse: data.jsonResponse as Record<string, unknown>,
+      createdAt: data.createdAt.toISOString(),
+    };
   }
 
   async saveResponse({
@@ -37,16 +44,21 @@ export class TechnicalSheetAIService {
     servings,
     response,
   }: CacheLookupParams & { response: unknown }): Promise<void> {
-    const { error } = await this.supabase
-      .from("technical_sheet_ai_cache")
-      .insert({
-        dish_name: dishName,
-        servings,
-        json_response: response,
-      });
-
-    if (error) {
-      throw new Error(error.message || "Error while saving AI cache");
-    }
+    await prisma.technical_sheet_ai_cache.upsert({
+      where: {
+        dishName_servings: {
+          dishName: dishName,
+          servings: servings,
+        },
+      },
+      update: {
+        jsonResponse: response as any,
+      },
+      create: {
+        dishName: dishName,
+        servings: servings,
+        jsonResponse: response as any,
+      },
+    });
   }
 }

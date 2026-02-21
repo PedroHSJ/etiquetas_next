@@ -1,10 +1,10 @@
 export interface StorageLocationEntity {
   id: string;
   name: string;
-  parent_id: string | null;
-  organization_id: string;
+  parentId: string | null;
+  organizationId: string;
   description: string | null;
   active: boolean;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }

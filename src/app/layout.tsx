@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { QueryProvider } from "@/components/provider/QueryProvider";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +25,9 @@ export default function RootLayout({
         >
           <QueryProvider>
             <AuthProvider>
-              <ProfileProvider>{children}</ProfileProvider>
+              <ProfileProvider>
+                <OrganizationProvider>{children}</OrganizationProvider>
+              </ProfileProvider>
             </AuthProvider>
           </QueryProvider>
           <Toaster richColors />

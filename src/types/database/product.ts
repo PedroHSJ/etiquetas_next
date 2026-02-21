@@ -1,5 +1,5 @@
 /**
- * Product and inventory database entities
+ * Product and inventory database entities - Updated to camelCase to match Prisma @map schema
  */
 
 /**
@@ -8,11 +8,11 @@
 export interface ProductEntity {
   id: number;
   name: string;
-  group_id: number | null;
-  organization_id: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  groupId: number | null;
+  organizationId: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -20,12 +20,12 @@ export interface ProductEntity {
  */
 export interface LabelEntity {
   id: number;
-  product_id: number | null;
+  productId: number | null;
   quantity: number;
-  printed_at: string;
-  user_id: string | null;
-  organization_id: string | null;
+  printedAt: string;
+  userId: string | null;
+  organizationId: string | null;
   status: string;
   notes: string | null;
-  created_at: string;
+  createdAt: string;
 }

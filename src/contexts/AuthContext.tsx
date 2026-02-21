@@ -1,9 +1,25 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabaseClient";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+// import { useOrganization } from "./OrganizationContext";
+
+// Definindo tipos compatíveis com o uso atual ou adaptando
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  image?: string;
+  emailVerified?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface Session {
+  user: User;
+  accessToken?: string; // Better auth usa cookie, mas para manter compatibilidade de tipo se precisar
+}
 
 interface AuthContextType {
   user: User | null;
@@ -15,14 +31,14 @@ interface AuthContextType {
   signUpWithEmail: (
     email: string,
     password: string,
-    options?: object
+    name: string,
   ) => Promise<{
     user: User | null;
     session: Session | null;
   }>;
-  linkWithEmail: (email: string, password: string) => Promise<void>;
+  // linkWithEmail: (email: string, password: string) => Promise<void>; // Better auth link logic might differ
   signOut: () => Promise<void>;
-  sendPasswordResetEmail: (email: string) => Promise<void>;
+  // sendPasswordResetEmail: (email: string) => Promise<void>; // Better auth reset password logic
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,17 +54,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchSession = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Erro ao buscar sessão:", error);
-        setLoading(false);
-        return;
-      }
+      const { data, error } = await authClient.getSession();
 
-      if (data.session?.user) {
-        setSession(data.session);
-        setUser(data.session.user);
-        setUserId(data.session.user.id);
+      if (data) {
+        // @ts-ignore
+        setSession(data);
+        // @ts-ignore
+        setUser(data.user);
+        setUserId(data.user.id);
       } else {
         setSession(null);
         setUser(null);
@@ -62,48 +75,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Chamar fetchSession inicialmente
     fetchSession();
-
-    // No modo de desenvolvimento, não precisamos escutar mudanças de auth
-    if (process.env.NODE_ENV === "development") {
-      return;
-    }
-
-    // Escutar mudanças de autenticação apenas em produção
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setUserId(session?.user?.id ?? "");
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      await authClient.signIn.social({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`, // Redirecionar após login
-          queryParams: {
-            prompt: "select_account", // Força a mostrar o seletor de contas do Google
-          },
-        },
+        callbackURL: "/auth/verify",
       });
-      if (error) throw error;
     } catch (error) {
       console.error("Erro ao fazer login com Google:", error);
+      throw error;
     }
   };
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await authClient.signOut();
+      setSession(null);
+      setUser(null);
+      setUserId("");
+      router.push("/login");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
     }
@@ -112,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Login com e-mail e senha
   const signInWithEmail = async (email: string, password: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await authClient.signIn.email({
       email,
       password,
     });
@@ -122,33 +115,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
     await fetchSession();
-    router.push("/auth/callback");
+    router.push("/auth/verify"); // Redireciona para verificação de onboarding
   };
 
   // Cadastro com e-mail e senha
   const signUpWithEmail = async (
     email: string,
     password: string,
-    options?: object
+    name: string,
   ) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await authClient.signUp.email({
       email,
       password,
-      options,
+      name,
     });
     if (error) throw error;
-    return data;
-  };
-
-  // Vincular e-mail/senha à conta autenticada (link provider)
-  const linkWithEmail = async (email: string, password: string) => {
-    if (!user) throw new Error("Usuário não autenticado");
-    setLoading(true);
-    // O Supabase não tem um método direto, mas podemos usar updateUser para adicionar email/senha
-    const { error } = await supabase.auth.updateUser({ email, password });
-    setLoading(false);
-    if (error) throw error;
     await fetchSession();
+    // @ts-ignore
+    return { user: data?.user, session: data?.session };
   };
 
   const value = {
@@ -159,22 +143,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
-    linkWithEmail,
+    // linkWithEmail, // Removido temporariamente
     signOut,
-    sendPasswordResetEmail,
+    // sendPasswordResetEmail, // Removido temporariamente
   };
 
-  // Enviar e-mail de redefinição de senha
-  async function sendPasswordResetEmail(email: string): Promise<void> {
-    setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setLoading(false);
-    if (error) throw error;
-  }
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value as any}>{children}</AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

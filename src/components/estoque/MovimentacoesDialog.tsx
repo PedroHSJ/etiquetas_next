@@ -89,7 +89,7 @@ export function MovimentacoesDialog({
       if (filtros.data_fim) params.append("data_fim", filtros.data_fim);
 
       const response = await fetchWithAuth(
-        `/api/estoque/movimentacoes?${params}`
+        `/api/estoque/movimentacoes?${params}`,
       );
       const data = await response.json();
 
@@ -135,7 +135,7 @@ export function MovimentacoesDialog({
 
   const handleFiltroChange = (
     key: keyof MovimentacoesFiltros,
-    value: string | undefined
+    value: string | undefined,
   ) => {
     setFiltros((prev) => ({ ...prev, [key]: value }));
     setPaginaAtual(1);
@@ -218,7 +218,7 @@ export function MovimentacoesDialog({
               onValueChange={(value) =>
                 handleFiltroChange(
                   "tipo_movimentacao",
-                  value === "todos" ? undefined : value
+                  value === "todos" ? undefined : value,
                 )
               }
             >

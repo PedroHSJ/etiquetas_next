@@ -50,7 +50,7 @@ export default function CreateConvitePage() {
   const [email, setEmail] = useState("");
   const [perfilId, setPerfilId] = useState("");
   const [dataExpiracao, setDataExpiracao] = useState<Date | undefined>(
-    undefined
+    undefined,
   );
   const [mensagem, setMensagem] = useState("");
 
@@ -65,7 +65,7 @@ export default function CreateConvitePage() {
       // Buscar perfis disponíveis (excluindo master)
       const data = await ProfileService.getProfiles();
       const filtered = data.filter(
-        (profile) => profile.name.toLowerCase() !== "master"
+        (profile) => profile.name.toLowerCase() !== "master",
       );
       setPerfis(filtered);
     } catch (error) {
@@ -191,7 +191,7 @@ export default function CreateConvitePage() {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !dataExpiracao && "text-muted-foreground"
+                        !dataExpiracao && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />

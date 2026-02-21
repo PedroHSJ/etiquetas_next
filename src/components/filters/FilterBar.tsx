@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, Filter, X } from 'lucide-react';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Filter, X } from "lucide-react";
 
 interface FilterBarProps {
   searchTerm?: string;
@@ -47,16 +47,16 @@ export default function FilterBar({
   setSelectedDepartment,
   organizations = [],
   departments = [],
-  searchPlaceholder = 'Buscar...',
+  searchPlaceholder = "Buscar...",
   showDepartmentFilter = true,
   onClearFilters,
   loading = false,
   onSearch,
   onFilter,
-  placeholder = 'Buscar...',
-  className = '',
+  placeholder = "Buscar...",
+  className = "",
 }: FilterBarProps) {
-  const [searchQuery, setSearchQuery] = useState(searchTerm || '');
+  const [searchQuery, setSearchQuery] = useState(searchTerm || "");
   const [showFilters, setShowFilters] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -68,11 +68,11 @@ export default function FilterBar({
   };
 
   const handleClearSearch = () => {
-    setSearchQuery('');
+    setSearchQuery("");
     if (setSearchTerm) {
-      setSearchTerm('');
+      setSearchTerm("");
     }
-    onSearch?.('');
+    onSearch?.("");
   };
 
   const toggleFilters = () => {
@@ -126,15 +126,11 @@ export default function FilterBar({
         <div className="p-4 border rounded-lg bg-muted/50">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium">Filtros</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleFilters}
-            >
+            <Button variant="ghost" size="sm" onClick={toggleFilters}>
               <X className="h-4 w-4" />
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Status</label>
@@ -144,7 +140,7 @@ export default function FilterBar({
                 <option value="inativo">Inativo</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">Tipo</label>
               <select className="w-full p-2 border rounded-md">
@@ -153,15 +149,19 @@ export default function FilterBar({
                 <option value="organizacao">Organização</option>
               </select>
             </div>
-            
+
             <div className="sm:col-span-2 md:col-span-1">
               <label className="block text-sm font-medium mb-2">Data</label>
               <Input type="date" />
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-2 mt-4">
-            <Button size="sm" onClick={() => onFilter?.({})} className="flex-1 sm:flex-none">
+            <Button
+              size="sm"
+              onClick={() => onFilter?.({})}
+              className="flex-1 sm:flex-none"
+            >
               Aplicar Filtros
             </Button>
             <Button variant="outline" size="sm" className="flex-1 sm:flex-none">

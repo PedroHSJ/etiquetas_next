@@ -32,7 +32,7 @@ import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNavigation } from "@/contexts/NavigationContext";
-import { supabase } from "@/lib/supabaseClient";
+import { authClient } from "@/lib/auth-client";
 import { Invite } from "@/types/models/invite";
 
 export default function OnboardingPage() {
@@ -59,9 +59,14 @@ export default function OnboardingPage() {
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
-      await supabase.auth.signOut();
-      toast.success("Logout realizado com sucesso");
-      router.push("/login");
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Logout realizado com sucesso");
+            router.push("/login"); // or sign-in
+          },
+        },
+      });
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       toast.error("Erro ao fazer logout");
@@ -107,7 +112,7 @@ export default function OnboardingPage() {
 
   const handleChoice = (
     tipo: "gestor" | "funcionario",
-    perfil?: "cozinheiro" | "estoquista"
+    perfil?: "cozinheiro" | "estoquista",
   ) => {
     setChoice({ tipo, perfil });
   };
@@ -341,13 +346,13 @@ export default function OnboardingPage() {
                           <p>
                             <strong>Data do convite:</strong>{" "}
                             {new Date(invite.createdAt).toLocaleDateString(
-                              "pt-BR"
+                              "pt-BR",
                             )}
                           </p>
                           <p>
                             <strong>Expira em:</strong>{" "}
                             {new Date(invite.expiresAt).toLocaleDateString(
-                              "pt-BR"
+                              "pt-BR",
                             )}
                           </p>
                         </div>
@@ -434,7 +439,7 @@ export default function OnboardingPage() {
 
           <div className="text-center mb-8 sm:mb-12">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
-              Bem-vindo ao Sistema de Gestão de UANs!
+              Bem-vindo!
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground">
               Como você gostaria de começar?
@@ -444,7 +449,7 @@ export default function OnboardingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Opção Gestor */}
             <Card
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 flex flex-col"
+              className="cursor-pointer hover:shadow-lg transition-all duration-100 hover:scale-105 flex flex-col"
               onClick={() => handleChoice("gestor")}
             >
               <CardHeader className="text-center">
@@ -519,22 +524,6 @@ export default function OnboardingPage() {
               </CardContent>
             </Card>
           </div>
-
-          {/* {invites.length > 0 && (
-            <div className="mt-8 sm:mt-12 text-center">
-              <p className="text-sm sm:text-base text-muted-foreground mb-4">
-                Você tem {invites.length} convite{invites.length > 1 ? "s" : ""}{" "}
-                pendente{invites.length > 1 ? "s" : ""}
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => handleChoice("funcionario")}
-                className="w-full sm:w-auto"
-              >
-                Ver Convites Pendentes
-              </Button>
-            </div>
-          )} */}
         </div>
       </div>
     </div>

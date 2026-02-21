@@ -5,14 +5,14 @@ import {
   InviteWithRelationsResponseDto,
   ListInvitesDto,
 } from "@/types/dto/invite";
-import { toInviteModel, toInviteModelList } from "@/lib/converters/invite";
-import { Invite } from "@/types/models/invite";
 
 export class InviteService {
   /**
    * Lista convites com filtros opcionais
    */
-  static async listInvites(params: ListInvitesDto = {}): Promise<Invite[]> {
+  static async listInvites(
+    params: ListInvitesDto = {},
+  ): Promise<InviteWithRelationsResponseDto[]> {
     const { data, status } = await api.get<
       ApiResponse<InviteWithRelationsResponseDto[]>
     >("/invites", {
@@ -23,13 +23,13 @@ export class InviteService {
       return [];
     }
 
-    return toInviteModelList(data.data);
+    return data.data;
   }
 
   /**
    * Busca convites pendentes para o usuário autenticado
    */
-  static async getPendingInvites(): Promise<Invite[]> {
+  static async getPendingInvites(): Promise<InviteWithRelationsResponseDto[]> {
     const { data, status } = await api.get<
       ApiResponse<InviteWithRelationsResponseDto[]>
     >("/invites", {
@@ -40,7 +40,7 @@ export class InviteService {
       return [];
     }
 
-    return toInviteModelList(data.data);
+    return data.data;
   }
 
   /**
@@ -54,7 +54,9 @@ export class InviteService {
   /**
    * Cria um novo convite
    */
-  static async createInvite(dto: CreateInviteDto): Promise<Invite> {
+  static async createInvite(
+    dto: CreateInviteDto,
+  ): Promise<InviteWithRelationsResponseDto> {
     const { data, status } = await api.post<
       ApiResponse<InviteWithRelationsResponseDto>
     >("/invites", dto);
@@ -63,13 +65,15 @@ export class InviteService {
       throw new Error("Erro ao criar convite");
     }
 
-    return toInviteModel(data.data);
+    return data.data;
   }
 
   /**
    * Lista convites por e-mail (onboarding legado)
    */
-  static async getInvitesByEmail(email: string): Promise<Invite[]> {
+  static async getInvitesByEmail(
+    email: string,
+  ): Promise<InviteWithRelationsResponseDto[]> {
     const { data, status } = await api.get<
       ApiResponse<InviteWithRelationsResponseDto[]>
     >("/invites", {
@@ -80,7 +84,7 @@ export class InviteService {
       return [];
     }
 
-    return toInviteModelList(data.data);
+    return data.data;
   }
 
   /**
@@ -88,7 +92,7 @@ export class InviteService {
    */
   static async getInvitesByOrganization(
     organizationId: string,
-  ): Promise<Invite[]> {
+  ): Promise<InviteWithRelationsResponseDto[]> {
     if (!organizationId) return [];
 
     const { data, status } = await api.get<
@@ -101,7 +105,7 @@ export class InviteService {
       return [];
     }
 
-    return toInviteModelList(data.data);
+    return data.data;
   }
 
   /**

@@ -12,11 +12,6 @@ import {
   StockListResponseDto,
   MovementListResponseDto,
 } from "@/types/dto/stock/response";
-import {
-  StockListModelResponse,
-  MovementListModelResponse,
-} from "@/types/models/stock";
-import { toStockModel, toStockMovementModel } from "@/lib/converters/stock";
 
 interface ListStockParams extends Partial<EstoqueFiltros> {
   page?: number;
@@ -37,7 +32,7 @@ interface ListProductsParams {
 }
 
 export const StockService = {
-  async listStock(params: ListStockParams): Promise<StockListModelResponse> {
+  async listStock(params: ListStockParams): Promise<StockListResponseDto> {
     const { page = 1, pageSize = 20, organizationId, ...filters } = params;
 
     if (!organizationId) {
@@ -53,22 +48,19 @@ export const StockService = {
           organizationId,
           ...filters,
         },
-      }
+      },
     );
 
     if (!data?.data) {
       throw new Error("Erro ao carregar estoque");
     }
 
-    return {
-      ...data.data,
-      data: (data.data.data || []).map(toStockModel),
-    };
+    return data.data;
   },
 
   async listMovements(
-    params: ListMovementsParams
-  ): Promise<MovementListModelResponse> {
+    params: ListMovementsParams,
+  ): Promise<MovementListResponseDto> {
     const { page = 1, pageSize = 20, organizationId, ...filters } = params;
 
     if (!organizationId) {
@@ -84,17 +76,14 @@ export const StockService = {
           organizationId,
           ...filters,
         },
-      }
+      },
     );
 
     if (!data?.data) {
       throw new Error("Erro ao carregar movimentações");
     }
 
-    return {
-      ...data.data,
-      data: (data.data.data || []).map(toStockMovementModel),
-    };
+    return data.data;
   },
 
   async getStockStatistics(organizationId: string): Promise<StockStatistics> {
@@ -105,7 +94,7 @@ export const StockService = {
       "/estoque/stats",
       {
         params: { organizationId },
-      }
+      },
     );
 
     if (!data?.data) {
@@ -116,13 +105,13 @@ export const StockService = {
   },
 
   async listProducts(
-    params: ListProductsParams = {}
+    params: ListProductsParams = {},
   ): Promise<ProductSelect[]> {
     const { data } = await api.get<ApiResponse<ProductSelect[]>>(
       "/estoque/produtos",
       {
         params,
-      }
+      },
     );
 
     if (!data?.data) {
@@ -139,7 +128,7 @@ export const StockService = {
 
     const { data } = await api.post<ApiSuccessResponse<QuickEntryResponseDto>>(
       "/estoque/entrada-rapida",
-      request
+      request,
     );
 
     if (!data?.data) {

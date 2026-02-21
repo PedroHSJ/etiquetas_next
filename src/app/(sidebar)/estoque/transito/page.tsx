@@ -27,11 +27,14 @@ import { ProductService } from "@/lib/services/client/product-service";
 import { StockInTransitService } from "@/lib/services/client/stock-in-transit-service";
 import { LabelPrinterService } from "@/lib/services/client/label-printer-service";
 import { StockService } from "@/lib/services/client/stock-service";
-import { Product, ProductGroup } from "@/types/models/product";
+import {
+  ProductResponseDto as Product,
+  ProductGroupResponseDto as ProductGroup,
+} from "@/types/dto/product/response";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Member } from "@/types/models/member";
+import { MemberResponseDto as Member } from "@/types/dto/member/response";
 import { MemberService } from "@/lib/services/client/member-service";
 import { SettingsService } from "@/lib/services/client/settings-service";
 import {
@@ -153,7 +156,8 @@ function ConservationOption({
 export default function EstoqueTransitoPage() {
   const router = useRouter();
   const { activeProfile } = useProfile();
-  const organizationId = activeProfile?.userOrganization?.organizationId || "";
+  const organizationId =
+    activeProfile?.userOrganization?.organization?.id || "";
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"amostras" | "produtos">(
@@ -212,7 +216,8 @@ export default function EstoqueTransitoPage() {
     queryKey: ["members", organizationId],
     queryFn: async () => {
       if (!organizationId) return [];
-      return MemberService.listByOrganization(organizationId);
+      const result = await MemberService.listByOrganization(organizationId);
+      return result as unknown as Member[];
     },
     enabled: !!organizationId,
   });
@@ -619,9 +624,12 @@ export default function EstoqueTransitoPage() {
                         <SelectValue placeholder="Selecione o responsável" />
                       </SelectTrigger>
                       <SelectContent>
-                        {members.map((member) => (
-                          <SelectItem key={member.id} value={member.user.name}>
-                            {member.user.name}
+                        {((members as any[]) || []).map((member) => (
+                          <SelectItem
+                            key={member.id}
+                            value={member.user?.name || member.id}
+                          >
+                            {member.user?.name || "Usuário"}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -881,12 +889,12 @@ export default function EstoqueTransitoPage() {
                           <SelectValue placeholder="Selecione o responsável" />
                         </SelectTrigger>
                         <SelectContent>
-                          {members.map((member) => (
+                          {((members as any[]) || []).map((member) => (
                             <SelectItem
                               key={member.id}
-                              value={member.user.name}
+                              value={member.user?.name || member.id}
                             >
-                              {member.user.name}
+                              {member.user?.name || "Usuário"}
                             </SelectItem>
                           ))}
                         </SelectContent>

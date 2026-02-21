@@ -1,5 +1,5 @@
 // =============================================================================
-// STOCK AND MOVEMENTS TYPES
+// STOCK AND MOVEMENTS TYPES - CAMELCASE (Matching Prisma Schema)
 // =============================================================================
 
 import { Product } from "./product";
@@ -13,27 +13,26 @@ export type UnitOfMeasureCode = "un" | "kg" | "g" | "l" | "ml" | "cx" | "pct";
 export interface Stock {
   id: string;
   productId: number;
-  organization_id?: string | null;
-  current_quantity: number;
-  unit_of_measure_code: UnitOfMeasureCode;
-  storage_location_id?: string | null;
+  organizationId?: string | null;
+  currentQuantity: number;
+  unitOfMeasureCode: UnitOfMeasureCode;
+  storageLocationId?: string | null;
   userId: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 
   // Related data (joins)
   product?: Product;
-  storage_location?: {
+  storageLocation?: {
     id: string;
     name: string;
-    parent_id?: string | null;
+    parentId?: string | null;
   } | null;
   user?: {
     id: string;
     email?: string;
-    user_metadata?: {
-      full_name?: string;
-    };
+    name?: string;
+    image?: string;
   };
 
   // Index signature to allow dynamic property access
@@ -44,24 +43,23 @@ export interface Stock {
 export interface StockMovement {
   id: string;
   productId: number;
-  organization_id?: string | null;
+  organizationId?: string | null;
   userId: string;
-  movement_type: MovementType;
+  movementType: MovementType;
   quantity: number;
-  unit_of_measure_code: UnitOfMeasureCode;
-  storage_location_id?: string | null;
+  unitOfMeasureCode: UnitOfMeasureCode;
+  storageLocationId?: string | null;
   observation?: string;
-  movement_date: string;
-  created_at: string;
+  movementDate: string;
+  createdAt: string;
 
   // Related data (joins)
   product?: Product;
   user?: {
     id: string;
     email?: string;
-    user_metadata?: {
-      full_name?: string;
-    };
+    name?: string;
+    image?: string;
   };
 
   // Index signature to allow dynamic property access
@@ -73,8 +71,8 @@ export interface QuickEntryRequest {
   productId: number;
   quantity: number;
   organizationId?: string;
-  unit_of_measure_code?: UnitOfMeasureCode;
-  storage_location_id?: string;
+  unitOfMeasureCode?: UnitOfMeasureCode;
+  storageLocationId?: string;
   observation?: string;
 }
 
@@ -88,22 +86,22 @@ export interface QuickEntryResponse {
 
 // Filters for stock listing
 export interface StockFilters {
-  product_name?: string;
+  productName?: string;
   productId?: number;
   userId?: string;
-  zero_stock?: boolean;
-  low_stock?: boolean;
-  minimum_quantity?: number;
+  zeroStock?: boolean;
+  lowStock?: boolean;
+  minimumQuantity?: number;
 }
 
 // Filters for movements
 export interface MovementFilters {
   productId?: number;
   userId?: string;
-  movement_type?: MovementType;
-  start_date?: string;
-  end_date?: string;
-  product_name?: string;
+  movementType?: MovementType;
+  startDate?: string;
+  endDate?: string;
+  productName?: string;
 }
 
 // Interface for paginated stock listing
@@ -126,33 +124,33 @@ export interface MovementListResponse {
 
 // Stock statistics (for dashboard)
 export interface StockStatistics {
-  total_products: number;
-  products_in_stock: number;
-  products_out_of_stock: number;
-  products_low_stock: number;
-  estimated_total_value?: number;
-  last_update: string;
+  totalProducts: number;
+  productsInStock: number;
+  productsOutOfStock: number;
+  productsLowStock: number;
+  estimatedTotalValue?: number;
+  lastUpdate: string;
 }
 
 // Interface for stock dashboard data
 export interface StockDashboard {
   statistics: StockStatistics;
-  products_out_of_stock: Stock[];
-  products_low_stock: Stock[];
-  recent_movements: StockMovement[];
+  productsOutOfStock: Stock[];
+  productsLowStock: Stock[];
+  recentMovements: StockMovement[];
 }
 
 // Interface for product selection in quick entry
 export interface ProductSelect {
   id: number;
   name: string;
-  group_id?: number;
+  groupId?: number;
   group: {
     id: number;
     name: string;
   };
-  unit_of_measure_code: UnitOfMeasureCode;
-  current_stock?: number;
+  unitOfMeasureCode: UnitOfMeasureCode;
+  currentQuantity?: number;
 }
 
 // Constants for movement types

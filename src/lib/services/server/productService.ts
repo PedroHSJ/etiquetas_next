@@ -1,239 +1,193 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { ProductEntity } from "@/types/database/product";
-import { GroupEntity } from "@/types/database/group";
-import {
-  ProductResponseDto,
-  ProductGroupResponseDto,
-} from "@/types/dto/product/response";
-import {
-  CreateProductDto,
-  UpdateProductDto,
-  CreateProductGroupDto,
-  UpdateProductGroupDto,
-} from "@/types/dto/product/request";
-import {
-  toProductResponseDto,
-  toProductGroupResponseDto,
-  toProductEntityForCreate,
-  toProductEntityForUpdate,
-  toGroupEntityForCreate,
-  toGroupEntityForUpdate,
-} from "@/lib/converters/product";
+import { prisma } from "@/lib/prisma";
+import { products, groups } from "@prisma/client";
 
+/**
+ * Backend service for product operations.
+ * Removed converters as per the new architectural guideline.
+ * Prisma entities are returned directly since fields are mapped to camelCase in schema.
+ */
 export class ProductBackendService {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor() {}
 
-  async getProducts(): Promise<ProductResponseDto[]> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select(
-        `
-        *,
-        group:groups(*)
-      `,
-      )
-      .order("name");
+  async getProducts(params?: {
+    organizationId?: string;
+    groupId?: number;
+  }): Promise<any[]> {
+    const where: any = {};
+    if (params?.organizationId) {
+      where.organizationId = params.organizationId;
+    }
+    if (params?.groupId) {
+      where.groupId = params.groupId;
+    }
 
-    if (error) throw error;
+    if (params?.organizationId) {
+      where.isActive = true;
+    }
 
-    const products = data as unknown as (ProductEntity & {
-      group: GroupEntity | null;
-    })[];
-
-    return products.map((p) => toProductResponseDto(p, p.group));
+    return prisma.products.findMany({
+      where,
+      include: {
+        groups: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
   }
 
-  async getProduct(id: number): Promise<ProductResponseDto | null> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select(
-        `
-        *,
-        group:groups(*)
-      `,
-      )
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
-    if (!data) return null;
-
-    const product = data as unknown as ProductEntity & {
-      group: GroupEntity | null;
-    };
-    return toProductResponseDto(product, product.group);
+  async getProduct(id: number): Promise<any | null> {
+    return prisma.products.findUnique({
+      where: { id },
+      include: {
+        groups: true,
+      },
+    });
   }
 
-  async createProduct(dto: CreateProductDto): Promise<ProductResponseDto> {
-    const payload = toProductEntityForCreate(dto);
-
-    const { data, error } = await this.supabase
-      .from("products")
-      .insert(payload)
-      .select(
-        `
-        *,
-        group:groups(*)
-      `,
-      )
-      .single();
-
-    if (error) throw error;
-
-    const created = data as unknown as ProductEntity & {
-      group: GroupEntity | null;
-    };
-    return toProductResponseDto(created, created.group);
+  async createProduct(data: {
+    name: string;
+    groupId?: number | null;
+    organizationId: string;
+  }): Promise<any> {
+    return prisma.products.create({
+      data: {
+        name: data.name,
+        groupId: data.groupId ?? null,
+        organizationId: data.organizationId,
+        isActive: true,
+      },
+      include: {
+        groups: true,
+      },
+    });
   }
 
   async updateProduct(
     id: number,
-    dto: UpdateProductDto,
-  ): Promise<ProductResponseDto> {
-    const payload = toProductEntityForUpdate(dto);
+    data: {
+      name?: string;
+      groupId?: number | null;
+      isActive?: boolean;
+    },
+  ): Promise<any> {
+    const updateData: any = { ...data };
+    updateData.updatedAt = new Date();
 
-    const { data, error } = await this.supabase
-      .from("products")
-      .update(payload)
-      .eq("id", id)
-      .select(
-        `
-        *,
-        group:groups(*)
-      `,
-      )
-      .single();
-
-    if (error) throw error;
-
-    const updated = data as unknown as ProductEntity & {
-      group: GroupEntity | null;
-    };
-    return toProductResponseDto(updated, updated.group);
+    return prisma.products.update({
+      where: { id },
+      data: updateData,
+      include: {
+        groups: true,
+      },
+    });
   }
 
   async deleteProduct(id: number): Promise<void> {
-    const { error } = await this.supabase
-      .from("products")
-      .update({ is_active: false })
-      .eq("id", id);
-    if (error) throw error;
+    await prisma.products.update({
+      where: { id },
+      data: { isActive: false, updatedAt: new Date() },
+    });
   }
 
-  async searchProducts(
-    organizationId: string,
-    query: string,
-  ): Promise<ProductResponseDto[]> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select(
-        `
-        *,
-        group:groups(*)
-      `,
-      )
-      .eq("organization_id", organizationId)
-      .eq("is_active", true)
-      .ilike("name", `%${query}%`)
-      .order("name")
-      .limit(20);
-
-    if (error) throw error;
-
-    const products = data as unknown as (ProductEntity & {
-      group: GroupEntity | null;
-    })[];
-    return products.map((p) => toProductResponseDto(p, p.group));
+  async searchProducts(organizationId: string, query: string): Promise<any[]> {
+    return prisma.products.findMany({
+      where: {
+        organizationId: organizationId,
+        isActive: true,
+        name: {
+          contains: query,
+          mode: "insensitive",
+        },
+      },
+      include: {
+        groups: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+      take: 20,
+    });
   }
 
   // Product Groups
-  async getGroups(organizationId: string): Promise<ProductGroupResponseDto[]> {
-    const { data, error } = await this.supabase
-      .from("groups")
-      .select("*")
-      .eq("organization_id", organizationId)
-      .eq("is_active", true)
-      .order("name");
-
-    if (error) throw error;
-
-    const groups = data as unknown as GroupEntity[];
-    return groups.map(toProductGroupResponseDto);
+  async getGroups(organizationId: string): Promise<any[]> {
+    return prisma.groups.findMany({
+      where: {
+        organizationId: organizationId,
+        isActive: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
   }
 
-  async createGroup(
-    dto: CreateProductGroupDto,
-  ): Promise<ProductGroupResponseDto> {
-    const payload = toGroupEntityForCreate(dto);
-
-    const { data, error } = await this.supabase
-      .from("groups")
-      .insert(payload)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return toProductGroupResponseDto(data as GroupEntity);
+  async createGroup(data: {
+    name: string;
+    description?: string | null;
+    organizationId: string;
+  }): Promise<any> {
+    return prisma.groups.create({
+      data: {
+        name: data.name,
+        description: data.description ?? null,
+        organizationId: data.organizationId,
+        isActive: true,
+      },
+    });
   }
 
   async updateGroup(
     id: number,
-    dto: UpdateProductGroupDto,
-  ): Promise<ProductGroupResponseDto> {
-    const payload = toGroupEntityForUpdate(dto);
+    data: {
+      name?: string;
+      description?: string | null;
+      isActive?: boolean;
+    },
+  ): Promise<any> {
+    const updateData: any = { ...data };
+    updateData.updatedAt = new Date();
 
-    const { data, error } = await this.supabase
-      .from("groups")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return toProductGroupResponseDto(data as GroupEntity);
+    return prisma.groups.update({
+      where: { id },
+      data: updateData,
+    });
   }
 
   async deleteGroup(id: number): Promise<void> {
-    const { error } = await this.supabase
-      .from("groups")
-      .update({ is_active: false })
-      .eq("id", id);
-    if (error) throw error;
+    await prisma.groups.update({
+      where: { id },
+      data: { isActive: false, updatedAt: new Date() },
+    });
   }
 
   // Statistics
-  async getProductStats(
-    organizationId: string,
-  ): Promise<import("@/types/dto/product/response").ProductStatsResponseDto> {
-    const { data: products, error: productsError } = await this.supabase
-      .from("products")
-      .select("id, group_id")
-      .eq("organization_id", organizationId)
-      .eq("is_active", true);
+  async getProductStats(organizationId: string): Promise<any> {
+    const [products, groups] = await Promise.all([
+      prisma.products.findMany({
+        where: {
+          organizationId: organizationId,
+          isActive: true,
+        },
+        select: { id: true, groupId: true },
+      }),
+      prisma.groups.findMany({
+        where: {
+          organizationId: organizationId,
+          isActive: true,
+        },
+        select: { id: true, name: true },
+      }),
+    ]);
 
-    const { data: groups, error: groupsError } = await this.supabase
-      .from("groups")
-      .select("id, name")
-      .eq("organization_id", organizationId)
-      .eq("is_active", true);
+    const totalProducts = products.length;
+    const totalGroups = groups.length;
 
-    if (productsError || groupsError) {
-      throw productsError || groupsError;
-    }
-
-    const totalProducts = products?.length || 0;
-    const totalGroups = groups?.length || 0;
-
-    const productsByGroup =
-      groups?.map((group: { id: number; name: string }) => ({
-        group: group.name,
-        count:
-          products?.filter(
-            (p: { group_id: number | null }) => p.group_id === group.id,
-          ).length || 0,
-      })) || [];
+    const productsByGroup = groups.map((group) => ({
+      group: group.name,
+      count: products.filter((p) => p.groupId === group.id).length,
+    }));
 
     return {
       totalProducts,

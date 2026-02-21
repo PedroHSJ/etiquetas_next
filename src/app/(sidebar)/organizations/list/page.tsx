@@ -22,11 +22,11 @@ import {
   GenericTableColumn,
 } from "@/components/ui/generic-table";
 import { formatCnpj } from "@/lib/utils";
-import { Organization } from "@/types/models/organization";
+import { OrganizationExpandedResponseDto } from "@/types/dto/organization/response";
 import { useQuery } from "@tanstack/react-query";
 import { OrganizationService } from "@/lib/services/client/organization-service";
 import { useProfile } from "@/contexts/ProfileContext";
-import { formatPhone } from "@/lib/converters";
+import { formatPhone } from "@/lib/utils/organization";
 
 interface Member {
   id: string;
@@ -52,7 +52,7 @@ export default function Page() {
   const { userId } = useAuth();
   const { userProfiles } = useProfile();
   const [filteredOrganizations, setfilteredOrganizations] = useState<
-    Organization[]
+    OrganizationExpandedResponseDto[]
   >([]);
   const [selectedOrganization, setSelectedOrganization] = useState<
     string | undefined
@@ -65,79 +65,81 @@ export default function Page() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Colunas da tabela
-  const organizationsColumns: GenericTableColumn<Organization>[] = [
-    {
-      id: "nome",
-      key: "nome",
-      label: "Nome",
-      accessor: (row) => row.name,
-      visible: true,
-      width: 300,
-      render: (value, row) => (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-              {getInitials(row.name)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="font-medium">{value as string}</span>
-        </div>
-      ),
-    },
-    {
-      id: "cnpj",
-      key: "cnpj",
-      label: "CNPJ",
-      accessor: (row) => (row.cnpj ? formatCnpj(row.cnpj) : "--"),
-      visible: true,
-    },
-    {
-      id: "profile",
-      key: "profile",
-      label: "Perfil",
-      accessor: () => "",
-      visible: true,
-      render: (_value, row) => {
-        const profilesForOrg = userProfiles
-          .filter(
-            (p) => p.userOrganization?.organizationId === row.id && p.profile
-          )
-          .map((p) => p.profile!.name);
-
-        if (profilesForOrg.length === 0) {
-          return <span className="text-sm text-muted-foreground">—</span>;
-        }
-
-        return (
-          <Badge className="text-sm font-medium" variant={"outline"}>
-            {profilesForOrg.join(", ")}
-          </Badge>
-        );
+  const organizationsColumns: GenericTableColumn<OrganizationExpandedResponseDto>[] =
+    [
+      {
+        id: "nome",
+        key: "nome",
+        label: "Nome",
+        accessor: (row) => row.name,
+        visible: true,
+        width: 300,
+        render: (value, row) => (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                {getInitials(row.name)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{value as string}</span>
+          </div>
+        ),
       },
-    },
-    {
-      id: "main_phone",
-      key: "main_phone",
-      label: "Telefone Principal",
-      accessor: (row) => row.mainPhone,
-      visible: true,
-      render: (value) => (
-        <span className="text-sm">{formatPhone(value as string)}</span>
-      ),
-    },
-    {
-      id: "created_at",
-      key: "created_at",
-      label: "Cadastrado em",
-      accessor: (row) => row.createdAt,
-      visible: true,
-      render: (value) => (
-        <div className="text-sm">
-          {format(new Date(value as string), "dd/MM/yyyy", { locale: ptBR })}
-        </div>
-      ),
-    },
-  ];
+      {
+        id: "cnpj",
+        key: "cnpj",
+        label: "CNPJ",
+        accessor: (row) => (row.cnpj ? formatCnpj(row.cnpj) : "--"),
+        visible: true,
+      },
+      {
+        id: "profile",
+        key: "profile",
+        label: "Perfil",
+        accessor: () => "",
+        visible: true,
+        render: (_value, row) => {
+          const profilesForOrg = userProfiles
+            .filter(
+              (p) =>
+                p.userOrganization?.organization?.id === row.id && p.profile,
+            )
+            .map((p) => p.profile!.name);
+
+          if (profilesForOrg.length === 0) {
+            return <span className="text-sm text-muted-foreground">—</span>;
+          }
+
+          return (
+            <Badge className="text-sm font-medium" variant={"outline"}>
+              {profilesForOrg.join(", ")}
+            </Badge>
+          );
+        },
+      },
+      {
+        id: "main_phone",
+        key: "main_phone",
+        label: "Telefone Principal",
+        accessor: (row) => row.mainPhone,
+        visible: true,
+        render: (value) => (
+          <span className="text-sm">{formatPhone(value as string)}</span>
+        ),
+      },
+      {
+        id: "created_at",
+        key: "created_at",
+        label: "Cadastrado em",
+        accessor: (row) => row.createdAt,
+        visible: true,
+        render: (value) => (
+          <div className="text-sm">
+            {format(new Date(value as string), "dd/MM/yyyy", { locale: ptBR })}
+          </div>
+        ),
+      },
+    ];
 
   // Dialog de confirmação de exclusão
   const [deleteDialog, setDeleteDialog] = useState({
@@ -147,7 +149,7 @@ export default function Page() {
   });
 
   const { data: orgsData, isLoading: orgsLoading } = useQuery<
-    Organization[],
+    OrganizationExpandedResponseDto[],
     Error
   >({
     queryKey: ["organizations", userId],
@@ -172,7 +174,7 @@ export default function Page() {
       filtered = filtered.filter(
         (org) =>
           org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          org.cnpj?.toLowerCase().includes(searchTerm.toLowerCase())
+          org.cnpj?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -187,7 +189,7 @@ export default function Page() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedOrganizations = filteredOrganizations.slice(
     startIndex,
-    endIndex
+    endIndex,
   );
 
   const openDeleteDialog = (member: Member) => {
@@ -288,7 +290,7 @@ export default function Page() {
           </div>
 
           {/* Tabela de Organizações */}
-          <GenericTable<Organization>
+          <GenericTable<OrganizationExpandedResponseDto>
             title="Organizações"
             description="Visualize e gerencie todas as suas organizações"
             columns={organizationsColumns}
@@ -299,11 +301,11 @@ export default function Page() {
             itemsPerPage={itemsPerPage}
             onItemsPerPageChange={setItemsPerPage}
             showAdvancedPagination={true}
-            rowActions={(row: Organization) => {
+            rowActions={(row: OrganizationExpandedResponseDto) => {
               const hasGestorProfile = userProfiles.some(
                 (profile) =>
-                  profile.userOrganization?.organizationId === row.id &&
-                  profile.profile?.name?.toLowerCase() === "gestor"
+                  profile.userOrganization?.organization?.id === row.id &&
+                  profile.profile?.name?.toLowerCase() === "gestor",
               );
 
               if (!hasGestorProfile) {

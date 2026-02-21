@@ -1,134 +1,102 @@
 /**
  * Location Service - Backend service for states and cities
- * Returns database entities (snake_case)
+ * Returns database entities (camelCase)
  */
 
-import type { StateEntity, CityEntity } from "@/types/database/location";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
+import { cities, states } from "@prisma/client";
 
 export class LocationService {
-  constructor(private readonly supabase: SupabaseClient) {}
-
   /**
    * Get all Brazilian states
    */
-  async getAllStates(): Promise<StateEntity[]> {
-    const { data, error } = await this.supabase
-      .from("states")
-      .select("*")
-      .order("name");
+  async getAllStates(): Promise<states[] | null> {
+    const states = await prisma.states.findMany({
+      orderBy: {
+        name: "asc",
+      },
+    });
 
-    if (error) {
-      console.error("Error fetching states:", error);
-      throw new Error("Failed to fetch states");
-    }
-
-    return data || [];
+    return states;
   }
 
   /**
    * Get state by ID
    */
-  async getStateById(stateId: number): Promise<StateEntity | null> {
-    const { data, error } = await this.supabase
-      .from("states")
-      .select("*")
-      .eq("id", stateId)
-      .single();
+  async getStateById(stateId: number): Promise<states | null> {
+    const state = await prisma.states.findUnique({
+      where: {
+        id: stateId,
+      },
+    });
 
-    if (error) {
-      console.error("Error fetching state:", error);
-      return null;
-    }
-
-    return data;
+    return state ? state : null;
   }
 
   /**
    * Get state by code (UF)
    */
-  async getStateByCode(code: string): Promise<StateEntity | null> {
-    const { data, error } = await this.supabase
-      .from("states")
-      .select("*")
-      .eq("code", code.toUpperCase())
-      .single();
+  async getStateByCode(code: string): Promise<states | null> {
+    const state = await prisma.states.findUnique({
+      where: {
+        code: code.toUpperCase(),
+      },
+    });
 
-    if (error) {
-      console.error("Error fetching state by code:", error);
-      return null;
-    }
-
-    return data;
+    return state;
   }
 
   /**
    * Get all cities from a specific state
    */
-  async getCitiesByState(stateId: number): Promise<CityEntity[]> {
-    const { data, error } = await this.supabase
-      .from("cities")
-      .select("*")
-      .eq("state_id", stateId)
-      .order("name");
+  async getCitiesByState(stateId: number): Promise<cities[]> {
+    const cities = await prisma.cities.findMany({
+      where: {
+        stateId: stateId,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
 
-    if (error) {
-      console.error("Error fetching cities:", error);
-      throw new Error("Failed to fetch cities");
-    }
-
-    return data || [];
+    return cities;
   }
 
   /**
    * Get city by ID with state information
    */
-  async getCityById(cityId: number): Promise<CityEntity | null> {
-    const { data, error } = await this.supabase
-      .from("cities")
-      .select(
-        `
-        *,
-        state:states(*)
-      `
-      )
-      .eq("id", cityId)
-      .single();
+  async getCityById(cityId: number): Promise<cities | null> {
+    const city = await prisma.cities.findUnique({
+      where: {
+        id: cityId,
+      },
+      include: {
+        states: true,
+      },
+    });
 
-    if (error) {
-      console.error("Error fetching city:", error);
-      return null;
-    }
-
-    return data || null;
+    return city;
   }
 
   /**
    * Search cities by name (optionally filter by state)
    */
-  async searchCitiesByName(
-    name: string,
-    stateId?: number
-  ): Promise<CityEntity[]> {
-    let query = this.supabase
-      .from("cities")
-      .select("*")
-      .ilike("name", `%${name}%`)
-      .order("name")
-      .limit(50);
+  async searchCitiesByName(name: string, stateId?: number): Promise<cities[]> {
+    const cities = await prisma.cities.findMany({
+      where: {
+        name: {
+          contains: name,
+          mode: "insensitive", // ilike
+        },
+        ...(stateId ? { stateId: stateId } : {}),
+      },
+      orderBy: {
+        name: "asc",
+      },
+      take: 50, // limit 50
+    });
 
-    if (stateId) {
-      query = query.eq("state_id", stateId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Error searching cities:", error);
-      throw new Error("Failed to search cities");
-    }
-
-    return data || [];
+    return cities;
   }
 
   /**
@@ -136,38 +104,38 @@ export class LocationService {
    */
   async getOrCreateStateByIbge(
     stateCode: string,
-    stateName?: string
-  ): Promise<StateEntity | null> {
+    stateName?: string,
+  ): Promise<states | null> {
     const code = stateCode.toUpperCase();
 
-    // First, try to find existing state by code
-    const { data: existingState } = await this.supabase
-      .from("states")
-      .select("*")
-      .eq("code", code)
-      .single();
+    const existingState = await prisma.states.findUnique({
+      where: {
+        code,
+      },
+    });
 
     if (existingState) {
       return existingState;
     }
 
-    // State doesn't exist, create it with full name
-    const { data: newState, error } = await this.supabase
-      .from("states")
-      .insert({
-        code,
-        name: stateName || this.getStateNameByCode(code),
-        region: this.getRegionByStateCode(code),
-      })
-      .select()
-      .single();
-
-    if (error) {
+    try {
+      const newState = await prisma.states.create({
+        data: {
+          code,
+          name: stateName || this.getStateNameByCode(code),
+          region: this.getRegionByStateCode(code),
+        },
+      });
+      return newState;
+    } catch (error) {
       console.error("Error creating state:", error);
+      const retryState = await prisma.states.findUnique({
+        where: { code },
+      });
+      if (retryState) return retryState;
+
       throw new Error("Failed to create state");
     }
-
-    return newState;
   }
 
   /**
@@ -175,7 +143,6 @@ export class LocationService {
    */
   private getRegionByStateCode(code: string): string {
     const regions: Record<string, string> = {
-      // Norte
       AC: "Norte",
       AM: "Norte",
       AP: "Norte",
@@ -183,7 +150,6 @@ export class LocationService {
       RO: "Norte",
       RR: "Norte",
       TO: "Norte",
-      // Nordeste
       AL: "Nordeste",
       BA: "Nordeste",
       CE: "Nordeste",
@@ -193,17 +159,14 @@ export class LocationService {
       PI: "Nordeste",
       RN: "Nordeste",
       SE: "Nordeste",
-      // Centro-Oeste
       DF: "Centro-Oeste",
       GO: "Centro-Oeste",
       MT: "Centro-Oeste",
       MS: "Centro-Oeste",
-      // Sudeste
       ES: "Sudeste",
       MG: "Sudeste",
       RJ: "Sudeste",
       SP: "Sudeste",
-      // Sul
       PR: "Sul",
       RS: "Sul",
       SC: "Sul",
@@ -257,57 +220,53 @@ export class LocationService {
       state_code: string;
       state_name?: string;
       zip_code?: string;
-    }
-  ): Promise<CityEntity | null> {
-    // First, try to find existing city by IBGE code
-    const { data: existingCity } = await this.supabase
-      .from("cities")
-      .select(
-        `
-        *,
-        state:states(*)
-      `
-      )
-      .eq("ibge_code", ibgeCode)
-      .single();
+    },
+  ): Promise<cities | null> {
+    const existingCity = await prisma.cities.findUnique({
+      where: {
+        ibgeCode,
+      },
+      include: {
+        states: true,
+      },
+    });
 
     if (existingCity) {
       return existingCity;
     }
 
-    // Get or create state
     const state = await this.getOrCreateStateByIbge(
       cityData.state_code,
-      cityData.state_name
+      cityData.state_name,
     );
 
     if (!state) {
-      console.error("Failed to get or create state:", cityData.state_code);
       throw new Error("Failed to get or create state");
     }
 
-    // Create new city
-    const { data: newCity, error } = await this.supabase
-      .from("cities")
-      .insert({
-        state_id: state.id,
-        ibge_code: ibgeCode,
-        name: cityData.name,
-        zip_code_start: cityData.zip_code || null,
-      })
-      .select(
-        `
-        *,
-        state:states(*)
-      `
-      )
-      .single();
+    try {
+      const newCity = await prisma.cities.create({
+        data: {
+          stateId: state.id,
+          ibgeCode: ibgeCode,
+          name: cityData.name,
+          zipCodeStart: cityData.zip_code || null,
+        },
+        include: {
+          states: true,
+        },
+      });
 
-    if (error) {
+      return newCity;
+    } catch (error) {
       console.error("Error creating city:", error);
+      const retryCity = await prisma.cities.findUnique({
+        where: { ibgeCode },
+        include: { states: true },
+      });
+      if (retryCity) return retryCity;
+
       throw new Error("Failed to create city");
     }
-
-    return newCity;
   }
 }

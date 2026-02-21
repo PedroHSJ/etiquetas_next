@@ -1,31 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { InviteBackendService } from "@/lib/services/server/inviteService";
 import { ApiSuccessResponse, ApiErrorResponse } from "@/types/common/api";
+import { headers } from "next/headers";
 
 /**
  * POST /api/invites/reject
  * Reject an invite by ID
  */
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) {
-    const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
-    };
-    return NextResponse.json(errorResponse, { status: 401 });
-  }
-
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    if (error || !user) {
+    if (!session || !session.user) {
       const errorResponse: ApiErrorResponse = {
         error: "User not authenticated",
       };
@@ -42,8 +31,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    const inviteService = new InviteBackendService(supabase);
-    await inviteService.rejectInvite(inviteId, user.id);
+    const inviteService = new InviteBackendService();
+    await inviteService.rejectInvite(inviteId, session.user.id);
 
     const successResponse: ApiSuccessResponse<{ success: boolean }> = {
       data: { success: true },

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { StockInTransitBackendService } from "@/lib/services/server/stockInTransitService";
 import { CreateStockInTransitDto } from "@/types/dto/stock-in-transit/request";
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (!token) {
+    if (!session) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 },
@@ -27,8 +28,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = getSupabaseBearerClient(token);
-    const service = new StockInTransitBackendService(supabase);
+    const service = new StockInTransitBackendService();
+    // TODO: Verify permissions
     const result = await service.list({ page, pageSize, organizationId });
 
     return NextResponse.json(result);
@@ -45,22 +46,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
+    if (!session) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 },
@@ -77,8 +67,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const service = new StockInTransitBackendService(supabase);
-    const result = await service.create(body, user.id, organizationId);
+    const service = new StockInTransitBackendService();
+    const result = await service.create(body, session.user.id, organizationId);
 
     return NextResponse.json({ success: true, data: result });
   } catch (error: unknown) {

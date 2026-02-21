@@ -11,7 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LocationService } from "@/lib/services/client/localidade-service";
-import { City, CityWithState, State } from "@/types/models/location";
+import {
+  StateResponseDto,
+  CityResponseDto,
+} from "@/types/dto/location/response";
 import { useToast } from "@/hooks/use-toast";
 import { formatCEP, unformatCEP } from "@/utils/masks";
 
@@ -47,8 +50,8 @@ export function LocationSelector({
   const { toast } = useToast();
 
   // States and cities
-  const [states, setStates] = useState<State[]>([]);
-  const [cities, setCities] = useState<City[]>([]);
+  const [states, setStates] = useState<StateResponseDto[]>([]);
+  const [cities, setCities] = useState<CityResponseDto[]>([]);
   // const [selectedCity, setSelectedCity] = useState<CityWithState | null>(null);
 
   // Loading states
@@ -196,7 +199,7 @@ export function LocationSelector({
     loadCities(newStateId);
   };
 
-  const handleCityChange = (city: City) => {
+  const handleCityChange = (city: CityResponseDto) => {
     // setSelectedCity(city);
     onChange({
       ...value,

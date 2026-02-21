@@ -26,7 +26,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { NavigationButton } from "@/components/ui/navigation-button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DepartmentWithOrganization } from "@/types/models/department";
+import { DepartmentWithOrganizationResponseDto } from "@/types/dto/department/response";
 import { DepartmentService } from "@/lib/services/client/department-service";
 
 export default function EditDepartmentPage() {
@@ -35,7 +35,8 @@ export default function EditDepartmentPage() {
   const { userId } = useAuth();
   const { organizations, selectedOrganization } = useOrganization();
 
-  const [department, setDepartment] = useState<DepartmentWithOrganization | null>(null);
+  const [department, setDepartment] =
+    useState<DepartmentWithOrganizationResponseDto | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     organizationId: "",
@@ -146,8 +147,12 @@ export default function EditDepartmentPage() {
           </NavigationButton>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+              <svg
+                className="w-7 h-7 text-white"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
               </svg>
             </div>
             <div>
@@ -188,12 +193,18 @@ export default function EditDepartmentPage() {
           </NavigationButton>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              <svg
+                className="w-7 h-7 text-white"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Departamento não encontrado</h1>
+              <h1 className="text-3xl font-bold">
+                Departamento não encontrado
+              </h1>
               <p className="text-muted-foreground">
                 O departamento solicitado não existe.
               </p>
@@ -213,8 +224,12 @@ export default function EditDepartmentPage() {
         </NavigationButton>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            <svg
+              className="w-7 h-7 text-white"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
             </svg>
           </div>
           <div>
@@ -228,14 +243,16 @@ export default function EditDepartmentPage() {
 
       <div className="grid gap-6 w-full">
         <Card>
-              <CardHeader>
+          <CardHeader>
             <CardTitle>Informações do Departamento</CardTitle>
             <CardDescription>
               Criado em{" "}
               {format(
-                department.createdAt,
+                new Date(department.createdAt),
                 "dd 'de' MMMM 'de' yyyy",
-                { locale: ptBR }
+                {
+                  locale: ptBR,
+                },
               )}
             </CardDescription>
           </CardHeader>

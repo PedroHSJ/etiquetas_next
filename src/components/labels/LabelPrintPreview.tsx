@@ -111,7 +111,7 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
             {value ? (
               <img
                 src={`https://barcode.tec-it.com/barcode.ashx?data=${encodeURIComponent(
-                  value
+                  value,
                 )}&code=Code128&multiplebarcodes=false&translate-esc=false&unit=Fit&dpi=96&imagetype=Gif&rotation=0&color=%23000000&bgcolor=%23ffffff&fontsize=8&qunit=Mm`}
                 alt="Barcode"
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
@@ -184,7 +184,7 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
           }}
         >
           {template.fields.map(renderField)}
-        </div>
+        </div>,
       );
     }
     return labels;
@@ -218,7 +218,7 @@ export const LabelPrintPreview: React.FC<LabelPrintPreviewProps> = ({
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(
-        `etiquetas-${template.name.replace(/\s+/g, "-").toLowerCase()}.pdf`
+        `etiquetas-${template.name.replace(/\s+/g, "-").toLowerCase()}.pdf`,
       );
 
       toast.success("PDF gerado com sucesso!");

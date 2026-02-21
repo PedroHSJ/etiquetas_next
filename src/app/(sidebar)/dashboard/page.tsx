@@ -23,17 +23,18 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { OrganizationService } from "@/lib/services/client/organization-service";
-import { formatCNPJ, formatPhone } from "@/lib/converters";
+import { formatCNPJ, formatPhone } from "@/lib/utils/organization";
 
 export default function DashboardPage() {
   const { activeOrganizationDetails, detailsLoading } = useOrganization();
   const { user } = useAuth();
   const { session } = useAuth();
-  const accessToken = session?.access_token;
+  // const accessToken = session?.access_token; // Removido
   const { isLoading } = useQuery({
-    queryKey: ["organization", accessToken],
-    enabled: !!accessToken,
+    queryKey: ["organization", session?.user?.id], // Usar user ID para invalidar cache se mudar user
+    enabled: !!session?.user,
     queryFn: async () => {
+      // OrganizationService.getOrganizations() agora deve usar apiClient com cookie, sem token manual
       return await OrganizationService.getOrganizations();
     },
   });
@@ -46,10 +47,11 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Bem-vindo,{" "}
-          {user?.user_metadata?.name.split(" ")[0] +
+          Bem-vindo, {/* @ts-ignore */}
+          {user?.name?.split(" ")[0] +
             " " +
-            user?.user_metadata?.name.split(" ")[1]}
+            // @ts-ignore
+            (user?.name?.split(" ")[1] || "")}
         </p>
       </div>
 

@@ -13,10 +13,7 @@ import {
   IngredientSuggestion,
   TechnicalSheetAIRequest,
   TechnicalSheetAIResponse,
-  TechnicalSheetListModel,
-  TechnicalSheetModel,
 } from "@/types/models/technical-sheet";
-import { toTechnicalSheetModel } from "@/lib/converters/technical-sheet";
 import { StockService } from "./stock-service";
 import { ProductSelect } from "@/types/stock/stock";
 
@@ -35,47 +32,47 @@ export const TechnicalSheetService = {
     pageSize = 12,
     difficulty,
     active = true,
-  }: ListParams): Promise<TechnicalSheetListModel> {
-    const { data } = await api.get<
-      ApiResponse<TechnicalSheetListResponseDto>
-    >("/technical-sheets", {
-      params: { organizationId, page, pageSize, difficulty, active },
-    });
+  }: ListParams): Promise<TechnicalSheetListResponseDto> {
+    const { data } = await api.get<ApiResponse<TechnicalSheetListResponseDto>>(
+      "/technical-sheets",
+      {
+        params: { organizationId, page, pageSize, difficulty, active },
+      },
+    );
 
     if (!data?.data) {
       throw new Error("Erro ao carregar fichas técnicas");
     }
 
-    const mapped = {
-      ...data.data,
-      data: data.data.data.map(toTechnicalSheetModel),
-    };
+    // Filtrar ativas se necessário (embora o backend já deva fazer)
+    if (data.data.data) {
+      data.data.data = data.data.data.filter((sheet) => sheet.active !== false);
+    }
 
-    mapped.data = mapped.data.filter((sheet) => sheet.active !== false);
-
-    return mapped;
+    return data.data;
   },
 
   async getById(
     id: string,
-    organizationId: string
-  ): Promise<TechnicalSheetModel> {
-    const { data } = await api.get<
-      ApiResponse<TechnicalSheetResponseDto>
-    >(`/technical-sheets/${id}`, {
-      params: { organizationId },
-    });
+    organizationId: string,
+  ): Promise<TechnicalSheetResponseDto> {
+    const { data } = await api.get<ApiResponse<TechnicalSheetResponseDto>>(
+      `/technical-sheets/${id}`,
+      {
+        params: { organizationId },
+      },
+    );
 
     if (!data?.data) {
       throw new Error("Ficha técnica não encontrada");
     }
 
-    return toTechnicalSheetModel(data.data);
+    return data.data;
   },
 
   async create(
-    payload: CreateTechnicalSheetDto
-  ): Promise<TechnicalSheetModel> {
+    payload: CreateTechnicalSheetDto,
+  ): Promise<TechnicalSheetResponseDto> {
     const { data } = await api.post<
       ApiSuccessResponse<TechnicalSheetResponseDto>
     >("/technical-sheets", payload);
@@ -84,13 +81,13 @@ export const TechnicalSheetService = {
       throw new Error("Erro ao criar ficha técnica");
     }
 
-    return toTechnicalSheetModel(data.data);
+    return data.data;
   },
 
   async update(
     id: string,
-    payload: UpdateTechnicalSheetDto
-  ): Promise<TechnicalSheetModel> {
+    payload: UpdateTechnicalSheetDto,
+  ): Promise<TechnicalSheetResponseDto> {
     const { data } = await api.put<
       ApiSuccessResponse<TechnicalSheetResponseDto>
     >(`/technical-sheets/${id}`, payload);
@@ -99,7 +96,7 @@ export const TechnicalSheetService = {
       throw new Error("Erro ao atualizar ficha técnica");
     }
 
-    return toTechnicalSheetModel(data.data);
+    return data.data;
   },
 
   async remove(id: string, organizationId: string): Promise<void> {
@@ -107,11 +104,11 @@ export const TechnicalSheetService = {
   },
 
   async generateIngredientSuggestions(
-    request: TechnicalSheetAIRequest
+    request: TechnicalSheetAIRequest,
   ): Promise<TechnicalSheetAIResponse> {
     const { data } = await api.post<TechnicalSheetAIResponse>(
       "/technical-sheet/generate",
-      request
+      request,
     );
 
     if (!data) {
@@ -123,7 +120,7 @@ export const TechnicalSheetService = {
 
   async matchIngredientsWithProducts(
     ingredients: IngredientSuggestion[],
-    organizationId: string
+    organizationId: string,
   ): Promise<EditableIngredient[]> {
     const editable: EditableIngredient[] = [];
 
@@ -147,10 +144,7 @@ export const TechnicalSheetService = {
           isEditing: false,
         });
       } catch (error) {
-        console.error(
-          `Erro ao buscar produto para ${ingredient.name}:`,
-          error
-        );
+        console.error(`Erro ao buscar produto para ${ingredient.name}:`, error);
         editable.push({
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
           name: ingredient.name,
@@ -167,7 +161,7 @@ export const TechnicalSheetService = {
 
   async searchAvailableProducts(
     organizationId: string,
-    query: string
+    query: string,
   ): Promise<ProductSelect[]> {
     try {
       return await StockService.listProducts({
@@ -184,7 +178,7 @@ export const TechnicalSheetService = {
   calculateProportionalQuantities(
     ingredients: EditableIngredient[],
     originalServings: number,
-    newServings: number
+    newServings: number,
   ): EditableIngredient[] {
     const ratio = newServings / originalServings;
 

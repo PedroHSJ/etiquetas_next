@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { StorageLocation } from "@/types/models/storage-location";
+import { StorageLocationResponseDto } from "@/types/dto/storage-location";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -33,19 +33,23 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface StorageLocationTreeProps {
-  locations: StorageLocation[];
-  onAddChild: (parent: StorageLocation) => void;
-  onEdit: (location: StorageLocation) => void;
+  locations: StorageLocationResponseDto[];
+  onAddChild: (parent: StorageLocationResponseDto) => void;
+  onEdit: (location: StorageLocationResponseDto) => void;
   onRefresh: () => void;
 }
 
 // Convert flat list to tree
-function buildTree(locations: StorageLocation[]): StorageLocation[] {
+function buildTree(
+  locations: StorageLocationResponseDto[],
+): StorageLocationResponseDto[] {
   const map = new Map<
     string,
-    StorageLocation & { children: StorageLocation[] }
+    StorageLocationResponseDto & { children?: StorageLocationResponseDto[] }
   >();
-  const roots: (StorageLocation & { children: StorageLocation[] })[] = [];
+  const roots: (StorageLocationResponseDto & {
+    children?: StorageLocationResponseDto[];
+  })[] = [];
 
   // Initialize map
   locations.forEach((loc) => {
@@ -56,7 +60,9 @@ function buildTree(locations: StorageLocation[]): StorageLocation[] {
   locations.forEach((loc) => {
     const node = map.get(loc.id)!;
     if (loc.parentId && map.has(loc.parentId)) {
-      map.get(loc.parentId)!.children.push(node);
+      const parent = map.get(loc.parentId)!;
+      if (!parent.children) parent.children = [];
+      parent.children.push(node);
     } else {
       roots.push(node);
     }
@@ -90,10 +96,12 @@ export function StorageLocationTree({
 }
 
 interface TreeNodeProps {
-  node: StorageLocation & { children?: StorageLocation[] };
+  node: StorageLocationResponseDto & {
+    children?: StorageLocationResponseDto[];
+  };
   level: number;
-  onAddChild: (parent: StorageLocation) => void;
-  onEdit: (location: StorageLocation) => void;
+  onAddChild: (parent: StorageLocationResponseDto) => void;
+  onEdit: (location: StorageLocationResponseDto) => void;
   onRefresh: () => void;
 }
 
@@ -127,7 +135,7 @@ function TreeNode({
       <div
         className={cn(
           "flex items-center justify-between p-2 rounded-md hover:bg-accent/50 group",
-          "border border-transparent hover:border-border transition-colors"
+          "border border-transparent hover:border-border transition-colors",
         )}
         style={{ marginLeft: `${level * 24}px` }}
       >

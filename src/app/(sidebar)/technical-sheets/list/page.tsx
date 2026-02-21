@@ -25,7 +25,7 @@ import {
 import { NavigationButton } from "@/components/ui/navigation-button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { TechnicalSheet } from "@/types/technical-sheet";
+import { TechnicalSheetResponseDto } from "@/types/dto/technical-sheet/response";
 import { TechnicalSheetService } from "@/lib/services/client/technical-sheet-service";
 import {
   ChefHat,
@@ -52,7 +52,7 @@ import { ReadGuard } from "@/components/auth/PermissionGuard";
 export default function TechnicalSheetsListPage() {
   const { user } = useAuth();
   const { selectedOrganization } = useOrganization();
-  const [sheets, setSheets] = useState<TechnicalSheet[]>([]);
+  const [sheets, setSheets] = useState<TechnicalSheetResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -82,12 +82,12 @@ export default function TechnicalSheetsListPage() {
 
       if (difficultyFilter !== "all") {
         filteredSheets = result.data.filter(
-          (sheet) => sheet.difficulty === difficultyFilter
+          (sheet) => sheet.difficulty === difficultyFilter,
         );
       }
 
       const activeSheets = filteredSheets.filter(
-        (sheet) => sheet.active !== false
+        (sheet) => sheet.active !== false,
       );
 
       setSheets(activeSheets);
@@ -321,7 +321,7 @@ export default function TechnicalSheetsListPage() {
                         <div className="text-xs text-muted-foreground">
                           {sheet.ingredients.slice(0, 3).map((ing, i) => (
                             <span key={i}>
-                              {ing.name}
+                              {ing.ingredientName}
                               {i < Math.min(sheet.ingredients.length - 1, 2) &&
                                 ", "}
                             </span>
@@ -427,7 +427,7 @@ export default function TechnicalSheetsListPage() {
                         <div className="text-xs text-muted-foreground">
                           {sheet.ingredients.slice(0, 3).map((ing, i) => (
                             <span key={i}>
-                              {ing.name}
+                              {ing.ingredientName}
                               {i < Math.min(sheet.ingredients.length - 1, 2) &&
                                 ", "}
                             </span>

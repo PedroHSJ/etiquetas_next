@@ -33,8 +33,7 @@ export interface OrganizationResponseDto {
 /**
  * Expanded organization response with relations
  */
-export interface OrganizationExpandedResponseDto
-  extends OrganizationResponseDto {
+export interface OrganizationExpandedResponseDto extends OrganizationResponseDto {
   state?: {
     id: number;
     code: string;

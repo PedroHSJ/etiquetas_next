@@ -36,7 +36,7 @@ import { ESTOQUE_MESSAGES } from "@/types/estoque";
 import { useEffect } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
 import { StockMovementService } from "@/lib/services/client/stock-movement-service";
-import { ProductStockModel } from "@/types/models/stock";
+import { ProductStockResponseDto } from "@/types/dto/stock/response";
 import { QuickEntryRequest } from "@/types/stock/stock";
 import {
   InputGroup,
@@ -71,7 +71,7 @@ export function SaidaRapidaDialog({
 }: SaidaRapidaDialogProps) {
   const { activeProfile } = useProfile();
   const organizationId =
-    activeProfile?.userOrganization?.organizationId || undefined;
+    activeProfile?.userOrganization?.organization?.id || undefined;
   const [open, setOpen] = useState(false);
   const form = useForm<SaidaRapidaFormData>({
     resolver: zodResolver(saidaRapidaSchema),
@@ -81,12 +81,12 @@ export function SaidaRapidaDialog({
       observacao: "",
     },
   });
-  const [produtos, setProdutos] = useState<ProductStockModel[]>([]);
+  const [produtos, setProdutos] = useState<ProductStockResponseDto[]>([]);
   const [carregandoProdutos, setCarregandoProdutos] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const produtoSelecionadoId = form.watch("produto_id");
   const produtoSelecionado = produtos.find(
-    (p) => p.id === Number(produtoSelecionadoId)
+    (p) => p.id === Number(produtoSelecionadoId),
   );
   const unidadeMedida = (
     produtoSelecionado?.unitOfMeasureCode || "un"
@@ -97,13 +97,13 @@ export function SaidaRapidaDialog({
     setCarregandoProdutos(true);
     try {
       // Para saída, carregar apenas produtos com estoque > 0
-      const produtos = await StockMovementService.listProducts({
+      const response = await StockMovementService.listProducts({
         q: termo,
         limit: 50,
         organizationId,
         onlyWithStock: true,
       });
-      setProdutos(produtos);
+      setProdutos(response);
     } catch (error) {
       console.error("Erro ao carregar produtos:", error);
       toast.error("Erro ao carregar produtos");
@@ -130,13 +130,13 @@ export function SaidaRapidaDialog({
     try {
       // Validar quantidade
       const produtoSelecionado = produtos.find(
-        (p) => p.id === parseInt(data.produto_id)
+        (p) => p.id === parseInt(data.produto_id),
       );
       const estoqueAtual = produtoSelecionado?.currentQuantity ?? 0;
 
       const validacao = StockMovementService.validateQuantity(
         parseFloat(data.quantidade),
-        estoqueAtual
+        estoqueAtual,
       );
 
       if (!validacao.valid) {
@@ -222,14 +222,9 @@ export function SaidaRapidaDialog({
                         >
                           <div className="flex items-center gap-2">
                             <span>{produto.name}</span>
-                            {(produto.currentQuantity !== undefined ||
-                              produto.currentQuantity !== undefined) && (
+                            {produto.currentQuantity !== undefined && (
                               <span className="text-xs text-muted-foreground">
-                                (Est:{" "}
-                                {produto.currentQuantity ||
-                                  produto.currentQuantity ||
-                                  0}
-                                )
+                                (Est: {produto.currentQuantity})
                               </span>
                             )}
                           </div>

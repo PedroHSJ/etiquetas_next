@@ -10,13 +10,6 @@ import {
   CreateCityFromZipCodeDto,
   SearchCitiesByNameDto,
 } from "@/types/dto/location/request";
-import {
-  toCityFromCreationDto,
-  toCityModel,
-  toCityWithStateModel,
-  toStateModel,
-} from "@/lib/converters/location";
-import { City, CityWithState, State } from "@/types/models/location";
 import axios from "axios";
 
 const API_BASE = "/location";
@@ -26,13 +19,15 @@ export const LocationService = {
     const cleanCep = cep.replace(/\D/g, "");
     if (cleanCep.length !== 8) throw new Error("CEP must have 8 digits");
     const { data } = await axios.get<ViaCepResponseDto>(
-      `https://viacep.com.br/ws/${cleanCep}/json/`
+      `https://viacep.com.br/ws/${cleanCep}/json/`,
     );
     if (!data || "erro" in data) return null;
     return data;
   },
 
-  async fetchOrCreateCity(cep: string): Promise<CityWithState | null> {
+  async fetchOrCreateCity(
+    cep: string,
+  ): Promise<CityCreationResponseDto | null> {
     const payload: CreateCityFromZipCodeDto = { cep: cep.replace(/\D/g, "") };
     const { data } = await api.post<
       CityCreationResponseDto | ApiSuccessResponse<CityCreationResponseDto>
@@ -44,10 +39,10 @@ export const LocationService = {
 
     if (!dto) return null;
 
-    return toCityFromCreationDto(dto);
+    return dto;
   },
 
-  async listStates(): Promise<State[]> {
+  async listStates(): Promise<StateResponseDto[]> {
     const { data } = await api.get<
       ApiResponse<StateResponseDto[]> | StateResponseDto[]
     >(`${API_BASE}/states`);
@@ -57,10 +52,10 @@ export const LocationService = {
         ? data
         : (data as ApiResponse<StateResponseDto[]>)?.data || [];
 
-    return states.map(toStateModel);
+    return states;
   },
 
-  async listCitiesByState(stateId: number): Promise<City[]> {
+  async listCitiesByState(stateId: number): Promise<CityResponseDto[]> {
     const { data } = await api.get<
       ApiResponse<CityResponseDto[]> | CityResponseDto[]
     >(`${API_BASE}/states/${stateId}/cities`);
@@ -70,19 +65,22 @@ export const LocationService = {
         ? data
         : (data as ApiResponse<CityResponseDto[]>)?.data || [];
 
-    return cities.map(toCityModel);
+    return cities;
   },
 
-  async fetchCityById(cityId: number): Promise<CityWithState | null> {
+  async fetchCityById(cityId: number): Promise<CityResponseDto | null> {
     const { data } = await api.get<ApiSuccessResponse<CityResponseDto>>(
-      `${API_BASE}/cities/${cityId}`
+      `${API_BASE}/cities/${cityId}`,
     );
 
     if (!data?.data) return null;
-    return toCityWithStateModel(data.data);
+    return data.data;
   },
 
-  async searchCitiesByName(name: string, stateId?: number): Promise<City[]> {
+  async searchCitiesByName(
+    name: string,
+    stateId?: number,
+  ): Promise<CityResponseDto[]> {
     const params: SearchCitiesByNameDto = { name };
     if (stateId) params.stateId = stateId;
 
@@ -97,7 +95,7 @@ export const LocationService = {
         ? data
         : (data as ApiResponse<CityResponseDto[]>)?.data || [];
 
-    return cities.map(toCityModel);
+    return cities;
   },
 
   validateCEP(cep: string): boolean {

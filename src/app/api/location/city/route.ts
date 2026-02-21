@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 import { CityCreationResponseDto } from "@/types/dto/location/response";
 import { LocationService } from "@/lib/services/server/locationService";
 
+/**
+ * POST /api/location/city
+ * Get or create a city by CEP
+ */
 export async function POST(request: Request) {
   try {
     const { cep } = await request.json();
@@ -12,12 +15,7 @@ export async function POST(request: Request) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    // Use anon supabase-js client for server-side
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    // Busca dados do CEP na API ViaCEP
+    // Fetch CEP data from ViaCEP API
     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
     if (!response.ok) {
       const errorResponse: ApiErrorResponse = { error: "Failed to fetch CEP" };
@@ -30,17 +28,14 @@ export async function POST(request: Request) {
       return NextResponse.json(errorResponse, { status: 404 });
     }
 
-    // Usar o LocationService para criar/buscar cidade (e estado se necessário)
-    const locationService = new LocationService(supabase);
-
+    const locationService = new LocationService();
     const city = await locationService.getOrCreateCityByIBGE(
-      cepData.ibge || cep, // Use IBGE code or CEP as fallback
+      cepData.ibge || cep,
       {
         name: cepData.localidade,
         state_code: cepData.uf,
-        state_name: undefined, // Will be resolved by getOrCreateStateByIbge
         zip_code: cep,
-      }
+      },
     );
 
     if (!city) {
@@ -50,25 +45,7 @@ export async function POST(request: Request) {
       return NextResponse.json(errorResponse, { status: 500 });
     }
 
-    // Normaliza resposta - o state vem do join com states
-    const state = city.state as
-      | { id: number; code: string; name: string; region?: string }
-      | undefined;
-
-    // Se por algum motivo o state não veio no join, busca separadamente
-    let stateData = state;
-    if (!stateData) {
-      const fetchedState = await locationService.getStateByCode(cepData.uf);
-      if (fetchedState) {
-        stateData = {
-          id: fetchedState.id,
-          code: fetchedState.code,
-          name: fetchedState.name,
-          region: fetchedState.region,
-        };
-      }
-    }
-
+    const stateData = (city as any).states;
     if (!stateData) {
       const errorResponse: ApiErrorResponse = {
         error: "Failed to find state for city",
@@ -78,11 +55,11 @@ export async function POST(request: Request) {
 
     const normalized: CityCreationResponseDto = {
       id: city.id,
-      nome: city.name,
-      estado: {
+      name: city.name,
+      state: {
         id: stateData.id,
-        codigo: stateData.code,
-        nome: stateData.name,
+        code: stateData.code,
+        name: stateData.name,
       },
     };
 

@@ -1,5 +1,5 @@
 /**
- * Profile and permission database entities
+ * Profile and permission database entities - Updated to camelCase to match Prisma @map schema
  */
 
 /**
@@ -10,7 +10,7 @@ export interface ProfileEntity {
   name: string;
   description: string | null;
   active: boolean;
-  created_at: string;
+  createdAt: string;
 }
 
 /**
@@ -22,7 +22,7 @@ export interface FunctionalityEntity {
   description: string | null;
   code: string;
   active: boolean;
-  created_at: string;
+  createdAt: string;
 }
 
 /**
@@ -30,11 +30,11 @@ export interface FunctionalityEntity {
  */
 export interface PermissionEntity {
   id: string;
-  functionality_id: string;
-  profile_id: string;
+  functionalityId: string;
+  profileId: string;
   action: string | null;
   active: boolean;
-  created_at: string;
+  createdAt: string;
   // Relations (optional, populated by joins)
   functionality?: FunctionalityEntity;
   profile?: ProfileEntity;
@@ -54,13 +54,13 @@ export interface PermissionWithRelationsEntity extends PermissionEntity {
  */
 export interface UserOrganizationEntity {
   id: string;
-  user_id: string;
-  organization_id: string;
-  profile_id: string;
+  userId: string;
+  organizationId: string;
+  profileId: string;
   active: boolean;
-  entry_date: string;
-  exit_date: string | null;
-  created_at: string;
+  entryDate: string;
+  exitDate: string | null;
+  createdAt: string;
 }
 
 /**
@@ -68,9 +68,9 @@ export interface UserOrganizationEntity {
  */
 export interface UserProfileEntity {
   id: string;
-  user_organization_id: string;
-  profile_id: string;
+  userOrganizationId: string;
+  profileId: string;
   active: boolean;
-  start_date: string;
-  created_at: string;
+  startDate: string;
+  createdAt: string;
 }

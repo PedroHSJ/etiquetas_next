@@ -1,39 +1,39 @@
 /**
- * Technical sheet database entities (snake_case)
+ * Technical sheet database entities - Updated to camelCase to match Prisma @map schema
  */
 
 export interface TechnicalSheetEntity {
   id: string;
-  dish_name: string;
+  dishName: string;
   servings: number;
-  preparation_time?: string | null;
-  cooking_time?: string | null;
+  preparationTime?: string | null;
+  cookingTime?: string | null;
   difficulty?: string | null;
-  preparation_steps?: string[] | null;
-  nutritional_insights?: Record<string, unknown> | null;
-  organization_id: string;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
+  preparationSteps?: string[] | null;
+  nutritionalInsights?: Record<string, unknown> | null;
+  organizationId: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
   active?: boolean | null;
 }
 
 export interface TechnicalSheetIngredientEntity {
   id: string;
-  technical_sheet_id: string;
-  ingredient_name: string;
+  technicalSheetId: string;
+  ingredientName: string;
   quantity: string;
   unit: string;
-  original_quantity: string;
-  product_id?: number | null;
-  sort_order: number;
-  created_at: string;
+  originalQuantity: string;
+  productId?: number | null;
+  sortOrder: number;
+  createdAt: string;
 }
 
 export interface TechnicalSheetAICacheEntity {
   id: string;
-  dish_name: string;
+  dishName: string;
   servings: number;
-  json_response: Record<string, unknown>;
-  created_at: string;
+  jsonResponse: Record<string, unknown>;
+  createdAt: string;
 }

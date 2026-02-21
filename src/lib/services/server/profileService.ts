@@ -1,15 +1,14 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  ProfileEntity,
-  UserProfileEntity,
-  UserOrganizationEntity,
-} from "@/types/database/profile";
-import { OrganizationEntity } from "@/types/database/organization";
-import { toOrganizationResponseDto } from "@/lib/converters/organization";
+import { prisma } from "@/lib/prisma";
 import {
   ProfileResponseDto,
   UserProfileResponseDto,
-} from "@/types/dto/profile";
+} from "@/types/dto/profile/response";
+import {
+  profiles,
+  user_profiles,
+  user_organizations,
+  organizations,
+} from "@prisma/client";
 
 interface ListProfilesOptions {
   search?: string;
@@ -17,63 +16,10 @@ interface ListProfilesOptions {
 }
 
 /**
- * Converter: ProfileEntity → ProfileResponseDto
- */
-function toProfileResponseDto(entity: ProfileEntity): ProfileResponseDto {
-  return {
-    id: entity.id,
-    name: entity.name,
-    description: entity.description,
-    active: entity.active,
-    createdAt: entity.created_at,
-  };
-}
-
-/**
- * Entity com join para user_profiles
- */
-interface UserProfileWithRelations {
-  id: string;
-  user_organization_id: string;
-  profile_id: string;
-  active: boolean;
-  start_date: string;
-  created_at: string;
-  profile?: ProfileEntity;
-  user_organization?: UserOrganizationEntity & {
-    organization?: OrganizationEntity;
-  };
-}
-
-/**
- * Converter: UserProfileEntity → UserProfileResponseDto
- */
-function toUserProfileResponseDto(
-  entity: UserProfileWithRelations
-): UserProfileResponseDto {
-  return {
-    id: entity.id,
-    userOrganizationId: entity.user_organization_id,
-    profileId: entity.profile_id,
-    active: entity.active,
-    startDate: entity.start_date,
-    createdAt: entity.created_at,
-    profile: entity.profile ? toProfileResponseDto(entity.profile) : undefined,
-    userOrganization: entity.user_organization?.organization
-      ? {
-          organization: toOrganizationResponseDto(
-            entity.user_organization.organization
-          ),
-        }
-      : undefined,
-  };
-}
-
-/**
  * Service layer for profile management
  */
 export class ProfileBackendService {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor() {}
 
   private slugify(value: string): string {
     return value
@@ -84,37 +30,76 @@ export class ProfileBackendService {
       .replace(/^-+|-+$/g, "");
   }
 
+  private mapProfileToDto(entity: profiles): ProfileResponseDto {
+    return {
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      active: entity.active ?? false,
+      createdAt: entity.createdAt?.toISOString() ?? new Date().toISOString(),
+      slug: this.slugify(entity.name),
+    };
+  }
+
+  private mapUserProfileToDto(entity: any): UserProfileResponseDto {
+    return {
+      id: entity.id,
+      userOrganizationId: entity.userOrganizationId,
+      profileId: entity.profileId,
+      active: entity.active ?? false,
+      startDate: entity.startDate?.toISOString() ?? new Date().toISOString(),
+      createdAt: entity.createdAt?.toISOString() ?? new Date().toISOString(),
+      profile: this.mapProfileToDto(entity.profiles),
+      userOrganization: {
+        organization: {
+          ...entity.user_organizations.organizations,
+          openingDate:
+            entity.user_organizations.organizations.openingDate?.toISOString() ||
+            null,
+          createdAt:
+            entity.user_organizations.organizations.createdAt.toISOString(),
+          updatedAt:
+            entity.user_organizations.organizations.updatedAt.toISOString(),
+          latitude: entity.user_organizations.organizations.latitude
+            ? Number(entity.user_organizations.organizations.latitude)
+            : null,
+          longitude: entity.user_organizations.organizations.longitude
+            ? Number(entity.user_organizations.organizations.longitude)
+            : null,
+        },
+      },
+    };
+  }
+
   /**
    * List all profiles with optional filters
    */
   async listProfiles(
-    options: ListProfilesOptions = {}
+    options: ListProfilesOptions = {},
   ): Promise<ProfileResponseDto[]> {
     const { search, activeOnly = true } = options;
-    let query = this.supabase.from("profiles").select("*");
+
+    const where: any = {};
 
     if (activeOnly) {
-      query = query.eq("active", true);
+      where.active = true;
     }
 
     if (search?.trim()) {
-      query = query.ilike("name", `%${search.trim()}%`);
+      where.name = {
+        contains: search.trim(),
+        mode: "insensitive",
+      };
     }
 
-    query = query.order("name", { ascending: true });
+    const profilesList = await prisma.profiles.findMany({
+      where,
+      orderBy: {
+        name: "asc",
+      },
+    });
 
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(error.message || "Error while fetching profiles");
-    }
-
-    const entities = (data ?? []) as ProfileEntity[];
-
-    return entities.map((entity) => ({
-      ...toProfileResponseDto(entity),
-      slug: this.slugify(entity.name),
-    }));
+    return profilesList.map((entity) => this.mapProfileToDto(entity));
   }
 
   /**
@@ -126,48 +111,40 @@ export class ProfileBackendService {
     }
 
     const normalizedSlug = this.slugify(slug);
-    const profiles = await this.listProfiles({ activeOnly: true });
+    const profilesResult = await this.listProfiles({ activeOnly: true });
 
     return (
-      profiles.find(
-        (profile) => this.slugify(profile.name) === normalizedSlug
+      profilesResult.find(
+        (profile) => this.slugify(profile.name) === normalizedSlug,
       ) ?? null
     );
   }
 
   /**
    * Busca todos os perfis disponíveis para o usuário informado
-   * @param userId id do usuário (auth.users)
    */
   async getAvailableProfiles(
-    userId: string
+    userId: string,
   ): Promise<UserProfileResponseDto[]> {
     try {
-      // Buscar user_profiles através de user_organizations
-      const { data, error } = await this.supabase
-        .from("user_profiles")
-        .select(
-          `
-          *,
-          profile:profiles(*),
-          user_organization:user_organizations!inner(
-            *,
-            organization:organizations(*)
-          )
-        `
-        )
-        // Importante: o filtro deve usar o nome da tabela real (user_organizations),
-        // não o alias (user_organization), para o Supabase aplicar corretamente.
-        .eq("user_organizations.user_id", userId)
-        .eq("active", true);
-      console.log("userId:", userId);
+      const userProfilesList = await prisma.user_profiles.findMany({
+        where: {
+          active: true,
+          user_organizations: {
+            userId: userId,
+          },
+        },
+        include: {
+          profiles: true,
+          user_organizations: {
+            include: {
+              organizations: true,
+            },
+          },
+        },
+      });
 
-      if (error) {
-        throw new Error(error.message || "Error fetching user profiles");
-      }
-
-      const entities = (data ?? []) as UserProfileWithRelations[];
-      return entities.map(toUserProfileResponseDto);
+      return userProfilesList.map((item) => this.mapUserProfileToDto(item));
     } catch (error) {
       console.error("Erro ao buscar perfis:", error);
       throw new Error("Erro ao buscar perfis do usuário");

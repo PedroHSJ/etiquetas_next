@@ -50,10 +50,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Criar dados do usuário para o NavUser
   const userData = {
-    name:
-      user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuário",
+    // @ts-ignore
+    name: user?.name || user?.email?.split("@")[0] || "Usuário",
     email: user?.email || "usuario@exemplo.com",
-    avatar: user?.user_metadata?.avatar_url || "",
+    // @ts-ignore
+    avatar: user?.image || "",
   };
 
   // Função para verificar se o usuário tem permissão para acessar uma rota
@@ -79,7 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         // Se o item tem subitens, filtrar os subitens também
         if (item.items) {
           const filteredSubItems = item.items.filter((subItem) =>
-            hasPermissionForRoute(subItem.url)
+            hasPermissionForRoute(subItem.url),
           );
 
           // Se não sobrou nenhum subitem, remover o item pai

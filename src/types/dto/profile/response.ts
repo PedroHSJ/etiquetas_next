@@ -110,8 +110,7 @@ export interface UserOrganizationResponseDto {
 /**
  * UserOrganization Response DTO with expanded relations
  */
-export interface UserOrganizationExpandedResponseDto
-  extends UserOrganizationResponseDto {
+export interface UserOrganizationExpandedResponseDto extends UserOrganizationResponseDto {
   profile?: ProfileResponseDto;
 }
 

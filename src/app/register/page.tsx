@@ -27,9 +27,7 @@ export default function RegisterPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="absolute bottom-6 left-6 text-white">
-          <h2 className="text-2xl font-bold mb-2">
-            Junte-se ao nosso sistema
-          </h2>
+          <h2 className="text-2xl font-bold mb-2">Junte-se ao nosso sistema</h2>
           <p className="text-sm opacity-90">
             Crie sua conta e tenha controle total dos seus produtos alimentícios
             com etiquetagem inteligente e controle de vencimentos

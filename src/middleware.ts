@@ -1,39 +1,79 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { updateSession } from "./utils/supabase/middleware";
+
+// Rotas públicas que não requerem autenticação
+const publicRoutes = [
+  "/login",
+  "/register",
+  "/auth", // Rotas de auth
+  "/api/auth", // Better Auth API
+  "/api/public", // API pública se houver
+  "/_next", // Next.js internals
+  "/favicon.ico",
+  "/public", // Assets públicos
+];
+
+// Extensões de arquivo estático para ignorar
+const staticFileExtensions = [
+  ".ico",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".svg",
+  ".css",
+  ".js",
+  ".json",
+  ".woff",
+  ".woff2",
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Rotas que sempre podem ser acessadas sem autenticação
-  const publicRoutes = ["/login", "/auth", "/api", "/_next", "/favicon.ico"];
+  // 1. Ignorar arquivos estáticos e imagens
+  if (staticFileExtensions.some((ext) => pathname.endsWith(ext))) {
+    return NextResponse.next();
+  }
 
-  // Se for uma rota pública, permitir acesso direto
+  // 2. Permitir rotas públicas
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // Para desenvolvimento, adicionar automaticamente dev=true e permitir bypass
-  if (process.env.NODE_ENV === "development") {
-    const devParam = request.nextUrl.searchParams.get("dev");
+  // 3. Verificar sessão via Cookie
+  // Better Auth usa cookies HTTP-only para gerenciar sessões
+  // O nome do cookie padrão é "better-auth.session_token"
+  // Em produção pode ter prefixo secure (__Secure-)
 
-    // Se não tem o parâmetro dev=true, adicionar e redirecionar
-    if (devParam !== "true") {
-      const url = request.nextUrl.clone();
-      url.searchParams.set("dev", "true");
-      return NextResponse.redirect(url);
-    }
+  const sessionToken =
+    request.cookies.get("better-auth.session_token")?.value ||
+    request.cookies.get("__Secure-better-auth.session_token")?.value;
 
-    // Se já tem dev=true, permitir acesso direto
-    return NextResponse.next();
+  if (!sessionToken) {
+    // Se não tiver token de sessão e a rota não for pública, redirecionar para login
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    // Opcional: Salvar redirect URL para redirecionar de volta após login
+    url.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(url);
   }
 
-  // Para todas as outras rotas, verificar autenticação através do updateSession
-  return await updateSession(request);
+  // Se tiver token, permitimos o acesso.
+  // A validação real da validade/expiração do token será feita pelo servidor (API/Server Components)
+  // ao tentar acessar dados protegidos ou renderizar páginas sensíveis.
+  // O middleware atua apenas como primeira gatekeeper de UI.
+
+  return NextResponse.next();
 }
 
-//O matcher array permite que seu middleware seja executado
-//apenas em rotas específicas. Isso reduz a carga de processamento
-//desnecessária e melhora o desempenho do aplicativo.
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes - although we might want middleware on some)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 };

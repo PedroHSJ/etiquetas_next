@@ -1,5 +1,6 @@
 /**
  * Location database entities (states and cities)
+ * Updated to camelCase to match Prisma @map schema
  */
 
 /**
@@ -10,7 +11,7 @@ export interface StateEntity {
   code: string; // UF (SP, RJ, etc.)
   name: string;
   region: string;
-  created_at: string;
+  createdAt: string;
 }
 
 /**
@@ -18,14 +19,14 @@ export interface StateEntity {
  */
 export interface CityEntity {
   id: number;
-  state_id: number;
-  ibge_code: string | null;
+  stateId: number;
+  ibgeCode: string | null;
   name: string;
-  zip_code_start: string | null;
-  zip_code_end: string | null;
+  zipCodeStart: string | null;
+  zipCodeEnd: string | null;
   latitude: number | null;
   longitude: number | null;
-  created_at: string;
-  updated_at: string;
-  state: StateEntity;
+  createdAt: string;
+  updatedAt: string;
+  state?: StateEntity;
 }

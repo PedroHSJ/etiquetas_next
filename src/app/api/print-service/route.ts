@@ -1,15 +1,13 @@
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 async function isUserAuthenticated(req: NextRequest): Promise<boolean> {
-  const response = NextResponse.next();
-  const supabase = getSupabaseServerClient(req, response);
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  return !!user && !error;
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  return !!session && !!session.user;
 }
 
 const PrintJobSchema = z.object({
@@ -51,7 +49,7 @@ export async function POST(req: NextRequest) {
     if (!(await isUserAuthenticated(req))) {
       return NextResponse.json(
         { success: false, message: "Usuário não autenticado." },
-        { status: 401 }
+        { status: 401 },
       );
     }
     const body = await req.json();
@@ -64,7 +62,7 @@ export async function POST(req: NextRequest) {
           message: "Dados inválidos",
           errors: parseResult.error.issues,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -89,7 +87,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { message: "Erro ao processar requisição.", error: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { QuickEntryRequest, STOCK_MESSAGES } from "@/types/stock/stock";
 import { StockBackendService } from "@/lib/services/server/stockService";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
@@ -7,31 +7,20 @@ import { QuickEntryResponseDto } from "@/types/dto/stock/response";
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (!token) {
+    if (!session) {
       const errorResponse: ApiErrorResponse = {
-        error: "Access token not provided",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
+        error: "Unauthorized",
       };
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
     const body: QuickEntryRequest = await request.json();
-    const stockService = new StockBackendService(supabase);
+    const stockService = new StockBackendService();
+
     if (!body.organizationId) {
       const errorResponse: ApiErrorResponse = {
         error: "organizationId is required",
@@ -42,9 +31,9 @@ export async function POST(request: NextRequest) {
     const result = await stockService.registerQuickExit({
       productId: body.productId,
       quantity: body.quantity,
-      unitOfMeasureCode: body.unit_of_measure_code,
+      unitOfMeasureCode: body.unitOfMeasureCode,
       observation: body.observation,
-      userId: user.id,
+      userId: session.user.id,
       organizationId: body.organizationId,
     });
 
@@ -61,8 +50,7 @@ export async function POST(request: NextRequest) {
         error instanceof Error
           ? error.message
           : "Erro interno ao processar saída rápida",
-      details:
-        error instanceof Error ? { message: error.message } : undefined,
+      details: error instanceof Error ? { message: error.message } : undefined,
     };
 
     const statusCode =

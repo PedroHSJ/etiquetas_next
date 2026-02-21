@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export function useMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -14,9 +14,9 @@ export function useMobile() {
     checkMobile();
 
     // Verificar quando a janela é redimensionada
-    window.addEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
 
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   return isMobile;

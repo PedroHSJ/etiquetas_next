@@ -67,7 +67,7 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
       created_at: "",
       updated_at: "",
       is_default: false,
-    }
+    },
   );
 
   const [showGrid, setShowGrid] = useState(true);
@@ -80,7 +80,7 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
       activationConstraint: {
         distance: 1, // Start dragging after moving 1px
       },
-    })
+    }),
   );
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -289,7 +289,7 @@ export const LabelEditor: React.FC<LabelEditorProps> = ({
                               <SelectItem key={key} value={key}>
                                 {config.name}
                               </SelectItem>
-                            )
+                            ),
                           )}
                         </SelectContent>
                       </Select>

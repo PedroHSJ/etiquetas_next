@@ -35,17 +35,17 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
 
   const updateIngredient = (
     id: string,
-    updates: Partial<EditableIngredient>
+    updates: Partial<EditableIngredient>,
   ) => {
     const updatedIngredients = ingredients.map((ingredient) =>
-      ingredient.id === id ? { ...ingredient, ...updates } : ingredient
+      ingredient.id === id ? { ...ingredient, ...updates } : ingredient,
     );
     onChange(updatedIngredients);
   };
 
   const removeIngredient = (id: string) => {
     const updatedIngredients = ingredients.filter(
-      (ingredient) => ingredient.id !== id
+      (ingredient) => ingredient.id !== id,
     );
     onChange(updatedIngredients);
   };
@@ -87,7 +87,7 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
     try {
       const products = await TechnicalSheetService.searchAvailableProducts(
         organizationId,
-        query
+        query,
       );
       setSearchingProducts((prev) => ({ ...prev, [ingredientId]: products }));
     } catch (error) {
@@ -188,14 +188,14 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
                 }
                 className={cn(
                   "w-20 text-sm",
-                  getQuantityValidationClass(ingredient.quantity)
+                  getQuantityValidationClass(ingredient.quantity),
                 )}
               />
             ) : (
               <span className="text-sm font-mono">
                 {TechnicalSheetService.formatQuantity(
                   ingredient.quantity,
-                  ingredient.unit
+                  ingredient.unit,
                 )}
               </span>
             )}
@@ -219,7 +219,7 @@ export const EditableIngredientList: React.FC<EditableIngredientListProps> = ({
                       <SelectItem key={option.value} value={option.value}>
                         {option.value}
                       </SelectItem>
-                    )
+                    ),
                   )}
                 </SelectContent>
               </Select>

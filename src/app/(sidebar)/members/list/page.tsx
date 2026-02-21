@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Member } from "@/types/models/member";
+import { MemberResponseDto } from "@/types/dto/member/response";
 import { MemberService } from "@/lib/services/client/member-service";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { ReadGuard } from "@/components/auth/PermissionGuard";
@@ -33,7 +33,10 @@ export default function MembersListPage() {
 
   const organizationId = selectedOrganization?.id;
 
-  const { data: members = [], isLoading } = useQuery<Member[], Error>({
+  const { data: members = [], isLoading } = useQuery<
+    MemberResponseDto[],
+    Error
+  >({
     queryKey: ["members", organizationId],
     queryFn: async () => {
       if (!organizationId) return [];
@@ -42,7 +45,7 @@ export default function MembersListPage() {
     enabled: !!organizationId,
   });
 
-  const columns = useMemo<GenericTableColumn<Member>[]>(() => {
+  const columns = useMemo<GenericTableColumn<MemberResponseDto>[]>(() => {
     return [
       {
         id: "member",
@@ -118,12 +121,12 @@ export default function MembersListPage() {
         id: "entryDate",
         key: "entryDate",
         label: "Entrada",
-        accessor: (row) => row.entryDate?.toISOString() ?? "",
+        accessor: (row) => row.entryDate ?? "",
         visible: true,
         render: (_value, row) => (
           <span className="text-sm">
             {row.entryDate
-              ? format(row.entryDate, "dd/MM/yyyy", { locale: ptBR })
+              ? format(new Date(row.entryDate), "dd/MM/yyyy", { locale: ptBR })
               : "—"}
           </span>
         ),
@@ -132,12 +135,12 @@ export default function MembersListPage() {
         id: "createdAt",
         key: "createdAt",
         label: "Vinculado em",
-        accessor: (row) => row.createdAt?.toISOString() ?? "",
+        accessor: (row) => row.createdAt ?? "",
         visible: true,
         render: (_value, row) => (
           <span className="text-sm">
             {row.createdAt
-              ? format(row.createdAt, "dd/MM/yyyy", { locale: ptBR })
+              ? format(new Date(row.createdAt), "dd/MM/yyyy", { locale: ptBR })
               : "—"}
           </span>
         ),
@@ -182,7 +185,7 @@ export default function MembersListPage() {
           </Badge>
         </div>
 
-        <GenericTable<Member>
+        <GenericTable<MemberResponseDto>
           title="Lista de membros"
           description="Visualize todos os integrantes ativos e inativos da organização"
           columns={columns}

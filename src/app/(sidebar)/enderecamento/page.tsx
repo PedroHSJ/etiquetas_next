@@ -5,17 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useStorageLocationsQuery } from "@/hooks/useStorageLocationsQuery";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { StorageLocation } from "@/types/models/storage-location";
+import { StorageLocationResponseDto } from "@/types/dto/storage-location";
 import { StorageLocationTree } from "./StorageLocationTree";
 import { StorageLocationForm } from "./StorageLocationForm";
 
 export default function StorageLocationsPage() {
   const { selectedOrganization } = useOrganization();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingLocation, setEditingLocation] = useState<StorageLocation | undefined>(undefined);
-  const [parentLocation, setParentLocation] = useState<StorageLocation | undefined>(undefined);
+  const [editingLocation, setEditingLocation] = useState<
+    StorageLocationResponseDto | undefined
+  >(undefined);
+  const [parentLocation, setParentLocation] = useState<
+    StorageLocationResponseDto | undefined
+  >(undefined);
 
-  const { data: locations = [], isLoading, refetch } = useStorageLocationsQuery({
+  const {
+    data: locations = [],
+    isLoading,
+    refetch,
+  } = useStorageLocationsQuery({
     organizationId: selectedOrganization?.id,
     enabled: !!selectedOrganization?.id,
   });
@@ -26,13 +34,13 @@ export default function StorageLocationsPage() {
     setIsFormOpen(true);
   };
 
-  const handleCreateChild = (parent: StorageLocation) => {
+  const handleCreateChild = (parent: StorageLocationResponseDto) => {
     setEditingLocation(undefined);
     setParentLocation(parent);
     setIsFormOpen(true);
   };
 
-  const handleEdit = (location: StorageLocation) => {
+  const handleEdit = (location: StorageLocationResponseDto) => {
     setEditingLocation(location);
     setParentLocation(undefined); // Parent doesn't change on edit usually, or we need to look it up
     setIsFormOpen(true);

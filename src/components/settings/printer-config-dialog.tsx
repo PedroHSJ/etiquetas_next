@@ -24,7 +24,7 @@ interface PrinterConfigDialogProps {
 
 export function PrinterConfigDialog({ trigger }: PrinterConfigDialogProps) {
   const { activeProfile } = useProfile();
-  const organizationId = activeProfile?.userOrganization?.organizationId;
+  const organizationId = activeProfile?.userOrganization?.organization?.id;
   const [open, setOpen] = useState(false);
   const [printerName, setPrinterName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ export function PrinterConfigDialog({ trigger }: PrinterConfigDialogProps) {
     setLoading(true);
     try {
       const name = await SettingsService.getPrinterName(organizationId);
-      setPrinterName(name);
+      setPrinterName(name || "");
     } catch (error) {
       console.error("Error loading printer settings:", error);
     } finally {

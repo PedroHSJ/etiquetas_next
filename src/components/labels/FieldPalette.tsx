@@ -55,7 +55,7 @@ const DraggableFieldType: React.FC<DraggableFieldTypeProps> = ({
       style={style}
       className={cn(
         "flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:bg-gray-50 transition-colors",
-        isDragging && "opacity-50"
+        isDragging && "opacity-50",
       )}
       {...attributes}
       {...listeners}

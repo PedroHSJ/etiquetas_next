@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProfileService } from "@/lib/services/client/profile-service";
-import { UserProfile } from "@/types/models/profile";
+import { UserProfileResponseDto } from "@/types/dto/profile/response";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const USER_PROFILES_QUERY_KEY = ["user-profiles"] as const;
@@ -12,7 +12,7 @@ export const USER_PROFILES_QUERY_KEY = ["user-profiles"] as const;
 export function useUserProfilesQuery() {
   const { userId } = useAuth();
 
-  const query = useQuery<UserProfile[], Error>({
+  const query = useQuery<UserProfileResponseDto[], Error>({
     queryKey: [...USER_PROFILES_QUERY_KEY, userId],
     queryFn: async () => {
       if (!userId) return [];

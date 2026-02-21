@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import axios from "axios";
 
 export class SettingsService {
   /**
@@ -9,20 +9,10 @@ export class SettingsService {
     key: string,
   ): Promise<string | null> {
     try {
-      const { data, error } = await (
-        supabase.from("organization_settings") as any
-      )
-        .select("setting_value")
-        .eq("organization_id", organizationId)
-        .eq("setting_key", key)
-        .single();
-
-      if (error) {
-        if (error.code === "PGRST116") return null; // Not found
-        throw error;
-      }
-
-      return data?.setting_value || null;
+      const response = await axios.get("/api/settings", {
+        params: { organizationId, key },
+      });
+      return response.data.value;
     } catch (error) {
       console.error(`Error fetching setting ${key}:`, error);
       return null;
@@ -38,20 +28,12 @@ export class SettingsService {
     value: string,
   ): Promise<boolean> {
     try {
-      const { error } = await (
-        supabase.from("organization_settings") as any
-      ).upsert(
-        {
-          organization_id: organizationId,
-          setting_key: key,
-          setting_value: value,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "organization_id,setting_key" },
-      );
-
-      if (error) throw error;
-      return true;
+      const response = await axios.post("/api/settings", {
+        organizationId,
+        key,
+        value,
+      });
+      return response.data.success;
     } catch (error) {
       console.error(`Error setting ${key}:`, error);
       return false;

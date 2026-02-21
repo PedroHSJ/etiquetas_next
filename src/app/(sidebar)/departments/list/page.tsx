@@ -24,7 +24,7 @@ import {
   GenericTableColumn,
 } from "@/components/ui/generic-table";
 import { capitalize } from "@/lib/utils";
-import { DepartmentWithOrganization } from "@/types/models/department";
+import { DepartmentWithOrganizationResponseDto } from "@/types/dto/department/response";
 import { DepartmentService } from "@/lib/services/client/department-service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReadGuard } from "@/components/auth/PermissionGuard";
@@ -36,11 +36,11 @@ export default function DepartmentsListPage() {
   const [loading, setLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingDepartment, setDeletingDepartment] =
-    useState<DepartmentWithOrganization | null>(null);
+    useState<DepartmentWithOrganizationResponseDto | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const { data: departments = [], isLoading: isQueryLoading } = useQuery<
-    DepartmentWithOrganization[],
+    DepartmentWithOrganizationResponseDto[],
     Error
   >({
     queryKey: ["departments", selectedOrganization?.id],
@@ -59,7 +59,9 @@ export default function DepartmentsListPage() {
     setLoading(isQueryLoading);
   }, [isQueryLoading]);
 
-  const handleDeleteClick = (department: DepartmentWithOrganization) => {
+  const handleDeleteClick = (
+    department: DepartmentWithOrganizationResponseDto,
+  ) => {
     setDeletingDepartment(department);
     setDeleteDialogOpen(true);
   };
@@ -73,32 +75,33 @@ export default function DepartmentsListPage() {
   };
 
   // Definir colunas da tabela
-  const departmentColumns: GenericTableColumn<DepartmentWithOrganization>[] = [
-    {
-      id: "nome",
-      key: "nome",
-      label: "Nome",
-      accessor: (row) => row.name,
-      visible: true,
-      width: 300,
-    },
-    {
-      id: "tipo_departamento",
-      key: "tipo_departamento",
-      label: "Tipo",
-      accessor: (row) => capitalize(row.departmentType || ""),
-      visible: true,
-      render: (value) => <Badge variant="secondary">{value as string}</Badge>,
-    },
-    {
-      id: "created_at",
-      key: "created_at",
-      label: "Data de Criação",
-      accessor: (row) => row.createdAt.toString(),
-      visible: true,
-      render: (value) => formatarData(value as string),
-    },
-  ];
+  const departmentColumns: GenericTableColumn<DepartmentWithOrganizationResponseDto>[] =
+    [
+      {
+        id: "nome",
+        key: "nome",
+        label: "Nome",
+        accessor: (row) => row.name,
+        visible: true,
+        width: 300,
+      },
+      {
+        id: "tipo_departamento",
+        key: "tipo_departamento",
+        label: "Tipo",
+        accessor: (row) => capitalize(row.departmentType || ""),
+        visible: true,
+        render: (value) => <Badge variant="secondary">{value as string}</Badge>,
+      },
+      {
+        id: "created_at",
+        key: "created_at",
+        label: "Data de Criação",
+        accessor: (row) => row.createdAt.toString(),
+        visible: true,
+        render: (value) => formatarData(value as string),
+      },
+    ];
 
   const handleDeleteConfirm = async () => {
     if (!deletingDepartment) return;
@@ -106,7 +109,7 @@ export default function DepartmentsListPage() {
     setDeleting(true);
     try {
       const success = await DepartmentService.deleteDepartment(
-        deletingDepartment.id
+        deletingDepartment.id,
       );
 
       if (!success) {

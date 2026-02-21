@@ -33,14 +33,15 @@ import {
 } from "@/types/technical-sheet";
 import { EditableIngredientList } from "./EditableIngredientList";
 import { TechnicalSheetModel } from "@/types/models/technical-sheet";
+import { TechnicalSheetResponseDto } from "@/types/dto/technical-sheet/response";
 
 interface TechnicalSheetGeneratorProps {
   organizationId: string;
   onSave?: (
-    sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] }
+    sheet: TechnicalSheetResponse & { ingredients: EditableIngredient[] },
   ) => void;
   isSaving?: boolean;
-  initialData?: TechnicalSheetModel | null;
+  initialData?: TechnicalSheetModel | TechnicalSheetResponseDto | null;
 }
 
 export const TechnicalSheetGenerator: React.FC<
@@ -65,33 +66,54 @@ export const TechnicalSheetGenerator: React.FC<
     setDishName(initialData.dishName);
     setServings(initialData.servings);
     setOriginalServings(initialData.servings);
+
+    const isResponseDto = (data: any): data is TechnicalSheetResponseDto => {
+      return (
+        data.ingredients &&
+        data.ingredients.length > 0 &&
+        "ingredientName" in data.ingredients[0]
+      );
+    };
+
+    const ingredients = isResponseDto(initialData)
+      ? initialData.ingredients.map((ing) => ({
+          id: ing.id,
+          name: ing.ingredientName,
+          quantity: ing.quantity,
+          unit: ing.unit,
+          originalQuantity: ing.originalQuantity,
+          productId: ing.productId ? String(ing.productId) : undefined,
+        }))
+      : initialData.ingredients.map((ing) => ({
+          id: ing.id,
+          name: ing.name,
+          quantity: ing.quantity,
+          unit: ing.unit,
+          originalQuantity: ing.originalQuantity,
+          productId: ing.productId ? String(ing.productId) : undefined,
+        }));
+
     setTechnicalSheet({
       dishName: initialData.dishName,
       servings: initialData.servings,
-      ingredients: initialData.ingredients.map((ingredient) => ({
-        name: ingredient.name,
-        quantity: ingredient.quantity,
-        unit: ingredient.unit,
+      ingredients: ingredients.map((ing) => ({
+        name: ing.name,
+        quantity: ing.quantity,
+        unit: ing.unit,
       })),
       preparationTime: initialData.preparationTime ?? undefined,
       cookingTime: initialData.cookingTime ?? undefined,
       difficulty: initialData.difficulty ?? undefined,
-      preparationSteps: initialData.preparationSteps,
+      preparationSteps: initialData.preparationSteps || [],
       nutritionalInsights:
         initialData.nutritionalInsights as TechnicalSheetResponse["nutritionalInsights"],
     });
+
     setEditableIngredients(
-      initialData.ingredients.map((ingredient) => ({
-        id: ingredient.id,
-        name: ingredient.name,
-        quantity: ingredient.quantity,
-        unit: ingredient.unit,
-        originalQuantity: ingredient.originalQuantity,
-        productId: ingredient.productId
-          ? String(ingredient.productId)
-          : undefined,
+      ingredients.map((ing) => ({
+        ...ing,
         isEditing: false,
-      }))
+      })),
     );
   }, [initialData]);
 
@@ -121,7 +143,7 @@ export const TechnicalSheetGenerator: React.FC<
       const matchedIngredients =
         await TechnicalSheetService.matchIngredientsWithProducts(
           response.ingredients,
-          organizationId
+          organizationId,
         );
 
       setTechnicalSheet(response);
@@ -129,14 +151,14 @@ export const TechnicalSheetGenerator: React.FC<
       setOriginalServings(response.servings);
 
       toast.success(
-        `Ficha técnica gerada! ${response.ingredients.length} ingredientes sugeridos para ${response.dishName}.`
+        `Ficha técnica gerada! ${response.ingredients.length} ingredientes sugeridos para ${response.dishName}.`,
       );
     } catch (error) {
       console.error("Erro ao gerar ficha técnica:", error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Erro ao gerar ficha técnica. Tente novamente em alguns instantes."
+          : "Erro ao gerar ficha técnica. Tente novamente em alguns instantes.",
       );
     } finally {
       setIsGenerating(false);
@@ -150,7 +172,7 @@ export const TechnicalSheetGenerator: React.FC<
       TechnicalSheetService.calculateProportionalQuantities(
         editableIngredients,
         originalServings,
-        newServings
+        newServings,
       );
 
     setEditableIngredients(proportionalIngredients);
@@ -158,7 +180,7 @@ export const TechnicalSheetGenerator: React.FC<
   };
 
   const handleIngredientsChange = (
-    updatedIngredients: EditableIngredient[]
+    updatedIngredients: EditableIngredient[],
   ) => {
     setEditableIngredients(updatedIngredients);
   };
@@ -192,33 +214,54 @@ export const TechnicalSheetGenerator: React.FC<
     if (initialData) {
       setDishName(initialData.dishName);
       setServings(initialData.servings);
+
+      const isResponseDto = (data: any): data is TechnicalSheetResponseDto => {
+        return (
+          data.ingredients &&
+          data.ingredients.length > 0 &&
+          "ingredientName" in data.ingredients[0]
+        );
+      };
+
+      const ingredients = isResponseDto(initialData)
+        ? initialData.ingredients.map((ing) => ({
+            id: ing.id,
+            name: ing.ingredientName,
+            quantity: ing.quantity,
+            unit: ing.unit,
+            originalQuantity: ing.originalQuantity,
+            productId: ing.productId ? String(ing.productId) : undefined,
+          }))
+        : initialData.ingredients.map((ing) => ({
+            id: ing.id,
+            name: ing.name,
+            quantity: ing.quantity,
+            unit: ing.unit,
+            originalQuantity: ing.originalQuantity,
+            productId: ing.productId ? String(ing.productId) : undefined,
+          }));
+
       setTechnicalSheet({
         dishName: initialData.dishName,
         servings: initialData.servings,
-        ingredients: initialData.ingredients.map((ingredient) => ({
-          name: ingredient.name,
-          quantity: ingredient.quantity,
-          unit: ingredient.unit,
+        ingredients: ingredients.map((ing) => ({
+          name: ing.name,
+          quantity: ing.quantity,
+          unit: ing.unit,
         })),
         preparationTime: initialData.preparationTime ?? undefined,
         cookingTime: initialData.cookingTime ?? undefined,
         difficulty: initialData.difficulty ?? undefined,
-        preparationSteps: initialData.preparationSteps,
+        preparationSteps: initialData.preparationSteps || [],
         nutritionalInsights:
           initialData.nutritionalInsights as TechnicalSheetResponse["nutritionalInsights"],
       });
+
       setEditableIngredients(
-        initialData.ingredients.map((ingredient) => ({
-          id: ingredient.id,
-          name: ingredient.name,
-          quantity: ingredient.quantity,
-          unit: ingredient.unit,
-          originalQuantity: ingredient.originalQuantity,
-          productId: ingredient.productId
-            ? String(ingredient.productId)
-            : undefined,
+        ingredients.map((ing) => ({
+          ...ing,
           isEditing: false,
-        }))
+        })),
       );
       setOriginalServings(initialData.servings);
       return;
@@ -415,7 +458,7 @@ export const TechnicalSheetGenerator: React.FC<
                             {step}
                           </p>
                         </div>
-                      )
+                      ),
                     )}
                   </div>
                 </div>
@@ -498,7 +541,7 @@ export const TechnicalSheetGenerator: React.FC<
                             >
                               {highlight}
                             </Badge>
-                          )
+                          ),
                         )}
                       </div>
                     </div>

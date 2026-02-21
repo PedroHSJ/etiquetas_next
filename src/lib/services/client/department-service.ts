@@ -7,19 +7,11 @@ import {
   UpdateDepartmentDto,
   ListDepartmentsDto,
 } from "@/types/dto/department";
-import {
-  Department,
-  DepartmentWithOrganization,
-} from "@/types/models/department";
-import {
-  toDepartmentModel,
-  toDepartmentWithOrganizationModel,
-} from "@/lib/converters/department";
 
 export const DepartmentService = {
   async getDepartments(
-    params: ListDepartmentsDto = {}
-  ): Promise<DepartmentWithOrganization[]> {
+    params: ListDepartmentsDto = {},
+  ): Promise<DepartmentWithOrganizationResponseDto[]> {
     const { data, status } = await api.get<
       ApiResponse<DepartmentWithOrganizationResponseDto[]>
     >("/departments", {
@@ -33,12 +25,12 @@ export const DepartmentService = {
       return [];
     }
 
-    return data.data.map(toDepartmentWithOrganizationModel);
+    return data.data;
   },
 
   async getDepartmentById(
-    id: string
-  ): Promise<DepartmentWithOrganization | null> {
+    id: string,
+  ): Promise<DepartmentWithOrganizationResponseDto | null> {
     const { data, status } = await api.get<
       ApiResponse<DepartmentWithOrganizationResponseDto>
     >(`/departments/${id}`);
@@ -47,36 +39,38 @@ export const DepartmentService = {
       return null;
     }
 
-    return toDepartmentWithOrganizationModel(data.data);
+    return data.data;
   },
 
   async createDepartment(
-    dto: CreateDepartmentDto
-  ): Promise<Department> {
-    const { data, status } = await api.post<
-      ApiResponse<DepartmentResponseDto>
-    >("/departments", dto);
+    dto: CreateDepartmentDto,
+  ): Promise<DepartmentResponseDto> {
+    const { data, status } = await api.post<ApiResponse<DepartmentResponseDto>>(
+      "/departments",
+      dto,
+    );
 
     if (!data || !data.data || (status !== 200 && status !== 201)) {
       throw new Error("Erro ao criar departamento");
     }
 
-    return toDepartmentModel(data.data);
+    return data.data;
   },
 
   async updateDepartment(
     id: string,
-    dto: UpdateDepartmentDto
-  ): Promise<Department> {
-    const { data, status } = await api.put<
-      ApiResponse<DepartmentResponseDto>
-    >(`/departments/${id}`, dto);
+    dto: UpdateDepartmentDto,
+  ): Promise<DepartmentResponseDto> {
+    const { data, status } = await api.put<ApiResponse<DepartmentResponseDto>>(
+      `/departments/${id}`,
+      dto,
+    );
 
     if (!data || !data.data || status !== 200) {
       throw new Error("Erro ao atualizar departamento");
     }
 
-    return toDepartmentModel(data.data);
+    return data.data;
   },
 
   async deleteDepartment(id: string): Promise<boolean> {
@@ -84,4 +78,3 @@ export const DepartmentService = {
     return status === 200;
   },
 };
-

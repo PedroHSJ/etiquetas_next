@@ -93,7 +93,7 @@ export function InviteEmployees({
     // Verificar se email já foi adicionado
     if (
       invites.some(
-        (inv) => inv.email === currentEmail && inv.perfil === currentPerfil
+        (inv) => inv.email === currentEmail && inv.perfil === currentPerfil,
       )
     ) {
       toast.error("Este email já foi adicionado");

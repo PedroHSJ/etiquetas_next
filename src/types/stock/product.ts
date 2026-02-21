@@ -1,24 +1,17 @@
 // =============================================================================
-// TIPOS DE PRODUTOS E GRUPOS
+// TIPOS DE PRODUTOS E GRUPOS - CAMELCASE
 // =============================================================================
 
 /**
  * Produto conforme schema do banco de dados
  * Tabela: public.products
  */
-export type UnitOfMeasureValue =
-  | "kg"
-  | "g"
-  | "l"
-  | "ml"
-  | "un"
-  | "cx"
-  | "pct";
+export type UnitOfMeasureValue = "kg" | "g" | "l" | "ml" | "un" | "cx" | "pct";
 
 export interface Product {
   id: number;
   name: string;
-  group_id?: number | null;
+  groupId?: number | null;
 
   // Dados relacionados (joins)
   group?: ProductGroup;

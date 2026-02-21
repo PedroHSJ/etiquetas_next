@@ -6,20 +6,19 @@ import {
   UpdateStorageLocationDto,
   ListStorageLocationsDto,
 } from "@/types/dto/storage-location";
-import { StorageLocation } from "@/types/models/storage-location";
-import { toStorageLocationModel } from "@/lib/converters/storage-location";
 
 export const StorageLocationService = {
   async getStorageLocations(
-    params: ListStorageLocationsDto = {}
-  ): Promise<StorageLocation[]> {
+    params: ListStorageLocationsDto = {},
+  ): Promise<StorageLocationResponseDto[]> {
     const { data, status } = await api.get<
       ApiResponse<StorageLocationResponseDto[]>
     >("/storage-locations", {
       params: {
         organizationId: params.organizationId || undefined,
         search: params.search || undefined,
-        parentId: params.parentId !== undefined ? String(params.parentId) : undefined,
+        parentId:
+          params.parentId !== undefined ? String(params.parentId) : undefined,
       },
     });
 
@@ -27,12 +26,12 @@ export const StorageLocationService = {
       return [];
     }
 
-    return data.data.map(toStorageLocationModel);
+    return data.data;
   },
 
   async getStorageLocationById(
-    id: string
-  ): Promise<StorageLocation | null> {
+    id: string,
+  ): Promise<StorageLocationResponseDto | null> {
     const { data, status } = await api.get<
       ApiResponse<StorageLocationResponseDto>
     >(`/storage-locations/${id}`);
@@ -41,12 +40,12 @@ export const StorageLocationService = {
       return null;
     }
 
-    return toStorageLocationModel(data.data);
+    return data.data;
   },
 
   async createStorageLocation(
-    dto: CreateStorageLocationDto
-  ): Promise<StorageLocation> {
+    dto: CreateStorageLocationDto,
+  ): Promise<StorageLocationResponseDto> {
     const { data, status } = await api.post<
       ApiResponse<StorageLocationResponseDto>
     >("/storage-locations", dto);
@@ -55,13 +54,13 @@ export const StorageLocationService = {
       throw new Error("Erro ao criar localização");
     }
 
-    return toStorageLocationModel(data.data);
+    return data.data;
   },
 
   async updateStorageLocation(
     id: string,
-    dto: UpdateStorageLocationDto
-  ): Promise<StorageLocation> {
+    dto: UpdateStorageLocationDto,
+  ): Promise<StorageLocationResponseDto> {
     const { data, status } = await api.put<
       ApiResponse<StorageLocationResponseDto>
     >(`/storage-locations/${id}`, dto);
@@ -70,7 +69,7 @@ export const StorageLocationService = {
       throw new Error("Erro ao atualizar localização");
     }
 
-    return toStorageLocationModel(data.data);
+    return data.data;
   },
 
   async deleteStorageLocation(id: string): Promise<boolean> {

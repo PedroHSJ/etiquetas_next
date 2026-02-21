@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { ProductBackendService } from "@/lib/services/server/productService";
 
 // GET /api/products
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
-  if (!token) {
-    return NextResponse.json(
-      { error: "Access token not provided" },
-      { status: 401 },
-    );
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const service = new ProductBackendService(supabase);
-    const products = await service.getProducts();
+    const searchParams = request.nextUrl.searchParams;
+    const organizationId = searchParams.get("organizationId");
+    const groupId = searchParams.get("groupId");
+
+    const service = new ProductBackendService();
+    // Filtros
+    const products = await service.getProducts({
+      organizationId: organizationId || undefined,
+      groupId: groupId ? parseInt(groupId) : undefined,
+    });
     return NextResponse.json(products);
   } catch (err: unknown) {
     console.log(err);
@@ -30,18 +36,18 @@ export async function GET(request: NextRequest) {
 
 // POST /api/products
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
-  if (!token) {
-    return NextResponse.json(
-      { error: "Access token not provided" },
-      { status: 401 },
-    );
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   try {
     const body = await request.json();
-    const supabase = getSupabaseBearerClient(token);
-    const service = new ProductBackendService(supabase);
+    const service = new ProductBackendService();
+    // TODO: Ensure organizationId in body matches user's organizations
     const product = await service.createProduct(body);
     return NextResponse.json(product);
   } catch (err: unknown) {

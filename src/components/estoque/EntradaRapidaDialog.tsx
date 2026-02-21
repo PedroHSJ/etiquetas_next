@@ -81,17 +81,11 @@ type QuickEntryDialogProps = {
 type ProductOption = ProductSelect;
 const STOCK_UI_MESSAGES = STOCK_MESSAGES;
 
-const getUnitLabel = (unit?: string | null) => {
-  if (!unit) return null;
-  const option = UNIT_OF_MEASURE_OPTIONS.find((opt) => opt.value === unit);
-  return option?.label || unit;
-};
-
 // Hooks customizados para React Query
 const useProducts = (searchTerm = "", enabled = true) => {
   const { activeProfile } = useProfile();
   const organizationId =
-    activeProfile?.userOrganization?.organizationId || undefined;
+    activeProfile?.userOrganization?.organization?.id || undefined;
 
   return useQuery({
     queryKey: ["products", { search: searchTerm, organizationId }],
@@ -109,7 +103,7 @@ const useProducts = (searchTerm = "", enabled = true) => {
 const useQuickEntry = () => {
   const { activeProfile } = useProfile();
   const organizationId =
-    activeProfile?.userOrganization?.organizationId || undefined;
+    activeProfile?.userOrganization?.organization?.id || undefined;
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -122,6 +116,7 @@ const useQuickEntry = () => {
       // Invalida queries relacionadas ao estoque
       queryClient.invalidateQueries({ queryKey: ["stock"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["organizations"] }); // Invalida estatísticas também
     },
   });
 };
@@ -133,7 +128,7 @@ export function EntradaRapidaDialog({
 }: QuickEntryDialogProps) {
   const { activeProfile } = useProfile();
   const organizationId =
-    activeProfile?.userOrganization?.organizationId || undefined;
+    activeProfile?.userOrganization?.organization?.id || undefined;
   const [open, setOpen] = useState(false);
   const [isComboboxOpen, setIsComboboxOpen] = useState(false);
 
@@ -193,8 +188,8 @@ export function EntradaRapidaDialog({
 
   // Atualizar unidade quando produto mudar
   useEffect(() => {
-    if (selectedProduct?.unit_of_measure_code) {
-      form.setValue("unitOfMeasure", selectedProduct.unit_of_measure_code);
+    if (selectedProduct?.unitOfMeasureCode) {
+      form.setValue("unitOfMeasure", selectedProduct.unitOfMeasureCode);
     }
   }, [selectedProduct, form]);
 
@@ -204,20 +199,13 @@ export function EntradaRapidaDialog({
     }
   }, [selectedProductId, form]);
 
-  useEffect(() => {
-    if (open && !organizationId) {
-      // ainda permite listar produtos globais se organização não estiver selecionada
-      return;
-    }
-  }, [open, organizationId]);
-
   const onSubmit = async (data: QuickEntryFormData) => {
     try {
       const request: QuickEntryRequest = {
         productId: parseInt(data.productId),
         quantity: parseFloat(data.quantity),
-        unit_of_measure_code: data.unitOfMeasure as UnitOfMeasureCode,
-        storage_location_id: data.storageLocationId || undefined,
+        unitOfMeasureCode: data.unitOfMeasure as UnitOfMeasureCode,
+        storageLocationId: data.storageLocationId || undefined,
         observation: data.observation,
         organizationId,
       };
@@ -291,9 +279,9 @@ export function EntradaRapidaDialog({
                             return selected ? (
                               <span>
                                 {selected.name}
-                                {selected.current_stock !== undefined && (
+                                {selected.currentQuantity !== undefined && (
                                   <span className="text-muted-foreground ml-2">
-                                    (Estoque: {selected.current_stock})
+                                    (Estoque: {selected.currentQuantity})
                                   </span>
                                 )}
                               </span>
@@ -336,12 +324,12 @@ export function EntradaRapidaDialog({
                               const groupNames: Record<string, string> = {};
 
                               for (const p of products) {
-                                const gid = p.group_id
-                                  ? String(p.group_id)
+                                const gid = p.groupId
+                                  ? String(p.groupId)
                                   : "Sem grupo";
                                 (byGroup[gid] ||= []).push(p);
-                                if (p?.group?.name)
-                                  groupNames[gid] = p.group.name ?? "";
+                                if ((p as any).group?.name)
+                                  groupNames[gid] = (p as any).group.name ?? "";
                                 else if (!groupNames[gid])
                                   groupNames[gid] = gid;
                               }

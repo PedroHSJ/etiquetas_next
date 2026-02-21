@@ -335,7 +335,7 @@ export const DraggableField: React.FC<DraggableFieldProps> = ({
       className={cn(
         "absolute border cursor-move flex items-center group",
         isSelected ? "border-blue-500 border-2" : "border-gray-300",
-        isDragging ? "opacity-50" : "opacity-100"
+        isDragging ? "opacity-50" : "opacity-100",
       )}
       {...attributes}
       {...listeners}

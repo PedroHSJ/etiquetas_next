@@ -43,7 +43,7 @@ export function convertKeysToCamel<T>(obj: JSONObject | JSONArray): T {
     return obj.map((item) =>
       typeof item === "object" && item !== null && !Array.isArray(item)
         ? convertKeysToCamel(item as JSONObject)
-        : item
+        : item,
     ) as T;
   }
 
@@ -65,7 +65,7 @@ export function convertKeysToCamel<T>(obj: JSONObject | JSONArray): T {
         result[camelKey] = value.map((item) =>
           typeof item === "object" && item !== null && !Array.isArray(item)
             ? convertKeysToCamel(item as JSONObject)
-            : item
+            : item,
         );
       } else {
         result[camelKey] = value;
@@ -90,7 +90,7 @@ export function convertKeysToSnake<T>(obj: JSONObject | JSONArray): T {
     return obj.map((item) =>
       typeof item === "object" && item !== null && !Array.isArray(item)
         ? convertKeysToSnake(item as JSONObject)
-        : item
+        : item,
     ) as T;
   }
 
@@ -112,7 +112,7 @@ export function convertKeysToSnake<T>(obj: JSONObject | JSONArray): T {
         result[snakeKey] = value.map((item) =>
           typeof item === "object" && item !== null && !Array.isArray(item)
             ? convertKeysToSnake(item as JSONObject)
-            : item
+            : item,
         );
       } else {
         result[snakeKey] = value;

@@ -1,280 +1,162 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { OrganizationEntity } from "@/types/database/organization";
-import {
-  toOrganizationResponseDto,
-  toOrganizationExpandedResponseDto,
-  toOrganizationEntityForCreate,
-  toOrganizationEntityForUpdate,
-  toOrganizationResponseDtoList,
-} from "@/lib/converters/organization";
-import {
-  CreateOrganizationDto,
-  UpdateOrganizationDto,
-} from "@/types/dto/organization/request";
+import { prisma } from "@/lib/prisma";
 import {
   OrganizationResponseDto,
   OrganizationExpandedResponseDto,
 } from "@/types/dto/organization/response";
-import { StateEntity, CityEntity } from "@/types/database/location";
+import { organizations } from "@prisma/client";
 
 /**
- * Service layer used by the API routes to manage organizations.
+ * Service layer used by the API routes to manage organizations using Prisma.
+ * Updated to return DTOs directly and handle date transformations.
  */
 export class OrganizationBackendService {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor() {}
 
   /**
    * Returns every organization the user created OR belongs to.
    */
-  async listByUserId(userId: string): Promise<OrganizationResponseDto[]> {
-    // 1) Organizations created by the user
-    const { data: owned, error: ownedError } = await this.supabase
-      .from("organizations")
-      .select("*")
-      .eq("created_by", userId);
+  async listByUserId(userId: string): Promise<organizations[]> {
+    const list = await prisma.organizations.findMany({
+      where: {
+        OR: [
+          { createdBy: userId },
+          {
+            user_organizations: {
+              some: {
+                userId,
+                active: true,
+              },
+            },
+          },
+        ],
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-    if (ownedError) {
-      throw new Error(
-        ownedError.message || "Error while fetching owned organizations"
-      );
-    }
-
-    // 2) Organizations where the user is a member (user_organizations)
-    const { data: memberships, error: membershipsError } = await this.supabase
-      .from("user_organizations")
-      .select("organization_id")
-      .eq("user_id", userId)
-      .eq("active", true);
-
-    if (membershipsError) {
-      throw new Error(
-        membershipsError.message || "Error while fetching user organizations"
-      );
-    }
-
-    const memberOrgIds = (memberships ?? []).map(
-      (m: { organization_id: string }) => m.organization_id
-    );
-
-    let memberOrgs: OrganizationEntity[] = [];
-    if (memberOrgIds.length > 0) {
-      const { data: memberData, error: memberError } = await this.supabase
-        .from("organizations")
-        .select("*")
-        .in("id", memberOrgIds);
-
-      if (memberError) {
-        throw new Error(
-          memberError.message || "Error while fetching member organizations"
-        );
-      }
-
-      memberOrgs = (memberData ?? []) as OrganizationEntity[];
-    }
-
-    // 3) Merge and deduplicate by organization id
-    const map = new Map<string, OrganizationEntity>();
-    for (const org of (owned ?? []) as OrganizationEntity[]) {
-      map.set(org.id, org);
-    }
-    for (const org of memberOrgs) {
-      map.set(org.id, org);
-    }
-
-    const combined = Array.from(map.values());
-    combined.sort((a, b) =>
-      (b.created_at || "").localeCompare(a.created_at || "")
-    );
-
-    return toOrganizationResponseDtoList(combined);
+    return list;
   }
 
-  async createOrganization(
-    dto: CreateOrganizationDto,
-    userId: string
-  ): Promise<OrganizationResponseDto> {
-    // Usa converter para transformar DTO → Entity (com limpeza de CNPJ/telefone)
-    const payload = toOrganizationEntityForCreate(dto, userId);
+  async createOrganization(data: any, userId: string): Promise<organizations> {
+    const entity = await prisma.organizations.create({
+      data: {
+        name: data.name,
+        type: data.type,
+        cnpj: data.cnpj?.replace(/\D/g, ""),
+        capacity: data.capacity,
+        openingDate: data.openingDate ? new Date(data.openingDate) : null,
+        stateId: data.stateId,
+        cityId: data.cityId,
+        zipCode: data.zipCode?.replace(/\D/g, ""),
+        address: data.address,
+        number: data.number,
+        addressComplement: data.addressComplement,
+        district: data.district,
+        fullAddress: data.fullAddress,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        mainPhone: data.mainPhone?.replace(/\D/g, ""),
+        altPhone: data.altPhone?.replace(/\D/g, ""),
+        institutionalEmail: data.institutionalEmail,
+        createdBy: userId,
+      },
+    });
 
-    const { data, error } = await this.supabase
-      .from("organizations")
-      .insert(payload)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(error.message || "Error while creating organization");
-    }
-
-    const entity = data as OrganizationEntity;
-    return toOrganizationResponseDto(entity);
+    return entity;
   }
 
-  async updateOrganization(
-    id: string,
-    dto: UpdateOrganizationDto
-  ): Promise<OrganizationResponseDto> {
-    // Usa converter para transformar DTO → Entity (com limpeza + updatedAt)
-    const payload = toOrganizationEntityForUpdate(dto);
+  async updateOrganization(id: string, data: any): Promise<organizations> {
+    const updateData: any = { ...data };
 
-    const { data, error } = await this.supabase
-      .from("organizations")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+    // Clean numeric strings
+    if (data.cnpj !== undefined)
+      updateData.cnpj = data.cnpj?.replace(/\D/g, "");
+    if (data.zipCode !== undefined)
+      updateData.zipCode = data.zipCode?.replace(/\D/g, "");
+    if (data.mainPhone !== undefined)
+      updateData.mainPhone = data.mainPhone?.replace(/\D/g, "");
+    if (data.altPhone !== undefined)
+      updateData.altPhone = data.altPhone?.replace(/\D/g, "");
 
-    if (error) {
-      throw new Error(error.message || "Error while updating organization");
-    }
+    // Handle dates
+    if (data.openingDate !== undefined)
+      updateData.openingDate = data.openingDate
+        ? new Date(data.openingDate)
+        : null;
 
-    const entity = data as OrganizationEntity;
-    return toOrganizationResponseDto(entity);
+    updateData.updatedAt = new Date();
+
+    const entity = await prisma.organizations.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return entity;
   }
 
   /**
    * Get organization by ID with expanded state/city
    */
-  async getByIdExpanded(id: string): Promise<OrganizationExpandedResponseDto> {
-    const { data, error } = await this.supabase
-      .from("organizations")
-      .select(
-        `
-        *,
-        state:states(*),
-        city:cities(*, state:states(*))
-      `
-      )
-      .eq("id", id)
-      .single();
+  async getByIdExpanded(id: string): Promise<any> {
+    const org = await prisma.organizations.findUnique({
+      where: { id },
+      include: {
+        states: true,
+        cities: {
+          include: {
+            states: true,
+          },
+        },
+      },
+    });
 
-    if (error) {
-      throw new Error(error.message || "Error while fetching organization");
+    if (!org) {
+      throw new Error("Organization not found");
     }
 
-    type ExpandedEntity = OrganizationEntity & {
-      state?: StateEntity;
-      city?: CityEntity & { state?: StateEntity };
-    };
-
-    return toOrganizationExpandedResponseDto(data as ExpandedEntity);
+    return org;
   }
 
   /**
    * Update organization and return expanded data
    */
-  async updateExpanded(
-    id: string,
-    dto: UpdateOrganizationDto
-  ): Promise<OrganizationExpandedResponseDto> {
-    // Usa converter (já aplica limpeza de telefone/CNPJ e updatedAt)
-    const payload = toOrganizationEntityForUpdate(dto);
-
-    const { data, error } = await this.supabase
-      .from("organizations")
-      .update(payload)
-      .eq("id", id)
-      .select(
-        `
-        *,
-        state:states(*),
-        city:cities(*, state:states(*))
-      `
-      )
-      .single();
-
-    if (error) {
-      throw new Error(error.message || "Error while updating organization");
-    }
-
-    type ExpandedEntity = OrganizationEntity & {
-      state?: StateEntity;
-      city?: CityEntity & { state?: StateEntity };
-    };
-
-    return toOrganizationExpandedResponseDto(data as ExpandedEntity);
+  async updateExpanded(id: string, data: any): Promise<any> {
+    await this.updateOrganization(id, data);
+    return this.getByIdExpanded(id);
   }
 
   /**
    * Get all organizations for a user with expanded state/city
    */
-  async listByUserIdExpanded(
-    userId: string
-  ): Promise<OrganizationExpandedResponseDto[]> {
-    // 1) Organizations created by the user (expanded)
-    const { data: owned, error: ownedError } = await this.supabase
-      .from("organizations")
-      .select(
-        `
-        *,
-        state:states(*),
-        city:cities(*, state:states(*))
-      `
-      )
-      .eq("created_by", userId);
+  async listByUserIdExpanded(userId: string): Promise<any[]> {
+    const list = await prisma.organizations.findMany({
+      where: {
+        OR: [
+          { createdBy: userId },
+          {
+            user_organizations: {
+              some: {
+                userId,
+                active: true,
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        states: true,
+        cities: {
+          include: {
+            states: true,
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
 
-    if (ownedError) {
-      throw new Error(
-        ownedError.message || "Error while fetching owned organizations"
-      );
-    }
-
-    // 2) Organizations where the user is a member
-    const { data: memberships, error: membershipsError } = await this.supabase
-      .from("user_organizations")
-      .select("organization_id")
-      .eq("user_id", userId)
-      .eq("active", true);
-
-    if (membershipsError) {
-      throw new Error(
-        membershipsError.message || "Error while fetching user organizations"
-      );
-    }
-
-    const memberOrgIds = (memberships ?? []).map(
-      (m: { organization_id: string }) => m.organization_id
-    );
-
-    type ExpandedEntity = OrganizationEntity & {
-      state?: StateEntity;
-      city?: CityEntity & { state?: StateEntity };
-    };
-
-    let memberOrgs: ExpandedEntity[] = [];
-    if (memberOrgIds.length > 0) {
-      const { data: memberData, error: memberError } = await this.supabase
-        .from("organizations")
-        .select(
-          `
-          *,
-          state:states(*),
-          city:cities(*, state:states(*))
-        `
-        )
-        .in("id", memberOrgIds);
-
-      if (memberError) {
-        throw new Error(
-          memberError.message || "Error while fetching member organizations"
-        );
-      }
-
-      memberOrgs = (memberData ?? []) as ExpandedEntity[];
-    }
-
-    // 3) Merge and deduplicate
-    const map = new Map<string, ExpandedEntity>();
-    for (const org of (owned ?? []) as ExpandedEntity[]) {
-      map.set(org.id, org);
-    }
-    for (const org of memberOrgs) {
-      map.set(org.id, org);
-    }
-
-    const combined = Array.from(map.values());
-    combined.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-
-    return combined.map(toOrganizationExpandedResponseDto);
+    return list;
   }
 }

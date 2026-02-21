@@ -287,7 +287,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                             <User className="w-4 h-4" />
                             Criado em{" "}
                             {new Date(template.created_at).toLocaleDateString(
-                              "pt-BR"
+                              "pt-BR",
                             )}
                           </div>
                         </div>

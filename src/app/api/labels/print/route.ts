@@ -1,18 +1,15 @@
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function POST(req: NextRequest) {
   try {
-    const response = NextResponse.next();
-    const supabase = getSupabaseServerClient(req, response);
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

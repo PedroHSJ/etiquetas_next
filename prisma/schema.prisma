@@ -1,0 +1,499 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["public"]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified Boolean?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  stock               stock[]
+  stockInTransit      stock_in_transit[] @relation("stock_in_transitToUser")
+  stockMovements      stock_movements[]  @relation("stock_movementsToUser")
+  technicalSheets     technical_sheets[] @relation("technical_sheetsToUser")
+  userOrganizations   user_organizations[] @relation("user_organizationsToUser")
+  invitesAccepted     invites[] @relation("invites_accepted_byToUser")
+  invitesInvited      invites[] @relation("invites_invited_byToUser")
+  invitesRejected     invites[] @relation("invites_rejected_byToUser")
+
+  @@map("user")
+  @@schema("public")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([token])
+  @@map("session")
+  @@schema("public")
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  userId       String
+  accountId    String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  idToken      String?
+  scope        String?
+  accessTokenExpiresAt DateTime?
+  expiresAt    DateTime?
+  password     String?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("account")
+  @@schema("public")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+  @@schema("public")
+}
+
+model cities {
+  id             Int             @id @default(autoincrement())
+  stateId        Int             @map("state_id")
+  ibgeCode       String?         @unique @map("ibge_code") @db.VarChar(10)
+  name           String          @db.VarChar(150)
+  zipCodeStart   String?         @map("zip_code_start") @db.VarChar(8)
+  zipCodeEnd     String?         @map("zip_code_end") @db.VarChar(8)
+  latitude       Decimal?        @db.Decimal(10, 8)
+  longitude      Decimal?        @db.Decimal(11, 8)
+  createdAt      DateTime?       @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime?       @map("updated_at") @default(now()) @db.Timestamptz(6)
+  states         states          @relation(fields: [stateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations  organizations[]
+
+  @@index([ibgeCode], map: "idx_cities_ibge_code")
+  @@index([name], map: "idx_cities_name")
+  @@index([stateId], map: "idx_cities_state")
+  @@schema("public")
+}
+
+model departments {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String        @db.VarChar(255)
+  organizationId  String        @map("organization_id") @db.Uuid
+  departmentType  String?       @map("department_type") @db.VarChar(100)
+  createdAt       DateTime?     @map("created_at") @default(now()) @db.Timestamptz(6)
+  organizations   organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+model functionalities {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String        @unique @db.VarChar(255)
+  description String?
+  code        String        @unique @db.VarChar(100)
+  active      Boolean?      @default(true)
+  createdAt   DateTime?     @map("created_at") @default(now()) @db.Timestamptz(6)
+  permissions permissions[]
+
+  @@schema("public")
+}
+
+model groups {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  organizationId String?     @map("organization_id") @db.Uuid
+  isActive    Boolean    @map("is_active") @default(true)
+  createdAt   DateTime   @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime   @map("updated_at") @default(now()) @db.Timestamptz(6)
+  products    products[]
+  organizations organizations? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+}
+
+model invites {
+  id                               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                            String        @db.VarChar(255)
+  organizationId                   String        @map("organization_id") @db.Uuid
+  profileId                        String        @map("profile_id") @db.Uuid
+  status                           String?       @default("pending") @db.VarChar(50)
+  inviteToken                     String        @unique @map("invite_token") @db.VarChar(255)
+  expiresAt                       DateTime?     @map("expires_at") @default(dbgenerated("(now() + '7 days'::interval)")) @db.Timestamptz(6)
+  invitedBy                       String        @map("invited_by")
+  invitedByName                  String?       @map("invited_by_name") @db.VarChar(255)
+  invitedByEmail                 String?       @map("invited_by_email") @db.VarChar(255)
+  invitedByAvatarUrl            String?       @map("invited_by_avatar_url")
+  createdAt                       DateTime?     @map("created_at") @default(now()) @db.Timestamptz(6)
+  acceptedAt                      DateTime?     @map("accepted_at") @db.Timestamptz(6)
+  acceptedBy                      String?       @map("accepted_by")
+  rejectedAt                      DateTime?     @map("rejected_at") @db.Timestamptz(6)
+  rejectedBy                      String?       @map("rejected_by")
+  
+  accepted_by_user        User?        @relation("invites_accepted_byToUser", fields: [acceptedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  invited_by_user         User         @relation("invites_invited_byToUser", fields: [invitedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations           organizations @relation(fields: [organizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  profiles                profiles      @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  rejected_by_user        User?        @relation("invites_rejected_byToUser", fields: [rejectedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+model labels {
+  id                  Int               @id @default(autoincrement())
+  productId          Int?              @map("product_id")
+  quantity            Int?              @default(1)
+  printedAt          DateTime?         @map("printed_at") @default(now()) @db.Timestamptz(6)
+  userId             String?           @map("user_id")
+  organizationId     String?           @map("organization_id") @db.Uuid
+  status              String?           @default("printed") @db.VarChar(100)
+  notes               String?
+  createdAt          DateTime?         @map("created_at") @default(now()) @db.Timestamptz(6)
+  stockInTransitId String?           @map("stock_in_transit_id") @db.Uuid
+  organizations       organizations?    @relation(fields: [organizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  products            products?         @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  stock_in_transit    stock_in_transit? @relation(fields: [stockInTransitId], references: [id], onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+model organization_settings {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String        @map("organization_id") @db.Uuid
+  settingKey      String        @map("setting_key") @db.VarChar(255)
+  settingValue    String?       @map("setting_value")
+  createdAt       DateTime?     @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime?     @map("updated_at") @default(now()) @db.Timestamptz(6)
+  organizations   organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([organizationId, settingKey])
+  @@schema("public")
+}
+
+model organizations {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                   String                   @db.VarChar(255)
+  type                   String?                  @db.VarChar(100)
+  cnpj                   String?                  @db.VarChar(14)
+  capacity               Int?
+  openingDate            DateTime?                @map("opening_date") @db.Date
+  fullAddress            String?                  @map("full_address")
+  zipCode                String?                  @map("zip_code") @db.VarChar(9)
+  district               String?                  @db.VarChar(100)
+  address                String?                  @db.VarChar(255)
+  number                 String?                  @db.VarChar(20)
+  addressComplement      String?                  @map("address_complement") @db.VarChar(100)
+  latitude               Decimal?                 @db.Decimal(10, 8)
+  longitude              Decimal?                 @db.Decimal(11, 8)
+  mainPhone              String?                  @map("main_phone") @db.VarChar(15)
+  altPhone               String?                  @map("alt_phone") @db.VarChar(15)
+  institutionalEmail     String?                  @map("institutional_email") @db.VarChar(255)
+  stateId                Int?                     @map("state_id")
+  cityId                 Int?                     @map("city_id")
+  createdBy              String?                  @map("created_by")
+  createdAt              DateTime?                @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt              DateTime?                @map("updated_at") @default(now()) @db.Timestamptz(6)
+  departments            departments[]
+  invites                invites[]
+  labels                 labels[]
+  organization_settings  organization_settings[]
+  cities                 cities?                  @relation(fields: [cityId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  states                 states?                  @relation(fields: [stateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  groups                 groups[]
+  stock                  stock[]
+  stock_in_transit       stock_in_transit[]
+  stock_movements        stock_movements[]
+  storage_locations      storage_locations[]
+  technical_responsibles technical_responsibles[]
+  technical_sheets       technical_sheets[]
+  user_organizations     user_organizations[]
+
+  @@schema("public")
+}
+
+model permissions {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  functionalityId String          @map("functionality_id") @db.Uuid
+  profileId       String          @map("profile_id") @db.Uuid
+  action           String?         @db.VarChar(100)
+  active           Boolean?        @default(true)
+  createdAt       DateTime?       @map("created_at") @default(now()) @db.Timestamptz(6)
+  functionalities  functionalities @relation(fields: [functionalityId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  profiles         profiles        @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+model products {
+  id                          Int                           @id @default(autoincrement())
+  name                        String
+  groupId                    Int?                          @map("group_id")
+  organizationId             String?                       @map("organization_id") @db.Uuid
+  isActive                   Boolean                       @map("is_active") @default(true)
+  createdAt                  DateTime?                     @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt                  DateTime?                     @map("updated_at") @default(now()) @db.Timestamptz(6)
+  labels                      labels[]
+  groups                      groups?                       @relation(fields: [groupId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  stock                       stock?
+  stock_in_transit            stock_in_transit[]
+  stock_movements             stock_movements[]
+  technical_sheet_ingredients technical_sheet_ingredients[]
+
+  @@schema("public")
+}
+
+model profiles {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String               @unique @db.VarChar(255)
+  description        String?
+  active             Boolean?             @default(true)
+  createdAt          DateTime?            @map("created_at") @default(now()) @db.Timestamptz(6)
+  invites            invites[]
+  permissions        permissions[]
+  user_organizations user_organizations[]
+  user_profiles      user_profiles[]
+
+  @@schema("public")
+}
+
+model states {
+  id            Int             @id @default(autoincrement())
+  code          String          @unique @db.VarChar(2)
+  name          String          @db.VarChar(100)
+  region        String          @db.VarChar(50)
+  createdAt     DateTime?       @map("created_at") @default(now()) @db.Timestamptz(6)
+  cities        cities[]
+  organizations organizations[]
+
+  @@index([code], map: "idx_states_code")
+  @@schema("public")
+}
+
+model stock {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId            Int                @unique(map: "stock_productId_unique")
+  organizationId      String?            @map("organization_id") @db.Uuid
+  unitOfMeasureCode String             @default("un") @map("unit_of_measure_code") @db.VarChar(10)
+  storageLocationId  String?            @map("storage_location_id") @db.Uuid
+  currentQuantity     Decimal            @default(0) @map("current_quantity") @db.Decimal(10, 3)
+  userId               String             
+  createdAt           DateTime           @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime           @map("updated_at") @default(now()) @db.Timestamptz(6)
+  organizations        organizations?     @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products             products           @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  storage_locations    storage_locations? @relation(fields: [storageLocationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit_of_measure      unit_of_measure    @relation(fields: [unitOfMeasureCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  users                User               @relation(fields: [userId], references: [id], onUpdate: NoAction)
+
+  @@index([organizationId], map: "idx_stock_organization_id")
+  @@index([productId], map: "idx_stock_productId")
+  @@index([storageLocationId], map: "idx_stock_storage_location")
+  @@index([userId], map: "idx_stock_userId")
+  @@schema("public")
+}
+
+model stock_in_transit {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId           Int             @map("product_id")
+  quantity             Decimal         @db.Decimal(15, 3)
+  unitOfMeasureCode String          @map("unit_of_measure_code") @db.VarChar(10)
+  manufacturingDate   DateTime?       @map("manufacturing_date") @db.Timestamptz(6)
+  expiryDate          DateTime?       @map("expiry_date") @db.Timestamptz(6)
+  organizationId      String          @map("organization_id") @db.Uuid
+  userId              String          @map("user_id")
+  observations         String?
+  createdAt           DateTime?       @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime?       @map("updated_at") @default(now()) @db.Timestamptz(6)
+  labels               labels[]
+  organizations        organizations   @relation(fields: [organizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  products             products        @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit_of_measure      unit_of_measure @relation(fields: [unitOfMeasureCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  users                User            @relation("stock_in_transitToUser", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([organizationId], map: "idx_stock_transit_organization")
+  @@index([productId], map: "idx_stock_transit_product")
+  @@index([userId], map: "idx_stock_transit_user")
+  @@schema("public")
+}
+
+model stock_movements {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId            Int
+  organizationId      String?            @map("organization_id") @db.Uuid
+  userId               String             
+  storageLocationId  String?            @map("storage_location_id") @db.Uuid
+  movementType        String             @map("movement_type")
+  quantity             Decimal            @db.Decimal(10, 3)
+  unitOfMeasureCode String             @default("un") @map("unit_of_measure_code") @db.VarChar(10)
+  observation          String?
+  movementDate        DateTime           @default(now()) @map("movement_date") @db.Timestamptz(6)
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  organizations        organizations?     @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products             products           @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  storage_locations    storage_locations? @relation(fields: [storageLocationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit_of_measure      unit_of_measure    @relation(fields: [unitOfMeasureCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  users                User               @relation("stock_movementsToUser", fields: [userId], references: [id], onUpdate: NoAction)
+
+  @@index([movementDate], map: "idx_stock_movements_date")
+  @@index([organizationId], map: "idx_stock_movements_organization_id")
+  @@index([productId], map: "idx_stock_movements_productId")
+  @@index([storageLocationId], map: "idx_stock_movements_storage_location")
+  @@index([movementType], map: "idx_stock_movements_type")
+  @@index([userId], map: "idx_stock_movements_userId")
+  @@schema("public")
+}
+
+model storage_locations {
+  id                      String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                    String              @db.VarChar(255)
+  parentId               String?             @map("parent_id") @db.Uuid
+  organizationId         String              @map("organization_id") @db.Uuid
+  description             String?
+  active                  Boolean?            @default(true)
+  createdAt              DateTime?           @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt              DateTime?           @map("updated_at") @default(now()) @db.Timestamptz(6)
+  stock                   stock[]
+  stock_movements         stock_movements[]
+  organizations           organizations       @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  storage_locations       storage_locations?  @relation("storage_locationsTostorage_locations", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_storage_locations storage_locations[] @relation("storage_locationsTostorage_locations")
+
+  @@index([organizationId], map: "idx_storage_locations_organization")
+  @@index([parentId], map: "idx_storage_locations_parent")
+  @@schema("public")
+}
+
+model technical_responsibles {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String        @map("organization_id") @db.Uuid
+  responsibleType String        @map("responsible_type") @db.VarChar(50)
+  name             String        @db.VarChar(255)
+  document         String?       @db.VarChar(20)
+  phone            String?       @db.VarChar(15)
+  email            String?       @db.VarChar(255)
+  notes            String?
+  active           Boolean?      @default(true)
+  createdAt       DateTime?       @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime?       @map("updated_at") @default(now()) @db.Timestamptz(6)
+  organizations    organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+model technical_sheet_ai_cache {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dishName     String   @map("dish_name")
+  servings      Int
+  jsonResponse Json     @map("json_response")
+  createdAt    DateTime @map("created_at") @default(now()) @db.Timestamptz(6)
+
+  @@unique([dishName, servings], map: "technical_sheet_ai_cache_unique")
+  @@schema("public")
+}
+
+model technical_sheet_ingredients {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  technicalSheetId  String           @map("technical_sheet_id") @db.Uuid
+  ingredientName    String           @map("ingredient_name")
+  quantity           String
+  unit               String
+  originalQuantity  String           @map("original_quantity")
+  productId         Int?             @map("product_id")
+  sortOrder         Int              @map("sort_order") @default(0)
+  createdAt          DateTime         @map("created_at") @default(now()) @db.Timestamptz(6)
+  products           products?        @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  technical_sheets   technical_sheets @relation(fields: [technicalSheetId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([productId], map: "idx_technical_sheet_ingredients_product")
+  @@index([technicalSheetId], map: "idx_technical_sheet_ingredients_sheet")
+  @@index([sortOrder], map: "idx_technical_sheet_ingredients_sort")
+  @@schema("public")
+}
+
+model technical_sheets {
+  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dishName                    String                        @map("dish_name")
+  servings                    Int
+  preparationTime             String?                       @map("preparation_time")
+  cookingTime                 String?                       @map("cooking_time")
+  difficulty                  String?
+  preparationSteps            String[]                      @map("preparation_steps")
+  nutritionalInsights         Json?                         @map("nutritional_insights")
+  organizationId              String                        @map("organization_id") @db.Uuid
+  createdBy                   String                        @map("created_by")
+  active                      Boolean                       @default(true)
+  createdAt                   DateTime                      @map("created_at") @default(now()) @db.Timestamptz(6)
+  updatedAt                   DateTime                      @map("updated_at") @default(now()) @db.Timestamptz(6)
+  technical_sheet_ingredients technical_sheet_ingredients[]
+  users                       User                          @relation("technical_sheetsToUser", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations               organizations                 @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([createdBy], map: "idx_technical_sheets_created_by")
+  @@index([organizationId], map: "idx_technical_sheets_org")
+  @@schema("public")
+}
+
+model unit_of_measure {
+  code             String             @id @db.VarChar(10)
+  description      String             @db.VarChar(100)
+  stock            stock[]
+  stock_in_transit stock_in_transit[]
+  stock_movements  stock_movements[]
+
+  @@schema("public")
+}
+
+model user_organizations {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String          @map("user_id")
+  organizationId  String          @map("organization_id") @db.Uuid
+  profileId       String          @map("profile_id") @db.Uuid
+  active          Boolean?        @default(true)
+  entryDate       DateTime?       @map("entry_date") @default(now()) @db.Timestamptz(6)
+  exitDate        DateTime?       @map("exit_date") @db.Timestamptz(6)
+  createdAt       DateTime?       @map("created_at") @default(now()) @db.Timestamptz(6)
+  organizations   organizations   @relation(fields: [organizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  profiles        profiles        @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users           User            @relation("user_organizationsToUser", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_profiles   user_profiles[]
+
+  @@schema("public")
+}
+
+model user_profiles {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userOrganizationId   String             @map("user_organization_id") @db.Uuid
+  profileId            String             @map("profile_id") @db.Uuid
+  active               Boolean?           @default(true)
+  startDate            DateTime?          @map("start_date") @default(now()) @db.Timestamptz(6)
+  createdAt            DateTime?          @map("created_at") @default(now()) @db.Timestamptz(6)
+  profiles             profiles           @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_organizations   user_organizations @relation(fields: [userOrganizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}

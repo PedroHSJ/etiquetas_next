@@ -8,14 +8,16 @@ export default function HomePage() {
 
   useEffect(() => {
     // Redirecionar automaticamente para o dashboard
-    router.push("/dashboard");
+    router.push("/auth/verify");
   }, [router]);
 
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-2 text-muted-foreground">Redirecionando para o dashboard...</p>
+        <p className="mt-2 text-muted-foreground">
+          Redirecionando para o dashboard...
+        </p>
       </div>
     </div>
   );

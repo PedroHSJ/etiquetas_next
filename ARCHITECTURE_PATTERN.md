@@ -182,7 +182,7 @@ export function cleanNumericString(value: string): string {
 
 // ============= Entity → DTO =============
 export function toOrganizationResponseDto(
-  entity: OrganizationEntity
+  entity: OrganizationEntity,
 ): OrganizationResponseDto {
   return {
     id: entity.id,
@@ -198,7 +198,7 @@ export function toOrganizationResponseDto(
 
 // ============= DTO → Model =============
 export function toOrganizationModel(
-  dto: OrganizationResponseDto
+  dto: OrganizationResponseDto,
 ): Organization {
   return {
     id: dto.id,
@@ -222,7 +222,7 @@ export function toOrganizationModel(
 // ============= DTO → Entity (for create) =============
 export function toOrganizationEntityForCreate(
   dto: CreateOrganizationDto,
-  userId: string
+  userId: string,
 ): Partial<OrganizationEntity> {
   return {
     name: dto.name,
@@ -240,7 +240,7 @@ export function toOrganizationEntityForCreate(
 
 // ============= DTO → Entity (for update) =============
 export function toOrganizationEntityForUpdate(
-  dto: UpdateOrganizationDto
+  dto: UpdateOrganizationDto,
 ): Partial<OrganizationEntity> {
   const updateData: Partial<OrganizationEntity> = {
     updated_at: new Date().toISOString(), // Always update timestamp
@@ -334,11 +334,11 @@ const handleSubmit = async (formData) => {
 // 2. FRONTEND SERVICE (/lib/services/client/organization-service.ts)
 export class OrganizationService {
   static async createOrganization(
-    dto: CreateOrganizationDto
+    dto: CreateOrganizationDto,
   ): Promise<Organization> {
     const response = await apiClient.post<OrganizationResponseDto>(
       "/api/organization",
-      dto
+      dto,
     );
 
     return toOrganizationModel(response.data); // DTO → Model
@@ -365,7 +365,7 @@ export async function POST(request: NextRequest) {
 export class OrganizationBackendService {
   async createOrganization(
     dto: CreateOrganizationDto,
-    userId: string
+    userId: string,
   ): Promise<OrganizationResponseDto> {
     // Convert DTO → Entity (apply business rules)
     const entity = toOrganizationEntityForCreate(dto, userId);

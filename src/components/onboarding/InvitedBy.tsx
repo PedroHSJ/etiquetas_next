@@ -62,9 +62,7 @@ export function InvitedBy({
             compact ? "w-5 h-5" : "w-6 h-6"
           } rounded-full flex items-center justify-center text-xs text-white font-medium overflow-hidden`}
           style={
-            user.avatarUrl
-              ? {}
-              : { backgroundColor: getAvatarColor(user.name) }
+            user.avatarUrl ? {} : { backgroundColor: getAvatarColor(user.name) }
           }
           title={`${user.name} (${user.email})`}
         >

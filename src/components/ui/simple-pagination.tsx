@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface SimplePaginationProps {
-  currentPage: number
-  totalPages: number
-  totalItems: number
-  itemsPerPage: number
-  onPageChange: (page: number) => void
-  className?: string
-  showInfo?: boolean
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  className?: string;
+  showInfo?: boolean;
 }
 
 export function SimplePagination({
@@ -19,13 +19,13 @@ export function SimplePagination({
   totalItems,
   itemsPerPage,
   onPageChange,
-  className = '',
-  showInfo = true
+  className = "",
+  showInfo = true,
 }: SimplePaginationProps) {
-  if (totalPages <= 1) return null
+  if (totalPages <= 1) return null;
 
-  const startItem = (currentPage - 1) * itemsPerPage + 1
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems)
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
     <div className={`flex items-center justify-between ${className}`}>
@@ -34,7 +34,7 @@ export function SimplePagination({
           Mostrando {startItem}-{endItem} de {totalItems} resultados
         </div>
       )}
-      
+
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
@@ -45,11 +45,11 @@ export function SimplePagination({
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        
+
         <span className="text-sm px-2">
           Página {currentPage} de {totalPages}
         </span>
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -61,7 +61,7 @@ export function SimplePagination({
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
-export default SimplePagination
+export default SimplePagination;

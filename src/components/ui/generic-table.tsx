@@ -167,7 +167,7 @@ export function GenericTable<T extends object>({
   const getCellValue = (
     row: T,
     column: GenericTableColumn<T>,
-    index: number
+    index: number,
   ) => {
     let value: unknown;
     if (typeof column.accessor === "function") {
@@ -199,7 +199,7 @@ export function GenericTable<T extends object>({
 
     if (checked) {
       const allRowIds = new Set(
-        paginatedData.map((row, index) => getRowId(row, startIndex + index))
+        paginatedData.map((row, index) => getRowId(row, startIndex + index)),
       );
       onSelectionChange(allRowIds);
     } else {
@@ -224,7 +224,7 @@ export function GenericTable<T extends object>({
     selectable &&
     paginatedData.length > 0 &&
     paginatedData.every((row, index) =>
-      selectedRows.has(getRowId(row, startIndex + index))
+      selectedRows.has(getRowId(row, startIndex + index)),
     );
 
   const isIndeterminate = selectable && selectedRows.size > 0 && !isAllSelected;
@@ -397,7 +397,7 @@ export function GenericTable<T extends object>({
                             getCellValue(
                               row,
                               column,
-                              startIndex + index
+                              startIndex + index,
                             ) as React.ReactNode
                           }
                         </TableCell>

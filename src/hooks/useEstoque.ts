@@ -24,7 +24,7 @@ export function useEstoque(organizationId?: string) {
     async (
       filtros: EstoqueFiltros = {},
       page = 1,
-      pageSize = 20
+      pageSize = 20,
     ): Promise<EstoqueListResponse | null> => {
       if (!organizationId) {
         toast.error("Organização não selecionada");
@@ -49,7 +49,7 @@ export function useEstoque(organizationId?: string) {
         if (filtros.quantidade_minima)
           params.append(
             "quantidade_minima",
-            filtros.quantidade_minima.toString()
+            filtros.quantidade_minima.toString(),
           );
 
         const response = await fetchWithAuth(`/api/estoque?${params}`);
@@ -69,7 +69,7 @@ export function useEstoque(organizationId?: string) {
         setCarregandoEstoque(false);
       }
     },
-    []
+    [],
   );
 
   // Buscar movimentações
@@ -77,7 +77,7 @@ export function useEstoque(organizationId?: string) {
     async (
       filtros: MovimentacoesFiltros = {},
       page = 1,
-      pageSize = 20
+      pageSize = 20,
     ): Promise<MovimentacoesListResponse | null> => {
       if (!organizationId) {
         toast.error("Organização não selecionada");
@@ -104,7 +104,7 @@ export function useEstoque(organizationId?: string) {
           params.append("produto_nome", filtros.produto_nome);
 
         const response = await fetchWithAuth(
-          `/api/estoque/movimentacoes?${params}`
+          `/api/estoque/movimentacoes?${params}`,
         );
         const data = await response.json();
 
@@ -122,7 +122,7 @@ export function useEstoque(organizationId?: string) {
         setCarregandoMovimentacoes(false);
       }
     },
-    []
+    [],
   );
 
   // Buscar produtos para seleção
@@ -158,7 +158,7 @@ export function useEstoque(organizationId?: string) {
         setCarregandoProdutos(false);
       }
     },
-    []
+    [],
   );
 
   // Realizar entrada rápida
@@ -179,14 +179,12 @@ export function useEstoque(organizationId?: string) {
       } catch (error) {
         console.error("Erro ao registrar entrada:", error);
         const fallbackMessage =
-          error instanceof Error
-            ? error.message
-            : "Erro ao registrar entrada";
+          error instanceof Error ? error.message : "Erro ao registrar entrada";
         toast.error(fallbackMessage);
         return false;
       }
     },
-    [organizationId]
+    [organizationId],
   );
 
   // Criar movimentação manual
@@ -195,7 +193,7 @@ export function useEstoque(organizationId?: string) {
       produto_id: number,
       tipo_movimentacao: "ENTRADA" | "SAIDA",
       quantidade: number,
-      observacao?: string
+      observacao?: string,
     ): Promise<boolean> => {
       try {
         const response = await fetchWithAuth("/api/estoque/movimentacoes", {
@@ -226,7 +224,7 @@ export function useEstoque(organizationId?: string) {
         return false;
       }
     },
-    [organizationId]
+    [organizationId],
   );
 
   return {

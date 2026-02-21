@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseBearerClient } from "@/lib/supabaseServer";
+import { auth } from "@/lib/auth";
 import { StorageLocationBackendService } from "@/lib/services/server/storageLocationService";
-import {
-  ApiErrorResponse,
-  ApiSuccessResponse,
-} from "@/types/common/api";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/common/api";
 import {
   CreateStorageLocationDto,
   ListStorageLocationsDto,
@@ -12,36 +9,26 @@ import {
 } from "@/types/dto/storage-location";
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const organizationId = searchParams.get("organizationId") || undefined;
     const search = searchParams.get("search") || undefined;
-    const parentId = searchParams.has("parentId") ? searchParams.get("parentId") : undefined;
+    const parentId = searchParams.has("parentId")
+      ? searchParams.get("parentId")
+      : undefined;
 
-    const service = new StorageLocationBackendService(supabase);
+    const service = new StorageLocationBackendService();
     const params: ListStorageLocationsDto = {
       organizationId,
       search,
@@ -50,7 +37,7 @@ export async function GET(request: NextRequest) {
     const locations = await service.listStorageLocations(params);
 
     const successResponse: ApiSuccessResponse<StorageLocationResponseDto[]> = {
-      data: locations,
+      data: locations as unknown as StorageLocationResponseDto[],
     };
 
     return NextResponse.json(successResponse, { status: 200 });
@@ -64,38 +51,26 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  if (!token) {
+  if (!session) {
     const errorResponse: ApiErrorResponse = {
-      error: "Access token not provided",
+      error: "Unauthorized",
     };
     return NextResponse.json(errorResponse, { status: 401 });
   }
 
   try {
-    const supabase = getSupabaseBearerClient(token);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      const errorResponse: ApiErrorResponse = {
-        error: "User not authenticated",
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
     const body = await request.json();
     const dto: CreateStorageLocationDto = body;
 
-    const service = new StorageLocationBackendService(supabase);
+    const service = new StorageLocationBackendService();
     const location = await service.createStorageLocation(dto);
 
     const successResponse: ApiSuccessResponse<StorageLocationResponseDto> = {
-      data: location,
+      data: location as unknown as StorageLocationResponseDto,
     };
 
     return NextResponse.json(successResponse, { status: 201 });

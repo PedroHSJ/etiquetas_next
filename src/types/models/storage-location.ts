@@ -10,7 +10,7 @@ export interface StorageLocation {
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Tree structure
   children?: StorageLocation[];
 }
