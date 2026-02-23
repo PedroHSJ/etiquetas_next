@@ -8,7 +8,61 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { StorageLocationResponseDto } from "@/types/dto/storage-location";
 import { StorageLocationTree } from "./StorageLocationTree";
 import { StorageLocationForm } from "./StorageLocationForm";
+import React from "react";
 
+export const EnderecamentoIcon = () => {
+  const themeColor = "#DC3545"; // Vermelho
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width="64"
+      height="64"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <style>
+        {`
+          .pin { animation: pinJump 2s infinite ease-in-out; }
+          .shadow { animation: shadowScale 2s infinite ease-in-out; transform-origin: 32px 46px; }
+          @keyframes pinJump {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+          }
+          @keyframes shadowScale {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.6); opacity: 0.5; }
+          }
+        `}
+      </style>
+      <rect x="0" y="0" width="64" height="64" rx="18" fill="#EAEAEA" />
+      <g fill="none">
+        {/* Sombra com tom avermelhado */}
+        <ellipse
+          className="shadow"
+          cx="32"
+          cy="46"
+          rx="5"
+          ry="2"
+          fill={themeColor}
+          opacity="0.3"
+        />
+        <g
+          className="pin"
+          stroke={themeColor}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path
+            d="M32 44C32 44 40 36 40 28C40 23.5817 36.4183 20 32 20C27.5817 20 24 23.5817 24 28C24 36 32 44 32 44Z"
+            fill={themeColor}
+            fillOpacity="0.1"
+          />
+          <circle cx="32" cy="28" r="3" fill={themeColor} />
+        </g>
+      </g>
+    </svg>
+  );
+};
 export default function StorageLocationsPage() {
   const { selectedOrganization } = useOrganization();
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -49,6 +103,7 @@ export default function StorageLocationsPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="flex h-14 items-center gap-4 border-b bg-background px-6">
+        <EnderecamentoIcon />
         <h1 className="text-xl font-semibold">Endereçamento Físico</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button onClick={handleCreateRoot} size="sm">

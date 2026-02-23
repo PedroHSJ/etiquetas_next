@@ -44,14 +44,15 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance text-primary">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground">
           Bem-vindo, {/* @ts-ignore */}
           {user?.name?.split(" ")[0] +
             " " +
             // @ts-ignore
             (user?.name?.split(" ")[1] || "")}
+        </h1>
+        <p className="text-muted-foreground">
+          Aqui está um resumo da sua organização e acesso rápido às principais
+          funcionalidades.
         </p>
       </div>
 

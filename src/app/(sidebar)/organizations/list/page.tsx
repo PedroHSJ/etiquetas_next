@@ -28,6 +28,55 @@ import { OrganizationService } from "@/lib/services/client/organization-service"
 import { useProfile } from "@/contexts/ProfileContext";
 import { formatPhone } from "@/lib/utils/organization";
 
+export const OrganizacaoIcon = () => {
+  const themeColor = "#007BFF"; // Azul vibrante
+  const bgColor = "#EAEAEA";
+
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width="64"
+      height="64"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <style>
+        {`
+          .lucide-building { transform-origin: 12px 22px; animation: scaleOrg 2s infinite alternate ease-in-out; }
+          @keyframes scaleOrg {
+            0%, 60% { transform: scaleY(1) translateY(0); }
+            100% { transform: scaleY(1.1) translateY(-1px); }
+          }
+        `}
+      </style>
+      <rect x="0" y="0" width="64" height="64" rx="18" fill={bgColor} />
+
+      {/* Escala de 1.5x e stroke ajustado para manter os 2.5px visuais */}
+      <g
+        transform="translate(14, 14) scale(1.5)"
+        stroke={themeColor}
+        strokeWidth="1.67"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      >
+        <g className="lucide-building">
+          <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
+          <path d="M9 22v-4h6v4" />
+          <path d="M8 6h.01" />
+          <path d="M16 6h.01" />
+          <path d="M12 6h.01" />
+          <path d="M12 10h.01" />
+          <path d="M12 14h.01" />
+          <path d="M16 10h.01" />
+          <path d="M16 14h.01" />
+          <path d="M8 10h.01" />
+          <path d="M8 14h.01" />
+        </g>
+      </g>
+    </svg>
+  );
+};
+
 interface Member {
   id: string;
   nome: string;
@@ -267,15 +316,7 @@ export default function Page() {
           {/* Cabeçalho */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg
-                  className="w-7 h-7 text-white"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
-                </svg>
-              </div>
+              <OrganizacaoIcon />
               <div>
                 <h1 className="text-3xl font-bold">Lista de organizações</h1>
                 <p className="text-muted-foreground">

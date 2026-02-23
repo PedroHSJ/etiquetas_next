@@ -86,7 +86,7 @@ export function PrinterConfigDialog({ trigger }: PrinterConfigDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="default" className="gap-2">
             <Settings className="h-4 w-4" />
             Configurar Impressora
           </Button>

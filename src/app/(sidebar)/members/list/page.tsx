@@ -28,6 +28,54 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+import React from "react";
+
+export const MembrosIcon = () => {
+  const themeColor = "#6F42C1"; // Roxo
+  const bgColor = "#EAEAEA"; // Cor do fundo para "recortar" os elementos
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width="64"
+      height="64"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <style>
+        {`
+          .front-user { animation: popUser 2.5s infinite alternate ease-in-out; transform-origin: 26px 46px; }
+          @keyframes popUser { 
+            0%, 70% { transform: scale(1); } 
+            100% { transform: scale(1.05); } 
+          }
+        `}
+      </style>
+      <rect x="0" y="0" width="64" height="64" rx="18" fill={bgColor} />
+      <g
+        stroke={themeColor}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      >
+        <circle cx="40" cy="24" r="5" fill={themeColor} opacity="0.3" />
+        <path
+          d="M48 42C48 38.5 45.5 35.5 40 35.5C38 35.5 36.2 36.1 35 37"
+          opacity="0.5"
+        />
+        <g className="front-user">
+          {/* Preenchimento da cor do fundo para esconder o usuário de trás */}
+          <path
+            d="M14 46C14 40.5 18.5 36.5 26 36.5C33.5 36.5 38 40.5 38 46"
+            fill={bgColor}
+          />
+          <circle cx="26" cy="28" r="6" fill={themeColor} />
+          <path d="M14 46C14 40.5 18.5 36.5 26 36.5C33.5 36.5 38 40.5 38 46" />
+        </g>
+      </g>
+    </svg>
+  );
+};
+
 export default function MembersListPage() {
   const { selectedOrganization } = useOrganization();
 
@@ -52,7 +100,7 @@ export default function MembersListPage() {
         key: "member",
         label: "Integrante",
         accessor: (row) =>
-          `${row.user.name ?? ""} ${row.user.email ?? ""}`.trim(),
+          `${row?.user?.name ?? ""} ${row?.user?.email ?? ""}`.trim(),
         visible: true,
         width: 280,
         fixed: true,
@@ -60,17 +108,17 @@ export default function MembersListPage() {
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
               <AvatarImage
-                src={row.user.avatarUrl ?? undefined}
-                alt={row.user.name}
+                src={row?.user?.avatarUrl ?? undefined}
+                alt={row?.user?.name}
               />
               <AvatarFallback className="bg-primary/10 text-primary">
-                {getInitials(row.user.name)}
+                {getInitials(row?.user?.name)}
               </AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium">{row.user.name}</div>
+              <div className="font-medium">{row?.user?.name}</div>
               <div className="text-sm text-muted-foreground">
-                {row.user.email || "—"}
+                {row?.user?.email || "—"}
               </div>
             </div>
           </div>
@@ -170,9 +218,7 @@ export default function MembersListPage() {
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-              <Users className="h-6 w-6 text-primary" />
-            </div>
+            <MembrosIcon />
             <div>
               <h1 className="text-3xl font-bold">Integrantes</h1>
               <p className="text-muted-foreground">

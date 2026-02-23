@@ -177,8 +177,22 @@ export class StockBackendService {
       prisma.stock_movements.count({ where }),
     ]);
 
+    // Transformar para o formato esperado pelo DTO
+    const formattedMovements = movements.map((mov: any) => ({
+      ...mov,
+      product: mov.products, // Mapear products -> product
+      user: mov.users ? {
+        id: mov.users.id,
+        name: mov.users.name,
+        fullName: mov.users.name,
+        email: mov.users.email,
+      } : undefined, // Mapear users -> user
+      products: undefined, // Remover o campo original
+      users: undefined, // Remover o campo original
+    }));
+
     return {
-      data: movements,
+      data: formattedMovements,
       total: count,
       page,
       pageSize,
@@ -248,6 +262,16 @@ export class StockBackendService {
       throw new Error(STOCK_MESSAGES.ERROR_PRODUCT_NOT_FOUND);
     }
 
+    // Verificar se a unidade de medida existe
+    const finalUnitCode = unitOfMeasureCode || "un";
+    const unitExists = await prisma.unit_of_measure.findUnique({
+      where: { code: finalUnitCode },
+    });
+
+    if (!unitExists) {
+      throw new Error(`Unidade de medida '${finalUnitCode}' não encontrada. Use uma das unidades válidas: kg, g, l, ml, un, cx, pct`);
+    }
+
     return await prisma.$transaction(async (tx: any) => {
       // Registrar movimentação
       const movement = await tx.stock_movements.create({
@@ -257,15 +281,27 @@ export class StockBackendService {
           organizationId: organizationId,
           movementType,
           quantity,
-          unitOfMeasureCode: unitOfMeasureCode || "un",
+          unitOfMeasureCode: finalUnitCode,
           observation:
             observation ||
             `${movementType.toLowerCase()} manual - ${product.name}`,
         },
         include: {
-          products: true,
+          products: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       });
+
+      // Transformar para o formato esperado
+      const formattedMovement = {
+        ...movement,
+        product: movement.products,
+        products: undefined,
+      };
 
       // Atualizar estoque
       if (movementType === "ENTRADA") {
@@ -276,7 +312,7 @@ export class StockBackendService {
             userId,
             organizationId: organizationId,
             currentQuantity: quantity,
-            unitOfMeasureCode: unitOfMeasureCode || "un",
+            unitOfMeasureCode: finalUnitCode,
           },
           update: {
             currentQuantity: { increment: quantity },
@@ -299,7 +335,7 @@ export class StockBackendService {
         });
       }
 
-      return movement;
+      return formattedMovement;
     });
   }
 

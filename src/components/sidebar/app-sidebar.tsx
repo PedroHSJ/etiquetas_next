@@ -15,6 +15,7 @@ import {
   Building,
   UserCog,
   MapPin,
+  Truck,
 } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -39,6 +40,7 @@ const ROUTE_PERMISSION_MAP: Record<string, string> = {
   "/convites": "INVITES",
   "/estoque": "STOCK",
   "/enderecamento": "STOCK",
+  "/receiving": "STOCK",
   "/etiquetas": "LABELS",
   "/technical-sheets": "TECHNICAL_SHEETS",
 };
@@ -146,6 +148,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/convites",
       icon: Mail,
       isActive: pathname.startsWith("/convites"),
+    },
+    {
+      title: "Recebimento",
+      url: "/receiving",
+      icon: Truck,
+      isActive: pathname.startsWith("/receiving"),
     },
     {
       title: "Estoque",

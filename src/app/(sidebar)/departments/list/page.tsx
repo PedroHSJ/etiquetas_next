@@ -29,6 +29,46 @@ import { DepartmentService } from "@/lib/services/client/department-service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReadGuard } from "@/components/auth/PermissionGuard";
 
+import React from "react";
+
+export const DepartamentosIcon = () => {
+  const themeColor = "#00C897"; // Verde água
+  const pulseColor = "#008F6B"; // Tom mais escuro para o pulso
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width="64"
+      height="64"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <style>
+        {`
+          .node1 { animation: pulseDep 2s infinite; transform-origin: 32px 20px;}
+          .node2 { animation: pulseDep 2s infinite 0.6s; transform-origin: 20px 42px;}
+          .node3 { animation: pulseDep 2s infinite 1.2s; transform-origin: 44px 42px;}
+          @keyframes pulseDep {
+            0%, 100% { transform: scale(1); stroke: ${themeColor}; }
+            50% { transform: scale(1.15); stroke: ${pulseColor}; }
+          }
+        `}
+      </style>
+      <rect x="0" y="0" width="64" height="64" rx="18" fill="#EAEAEA" />
+      <g
+        stroke={themeColor}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      >
+        <path d="M32 26V34H20V38M32 34H44V38" />
+        <rect className="node1" x="26" y="16" width="12" height="10" rx="3" />
+        <rect className="node2" x="14" y="38" width="12" height="10" rx="3" />
+        <rect className="node3" x="38" y="38" width="12" height="10" rx="3" />
+      </g>
+    </svg>
+  );
+};
+
 export default function DepartmentsListPage() {
   const { userId } = useAuth();
   const { selectedOrganization } = useOrganization();
@@ -138,15 +178,7 @@ export default function DepartmentsListPage() {
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg
-                className="w-7 h-7 text-white"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-            </div>
+            <DepartamentosIcon />
             <div>
               <h1 className="text-3xl font-bold">Departamentos</h1>
               <p className="text-muted-foreground">
@@ -175,15 +207,7 @@ export default function DepartmentsListPage() {
         {/* Cabeçalho */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg
-                className="w-7 h-7 text-white"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-            </div>
+            <DepartamentosIcon />
             <div>
               <h1 className="text-3xl font-bold">Departamentos</h1>
               <p className="text-muted-foreground">

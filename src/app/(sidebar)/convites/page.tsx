@@ -33,7 +33,7 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Mail,
+  MailQuestionMark,
   Send,
   User,
 } from "lucide-react";
@@ -45,7 +45,43 @@ import { InviteService } from "@/lib/services/client/invite-service";
 import { ReadGuard } from "@/components/auth/PermissionGuard";
 import { toast } from "sonner";
 import { InviteWithRelationsResponseDto } from "@/types/dto/invite";
+import React from "react";
 
+export const ConvitesIcon = () => {
+  const themeColor = "#FD7E14"; // Laranja
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width="64"
+      height="64"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <style>
+        {`
+          .lucide-mail { transform-origin: 32px 32px; animation: wiggleEnv 2.5s infinite ease-in-out; }
+          @keyframes wiggleEnv {
+            0%, 100% { transform: rotate(0deg); }
+            10%, 30% { transform: rotate(-8deg); }
+            20%, 40% { transform: rotate(8deg); }
+            50% { transform: rotate(0deg); }
+          }
+        `}
+      </style>
+      <rect x="0" y="0" width="64" height="64" rx="18" fill="#EAEAEA" />
+      <g
+        className="lucide-mail"
+        stroke={themeColor}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      >
+        <rect x="18" y="22" width="28" height="20" rx="2" />
+        <path d="M18 22L32 32L46 22" />
+      </g>
+    </svg>
+  );
+};
 export default function ConvitesPage() {
   const { userId, user } = useAuth();
   const { selectedOrganization } = useOrganization();
@@ -571,9 +607,7 @@ export default function ConvitesPage() {
           {/* Cabeçalho */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Mail className="h-6 w-6 text-primary" />
-              </div>
+              <ConvitesIcon />
               <div>
                 <h1 className="text-3xl font-bold">Convites</h1>
                 <p className="text-muted-foreground">
@@ -599,7 +633,7 @@ export default function ConvitesPage() {
                 value="pendentes"
                 className="flex items-center gap-2"
               >
-                <Mail className="h-4 w-4" />
+                <MailQuestionMark className="h-4 w-4" />
                 Pendentes ({pendingInvites.length})
               </TabsTrigger>
               <TabsTrigger value="aceitos" className="flex items-center gap-2">
@@ -618,7 +652,7 @@ export default function ConvitesPage() {
                 Enviados ({sentInvites.length})
               </TabsTrigger>
               <TabsTrigger value="todos" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
+                <MailQuestionMark className="h-4 w-4" />
                 Todos ({invites.length})
               </TabsTrigger>
             </TabsList>
@@ -635,7 +669,7 @@ export default function ConvitesPage() {
                   }`}
                 >
                   <div className="flex flex-col items-center gap-2">
-                    <Mail
+                    <MailQuestionMark
                       className={`h-6 w-6 ${
                         activeTab === "pendentes"
                           ? "text-primary"
@@ -735,7 +769,7 @@ export default function ConvitesPage() {
                   }`}
                 >
                   <div className="flex flex-col items-center gap-2">
-                    <Mail
+                    <MailQuestionMark
                       className={`h-6 w-6 ${
                         activeTab === "todos"
                           ? "text-primary"
@@ -771,7 +805,7 @@ export default function ConvitesPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
+                    <MailQuestionMark className="h-5 w-5" />
                     Convites Pendentes ({pendingInvites.length})
                   </CardTitle>
                   <CardDescription>
@@ -875,7 +909,7 @@ export default function ConvitesPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
+                    <MailQuestionMark className="h-5 w-5" />
                     Todos os Convites ({invites.length})
                   </CardTitle>
                   <CardDescription>

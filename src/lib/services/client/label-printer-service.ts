@@ -5,8 +5,8 @@ import { format } from "date-fns";
  * Service for interacting with the local label printer agent (usually running on port 5000)
  */
 export class LabelPrinterService {
-  private static readonly BASE_URL = "/api/labels";
-
+  private static readonly BASE_URL =
+    "https://printhubservice.duckdns.org/api/print";
   /**
    * Helper to format dates to DD/MM/YYYY
    */

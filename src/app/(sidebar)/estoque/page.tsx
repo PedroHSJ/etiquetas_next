@@ -47,6 +47,46 @@ import { StorageLocationResponseDto as StorageLocation } from "@/types/dto/stora
 import { ReadGuard } from "@/components/auth/PermissionGuard";
 import { Button } from "@/components/ui/button";
 
+export const EstoqueIcon = () => {
+  const themeColor = "#D68910"; // Âmbar / Marrom
+  const bgColor = "#EAEAEA";
+
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width="64"
+      height="64"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <style>
+        {`
+          .lucide-warehouse { transform-origin: 12px 12px; animation: pulseWarehouse 2s infinite alternate ease-in-out; }
+          @keyframes pulseWarehouse {
+            0%, 70% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+          }
+        `}
+      </style>
+      <rect x="0" y="0" width="64" height="64" rx="18" fill={bgColor} />
+
+      <g
+        transform="translate(14, 14) scale(1.5)"
+        stroke={themeColor}
+        strokeWidth="1.67"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      >
+        <g className="lucide-warehouse">
+          <path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z" />
+          <path d="M6 18h12" />
+          <path d="M6 14h12" />
+          <rect width="12" height="12" x="6" y="10" />
+        </g>
+      </g>
+    </svg>
+  );
+};
 export default function EstoquePage() {
   const { activeProfile } = useProfile();
   const organizationId =
@@ -386,9 +426,7 @@ export default function EstoquePage() {
         {/* Cabeçalho */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-              <Warehouse className="h-6 w-6 text-primary" />
-            </div>
+            <EstoqueIcon />
             <div>
               <h1 className="text-3xl font-bold tracking-tight">
                 Controle de Estoque
