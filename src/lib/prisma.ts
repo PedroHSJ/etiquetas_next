@@ -1,15 +1,27 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import * as neon from "@neondatabase/serverless";
+import { Pool as LocalPool } from "pg";
+import ws from "ws";
 
 const prismaClientSingleton = () => {
-  // Durante o build, usa uma URL dummy se não estiver definida
-  const connectionString =
-    process.env.DATABASE_URL ||
-    "postgresql://user:password@localhost:5432/dummy";
+  const connectionString = process.env.DATABASE_URL || "";
+  const isNeon = connectionString.includes("neon.tech");
 
-  const pool = new Pool({ connectionString });
-  const adapter = new PrismaPg(pool);
+  let adapter;
+
+  if (isNeon) {
+    // Configuração para NEON (Serverless/WebSocket)
+    if (typeof window === "undefined") {
+      neon.neonConfig.webSocketConstructor = ws;
+    }
+    adapter = new PrismaNeon({ connectionString });
+  } else {
+    // Configuração para POSTGRES LOCAL (TCP)
+    const pool = new LocalPool({ connectionString });
+    adapter = new PrismaPg(pool);
+  }
 
   return new PrismaClient({
     adapter,
