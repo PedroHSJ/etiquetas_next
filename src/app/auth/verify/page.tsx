@@ -14,7 +14,7 @@ export default function VerifyAuthPage() {
     // Só processa quando ambos os loadings terminarem
     if (authLoading || onboardingLoading) return;
 
-    if (!user) {
+    if (!user && !authLoading) {
       router.push("/login");
       return;
     }
