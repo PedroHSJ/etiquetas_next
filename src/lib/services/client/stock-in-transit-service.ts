@@ -50,4 +50,10 @@ export class StockInTransitService {
   static async delete(id: string): Promise<void> {
     await api.delete(`${API_URL}/${id}`);
   }
+
+  static async discard(id: string, organizationId: string): Promise<void> {
+    await api.post(`${API_URL}/${id}/discard`, null, {
+      params: { organizationId },
+    });
+  }
 }

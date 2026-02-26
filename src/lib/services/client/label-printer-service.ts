@@ -84,9 +84,9 @@ export class LabelPrinterService {
   ): Promise<boolean> {
     try {
       console.table(data);
-      if (process.env.NODE_ENV === "development") {
-        return true;
-      }
+      // if (process.env.NODE_ENV === "development") {
+      //   return true;
+      // }
 
       const payload = {
         printerName,
@@ -122,9 +122,9 @@ export class LabelPrinterService {
   ): Promise<boolean> {
     try {
       console.table(data);
-      if (process.env.NODE_ENV === "development") {
-        return true;
-      }
+      // if (process.env.NODE_ENV === "development") {
+      //   return true;
+      // }
 
       const payload = {
         printerName,

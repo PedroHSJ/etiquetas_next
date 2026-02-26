@@ -17,6 +17,7 @@ import {
   MapPin,
   Truck,
   PackageOpen,
+  Tags,
 } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -32,6 +33,7 @@ import { usePathname } from "next/navigation";
 import { NavUser } from "./nav-user";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { title } from "process";
 
 // Mapeamento de rotas para módulos de permissão
 const ROUTE_PERMISSION_MAP: Record<string, string> = {
@@ -183,6 +185,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           isActive: pathname === "/estoque-em-transito",
           icon: PackageOpen,
         },
+        {
+          title: "Etiquetas",
+          url: "/estoque/transito",
+          isActive: pathname === "/estoque/transito",
+          icon: Tags,
+        },
       ],
     },
     // {
@@ -208,7 +216,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   return (
-    <Sidebar {...props} variant="inset">
+    <Sidebar {...props} variant="inset" collapsible="icon">
       <SidebarHeader>
         <TeamSwitcher />
       </SidebarHeader>

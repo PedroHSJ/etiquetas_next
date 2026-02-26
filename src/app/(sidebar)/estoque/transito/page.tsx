@@ -37,6 +37,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MemberResponseDto as Member } from "@/types/dto/member/response";
 import { MemberService } from "@/lib/services/client/member-service";
 import { SettingsService } from "@/lib/services/client/settings-service";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -189,6 +190,8 @@ function ProductPickerSection({
   onGroupFilterChange,
   onProductFilterChange,
   onCreateProduct,
+  filterByGroup,
+  onFilterByGroupChange,
 }: {
   groups: ProductGroup[];
   products: Product[];
@@ -202,6 +205,8 @@ function ProductPickerSection({
   onGroupFilterChange: (v: string) => void;
   onProductFilterChange: (v: string) => void;
   onCreateProduct: (name: string) => void;
+  filterByGroup: boolean;
+  onFilterByGroupChange: (v: boolean) => void;
 }) {
   const filteredGroups = groups.filter((g) =>
     g.name.toLowerCase().includes(groupFilter.toLowerCase()),
@@ -212,48 +217,65 @@ function ProductPickerSection({
 
   return (
     <Card className="border-none shadow-sm overflow-hidden">
-      <CardHeader className="pb-3 border-b">
+      <CardHeader className="pb-3 border-b flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-semibold text-slate-600">
           Produto
         </CardTitle>
+        <div className="flex items-center space-x-2">
+          <Label
+            htmlFor="filter-by-group"
+            className="text-sm font-medium cursor-pointer"
+          >
+            Filtrar por Grupo
+          </Label>
+          <div className="scale-75 origin-right">
+            <Switch
+              id="filter-by-group"
+              checked={filterByGroup}
+              onCheckedChange={onFilterByGroupChange}
+            />
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="pt-4 space-y-4">
         {/* ── Groups: vertical grid ── */}
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
-            Grupo
-          </p>
-          {groups.length > 8 && (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Filtrar grupos..."
-                value={groupFilter}
-                onChange={(e) => onGroupFilterChange(e.target.value)}
-                className="h-9 pl-9 text-sm"
-              />
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-2 max-h-[40vh] overflow-y-auto">
-            {filteredGroups.length === 0 && !loading ? (
-              <p className="text-sm text-slate-400 py-2 col-span-2 text-center">
-                Nenhum grupo encontrado
-              </p>
-            ) : (
-              filteredGroups.map((group) => (
-                <GroupChip
-                  key={group.id}
-                  group={group}
-                  isSelected={selectedGroupId === group.id.toString()}
-                  onSelect={onGroupSelect}
+        {filterByGroup && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+              Grupo
+            </p>
+            {groups.length > 8 && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Filtrar grupos..."
+                  value={groupFilter}
+                  onChange={(e) => onGroupFilterChange(e.target.value)}
+                  className="h-9 pl-9 text-sm"
                 />
-              ))
+              </div>
             )}
+            <div className="grid grid-cols-2 gap-2 max-h-[40vh] overflow-y-auto">
+              {filteredGroups.length === 0 && !loading ? (
+                <p className="text-sm text-slate-400 py-2 col-span-2 text-center">
+                  Nenhum grupo encontrado
+                </p>
+              ) : (
+                filteredGroups.map((group) => (
+                  <GroupChip
+                    key={group.id}
+                    group={group}
+                    isSelected={selectedGroupId === group.id.toString()}
+                    onSelect={onGroupSelect}
+                  />
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── Products grid ── */}
-        {selectedGroupId && (
+        {(!filterByGroup || selectedGroupId) && (
           <div className="space-y-2">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
               Produto
@@ -429,6 +451,7 @@ export default function EstoqueTransitoPage() {
     useState<ConservationMode>("REFRIGERADO");
   const [productResponsible, setProductResponsible] = useState("");
   const [productQuantity, setProductQuantity] = useState<number>(1);
+  const [filterByGroup, setFilterByGroup] = useState(false);
 
   // ────── Queries ──────
   const { data: members = [] } = useQuery<Member[], Error>({
@@ -462,13 +485,13 @@ export default function EstoqueTransitoPage() {
   }, [organizationId]);
 
   useEffect(() => {
-    if (selectedGroupId && organizationId) {
-      loadProducts(selectedGroupId);
+    if ((selectedGroupId || !filterByGroup) && organizationId) {
+      loadProducts(filterByGroup ? selectedGroupId : undefined);
     } else {
       setProducts([]);
       setSelectedProductId("");
     }
-  }, [selectedGroupId, organizationId]);
+  }, [selectedGroupId, filterByGroup, organizationId]);
 
   useEffect(() => {
     if (selectedProductId && organizationId) {
@@ -514,11 +537,15 @@ export default function EstoqueTransitoPage() {
     }
   };
 
-  const loadProducts = async (groupId: string) => {
+  const loadProducts = async (groupId?: string) => {
     try {
       setLoading(true);
       const all = await ProductService.getProducts(organizationId);
-      setProducts(all.filter((p) => p.groupId === parseInt(groupId)));
+      if (groupId) {
+        setProducts(all.filter((p) => p.groupId === parseInt(groupId)));
+      } else {
+        setProducts(all);
+      }
     } catch (error) {
       console.error("Error loading products:", error);
       toast.error("Erro ao carregar produtos");
@@ -758,7 +785,7 @@ export default function EstoqueTransitoPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center p-4 border-b bg-white sticky top-0 z-20">
+      <div className="flex items-center p-4 border-b bg-white sticky top-0 z-20 rounded-xl">
         <Button
           variant="ghost"
           size="icon"
@@ -810,6 +837,11 @@ export default function EstoqueTransitoPage() {
               onGroupFilterChange={setGroupFilter}
               onProductFilterChange={setProductFilter}
               onCreateProduct={handleCreateProduct}
+              filterByGroup={filterByGroup}
+              onFilterByGroupChange={(v) => {
+                setFilterByGroup(v);
+                if (!v) setSelectedGroupId("");
+              }}
             />
 
             {/* 2 – Form fields (always visible) */}
@@ -929,6 +961,11 @@ export default function EstoqueTransitoPage() {
               onGroupFilterChange={setGroupFilter}
               onProductFilterChange={setProductFilter}
               onCreateProduct={handleCreateProduct}
+              filterByGroup={filterByGroup}
+              onFilterByGroupChange={(v) => {
+                setFilterByGroup(v);
+                if (!v) setSelectedGroupId("");
+              }}
             />
 
             {/* 2 – Form fields (always visible) */}
@@ -957,7 +994,7 @@ export default function EstoqueTransitoPage() {
                   onQuantityChange={setProductQuantity}
                 />
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="product-manufacturing">
                       Fabricação <span className="text-destructive">*</span>
@@ -986,7 +1023,7 @@ export default function EstoqueTransitoPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="product-opening">Abertura</Label>
                     <Input

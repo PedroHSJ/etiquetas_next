@@ -293,12 +293,12 @@ export function GenericTable<T extends object>({
         )}
 
         {/* Tabela */}
-        <div className="border rounded-lg">
+        <div className="border rounded-lg overflow-hidden shadow-sm">
           <Table>
-            <TableHeader className="bg-accent">
+            <thead className="bg-accent">
               <TableRow>
                 {selectable && (
-                  <TableHead className="w-[50px]">
+                  <TableHead className="w-[50px] rounded-2xl">
                     <Checkbox
                       checked={isAllSelected}
                       onCheckedChange={handleSelectAll}
@@ -328,7 +328,7 @@ export function GenericTable<T extends object>({
                   </TableHead>
                 )}
               </TableRow>
-            </TableHeader>
+            </thead>
             <TableBody>
               {loading ? (
                 <TableRow>

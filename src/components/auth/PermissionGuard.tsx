@@ -35,7 +35,7 @@ export function CodePermissionGuard({
     return loadingFallback ? <>{loadingFallback}</> : null;
   }
 
-  if (!hasPermissionByCode(code)) {
+  if (!hasPermissionByCode(code) && !loading) {
     return fallback ? (
       <>{fallback}</>
     ) : (
@@ -124,7 +124,7 @@ export function PermissionGuard({
     return null;
   }
 
-  if (!hasPermission(funcionalidade, acao)) {
+  if (!loading && !hasPermission(funcionalidade, acao)) {
     return (
       fallback || (
         <div className="flex items-center justify-center p-4 text-center">

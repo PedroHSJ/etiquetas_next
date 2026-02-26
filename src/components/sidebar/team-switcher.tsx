@@ -10,6 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronsUpDown, User } from "lucide-react";
@@ -22,6 +28,7 @@ export function TeamSwitcher() {
     useProfile();
   const { setSelectedOrganization, selectedOrganization } = useOrganization();
   const [open, setOpen] = useState(false);
+  const { isMobile } = useSidebar();
 
   // Selecionar automaticamente se houver apenas um perfil
   useEffect(() => {
@@ -79,14 +86,18 @@ export function TeamSwitcher() {
 
   if (!activeProfile || userProfiles.length === 0) {
     return (
-      <div className="flex items-center space-x-2 px-3 py-2">
-        <div className="h-8 w-8 rounded-md bg-muted">
-          <User className="h-4 w-4 m-2 text-muted-foreground" />
-        </div>
-        <span className="text-sm text-muted-foreground">
-          Nenhum perfil disponível
-        </span>
-      </div>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <div className="flex items-center space-x-2 px-3 py-2">
+            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+              <User className="h-4 w-4 text-foreground" />
+            </div>
+            <span className="text-sm text-foreground group-data-[collapsible=icon]:hidden">
+              Nenhum perfil disponível
+            </span>
+          </div>
+        </SidebarMenuItem>
+      </SidebarMenu>
     );
   }
 
@@ -96,79 +107,81 @@ export function TeamSwitcher() {
   };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          aria-label="Selecionar perfil"
-          className="w-full justify-between px-3 py-6 min-w-0"
-        >
-          <div className="flex items-center space-x-2 min-w-0 flex-1">
-            <Avatar className="h-6 w-6 shrink-0">
-              <AvatarFallback className="text-xs">
-                {activeProfile?.profile?.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col items-start text-left min-w-0 flex-1">
-              <span className="text-sm font-medium leading-none truncate max-w-full">
-                {activeProfile?.profile?.name}
-              </span>
-              <span className="text-xs leading-none text-muted-foreground truncate max-w-full">
-                {activeProfile?.userOrganization?.organization?.name}
-              </span>
-            </div>
-          </div>
-          <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        className="w-56 max-w-[calc(100vw-2rem)]"
-        align="start"
-        forceMount
-      >
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              Perfis disponíveis
-            </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              Selecione um perfil para alternar
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {userProfiles.map((profile) => (
-          <DropdownMenuItem
-            key={profile.id}
-            className="cursor-pointer"
-            onClick={() => {
-              const org = profile.userOrganization?.organization;
-              if (org) {
-                setSelectedOrganization(org as unknown as Organization);
-              }
-              handleProfileChange(profile as unknown as UserProfile);
-            }}
-          >
-            <div className="flex items-center space-x-2 min-w-0 flex-1">
-              <Avatar className="h-6 w-6 shrink-0">
-                <AvatarFallback className="text-xs">
-                  {profile?.profile?.name?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-sm font-medium leading-none truncate">
-                  {profile?.profile?.name}
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarFallback className="rounded-lg text-xs font-bold flex items-center justify-center bg-sidebar-primary text-sidebar-primary-foreground border-none">
+                    {activeProfile?.profile?.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold text-sidebar-foreground">
+                  {activeProfile?.profile?.name}
                 </span>
-                <span className="text-xs leading-none text-muted-foreground truncate">
-                  {profile.userOrganization?.organization?.name}
+                <span className="truncate text-xs text-sidebar-foreground">
+                  {activeProfile?.userOrganization?.organization?.name}
                 </span>
               </div>
-            </div>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+              <ChevronsUpDown className="ml-auto size-4 text-sidebar-foreground" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            align="start"
+            side={isMobile ? "bottom" : "right"}
+            sideOffset={4}
+          >
+            <DropdownMenuLabel className="font-normal text-sidebar-foreground">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  Perfis disponíveis
+                </p>
+                <p className="text-xs leading-none text-sidebar-foreground opacity-70">
+                  Selecione um perfil para alternar
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {userProfiles.map((profile) => (
+              <DropdownMenuItem
+                key={profile.id}
+                className="cursor-pointer gap-3 p-2"
+                onClick={() => {
+                  const org = profile.userOrganization?.organization;
+                  if (org) {
+                    setSelectedOrganization(org as unknown as Organization);
+                  }
+                  handleProfileChange(profile as unknown as UserProfile);
+                }}
+              >
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-muted text-foreground">
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg text-xs font-bold text-foreground">
+                      {profile?.profile?.name?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium text-sidebar-foreground">
+                    {profile?.profile?.name}
+                  </span>
+                  <span className="truncate text-xs text-sidebar-foreground opacity-70">
+                    {profile.userOrganization?.organization?.name}
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }

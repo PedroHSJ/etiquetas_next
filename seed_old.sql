@@ -233,9 +233,7 @@ INSERT INTO public.products (name, group_id) VALUES
 ('Pepino', 2),
 ('Óleo de milho', 4),
 ('Presunto', 6),
-('Salame', 6);
-
-INSERT INTO public.products (id, name, group_id) VALUES 
+('Salame', 6),
 (132, 'Queijo parmesão', 7),
 (133, 'Requeijão', 7),
 (134, 'Melaço', 9),

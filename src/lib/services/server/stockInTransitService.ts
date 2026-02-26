@@ -7,6 +7,7 @@ import {
   CreateStockInTransitDto,
   UpdateStockInTransitDto,
 } from "@/types/dto/stock-in-transit/request";
+import { StockBackendService } from "./stockService";
 
 export class StockInTransitBackendService {
   constructor() {}
@@ -138,5 +139,29 @@ export class StockInTransitBackendService {
     await prisma.stock_in_transit.delete({
       where: { id },
     });
+  }
+
+  async discard(
+    id: string,
+    userId: string,
+    organizationId: string,
+  ): Promise<void> {
+    const item = await this.getById(id);
+    const stockService = new StockBackendService();
+
+    // Register movement (which also subtracts from main stock)
+    await stockService.registerMovement({
+      productId: item.productId,
+      movementType: "SAIDA",
+      quantity: item.quantity,
+      userId: userId,
+      organizationId: organizationId,
+      observation: `Descarte do estoque em trânsito. Obs: ${item.observations || "-"}`,
+      unitOfMeasureCode: item.unitOfMeasureCode,
+      skipStockUpdate: true,
+    });
+
+    // Remove from in-transit
+    await this.delete(id);
   }
 }

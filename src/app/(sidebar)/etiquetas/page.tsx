@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useEffect, useState } from "react";
 import { Grupo, Produto } from "@/types/etiquetas";
 import { useMobile } from "@/hooks/use-mobile";
@@ -44,6 +45,7 @@ export default function Page() {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [tipoEtiqueta, setTipoEtiqueta] = useState<string>("produto_aberto");
+  const [porGrupo, setPorGrupo] = useState(true);
   const isMobile = useMobile();
 
   // Buscar grupos ao carregar
@@ -72,16 +74,21 @@ export default function Page() {
     fetchGrupos();
   }, []);
 
-  // Buscar produtos do grupo selecionado
+  // Buscar produtos do grupo selecionado ou todos dependendo do toggle
   useEffect(() => {
-    if (!grupoSelecionado) {
+    if (porGrupo && !grupoSelecionado) {
       setProdutos([]);
       return;
     }
     async function fetchProdutos() {
       setCarregando(true);
       try {
-        const res = await fetch(`/api/products?groupId=${grupoSelecionado}`);
+        const url =
+          porGrupo && grupoSelecionado
+            ? `/api/products?groupId=${grupoSelecionado}`
+            : `/api/products`;
+
+        const res = await fetch(url);
         const data = await res.json();
         if (res.ok && Array.isArray(data)) {
           setProdutos(data);
@@ -92,7 +99,7 @@ export default function Page() {
       setCarregando(false);
     }
     fetchProdutos();
-  }, [grupoSelecionado]);
+  }, [grupoSelecionado, porGrupo]);
 
   // Filtragem
   const gruposFiltrados = grupos.filter((g) =>
@@ -189,16 +196,34 @@ export default function Page() {
         </div>
 
         <Card className="">
-          <CardHeader>
-            {grupoSelecionado ? (
-              <p className="text-lg font-medium">Selecione o produto</p>
-            ) : (
-              <p className="text-lg font-medium">Selecione o grupo</p>
-            )}
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 gap-4">
+            <div>
+              {porGrupo && !grupoSelecionado ? (
+                <p className="text-lg font-medium">Selecione o grupo</p>
+              ) : (
+                <p className="text-lg font-medium">Selecione o produto</p>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label
+                htmlFor="por-grupo"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Filtrar por Grupo
+              </Label>
+              <Switch
+                id="por-grupo"
+                checked={porGrupo}
+                onCheckedChange={(checked) => {
+                  setPorGrupo(checked);
+                  if (!checked) setGrupoSelecionado(null);
+                }}
+              />
+            </div>
           </CardHeader>
           <CardContent className="h-[420px] overflow-y-auto">
             {carregando && <div className="text-gray-500">Carregando...</div>}
-            {!grupoSelecionado ? (
+            {porGrupo && !grupoSelecionado ? (
               <div className="flex flex-col gap-3">
                 <input
                   type="text"
@@ -211,7 +236,7 @@ export default function Page() {
                   {gruposFiltrados.map((grupo) => (
                     <li
                       key={grupo.id}
-                      className="py-2 cursor-pointer hover:bg-emerald-50 px-2 rounded"
+                      className="py-2 cursor-pointer hover:bg-muted px-2 rounded"
                       onClick={() => setGrupoSelecionado(grupo.id)}
                     >
                       {grupo.name || grupo.nome}
@@ -226,12 +251,14 @@ export default function Page() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <button
-                  className="text-sm text-emerald-700 underline w-fit mb-2"
-                  onClick={() => setGrupoSelecionado(null)}
-                >
-                  ← Voltar para grupos
-                </button>
+                {porGrupo && (
+                  <button
+                    className="text-sm text-primary underline w-fit mb-2"
+                    onClick={() => setGrupoSelecionado(null)}
+                  >
+                    ← Voltar para grupos
+                  </button>
+                )}
                 <input
                   type="text"
                   placeholder="Filtrar produtos..."
@@ -243,7 +270,7 @@ export default function Page() {
                   {produtosFiltrados.map((produto) => (
                     <li
                       key={produto.id}
-                      className="py-2 px-2 cursor-pointer hover:bg-emerald-50 rounded"
+                      className="py-2 px-2 cursor-pointer hover:bg-muted rounded"
                       onClick={() => handleProdutoClick(produto)}
                     >
                       {produto.name || produto.nome}

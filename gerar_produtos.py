@@ -8,8 +8,8 @@ from sentence_transformers import SentenceTransformer, util
 print("Inicializando modelos...")
 embedder = SentenceTransformer('all-MiniLM-L6-v2')
 
-SEED_FILE = "supabase/seed.sql"
-OUTPUT_FILE = "supabase/seed_novos_produtos.sql"
+SEED_FILE = "seed.sql"
+OUTPUT_FILE = "seed_novos_produtos.sql"
 OLLAMA_MODEL = "llama3"
 
 def extract_groups(sql_content):
@@ -65,33 +65,20 @@ def generate_new_products(existing_names, count=1000):
     for i in range(batches):
         print(f"Buscando Lote {i+1}/{batches}...")
         
-        # Rotaciona o foco de cada lote para forçar a IA a criar coisas realistas e variadas
-        foco = "mantimentos gerais e grãos base da alimentação"
-        if i % 5 == 0:
-            foco = "CORTES ESPECÍFICOS E REAIS DE CARNE BOVINA (ex: Acém moído, Contrafilé porcionado, Picanha peça, Alcatra, Cupim, Costela minga, Fraldinha, Patinho, Coxão Duro, Lagarto, etc). Crie diferentes cortes e preparos (em cubos, moído, peça, bife)."
-        elif i % 5 == 1:
-            foco = "CORTES ESPECÍFICOS E REAIS DE CARNE SUÍNA E AVES (ex: Costelinha suína, Pernil sem osso, Lombo fatiado, Toucinho, Filé de peito de frango, Sobrecoxa desossada, Coração de frango, etc). Crie diferentes cortes e preparos."
-        elif i % 5 == 2:
-            foco = "HORTIFRUTI, verduras, frutas e legumes frescos encontrados no Brasil. Frutas maduras, verduras higienizadas, legumes picados, batata, cebola, alho, etc."
-        elif i % 5 == 3:
-            foco = "LATICÍNIOS, LEITE E DERIVADOS: Múltiplas variações e embalagens de LEITE (Leite integral UHT engradado, Leite desnatado 1L, Leite em pó lata 400g, Leite condensado, Creme de Leite 200g, Creme de Leite fresco 1L, Manteiga pote 500g). Foque pesadamente em derivados lácteos reais e diferentes queijos (Prato, Muçarela peça, Coalho, Provolone)."
-            
         historico_recentes = ", ".join(new_products[-30:]) if new_products else "Nenhum ainda."
         
         prompt = f"""
-Você é o comprador-chefe (Gerente de Suprimentos) de um Restaurante ou Cozinha Industrial no Brasil.
-Gere uma lista de exatamente {batch_size} produtos de estoque REALISTAS (ingredientes bases).
-Se nunca houver gerado neste lote, lembre-se OBRIGATORIAMENTE dos itens vitais: "Leite Integral UHT", "Óleo de Soja", "Feijão Carioca", "Arroz Branco".
+        Você é o comprador-chefe (Gerente de Suprimentos) de um Restaurante ou Cozinha Industrial no Brasil.
+        Gere uma lista de exatamente {batch_size} produtos de estoque REALISTAS (ingredientes bases).
 
-FOCO DESSE LOTE DE REQUISIÇÃO (MUITO IMPORTANTE):
->>> {foco} <<<
-
-REGRAS RÍGIDAS (ATENÇÃO!):
-1. Retorne APENAS um JSON array de strings. NADA MAIS. Formato ["Produto 1", "Produto 2"].
-2. PROIBIDO: Carnes exóticas (rã, javali, avestruz, pato, codorna, faisão, macaco, tatu, etc).
-3. PROIBIDO: Ingredientes irreais ou absurdos. Use apenas o que se compra em atacados brasileiros comuns.
-4. Tente criar nomes com especificações de embalagem, ex: "Leite de Coco 200ml", "Óleo de Soja 900ml", "Coxão Mole Resfriado a vácuo".
-5. NÃO repita esses produtos: {historico_recentes[:500]}
+        REGRAS RÍGIDAS (ATENÇÃO!):
+        1. Retorne APENAS um JSON array de strings. NADA MAIS. Formato ["Produto 1", "Produto 2"].
+        2. PROIBIDO: Carnes exóticas (rã, javali, avestruz, pato, codorna, faisão, macaco, tatu, etc).
+        3. PROIBIDO: Ingredientes irreais ou absurdos. Use apenas o que se compra em atacados brasileiros comuns e ingredientes de cozinha industrial.
+        4. Tente criar nomes sem especificações de embalagem, ex: "Leite de Coco", "Óleo de Soja", "Coxão Mole".
+        5. NÃO repita esses produtos: {historico_recentes[:500]}
+        6. Não use esse padrão: Castanha-do-Brazil, Leite-Integral
+        7. Todos os produtos devem estar em pt-BR
 """
         try:
             response = ollama.chat(model=OLLAMA_MODEL, messages=[
@@ -114,7 +101,7 @@ REGRAS RÍGIDAS (ATENÇÃO!):
                         if not any(tp in p.lower() for tp in termos_proibidos):
                             new_products.append(p)
                         
-                print(f"  ✅ Lote {i+1} obteve {len(batch_products)} nomes (Foco: {foco[:30]}...). Total: {len(new_products)}")
+                print(f"  ✅ Lote {i+1} obteve {len(batch_products)} nomes. Total: {len(new_products)}")
             else:
                 print(f"  ❌ Lote {i+1} falhou. Não consegui extrair o JSON.")
                 
@@ -157,15 +144,29 @@ def map_and_correct_products(products_list, groups_dict):
     return mapped_products
 
 def run():
-    with open(SEED_FILE, "r", encoding="utf-8") as f:
-        sql_content = f.read()
-
-    groups = extract_groups(sql_content)
-    existing_products = extract_products(sql_content)
-    existing_names = [p["name"] for p in existing_products]
+    groups = {}
+    existing_names = []
     
-    print(f"Grupos encontrados: {len(groups)}")
-    print(f"Produtos atuais válidos: {len(existing_products)}")
+    if os.path.exists(SEED_FILE):
+        print(f"📖 Lendo produtos existentes de {SEED_FILE}...")
+        with open(SEED_FILE, "r", encoding="utf-8") as f:
+            sql_content = f.read()
+        groups = extract_groups(sql_content)
+        existing_products = extract_products(sql_content)
+        existing_names = [p["name"] for p in existing_products]
+    else:
+        print(f"⚠️ Arquivo {SEED_FILE} não encontrado. Iniciando sem produtos base.")
+        # Grupos padrão caso o seed não exista (para o mapeador não falhar)
+        groups = {
+            1: 'Cereais', 2: 'Verduras', 3: 'Frutos', 4: 'Gorduras', 5: 'Pescados',
+            6: 'Carnes', 7: 'Leite', 8: 'Ovos', 9: 'Açúcares', 10: 'Miscelâneas',
+            11: 'Industrializados', 12: 'Preparados', 13: 'Leguminosas', 
+            14: 'Nozes e sementes', 15: 'Frutas', 16: 'Bebidas', 
+            17: 'Conservas', 18: 'Congelados', 19: 'Especiarias', 20: 'Molhos'
+        }
+
+    print(f"Grupos carregados: {len(groups)}")
+    print(f"Produtos atuais conhecidos: {len(existing_names)}")
 
     # Geração!
     new_products_names = generate_new_products(existing_names, count=1000)

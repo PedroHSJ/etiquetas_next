@@ -8,11 +8,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PackageOpen } from "lucide-react";
+import { PackageOpen, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   GenericTable,
   GenericTableColumn,
 } from "@/components/ui/generic-table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/ProfileContext";
 import { StockInTransitResponseDto } from "@/types/dto/stock-in-transit/response";
@@ -40,6 +51,7 @@ export default function EstoqueEmTransitoPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [discardId, setDiscardId] = useState<string | null>(null);
 
   const carregarDados = async () => {
     if (!organizationId) return;
@@ -65,6 +77,21 @@ export default function EstoqueEmTransitoPage() {
       carregarDados();
     }
   }, [page, itemsPerPage, organizationId]);
+
+  const handleDiscard = async () => {
+    if (!discardId) return;
+
+    try {
+      await StockInTransitService.discard(discardId, organizationId);
+      toast.success("Item descartado com sucesso!");
+      carregarDados();
+    } catch (error: any) {
+      console.error("Erro ao descartar item:", error);
+      toast.error(error?.response?.data?.error || "Erro ao descartar o item");
+    } finally {
+      setDiscardId(null);
+    }
+  };
 
   const formatarQuantidade = (quantidade: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -155,11 +182,56 @@ export default function EstoqueEmTransitoPage() {
       visible: true,
       render: (value) => <div>{formatarDataHora(value as string)}</div>,
     },
+    {
+      id: "actions",
+      key: "id",
+      label: "Ações",
+      accessor: (row) => row.id,
+      visible: true,
+      width: 100,
+      render: (value) => (
+        <div className="flex justify-center">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setDiscardId(value as string)}
+            className="flex h-8 items-center gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            Descarte
+          </Button>
+        </div>
+      ),
+    },
   ];
 
   return (
     <ReadGuard module="STOCK">
       <div className="flex-1 space-y-6">
+        <AlertDialog
+          open={!!discardId}
+          onOpenChange={(open) => !open && setDiscardId(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar descarte</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja descartar este item? Ele será removido do
+                estoque em trânsito e gerará um registro de saída no estoque.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={handleDiscard}
+              >
+                Descartar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <EstoqueEmTransitoIcon />
