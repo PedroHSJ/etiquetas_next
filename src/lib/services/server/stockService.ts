@@ -87,8 +87,16 @@ export class StockBackendService {
       prisma.stock.count({ where }),
     ]);
 
+    const formattedData = data.map((item: any) => ({
+      ...item,
+      product: item.products,
+      storageLocation: item.storage_locations,
+      products: undefined,
+      storage_locations: undefined,
+    }));
+
     return {
-      data,
+      data: formattedData,
       total: count,
       page,
       pageSize,
@@ -181,12 +189,14 @@ export class StockBackendService {
     const formattedMovements = movements.map((mov: any) => ({
       ...mov,
       product: mov.products, // Mapear products -> product
-      user: mov.users ? {
-        id: mov.users.id,
-        name: mov.users.name,
-        fullName: mov.users.name,
-        email: mov.users.email,
-      } : undefined, // Mapear users -> user
+      user: mov.users
+        ? {
+            id: mov.users.id,
+            name: mov.users.name,
+            fullName: mov.users.name,
+            email: mov.users.email,
+          }
+        : undefined, // Mapear users -> user
       products: undefined, // Remover o campo original
       users: undefined, // Remover o campo original
     }));
@@ -269,7 +279,9 @@ export class StockBackendService {
     });
 
     if (!unitExists) {
-      throw new Error(`Unidade de medida '${finalUnitCode}' não encontrada. Use uma das unidades válidas: kg, g, l, ml, un, cx, pct`);
+      throw new Error(
+        `Unidade de medida '${finalUnitCode}' não encontrada. Use uma das unidades válidas: kg, g, l, ml, un, cx, pct`,
+      );
     }
 
     return await prisma.$transaction(async (tx: any) => {

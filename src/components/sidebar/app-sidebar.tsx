@@ -16,6 +16,7 @@ import {
   UserCog,
   MapPin,
   Truck,
+  PackageOpen,
 } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -39,6 +40,7 @@ const ROUTE_PERMISSION_MAP: Record<string, string> = {
   "/members": "MEMBERS",
   "/convites": "INVITES",
   "/estoque": "STOCK",
+  "/estoque-em-transito": "STOCK",
   "/enderecamento": "STOCK",
   "/receiving": "STOCK",
   "/etiquetas": "LABELS",
@@ -149,12 +151,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: Mail,
       isActive: pathname.startsWith("/convites"),
     },
-    {
-      title: "Recebimento",
-      url: "/receiving",
-      icon: Truck,
-      isActive: pathname.startsWith("/receiving"),
-    },
+    // {
+    //   title: "Recebimento",
+    //   url: "/receiving",
+    //   icon: Truck,
+    //   isActive: pathname.startsWith("/receiving"),
+    // },
     {
       title: "Estoque",
       url: "/estoque",
@@ -166,7 +168,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           title: "Estoque",
           url: "/estoque",
-          isActive: pathname.startsWith("/estoque"),
+          isActive: pathname === "/estoque",
           icon: Warehouse,
         },
         {
@@ -174,6 +176,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/enderecamento",
           isActive: pathname.startsWith("/enderecamento"),
           icon: MapPin,
+        },
+        {
+          title: "Estoque em Trânsito",
+          url: "/estoque-em-transito",
+          isActive: pathname === "/estoque-em-transito",
+          icon: PackageOpen,
         },
       ],
     },

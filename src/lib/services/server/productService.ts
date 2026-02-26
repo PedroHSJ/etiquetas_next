@@ -15,14 +15,14 @@ export class ProductBackendService {
   }): Promise<any[]> {
     const where: any = {};
     if (params?.organizationId) {
-      where.organizationId = params.organizationId;
+      where.OR = [
+        { organizationId: params.organizationId },
+        { organizationId: null },
+      ];
+      where.isActive = true;
     }
     if (params?.groupId) {
       where.groupId = params.groupId;
-    }
-
-    if (params?.organizationId) {
-      where.isActive = true;
     }
 
     return prisma.products.findMany({
@@ -114,7 +114,7 @@ export class ProductBackendService {
   async getGroups(organizationId: string): Promise<any[]> {
     return prisma.groups.findMany({
       where: {
-        organizationId: organizationId,
+        OR: [{ organizationId: organizationId }, { organizationId: null }],
         isActive: true,
       },
       orderBy: {

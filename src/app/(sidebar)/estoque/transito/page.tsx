@@ -10,19 +10,20 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   ChevronLeft,
-  Package,
   Printer,
   Save,
   AlertCircle,
-  CheckCircle2,
   FlaskConical,
   ShoppingBasket,
   Snowflake,
   Thermometer,
   Sun,
   Check,
+  PlusCircle,
+  Search,
 } from "lucide-react";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { ProductService } from "@/lib/services/client/product-service";
 import { StockInTransitService } from "@/lib/services/client/stock-in-transit-service";
 import { LabelPrinterService } from "@/lib/services/client/label-printer-service";
@@ -31,7 +32,6 @@ import {
   ProductResponseDto as Product,
   ProductGroupResponseDto as ProductGroup,
 } from "@/types/dto/product/response";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { MemberResponseDto as Member } from "@/types/dto/member/response";
@@ -44,74 +44,89 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UNIT_OF_MEASURE_OPTIONS } from "@/types/stock/product";
 
 type ConservationMode = "REFRIGERADO" | "CONGELADO" | "AMBIENTE";
 
-interface SelectableCardProps {
-  id: string;
-  name: string;
-  isSelected: boolean;
-  onSelect: (id: string) => void;
-  disabled?: boolean;
-  badge?: string;
-  badgeVariant?: "default" | "secondary" | "destructive" | "outline";
-}
-
-function SelectableCard({
-  id,
-  name,
+// ─────────────────────────────────────────────────
+// Reusable sub‑components
+// ─────────────────────────────────────────────────
+function GroupChip({
+  group,
   isSelected,
   onSelect,
-  disabled,
-  badge,
-  badgeVariant = "secondary",
-}: SelectableCardProps) {
+}: {
+  group: ProductGroup;
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+}) {
   return (
     <button
       type="button"
-      disabled={disabled}
-      onClick={() => onSelect(id)}
+      onClick={() => onSelect(group.id.toString())}
       className={cn(
-        "relative w-full p-4 rounded-xl border-2 text-left transition-all duration-200",
-        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        "relative w-full p-4 rounded-xl border-2 text-left transition-all duration-150 overflow-hidden",
         isSelected
-          ? "border-primary bg-primary/5 shadow-md"
-          : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm",
-        disabled && "opacity-50 cursor-not-allowed",
+          ? "border-primary bg-primary/5 shadow-md ring-1 ring-primary/20"
+          : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm active:bg-slate-50",
       )}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-2">
         <span
           className={cn(
-            "font-medium text-sm",
+            "font-medium text-xs leading-tight text-wrap",
             isSelected ? "text-primary" : "text-slate-700",
           )}
         >
-          {name}
+          {group.name}
         </span>
-        <div className="flex items-center gap-2">
-          {badge && (
-            <Badge variant={badgeVariant} className="text-xs">
-              {badge}
-            </Badge>
-          )}
-          {isSelected && (
-            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-              <Check className="h-4 w-4 text-white" />
-            </div>
-          )}
-        </div>
+        {isSelected && (
+          <div className="shrink-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+            <Check className="h-3 w-3 text-white" />
+          </div>
+        )}
       </div>
     </button>
   );
 }
 
-interface ConservationOptionProps {
-  mode: ConservationMode;
-  label: string;
-  icon: React.ReactNode;
+function ProductCard({
+  product,
+  isSelected,
+  onSelect,
+}: {
+  product: Product;
   isSelected: boolean;
-  onSelect: (mode: ConservationMode) => void;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(product.id.toString())}
+      className={cn(
+        "relative w-full p-3.5 rounded-xl border-2 text-left transition-all duration-150",
+        isSelected
+          ? "border-primary bg-primary/5 shadow-md ring-1 ring-primary/20"
+          : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm active:bg-slate-50",
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span
+          className={cn(
+            "font-medium text-xs leading-tight",
+            isSelected ? "text-primary" : "text-slate-700",
+          )}
+        >
+          {product.name}
+        </span>
+        {isSelected && (
+          <div className="shrink-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+            <Check className="h-3 w-3 text-white" />
+          </div>
+        )}
+      </div>
+    </button>
+  );
 }
 
 function ConservationOption({
@@ -120,31 +135,36 @@ function ConservationOption({
   icon,
   isSelected,
   onSelect,
-}: ConservationOptionProps) {
+}: {
+  mode: ConservationMode;
+  label: string;
+  icon: React.ReactNode;
+  isSelected: boolean;
+  onSelect: (mode: ConservationMode) => void;
+}) {
   return (
     <button
       type="button"
       onClick={() => onSelect(mode)}
       className={cn(
-        "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
-        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-150",
         isSelected
           ? "border-primary bg-primary/10 shadow-md"
-          : "border-slate-200 bg-white hover:border-slate-300",
+          : "border-slate-200 bg-white hover:border-slate-300 active:bg-slate-50",
       )}
     >
       <div
         className={cn(
-          "w-12 h-12 rounded-full flex items-center justify-center",
-          isSelected ? "bg-primary text-white" : "bg-slate-100 text-slate-600",
+          "w-10 h-10 rounded-full flex items-center justify-center",
+          isSelected ? "bg-primary text-white" : "bg-slate-100 text-slate-500",
         )}
       >
         {icon}
       </div>
       <span
         className={cn(
-          "text-xs font-medium text-center",
-          isSelected ? "text-primary" : "text-slate-600",
+          "text-[11px] font-medium text-center leading-tight",
+          isSelected ? "text-primary" : "text-slate-500",
         )}
       >
         {label}
@@ -153,71 +173,271 @@ function ConservationOption({
   );
 }
 
+// ─────────────────────────────────────────────────
+// Shared: Product picker section used by both tabs
+// ─────────────────────────────────────────────────
+function ProductPickerSection({
+  groups,
+  products,
+  loading,
+  selectedGroupId,
+  selectedProductId,
+  groupFilter,
+  productFilter,
+  onGroupSelect,
+  onProductSelect,
+  onGroupFilterChange,
+  onProductFilterChange,
+  onCreateProduct,
+}: {
+  groups: ProductGroup[];
+  products: Product[];
+  loading: boolean;
+  selectedGroupId: string;
+  selectedProductId: string;
+  groupFilter: string;
+  productFilter: string;
+  onGroupSelect: (id: string) => void;
+  onProductSelect: (id: string) => void;
+  onGroupFilterChange: (v: string) => void;
+  onProductFilterChange: (v: string) => void;
+  onCreateProduct: (name: string) => void;
+}) {
+  const filteredGroups = groups.filter((g) =>
+    g.name.toLowerCase().includes(groupFilter.toLowerCase()),
+  );
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(productFilter.toLowerCase()),
+  );
+
+  return (
+    <Card className="border-none shadow-sm overflow-hidden">
+      <CardHeader className="pb-3 border-b">
+        <CardTitle className="text-sm font-semibold text-slate-600">
+          Produto
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4 space-y-4">
+        {/* ── Groups: vertical grid ── */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+            Grupo
+          </p>
+          {groups.length > 8 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Filtrar grupos..."
+                value={groupFilter}
+                onChange={(e) => onGroupFilterChange(e.target.value)}
+                className="h-9 pl-9 text-sm"
+              />
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2 max-h-[40vh] overflow-y-auto">
+            {filteredGroups.length === 0 && !loading ? (
+              <p className="text-sm text-slate-400 py-2 col-span-2 text-center">
+                Nenhum grupo encontrado
+              </p>
+            ) : (
+              filteredGroups.map((group) => (
+                <GroupChip
+                  key={group.id}
+                  group={group}
+                  isSelected={selectedGroupId === group.id.toString()}
+                  onSelect={onGroupSelect}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* ── Products grid ── */}
+        {selectedGroupId && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+              Produto
+            </p>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Buscar produto..."
+                value={productFilter}
+                onChange={(e) => onProductFilterChange(e.target.value)}
+                className="h-9 pl-9 text-sm"
+              />
+            </div>
+            {loading ? (
+              <p className="text-center text-slate-400 py-4 text-sm">
+                Carregando...
+              </p>
+            ) : filteredProducts.length === 0 ? (
+              <div className="flex flex-col items-center p-5 bg-slate-50 border border-dashed rounded-xl">
+                <p className="text-sm text-slate-500 mb-3 text-center">
+                  <strong>&quot;{productFilter || "..."}&quot;</strong> não
+                  encontrado.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    onCreateProduct(productFilter || "Novo Produto")
+                  }
+                  disabled={loading}
+                >
+                  <PlusCircle className="mr-1.5 h-4 w-4" />
+                  Cadastrar e selecionar
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-[40vh] overflow-y-auto">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isSelected={selectedProductId === product.id.toString()}
+                    onSelect={onProductSelect}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────
+// Unit of Measure selector
+// ─────────────────────────────────────────────────
+function UnitOfMeasureField({
+  stockUnit,
+  value,
+  onChange,
+  quantity,
+  onQuantityChange,
+}: {
+  stockUnit: string | null; // null = no stock → user picks
+  value: string;
+  onChange: (v: string) => void;
+  quantity: number;
+  onQuantityChange: (v: number) => void;
+}) {
+  const unitLocked = !!stockUnit;
+
+  return (
+    <div className="space-y-2">
+      <Label>
+        Quantidade <span className="text-destructive">*</span>
+      </Label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <Input
+          type="number"
+          min="0.001"
+          step="0.001"
+          className="h-12 flex-1"
+          value={quantity}
+          onChange={(e) => onQuantityChange(Number(e.target.value))}
+        />
+        {unitLocked ? (
+          <div className="flex h-12 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-500 min-w-[60px]">
+            {stockUnit}
+          </div>
+        ) : (
+          <Select value={value} onValueChange={onChange}>
+            <SelectTrigger className="h-full w-full">
+              <SelectValue placeholder="un" />
+            </SelectTrigger>
+            <SelectContent>
+              {UNIT_OF_MEASURE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.value}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────
+// Main page
+// ─────────────────────────────────────────────────
 export default function EstoqueTransitoPage() {
   const router = useRouter();
   const { activeProfile } = useProfile();
+  const { user } = useAuth();
   const organizationId =
     activeProfile?.userOrganization?.organization?.id || "";
+  const isGestor =
+    activeProfile?.profile?.name?.toLowerCase().includes("gestor") || false;
 
-  // Tab state
+  // Tab
   const [activeTab, setActiveTab] = useState<"amostras" | "produtos">(
     "amostras",
   );
 
-  // Data state
+  // Data
   const [groups, setGroups] = useState<ProductGroup[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Selection state
-  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
-  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  // Selection (shared)
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [groupFilter, setGroupFilter] = useState("");
+  const [productFilter, setProductFilter] = useState("");
+
+  // Stock info (null = not checked yet, { quantity: 0 } = no stock)
   const [stockInfo, setStockInfo] = useState<{
     quantity: number;
     unit: string;
   } | null>(null);
 
-  // Filter state
-  const [groupFilter, setGroupFilter] = useState<string>("");
-  const [productFilter, setProductFilter] = useState<string>("");
+  // Custom unit (only used when stockInfo.quantity === 0)
+  const [customUnit, setCustomUnit] = useState("un");
 
-  // Filtered data
-  const filteredGroups = groups.filter((group) =>
-    group.name.toLowerCase().includes(groupFilter.toLowerCase()),
-  );
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(productFilter.toLowerCase()),
-  );
+  // The effective unit
+  const effectiveUnit =
+    stockInfo && stockInfo.quantity > 0 ? stockInfo.unit : null;
 
-  // ====== SAMPLES - Form State ======
-  const [sampleName, setSampleName] = useState<string>("");
-  const [sampleTime, setSampleTime] = useState<string>("");
-  const [sampleCollectionDate, setSampleCollectionDate] = useState<string>(
+  // ====== SAMPLES state ======
+  const [sampleName, setSampleName] = useState("");
+  const [sampleTime, setSampleTime] = useState("");
+  const [sampleCollectionDate, setSampleCollectionDate] = useState(
     new Date().toISOString().split("T")[0],
   );
-  const [sampleDiscardDate, setSampleDiscardDate] = useState<string>("");
-  const [sampleResponsible, setSampleResponsible] = useState<string>("");
+  const [sampleDiscardDate, setSampleDiscardDate] = useState("");
+  const [sampleResponsible, setSampleResponsible] = useState("");
+  const [sampleQuantity, setSampleQuantity] = useState<number>(1);
 
-  // ====== PRODUCTS - Form State ======
-  const [productManufacturingDate, setProductManufacturingDate] =
-    useState<string>(new Date().toISOString().split("T")[0]);
-  const [productExpiryDate, setProductExpiryDate] = useState<string>("");
-  const [productOpeningDate, setProductOpeningDate] = useState<string>(
+  // ====== PRODUCTS state ======
+  const [productManufacturingDate, setProductManufacturingDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [productExpiryDate, setProductExpiryDate] = useState("");
+  const [productOpeningDate, setProductOpeningDate] = useState(
     new Date().toISOString().split("T")[0],
   );
   const [productExpiryAfterOpeningDate, setProductExpiryAfterOpeningDate] =
-    useState<string>("");
+    useState("");
   const [productConservationMode, setProductConservationMode] =
     useState<ConservationMode>("REFRIGERADO");
-  const [productResponsible, setProductResponsible] = useState<string>("");
+  const [productResponsible, setProductResponsible] = useState("");
+  const [productQuantity, setProductQuantity] = useState<number>(1);
 
-  const { data: members = [], isLoading } = useQuery<Member[], Error>({
+  // ────── Queries ──────
+  const { data: members = [] } = useQuery<Member[], Error>({
     queryKey: ["members", organizationId],
     queryFn: async () => {
       if (!organizationId) return [];
-      const result = await MemberService.listByOrganization(organizationId);
-      return result as unknown as Member[];
+      return MemberService.listByOrganization(
+        organizationId,
+      ) as unknown as Member[];
     },
     enabled: !!organizationId,
   });
@@ -228,20 +448,18 @@ export default function EstoqueTransitoPage() {
     enabled: !!organizationId,
   });
 
+  // ────── Effects ──────
   useEffect(() => {
-    // Calculate discard date (72 hours = 3 days after collection)
     if (sampleCollectionDate) {
-      const collection = new Date(sampleCollectionDate);
-      collection.setDate(collection.getDate() + 3);
-      setSampleDiscardDate(collection.toISOString().split("T")[0]);
+      const d = new Date(sampleCollectionDate);
+      d.setDate(d.getDate() + 3);
+      setSampleDiscardDate(d.toISOString().split("T")[0]);
     }
   }, [sampleCollectionDate]);
 
   useEffect(() => {
-    if (organizationId && activeTab === "produtos") {
-      loadGroups();
-    }
-  }, [organizationId, activeTab]);
+    if (organizationId) loadGroups();
+  }, [organizationId]);
 
   useEffect(() => {
     if (selectedGroupId && organizationId) {
@@ -260,6 +478,29 @@ export default function EstoqueTransitoPage() {
     }
   }, [selectedProductId, organizationId]);
 
+  useEffect(() => {
+    // Set default responsible to current logged-in user
+    if (user?.name) {
+      if (!sampleResponsible || !isGestor) {
+        setSampleResponsible(user.name);
+      }
+      if (!productResponsible || !isGestor) {
+        setProductResponsible(user.name);
+      }
+    }
+  }, [user?.name, isGestor, sampleResponsible, productResponsible]);
+
+  // Reset selections when switching tabs
+  useEffect(() => {
+    setSelectedGroupId("");
+    setSelectedProductId("");
+    setGroupFilter("");
+    setProductFilter("");
+    setStockInfo(null);
+    setCustomUnit("un");
+  }, [activeTab]);
+
+  // ────── Loaders ──────
   const loadGroups = async () => {
     try {
       setLoading(true);
@@ -267,7 +508,7 @@ export default function EstoqueTransitoPage() {
       setGroups(data);
     } catch (error) {
       console.error("Error loading groups:", error);
-      toast.error("Erro ao carregar grupos de alimentos");
+      toast.error("Erro ao carregar grupos");
     } finally {
       setLoading(false);
     }
@@ -276,12 +517,8 @@ export default function EstoqueTransitoPage() {
   const loadProducts = async (groupId: string) => {
     try {
       setLoading(true);
-      const allProducts = await ProductService.getProducts(organizationId);
-      // console.table(allProducts);
-      const filtered = allProducts.filter(
-        (p) => p.groupId === parseInt(groupId),
-      );
-      setProducts(filtered);
+      const all = await ProductService.getProducts(organizationId);
+      setProducts(all.filter((p) => p.groupId === parseInt(groupId)));
     } catch (error) {
       console.error("Error loading products:", error);
       toast.error("Erro ao carregar produtos");
@@ -298,7 +535,6 @@ export default function EstoqueTransitoPage() {
         organizationId,
         productId: parseInt(productId),
       });
-
       if (stock.data && stock.data.length > 0) {
         setStockInfo({
           quantity: stock.data[0].currentQuantity,
@@ -307,24 +543,60 @@ export default function EstoqueTransitoPage() {
       } else {
         setStockInfo({ quantity: 0, unit: "un" });
       }
-    } catch (error) {
-      console.error("Error checking stock:", error);
+    } catch {
       setStockInfo(null);
     }
   };
 
-  const handleSelectGroup = (id: string) => {
+  // ────── Handlers ──────
+  const handleGroupSelect = (id: string) => {
     setSelectedGroupId(id === selectedGroupId ? "" : id);
     setSelectedProductId("");
+    setProductFilter("");
   };
 
-  const handleSelectProduct = (id: string) => {
+  const handleProductSelect = (id: string) => {
     setSelectedProductId(id === selectedProductId ? "" : id);
   };
 
+  const handleCreateProduct = async (name: string) => {
+    if (!name.trim() || !organizationId || !selectedGroupId) return;
+    try {
+      setLoading(true);
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          groupId: parseInt(selectedGroupId),
+          organizationId,
+        }),
+      });
+      if (!res.ok) throw new Error("Erro via API");
+      const newProduct = await res.json();
+      setProducts((prev) => [...prev, newProduct]);
+      setSelectedProductId(newProduct.id.toString());
+      setProductFilter("");
+      toast.success("Produto cadastrado!");
+    } catch {
+      toast.error("Erro ao cadastrar produto");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ────── Validation ──────
   const validateSampleForm = (): boolean => {
+    if (!selectedProductId) {
+      toast.error("Selecione um produto");
+      return false;
+    }
     if (!sampleName.trim()) {
       toast.error("Preencha o nome da amostra");
+      return false;
+    }
+    if (sampleQuantity <= 0) {
+      toast.error("A quantidade deve ser maior que zero");
       return false;
     }
     if (!sampleTime) {
@@ -336,7 +608,7 @@ export default function EstoqueTransitoPage() {
       return false;
     }
     if (!sampleResponsible.trim()) {
-      toast.error("Preencha o responsável");
+      toast.error("Selecione o responsável");
       return false;
     }
     return true;
@@ -345,6 +617,10 @@ export default function EstoqueTransitoPage() {
   const validateProductForm = (): boolean => {
     if (!selectedProductId) {
       toast.error("Selecione um produto");
+      return false;
+    }
+    if (productQuantity <= 0) {
+      toast.error("A quantidade deve ser maior que zero");
       return false;
     }
     if (!productManufacturingDate) {
@@ -356,52 +632,50 @@ export default function EstoqueTransitoPage() {
       return false;
     }
     if (!productResponsible.trim()) {
-      toast.error("Preencha o responsável");
+      toast.error("Selecione o responsável");
       return false;
     }
     return true;
   };
 
+  // ────── Save ──────
+  const resolveUnit = () =>
+    stockInfo && stockInfo.quantity > 0 ? stockInfo.unit : customUnit;
+
   const handleSaveSample = async (print: boolean = false) => {
     if (!validateSampleForm()) return;
-
     try {
       setSaving(true);
 
-      // TODO: Save to database if needed
+      await StockInTransitService.create({
+        productId: parseInt(selectedProductId),
+        quantity: sampleQuantity,
+        unitOfMeasureCode: resolveUnit(),
+        manufacturingDate: sampleCollectionDate,
+        expiryDate: sampleDiscardDate,
+        observations: `AMOSTRA - ${sampleName} (${sampleTime})`,
+        organizationId,
+      });
+      toast.success("Amostra registrada no estoque em trânsito!");
 
       if (print) {
-        // const printerStatus = await LabelPrinterService.checkStatus();
-        const printerStatus = true;
-        if (!printerStatus) {
-          toast.warning(
-            "Agente de impressão não detectado (localhost:5000). A etiqueta não foi impressa.",
-          );
-        } else {
-          const printed = await LabelPrinterService.printSampleLabel(
-            {
-              sampleName: sampleName,
-              collectionTime: sampleTime,
-              collectionDate: sampleCollectionDate,
-              discardDate: sampleDiscardDate,
-              responsibleName: sampleResponsible,
-            },
-            printerName || "LABEL PRINTER", // Fallback final se não configurado
-          );
-
-          if (printed) {
-            toast.success("Etiqueta de amostra enviada para impressão!");
-          } else {
-            toast.error("Falha ao imprimir etiqueta.");
-          }
-        }
-      } else {
-        toast.success("Dados salvos com sucesso!");
+        const printed = await LabelPrinterService.printSampleLabel(
+          {
+            sampleName,
+            collectionTime: sampleTime,
+            collectionDate: sampleCollectionDate,
+            discardDate: sampleDiscardDate,
+            responsibleName: sampleResponsible,
+          },
+          printerName || "LABEL PRINTER",
+        );
+        if (printed) toast.success("Etiqueta enviada para impressão!");
+        else toast.error("Falha ao imprimir.");
       }
 
       router.push("/estoque");
     } catch (error) {
-      console.error("Error saving:", error);
+      console.error(error);
       toast.error("Erro ao processar");
     } finally {
       setSaving(false);
@@ -410,102 +684,81 @@ export default function EstoqueTransitoPage() {
 
   const handleSaveProduct = async (print: boolean = false) => {
     if (!validateProductForm()) return;
-
     try {
       setSaving(true);
-
       const product = products.find(
         (p) => p.id.toString() === selectedProductId,
       );
 
-      // Save to stock in transit
       await StockInTransitService.create({
         productId: parseInt(selectedProductId),
-        quantity: 1,
-        unitOfMeasureCode: stockInfo?.unit || "un",
+        quantity: productQuantity,
+        unitOfMeasureCode: resolveUnit(),
+        manufacturingDate: productManufacturingDate,
         expiryDate: productExpiryDate,
         observations: `Conservação: ${productConservationMode}`,
-        organizationId: organizationId,
+        organizationId,
       });
-
       toast.success("Salvo no estoque em trânsito!");
 
       if (print) {
-        // const printerStatus = await LabelPrinterService.checkStatus();
-        const printerStatus = true;
-        if (!printerStatus) {
-          toast.warning(
-            "Agente de impressão não detectado (localhost:5000). A etiqueta não foi impressa.",
-          );
-        } else {
-          const printed = await LabelPrinterService.printProductLabel(
-            {
-              productName: product?.name || "Produto",
-              manufacturingDate: productManufacturingDate,
-              validityDate: productExpiryDate,
-              openingDate: productOpeningDate,
-              validityAfterOpening: productExpiryAfterOpeningDate,
-              conservationMode: productConservationMode,
-              responsibleName: productResponsible,
-            },
-            printerName || "LABEL PRINTER", // Fallback final se não configurado
-          );
-
-          if (printed) {
-            toast.success("Etiqueta de produto enviada para impressão!");
-          } else {
-            toast.error("Falha ao imprimir etiqueta.");
-          }
-        }
+        const printed = await LabelPrinterService.printProductLabel(
+          {
+            productName: product?.name || "Produto",
+            manufacturingDate: productManufacturingDate,
+            validityDate: productExpiryDate,
+            openingDate: productOpeningDate,
+            validityAfterOpening: productExpiryAfterOpeningDate,
+            conservationMode: productConservationMode,
+            responsibleName: productResponsible,
+          },
+          printerName || "LABEL PRINTER",
+        );
+        if (printed) toast.success("Etiqueta enviada para impressão!");
+        else toast.error("Falha ao imprimir.");
       }
 
       router.push("/estoque");
     } catch (error) {
-      console.error("Error saving:", error);
-      toast.error("Erro ao salvar no estoque em trânsito");
+      console.error(error);
+      toast.error("Erro ao salvar");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSave = (print: boolean = false) => {
-    if (activeTab === "amostras") {
-      handleSaveSample(print);
-    } else {
-      handleSaveProduct(print);
-    }
+  const handleSave = (print: boolean) => {
+    if (activeTab === "amostras") handleSaveSample(print);
+    else handleSaveProduct(print);
   };
 
   const isFormValid = () => {
     if (activeTab === "amostras") {
       return (
+        selectedProductId &&
         sampleName.trim() &&
+        sampleQuantity > 0 &&
         sampleTime &&
         sampleCollectionDate &&
         sampleResponsible.trim()
       );
-    } else {
-      return (
-        selectedProductId &&
-        productManufacturingDate &&
-        productExpiryDate &&
-        productResponsible.trim()
-      );
     }
+    return (
+      selectedProductId &&
+      productQuantity > 0 &&
+      productManufacturingDate &&
+      productExpiryDate &&
+      productResponsible.trim()
+    );
   };
 
-  if (loading && groups.length === 0 && activeTab === "produtos") {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p>Carregando...</p>
-      </div>
-    );
-  }
-
+  // ──────────────────────────────────────────────
+  // Render
+  // ──────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full">
-      {/* Mobile Header */}
-      <div className="flex items-center p-4 border-b">
+      {/* Header */}
+      <div className="flex items-center p-4 border-b bg-white sticky top-0 z-20">
         <Button
           variant="ghost"
           size="icon"
@@ -518,13 +771,13 @@ export default function EstoqueTransitoPage() {
       </div>
 
       {/* Tabs */}
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-4 flex-1 overflow-y-auto pb-28">
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "amostras" | "produtos")}
           className="w-full"
         >
-          <TabsList className="w-full grid grid-cols-2 h-12 bg-slate-100 p-1 rounded-xl">
+          <TabsList className="w-full grid grid-cols-2 h-12 bg-slate-100 p-1 rounded-xl sticky top-0 z-10">
             <TabsTrigger
               value="amostras"
               className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2"
@@ -541,375 +794,288 @@ export default function EstoqueTransitoPage() {
             </TabsTrigger>
           </TabsList>
 
-          <div className="pb-28">
-            {/* SAMPLES TAB */}
-            <TabsContent value="amostras" className="mt-4 space-y-4">
-              <Card className="border-none shadow-sm overflow-hidden">
-                <CardHeader className="pb-3 border-b">
-                  <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                    <FlaskConical className="h-4 w-4 text-purple-600" />
-                    Dados da Amostra
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sample-name">
-                      Nome da Amostra{" "}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="sample-name"
-                      placeholder="Ex: Salada de Frutas"
-                      className="h-12"
-                      value={sampleName}
-                      onChange={(e) => setSampleName(e.target.value)}
-                    />
-                  </div>
+          {/* ═══════ SAMPLES TAB ═══════ */}
+          <TabsContent value="amostras" className="mt-4 space-y-4">
+            {/* 1 – Product picker */}
+            <ProductPickerSection
+              groups={groups}
+              products={products}
+              loading={loading}
+              selectedGroupId={selectedGroupId}
+              selectedProductId={selectedProductId}
+              groupFilter={groupFilter}
+              productFilter={productFilter}
+              onGroupSelect={handleGroupSelect}
+              onProductSelect={handleProductSelect}
+              onGroupFilterChange={setGroupFilter}
+              onProductFilterChange={setProductFilter}
+              onCreateProduct={handleCreateProduct}
+            />
 
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="sample-time">
-                        Horário <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="sample-time"
-                        type="time"
-                        className="h-12"
-                        value={sampleTime}
-                        onChange={(e) => setSampleTime(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="sample-collection">
-                        Data da Coleta{" "}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="sample-collection"
-                        type="date"
-                        className="h-12"
-                        value={sampleCollectionDate}
-                        onChange={(e) =>
-                          setSampleCollectionDate(e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="sample-discard">Data do Descarte</Label>
-                    <Input
-                      id="sample-discard"
-                      type="date"
-                      className="h-12 bg-slate-50"
-                      value={sampleDiscardDate}
-                      onChange={(e) => setSampleDiscardDate(e.target.value)}
-                    />
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      Obs: Descarte após 72 horas
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="sample-responsible">
-                      Responsável <span className="text-destructive">*</span>
-                    </Label>
-                    <Select
-                      value={sampleResponsible}
-                      onValueChange={setSampleResponsible}
-                    >
-                      <SelectTrigger className="w-full h-12">
-                        <SelectValue placeholder="Selecione o responsável" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {((members as any[]) || []).map((member) => (
-                          <SelectItem
-                            key={member.id}
-                            value={member.user?.name || member.id}
-                          >
-                            {member.user?.name || "Usuário"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* PRODUCTS TAB */}
-            <TabsContent value="produtos" className="space-y-4">
-              {/* Group Selection - Show only when no group is selected */}
-              {!selectedGroupId && (
-                <Card className="border-none shadow-sm overflow-hidden">
-                  <CardHeader className="border-b">
-                    <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                      <Package className="h-4 w-4 text-blue-600" />
-                      1. Selecione o Grupo
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-3">
-                    <Input
-                      placeholder="Buscar grupo..."
-                      value={groupFilter}
-                      onChange={(e) => setGroupFilter(e.target.value)}
-                      className="h-10"
-                    />
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto">
-                      {filteredGroups.map((group) => (
-                        <SelectableCard
-                          key={group.id}
-                          id={group.id.toString()}
-                          name={group.name}
-                          isSelected={selectedGroupId === group.id.toString()}
-                          onSelect={handleSelectGroup}
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Product Selection - Show only when a group is selected AND no product selected */}
-              {selectedGroupId && !selectedProductId && (
-                <Card className="border-none shadow-sm overflow-hidden">
-                  <CardHeader className="border-b">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedGroupId("");
-                          setSelectedProductId("");
-                          setProductFilter("");
-                        }}
-                        className="h-8 px-2"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                        <ShoppingBasket className="h-4 w-4 text-green-600" />
-                        2. Selecione o Produto
-                      </CardTitle>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Grupo:{" "}
-                      {
-                        groups.find((g) => g.id.toString() === selectedGroupId)
-                          ?.name
-                      }
-                    </p>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-3">
-                    <Input
-                      placeholder="Buscar produto..."
-                      value={productFilter}
-                      onChange={(e) => setProductFilter(e.target.value)}
-                      className="h-10"
-                    />
-                    {loading ? (
-                      <p className="text-center text-slate-500 py-4">
-                        Carregando produtos...
-                      </p>
-                    ) : filteredProducts.length === 0 ? (
-                      <p className="text-center text-slate-500 py-4">
-                        Nenhum produto encontrado
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto">
-                        {filteredProducts.map((product) => (
-                          <SelectableCard
-                            key={product.id}
-                            id={product.id.toString()}
-                            name={product.name}
-                            isSelected={
-                              selectedProductId === product.id.toString()
-                            }
-                            onSelect={handleSelectProduct}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Stock Status */}
-              {selectedProductId && stockInfo !== null && (
-                <div
-                  className={`flex items-center gap-3 p-4 rounded-xl border ${stockInfo.quantity > 0 ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"}`}
-                >
-                  {stockInfo.quantity > 0 ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5 text-amber-600" />
-                  )}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      {stockInfo.quantity > 0
-                        ? `Em estoque: ${stockInfo.quantity} ${stockInfo.unit}`
-                        : "Produto não encontrado no estoque principal"}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Você pode prosseguir mesmo sem estoque registrado.
-                    </p>
-                  </div>
-                  <Badge
-                    variant={stockInfo.quantity > 0 ? "default" : "outline"}
-                    className={stockInfo.quantity > 0 ? "bg-green-600" : ""}
-                  >
-                    {stockInfo.quantity > 0 ? "OK" : "Indisponível"}
-                  </Badge>
+            {/* 2 – Form fields (always visible) */}
+            <Card className="border-none shadow-sm overflow-hidden">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4 text-purple-600" />
+                  Dados da Amostra
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sample-name">
+                    Nome da Amostra <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="sample-name"
+                    placeholder="Ex: Salada de Frutas"
+                    className="h-12"
+                    value={sampleName}
+                    onChange={(e) => setSampleName(e.target.value)}
+                  />
                 </div>
-              )}
 
-              {/* Product Form - Show only when a product is selected */}
-              {selectedProductId && (
-                <Card className="border-none shadow-sm overflow-hidden">
-                  <CardHeader className="border-b">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedProductId("")}
-                        className="h-8 px-2"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                        📋 3. Informações da Etiqueta
-                      </CardTitle>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Produto:{" "}
-                      {
-                        products.find(
-                          (p) => p.id.toString() === selectedProductId,
-                        )?.name
+                <UnitOfMeasureField
+                  stockUnit={effectiveUnit}
+                  value={customUnit}
+                  onChange={setCustomUnit}
+                  quantity={sampleQuantity}
+                  onQuantityChange={setSampleQuantity}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="sample-time">
+                      Horário <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="sample-time"
+                      type="time"
+                      className="h-12"
+                      value={sampleTime}
+                      onChange={(e) => setSampleTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sample-collection">
+                      Data Coleta <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="sample-collection"
+                      type="date"
+                      className="h-12"
+                      value={sampleCollectionDate}
+                      onChange={(e) => setSampleCollectionDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sample-discard">Data do Descarte</Label>
+                  <Input
+                    id="sample-discard"
+                    type="date"
+                    className="h-12 bg-slate-50"
+                    value={sampleDiscardDate}
+                    onChange={(e) => setSampleDiscardDate(e.target.value)}
+                  />
+                  <p className="text-xs text-slate-400 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Calculado automaticamente (72h após coleta)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>
+                    Responsável <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={sampleResponsible}
+                    onValueChange={setSampleResponsible}
+                    disabled={!isGestor}
+                  >
+                    <SelectTrigger className="w-full h-12">
+                      <SelectValue placeholder="Selecione o responsável" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(members as any[]).map((member) => {
+                        const name =
+                          member.users?.name || member.user?.name || member.id;
+                        return (
+                          <SelectItem key={member.id} value={name}>
+                            {name !== member.id ? name : "Usuário"}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ═══════ PRODUCTS TAB ═══════ */}
+          <TabsContent value="produtos" className="mt-4 space-y-4">
+            {/* 1 – Product picker */}
+            <ProductPickerSection
+              groups={groups}
+              products={products}
+              loading={loading}
+              selectedGroupId={selectedGroupId}
+              selectedProductId={selectedProductId}
+              groupFilter={groupFilter}
+              productFilter={productFilter}
+              onGroupSelect={handleGroupSelect}
+              onProductSelect={handleProductSelect}
+              onGroupFilterChange={setGroupFilter}
+              onProductFilterChange={setProductFilter}
+              onCreateProduct={handleCreateProduct}
+            />
+
+            {/* 2 – Form fields (always visible) */}
+            <Card className="border-none shadow-sm overflow-hidden">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                  📋 Informações da Etiqueta
+                </CardTitle>
+                {selectedProductId && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    Produto:{" "}
+                    {
+                      products.find(
+                        (p) => p.id.toString() === selectedProductId,
+                      )?.name
+                    }
+                  </p>
+                )}
+              </CardHeader>
+              <CardContent className="pt-4 space-y-4">
+                <UnitOfMeasureField
+                  stockUnit={effectiveUnit}
+                  value={customUnit}
+                  onChange={setCustomUnit}
+                  quantity={productQuantity}
+                  onQuantityChange={setProductQuantity}
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="product-manufacturing">
+                      Fabricação <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="product-manufacturing"
+                      type="date"
+                      className="h-12"
+                      value={productManufacturingDate}
+                      onChange={(e) =>
+                        setProductManufacturingDate(e.target.value)
                       }
-                    </p>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="product-manufacturing">
-                          Dt. Fabricação *
-                        </Label>
-                        <Input
-                          id="product-manufacturing"
-                          type="date"
-                          className="h-12"
-                          value={productManufacturingDate}
-                          onChange={(e) =>
-                            setProductManufacturingDate(e.target.value)
-                          }
-                        />
-                      </div>
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="product-expiry">
+                      Validade <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="product-expiry"
+                      type="date"
+                      className="h-12"
+                      value={productExpiryDate}
+                      onChange={(e) => setProductExpiryDate(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="product-expiry">Dt. Validade *</Label>
-                        <Input
-                          id="product-expiry"
-                          type="date"
-                          className="h-12"
-                          value={productExpiryDate}
-                          onChange={(e) => setProductExpiryDate(e.target.value)}
-                        />
-                      </div>
-                    </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="product-opening">Abertura</Label>
+                    <Input
+                      id="product-opening"
+                      type="date"
+                      className="h-12"
+                      value={productOpeningDate}
+                      onChange={(e) => setProductOpeningDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="product-expiry-after-opening">
+                      Val. após abertura
+                    </Label>
+                    <Input
+                      id="product-expiry-after-opening"
+                      type="date"
+                      className="h-12"
+                      value={productExpiryAfterOpeningDate}
+                      onChange={(e) =>
+                        setProductExpiryAfterOpeningDate(e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
 
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="product-opening">Dt. Abertura</Label>
-                        <Input
-                          id="product-opening"
-                          type="date"
-                          className="h-12"
-                          value={productOpeningDate}
-                          onChange={(e) =>
-                            setProductOpeningDate(e.target.value)
-                          }
-                        />
-                      </div>
+                {/* Conservation Mode */}
+                <div className="space-y-2">
+                  <Label>
+                    Conservação <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <ConservationOption
+                      mode="REFRIGERADO"
+                      label="Refrigerado"
+                      icon={<Thermometer className="h-5 w-5" />}
+                      isSelected={productConservationMode === "REFRIGERADO"}
+                      onSelect={setProductConservationMode}
+                    />
+                    <ConservationOption
+                      mode="CONGELADO"
+                      label="Congelado"
+                      icon={<Snowflake className="h-5 w-5" />}
+                      isSelected={productConservationMode === "CONGELADO"}
+                      onSelect={setProductConservationMode}
+                    />
+                    <ConservationOption
+                      mode="AMBIENTE"
+                      label="T° Ambiente"
+                      icon={<Sun className="h-5 w-5" />}
+                      isSelected={productConservationMode === "AMBIENTE"}
+                      onSelect={setProductConservationMode}
+                    />
+                  </div>
+                </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="product-expiry-after-opening">
-                          Validade após Abertura
-                        </Label>
-                        <Input
-                          id="product-expiry-after-opening"
-                          type="date"
-                          className="h-12"
-                          value={productExpiryAfterOpeningDate}
-                          onChange={(e) =>
-                            setProductExpiryAfterOpeningDate(e.target.value)
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    {/* Conservation Mode */}
-                    <div className="space-y-3">
-                      <Label>Modo de Conservação *</Label>
-                      <div className="grid grid-cols-3 gap-3">
-                        <ConservationOption
-                          mode="REFRIGERADO"
-                          label="Refrigerado"
-                          icon={<Thermometer className="h-5 w-5" />}
-                          isSelected={productConservationMode === "REFRIGERADO"}
-                          onSelect={setProductConservationMode}
-                        />
-                        <ConservationOption
-                          mode="CONGELADO"
-                          label="Congelado"
-                          icon={<Snowflake className="h-5 w-5" />}
-                          isSelected={productConservationMode === "CONGELADO"}
-                          onSelect={setProductConservationMode}
-                        />
-                        <ConservationOption
-                          mode="AMBIENTE"
-                          label="T° Ambiente"
-                          icon={<Sun className="h-5 w-5" />}
-                          isSelected={productConservationMode === "AMBIENTE"}
-                          onSelect={setProductConservationMode}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="product-responsible">Responsável *</Label>
-                      <Select
-                        value={productResponsible}
-                        onValueChange={setProductResponsible}
-                        required
-                      >
-                        <SelectTrigger className="w-full h-12">
-                          <SelectValue placeholder="Selecione o responsável" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {((members as any[]) || []).map((member) => (
-                            <SelectItem
-                              key={member.id}
-                              value={member.user?.name || member.id}
-                            >
-                              {member.user?.name || "Usuário"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </div>
+                <div className="space-y-2">
+                  <Label>
+                    Responsável <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={productResponsible}
+                    onValueChange={setProductResponsible}
+                    disabled={!isGestor}
+                  >
+                    <SelectTrigger className="w-full h-12">
+                      <SelectValue placeholder="Selecione o responsável" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(members as any[]).map((member) => {
+                        const name =
+                          member.users?.name || member.user?.name || member.id;
+                        return (
+                          <SelectItem key={member.id} value={name}>
+                            {name !== member.id ? name : "Usuário"}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
-      {/* Fixed Mobile Footer */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex gap-3 z-10 shadow-lg md:static md:bg-transparent md:border-none md:shadow-none md:p-4 md:mt-4">
+      {/* Fixed Footer */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex gap-3 z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] md:static md:bg-transparent md:border-none md:shadow-none md:p-4">
         <Button
           variant="outline"
           className="flex-1 h-12 gap-2"
@@ -923,7 +1089,7 @@ export default function EstoqueTransitoPage() {
           onClick={() => handleSave(true)}
           disabled={saving || !isFormValid()}
         >
-          <Printer className="h-5 w-5" /> Salvar e Imprimir
+          <Printer className="h-5 w-5" /> Imprimir
         </Button>
       </div>
     </div>

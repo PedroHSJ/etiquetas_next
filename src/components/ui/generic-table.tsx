@@ -259,12 +259,12 @@ export function GenericTable<T extends object>({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <ColumnSelector
               columns={columns}
               onColumnsChange={handleColumnsChange}
             />
-          </div>
+          </div> */}
         </div>
 
         {/* Barra de ações em lote */}
