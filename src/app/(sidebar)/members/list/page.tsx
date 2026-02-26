@@ -99,52 +99,61 @@ export default function MembersListPage() {
         id: "member",
         key: "member",
         label: "Integrante",
-        accessor: (row) =>
-          `${row?.user?.name ?? ""} ${row?.user?.email ?? ""}`.trim(),
+        accessor: (row) => {
+          const name = row?.user?.name || row?.users?.name || "";
+          const email = row?.user?.email || row?.users?.email || "";
+          return `${name} ${email}`.trim();
+        },
         visible: true,
         width: 280,
         fixed: true,
-        render: (_value, row) => (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage
-                src={row?.user?.avatarUrl ?? undefined}
-                alt={row?.user?.name}
-              />
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {getInitials(row?.user?.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="font-medium">{row?.user?.name}</div>
-              <div className="text-sm text-muted-foreground">
-                {row?.user?.email || "—"}
+        render: (_value, row) => {
+          const name = row?.user?.name || row?.users?.name;
+          const email = row?.user?.email || row?.users?.email;
+          const avatarUrl = row?.user?.avatarUrl || row?.users?.image;
+
+          return (
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage
+                  src={avatarUrl ?? undefined}
+                  alt={name ?? undefined}
+                />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {name ? getInitials(name) : "US"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium">{name}</div>
+                <div className="text-sm text-muted-foreground">
+                  {email || "—"}
+                </div>
               </div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
         id: "profile",
         key: "profile",
         label: "Perfil",
-        accessor: (row) => row.profile?.name ?? "",
+        accessor: (row) => row.profile?.name || row.profiles?.name || "",
         visible: true,
-        render: (_value, row) =>
-          row.profile ? (
+        render: (_value, row) => {
+          const profileName = row.profile?.name || row.profiles?.name;
+          return profileName ? (
             <Badge
               variant={`${
-                row.profile?.name?.toLowerCase() == "gestor"
-                  ? "default"
-                  : "outline"
+                profileName.toLowerCase() === "gestor" ? "default" : "outline"
               }`}
               className="font-medium"
             >
-              {row.profile.name}
+              {profileName}
             </Badge>
           ) : (
             <span className="text-sm text-muted-foreground">—</span>
-          ),
+          );
+        },
       },
       {
         id: "status",

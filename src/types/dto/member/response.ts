@@ -9,11 +9,18 @@ export interface MemberResponseDto {
   entryDate: string | null;
   exitDate: string | null;
   createdAt: string | null;
-  user: {
+  user?: {
     id: string;
     name: string;
     email: string;
     avatarUrl?: string | null;
   };
   profile?: ProfileResponseDto;
+  users?: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string | null;
+  };
+  profiles?: ProfileResponseDto;
 }

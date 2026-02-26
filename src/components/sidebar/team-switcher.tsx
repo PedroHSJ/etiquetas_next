@@ -139,12 +139,12 @@ export function TeamSwitcher() {
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="font-normal text-sidebar-foreground">
+            <DropdownMenuLabel className="font-normal text-foreground">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">
                   Perfis disponíveis
                 </p>
-                <p className="text-xs leading-none text-sidebar-foreground opacity-70">
+                <p className="text-xs leading-none text-foreground opacity-70">
                   Selecione um perfil para alternar
                 </p>
               </div>
@@ -170,10 +170,10 @@ export function TeamSwitcher() {
                   </Avatar>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium text-sidebar-foreground">
+                  <span className="truncate font-medium text-foreground">
                     {profile?.profile?.name}
                   </span>
-                  <span className="truncate text-xs text-sidebar-foreground opacity-70">
+                  <span className="truncate text-xs text-foreground opacity-70">
                     {profile.userOrganization?.organization?.name}
                   </span>
                 </div>

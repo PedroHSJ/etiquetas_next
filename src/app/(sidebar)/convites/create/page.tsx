@@ -26,7 +26,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Mail, UserPlus, ArrowLeft } from "lucide-react";
+import { CalendarIcon, Mail, UserPlus, ArrowLeft, Send } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {} from "@/hooks/usePermissions";
@@ -34,10 +34,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { InviteService } from "@/lib/services/client/invite-service";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { PermissionGuard } from "@/components/auth/PermissionGuard";
+import { PermissionGuard, WriteGuard } from "@/components/auth/PermissionGuard";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Profile } from "@/types/models/profile";
 import { ProfileService } from "@/lib/services/client/profile-service";
+import { ConvitesIcon } from "../page";
 
 export default function CreateConvitePage() {
   const router = useRouter();
@@ -94,7 +95,7 @@ export default function CreateConvitePage() {
       toast.success("Convite enviado com sucesso!");
       router.push("/convites");
     } catch (error) {
-      console.error("Erro ao criar convite:", error);
+      console.error("Erro ao enviar convite:", error);
       toast.error("Erro ao enviar convite");
     } finally {
       setLoading(false);
@@ -102,7 +103,7 @@ export default function CreateConvitePage() {
   };
 
   return (
-    <PermissionGuard funcionalidade="Convites" acao="criar">
+    <WriteGuard module="Convites">
       <div className="flex flex-1 flex-col gap-6">
         {/* Cabeçalho */}
         <div className="flex items-center gap-4">
@@ -110,17 +111,9 @@ export default function CreateConvitePage() {
             <ArrowLeft className="h-4 w-4" />
           </NavigationButton>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg
-                className="w-7 h-7 text-white"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 4H12v8H9V2H4v10h3v8h5v-6h2l4 6z" />
-              </svg>
-            </div>
+            <ConvitesIcon />
             <div>
-              <h1 className="text-3xl font-bold">Criar Convite</h1>
+              <h1 className="text-3xl font-bold">Convite</h1>
               <p className="text-muted-foreground">
                 Convide novos usuários para {selectedOrganization?.name}
               </p>
@@ -129,7 +122,7 @@ export default function CreateConvitePage() {
         </div>
 
         {/* Formulário */}
-        <Card className="max-w-2xl">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
@@ -166,7 +159,11 @@ export default function CreateConvitePage() {
                   </SelectTrigger>
                   <SelectContent>
                     {perfis.map((perfil) => (
-                      <SelectItem key={perfil.id} value={perfil.id}>
+                      <SelectItem
+                        key={perfil.id}
+                        value={perfil.id}
+                        className="p-2"
+                      >
                         <div className="flex flex-col">
                           <span className="font-medium">{perfil.name}</span>
                           <span className="text-sm text-muted-foreground">
@@ -254,7 +251,7 @@ export default function CreateConvitePage() {
                     </>
                   ) : (
                     <>
-                      <Mail className="h-4 w-4 mr-2" />
+                      <Send className="h-4 w-4 mr-2" />
                       Enviar Convite
                     </>
                   )}
@@ -300,6 +297,6 @@ export default function CreateConvitePage() {
           </CardContent>
         </Card>
       </div>
-    </PermissionGuard>
+    </WriteGuard>
   );
 }
