@@ -51,7 +51,13 @@ const ROUTE_PERMISSION_MAP: Record<string, string> = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, loading } = useAuth();
-  const { canRead, loading: permissionsLoading } = usePermissions();
+  const {
+    canRead,
+    isGestor,
+    isCozinheiro,
+    isEstoquista,
+    loading: permissionsLoading,
+  } = usePermissions();
   const pathname = usePathname();
 
   // Criar dados do usuário para o NavUser
@@ -66,7 +72,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Função para verificar se o usuário tem permissão para acessar uma rota
   const hasPermissionForRoute = (url: string): boolean => {
     // Dashboard sempre visível
-    if (url === "/dashboard") return true;
+    if (url === "/dashboard" || url === "#") return true;
+
+    if (isGestor()) return true;
+
+    if (isCozinheiro() || isEstoquista()) {
+      return (
+        url.startsWith("/estoque") ||
+        url.startsWith("/enderecamento") ||
+        url.startsWith("/estoque-em-transito") ||
+        url === "/estoque/transito"
+      );
+    }
 
     // Encontrar o módulo de permissão baseado na rota
     for (const [route, module] of Object.entries(ROUTE_PERMISSION_MAP)) {
