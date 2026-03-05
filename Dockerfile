@@ -4,10 +4,11 @@ FROM node:20-alpine
 # Define o diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos de dependência
+# Copia os arquivos de dependência e schema PRIMEIRO para o postinstall funcionar
 COPY package.json package-lock.json* ./
+COPY prisma ./prisma/
 
-# Instala as dependências
+# Instala as dependências (que invocam o prisma generate)
 RUN npm ci
 
 # Copia o restante do código fonte

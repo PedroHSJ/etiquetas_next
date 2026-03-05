@@ -3,13 +3,6 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-async function isUserAuthenticated(req: NextRequest): Promise<boolean> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  return !!session && !!session.user;
-}
-
 const PrintJobSchema = z.object({
   printerName: z.string(),
   language: z.string(),
@@ -23,6 +16,7 @@ const PrintJobSchema = z.object({
   storage: z.string(),
   responsible: z.string(),
   barcode: z.string(),
+  organizationId: z.string().min(1, "organizationId é obrigatório"),
 });
 
 type PrintJobVariables = z.infer<typeof PrintJobSchema>;
@@ -46,12 +40,18 @@ function buildTSPL(data: PrintJobVariables): string {
 
 export async function POST(req: NextRequest) {
   try {
-    if (!(await isUserAuthenticated(req))) {
+    // Verifica autenticação
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session || !session.user) {
       return NextResponse.json(
         { success: false, message: "Usuário não autenticado." },
         { status: 401 },
       );
     }
+
     const body = await req.json();
     const parseResult = PrintJobSchema.safeParse(body);
 
@@ -71,10 +71,15 @@ export async function POST(req: NextRequest) {
 
     const printServiceUrl =
       process.env.PRINT_SERVICE_URL || "http://localhost:5000/api/print";
+
     const response = await fetch(printServiceUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": process.env.PRINT_HUB_API_KEY || "",
+      },
       body: JSON.stringify({
+        tenantId: data.organizationId,
         printerName: data.printerName,
         language: data.language,
         printData,

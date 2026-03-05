@@ -2,7 +2,9 @@ import axios from "axios";
 import { format } from "date-fns";
 
 /**
- * Service for interacting with the local label printer agent (usually running on port 5000)
+ * Service for interacting with the label printer via PrinterHub.Server.
+ * All requests include the organizationId (tenantId) to ensure print
+ * commands are routed to the correct restaurant's local service.
  */
 export class LabelPrinterService {
   private static readonly BASE_URL =
@@ -40,6 +42,7 @@ export class LabelPrinterService {
       userName?: string;
     },
     printerName: string,
+    organizationId: string,
   ): Promise<boolean> {
     try {
       console.table(data);
@@ -49,6 +52,7 @@ export class LabelPrinterService {
       }
 
       const payload = {
+        tenantId: organizationId,
         printerName,
         productName: data.productName,
         manufacturingDate: this.formatDate(data.manufacturingDate),
@@ -81,14 +85,13 @@ export class LabelPrinterService {
       responsibleName: string;
     },
     printerName: string,
+    organizationId: string,
   ): Promise<boolean> {
     try {
       console.table(data);
-      // if (process.env.NODE_ENV === "development") {
-      //   return true;
-      // }
 
       const payload = {
+        tenantId: organizationId,
         printerName,
         productName: `AMOSTRA: ${data.sampleName} (${data.collectionTime})`,
         manufacturingDate: this.formatDate(data.collectionDate),
@@ -119,14 +122,13 @@ export class LabelPrinterService {
       responsibleName: string;
     },
     printerName: string,
+    organizationId: string,
   ): Promise<boolean> {
     try {
       console.table(data);
-      // if (process.env.NODE_ENV === "development") {
-      //   return true;
-      // }
 
       const payload = {
+        tenantId: organizationId,
         printerName,
         productName: data.productName,
         manufacturingDate: this.formatDate(data.manufacturingDate),

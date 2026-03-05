@@ -54,13 +54,16 @@ export function OrganizationProvider({
     try {
       const organizationsData = await OrganizationService.getOrganizations();
 
+      // Safely handle the routing state side-effect outside of the set state reducer function.
+      if (organizationsData.length === 0) {
+        setOrganizations([]);
+        setSelectedOrganization(null);
+        router.push("/onboarding");
+        return;
+      }
+
       setOrganizations(organizationsData as unknown as Organization[]);
       setSelectedOrganization((current) => {
-        if (organizationsData.length === 0) {
-          router.push("/onboarding");
-          return null;
-        }
-
         if (!current && organizationsData.length > 0) {
           return organizationsData[0] as unknown as Organization;
         }

@@ -15,6 +15,17 @@ export const api = axios.create({
   withCredentials: true, // Importante para enviar cookies de sessão
 });
 
+// Inject the active organization ID automatically into all internal API routes
+api.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const orgId = localStorage.getItem("selectedOrganizationId");
+    if (orgId) {
+      config.headers["X-Organization-Id"] = orgId;
+    }
+  }
+  return config;
+});
+
 // Interceptor de erros (opcional)
 api.interceptors.response.use(
   (response) => response,
@@ -22,7 +33,10 @@ api.interceptors.response.use(
     // Tratamento global de erros
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        // Ignorar redirecionamento de login se a falha 401 veio explicitamente do Hub de Dispositivos (Proxy downstream)
+        if (error.config?.url && !error.config.url.startsWith("/devices")) {
+          window.location.href = "/login";
+        }
       }
     }
     return Promise.reject(error);

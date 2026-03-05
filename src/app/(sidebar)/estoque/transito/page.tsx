@@ -37,6 +37,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MemberResponseDto as Member } from "@/types/dto/member/response";
 import { MemberService } from "@/lib/services/client/member-service";
 import { SettingsService } from "@/lib/services/client/settings-service";
+import { DevicesService, PrinterInfo } from "@/lib/services/client/devices-service";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -465,7 +466,36 @@ export default function EstoqueTransitoPage() {
     enabled: !!organizationId,
   });
 
-  const { data: printerName } = useQuery({
+  // Printer Polling
+  const [printers, setPrinters] = useState<PrinterInfo[]>([]);
+  const [selectedPrinter, setSelectedPrinter] = useState<string>("");
+  const [loadingPrinters, setLoadingPrinters] = useState(false);
+
+  useEffect(() => {
+    if (organizationId) {
+      const loadPrinters = async () => {
+        setLoadingPrinters(true);
+        try {
+          const data = await DevicesService.getConnectedPrinters();
+          setPrinters(data);
+          if (data.length > 0 && !selectedPrinter) {
+            setSelectedPrinter(data[0].printerName);
+          }
+        } catch (e) {
+          console.error("Error loading printers", e);
+        } finally {
+          setLoadingPrinters(false);
+        }
+      };
+      loadPrinters();
+      // Optional: Polling every 15s to keep printer list fresh
+      const interval = setInterval(loadPrinters, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [organizationId, selectedPrinter]);
+
+  // Settings
+  const { data: defaultPrinterName } = useQuery({
     queryKey: ["printer-name", organizationId],
     queryFn: () => SettingsService.getPrinterName(organizationId),
     enabled: !!organizationId,
@@ -686,6 +716,7 @@ export default function EstoqueTransitoPage() {
       toast.success("Amostra registrada no estoque em trânsito!");
 
       if (print) {
+        const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printSampleLabel(
           {
             sampleName,
@@ -694,9 +725,10 @@ export default function EstoqueTransitoPage() {
             discardDate: sampleDiscardDate,
             responsibleName: sampleResponsible,
           },
-          printerName || "LABEL PRINTER",
+          finalPrinter,
+          organizationId,
         );
-        if (printed) toast.success("Etiqueta enviada para impressão!");
+        if (printed) toast.success(`Etiqueta enviada para ${finalPrinter}!`);
         else toast.error("Falha ao imprimir.");
       }
 
@@ -729,6 +761,7 @@ export default function EstoqueTransitoPage() {
       toast.success("Salvo no estoque em trânsito!");
 
       if (print) {
+        const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printProductLabel(
           {
             productName: product?.name || "Produto",
@@ -739,9 +772,10 @@ export default function EstoqueTransitoPage() {
             conservationMode: productConservationMode,
             responsibleName: productResponsible,
           },
-          printerName || "LABEL PRINTER",
+          finalPrinter,
+          organizationId,
         );
-        if (printed) toast.success("Etiqueta enviada para impressão!");
+        if (printed) toast.success(`Etiqueta enviada para ${finalPrinter}!`);
         else toast.error("Falha ao imprimir.");
       }
 
@@ -1112,22 +1146,37 @@ export default function EstoqueTransitoPage() {
       </div>
 
       {/* Fixed Footer */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex gap-3 z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] md:static md:bg-transparent md:border-none md:shadow-none md:p-4">
-        <Button
-          variant="outline"
-          className="flex-1 h-12 gap-2"
-          onClick={() => handleSave(false)}
-          disabled={saving || !isFormValid()}
-        >
-          <Save className="h-5 w-5" /> Salvar
-        </Button>
-        <Button
-          className="flex-1 h-12 gap-2 bg-primary"
-          onClick={() => handleSave(true)}
-          disabled={saving || !isFormValid()}
-        >
-          <Printer className="h-5 w-5" /> Imprimir
-        </Button>
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex flex-col md:flex-row gap-3 z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] md:static md:bg-transparent md:border-none md:shadow-none md:p-4">
+        <div className="flex-1 max-w-xs md:max-w-[200px]">
+          <Select value={selectedPrinter} onValueChange={setSelectedPrinter} disabled={loadingPrinters || printers.length === 0}>
+            <SelectTrigger className="h-12 w-full text-xs font-medium bg-slate-50 border-slate-200">
+               <Printer className="mr-2 h-4 w-4 text-slate-500" />
+               <SelectValue placeholder={printers.length === 0 ? "Impressora Offline" : "Escolher Impressão"} />
+            </SelectTrigger>
+            <SelectContent>
+                {printers.map((p) => (
+                    <SelectItem key={p.printerName} value={p.printerName}>{p.printerName}</SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-1 gap-3">
+            <Button
+            variant="outline"
+            className="flex-1 h-12 gap-2"
+            onClick={() => handleSave(false)}
+            disabled={saving || !isFormValid()}
+            >
+            <Save className="h-5 w-5" /> Salvar
+            </Button>
+            <Button
+            className="flex-1 h-12 gap-2 bg-primary"
+            onClick={() => handleSave(true)}
+            disabled={saving || !isFormValid() || printers.length === 0}
+            >
+            <Printer className="h-5 w-5" /> Imprimir
+            </Button>
+        </div>
       </div>
     </div>
   );

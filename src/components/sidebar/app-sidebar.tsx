@@ -18,6 +18,7 @@ import {
   Truck,
   PackageOpen,
   Tags,
+  Printer,
 } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -161,6 +162,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/members/list",
           isActive: pathname.startsWith("/members"),
           icon: UserCog,
+        },
+        {
+          title: "Dispositivos",
+          url: "/organizations/devices",
+          isActive: pathname.startsWith("/organizations/devices"),
+          icon: Printer,
         },
       ],
     },
