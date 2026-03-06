@@ -9,7 +9,8 @@ const DEFAULT_PRINT_SERVICE_URL =
     : "https://printhubservice.duckdns.org/api/print";
 
 function getPrintServiceActionUrl(): string {
-  const configuredUrl = process.env.PRINT_SERVICE_URL || DEFAULT_PRINT_SERVICE_URL;
+  const configuredUrl =
+    process.env.PRINT_SERVICE_URL || DEFAULT_PRINT_SERVICE_URL;
   const normalizedUrl = configuredUrl.replace(/\/$/, "");
 
   if (
@@ -123,7 +124,13 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(payload),
       cache: "no-store",
     });
-
+    console.log(`Print service response status: ${response.status}`);
+    console.log(
+      `Print service response headers: ${JSON.stringify(response.headers)}`,
+    );
+    console.log(
+      `Print service response body: ${await response.clone().text()}`,
+    );
     const responseText = await response.text();
     let responseBody: unknown = null;
 
@@ -134,7 +141,9 @@ export async function POST(req: NextRequest) {
         responseBody = { raw: responseText };
       }
     }
-
+    console.log(
+      `Parsed print service response body: ${JSON.stringify(responseBody)}`,
+    );
     if (!response.ok) {
       return NextResponse.json(
         {
