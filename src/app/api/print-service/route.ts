@@ -319,7 +319,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
   const productTextLines = productNameLines.map((line, index) => {
     const y = yOffset + nameLineY + index * nameLineSpacing;
-    return `TEXT ${xOffset + 24},${y},"3",0,1,1,"${sanitizeText(line, 18)}"`;
+    return `TEXT ${xOffset + 24},${y},"4",0,1,1,"${sanitizeText(line, 18)}"`;
   });
 
   return buildTsplLabel(
