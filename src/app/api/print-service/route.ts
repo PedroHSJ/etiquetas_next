@@ -126,18 +126,25 @@ function normalizeCopies(copies?: number): number {
 
 function sanitizeText(value?: string | null, maxLength = 32): string {
   if (!value) return "-";
-  return value.replace(/["\r\n]+/g, " ").trim().slice(0, maxLength) || "-";
+  return (
+    value
+      .replace(/["\r\n]+/g, " ")
+      .trim()
+      .slice(0, maxLength) || "-"
+  );
 }
 
 function normalizeLabelText(value?: string | null, maxLength = 32): string {
   if (!value) return "";
-  const cleaned = value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+  const cleaned = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   return sanitizeText(cleaned, maxLength).toUpperCase();
 }
 
-function splitLabelLines(value: string, maxLen: number, maxLines = 2): string[] {
+function splitLabelLines(
+  value: string,
+  maxLen: number,
+  maxLines = 2,
+): string[] {
   if (!value) return [];
   const words = value.split(/\s+/).filter(Boolean);
   if (words.length === 0) return [];
@@ -173,7 +180,6 @@ function splitLabelLines(value: string, maxLen: number, maxLines = 2): string[] 
   return lines.slice(0, maxLines).map((line) => line.slice(0, maxLen));
 }
 
-
 function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "";
 
@@ -203,14 +209,14 @@ function formatCnpjValue(value?: string | null): string {
   if (!value) return "";
   const digits = value.replace(/\D/g, "");
   if (digits.length != 14) return value;
-  return `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12)}`;
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
 }
 
 function formatCepValue(value?: string | null): string {
   if (!value) return "";
   const digits = value.replace(/\D/g, "");
   if (digits.length != 8) return value;
-  return `${digits.slice(0,5)}-${digits.slice(5)}`;
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
 }
 
 function buildTsplLabel(lines: string[], copies = 1): string {
@@ -232,7 +238,7 @@ function buildTsplLabel(lines: string[], copies = 1): string {
 function buildSampleTspl(payload: SamplePayload, copies = 1): string {
   return buildTsplLabel(
     [
-      "TEXT 20,20,\"2\",0,1,1,\"AMOSTRA\"",
+      'TEXT 20,20,"2",0,1,1,"AMOSTRA"',
       "BOX 15,45,435,48,2",
       `TEXT 20,65,\"3\",0,2,1,\"${sanitizeText(payload.sampleName, 24)}\"`,
       `TEXT 20,115,\"1\",0,1,1,\"Hora: ${sanitizeText(payload.collectionTime, 8)}\"`,
@@ -252,18 +258,30 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const handlingDate = formatDate(payload.openingDate);
   const validityAfterOpening = formatDate(payload.validityAfterOpening);
   const responsible = normalizeLabelText(payload.responsibleName ?? "", 24);
-  const organizationName = normalizeLabelText(payload.organizationName ?? "", 28);
+  const organizationName = normalizeLabelText(
+    payload.organizationName ?? "",
+    28,
+  );
   const weight = normalizeLabelText(
     `${payload.quantity} ${sanitizeText(payload.unit, 10)}`,
     18,
   );
-  const cnpj = normalizeLabelText(formatCnpjValue(payload.organizationCnpj ?? ""), 28);
+  const cnpj = normalizeLabelText(
+    formatCnpjValue(payload.organizationCnpj ?? ""),
+    28,
+  );
   const address = normalizeLabelText(payload.organizationAddress ?? "", 28);
   const number = normalizeLabelText(payload.organizationNumber ?? "", 10);
-  const complement = normalizeLabelText(payload.organizationAddressComplement ?? "", 18);
+  const complement = normalizeLabelText(
+    payload.organizationAddressComplement ?? "",
+    18,
+  );
   const city = normalizeLabelText(payload.organizationCity ?? "", 18);
   const state = normalizeLabelText(payload.organizationState ?? "", 6);
-  const zip = normalizeLabelText(formatCepValue(payload.organizationZipCode ?? ""), 12);
+  const zip = normalizeLabelText(
+    formatCepValue(payload.organizationZipCode ?? ""),
+    12,
+  );
 
   const addressLine =
     [address, number].filter(Boolean).join(", ") +
@@ -281,8 +299,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const nameLineY = 18;
   const nameLineSpacing = 28;
   const rowHeight = 22;
-  const storageY =
-    nameLineY + (productLines.length || 1) * nameLineSpacing + 4;
+  const storageY = nameLineY + (productLines.length || 1) * nameLineSpacing + 12;
   const divider1Y = storageY + 20;
   const infoStartY = divider1Y + 10;
 
@@ -319,22 +336,35 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
   const productTextLines = productNameLines.map((line, index) => {
     const y = yOffset + nameLineY + index * nameLineSpacing;
-    return `TEXT ${xOffset + 24},${y},"4",0,1,1,"${sanitizeText(line, 18)}"`;
+    return `TEXT ${xOffset + 24},${y},"3",0,1,1,"${sanitizeText(line, 18)}"`;
   });
 
   return buildTsplLabel(
     [
       ...productTextLines,
       `TEXT ${xOffset + 24},${yOffset + storageY},"2",0,1,1,"${storage}"`,
+      `TEXT ${xOffset + 300},${yOffset + storageY},"2",0,1,1,"${weight}"`,
       `BOX ${xOffset + 18},${yOffset + divider1Y},${xOffset + 430},${yOffset + divider1Y + 2},1`,
 
       ...boldLeft(xOffset + 24, yOffset + infoStartY, "VAL. ORIGINAL:"),
       `TEXT ${xOffset + 300},${yOffset + infoStartY},"2",0,1,1,"${validityOriginal}"`,
-      ...boldLeft(xOffset + 24, yOffset + infoStartY + rowHeight, "MANIPULACAO:"),
+      ...boldLeft(
+        xOffset + 24,
+        yOffset + infoStartY + rowHeight,
+        "MANIPULACAO:",
+      ),
       `TEXT ${xOffset + 300},${yOffset + infoStartY + rowHeight},"2",0,1,1,"${handlingDate}"`,
-      ...boldLeft(xOffset + 24, yOffset + infoStartY + rowHeight * 2, "VALIDADE:"),
+      ...boldLeft(
+        xOffset + 24,
+        yOffset + infoStartY + rowHeight * 2,
+        "VALIDADE:",
+      ),
       `TEXT ${xOffset + 300},${yOffset + infoStartY + rowHeight * 2},"2",0,1,1,"${validityAfterOpening || validityOriginal}"`,
-      ...boldLeft(xOffset + 24, yOffset + infoStartY + rowHeight * 3, "FABRICACAO:"),
+      ...boldLeft(
+        xOffset + 24,
+        yOffset + infoStartY + rowHeight * 3,
+        "FABRICACAO:",
+      ),
       `TEXT ${xOffset + 300},${yOffset + infoStartY + rowHeight * 3},"2",0,1,1,"${manufacturing}"`,
 
       `BOX ${xOffset + 18},${yOffset + divider2Y},${xOffset + 430},${yOffset + divider2Y + 2},1`,
@@ -343,9 +373,11 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
       `TEXT ${xOffset + 120},${yOffset + section2StartY},"2",0,1,1,"${responsible}"`,
       ...boldLeft(xOffset + 24, yOffset + section2StartY + rowHeight, "LOTE:"),
       `TEXT ${xOffset + 120},${yOffset + section2StartY + rowHeight},"2",0,1,1,"-"`,
-      ...boldLeft(xOffset + 24, yOffset + section2StartY + rowHeight * 2, "PESO:"),
-      `TEXT ${xOffset + 120},${yOffset + section2StartY + rowHeight * 2},"2",0,1,1,"${weight}"`,
-      ...boldLeft(xOffset + 24, yOffset + section2StartY + rowHeight * 3, "MARCA / FORN:"),
+      ...boldLeft(
+        xOffset + 24,
+        yOffset + section2StartY + rowHeight * 3,
+        "MARCA / FORN:",
+      ),
       `TEXT ${xOffset + 200},${yOffset + section2StartY + rowHeight * 3},"2",0,1,1,"-"`,
 
       `BOX ${xOffset + 18},${yOffset + divider3Y},${xOffset + 430},${yOffset + divider3Y + 2},1`,
@@ -358,15 +390,13 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   );
 }
 
-
-
 function buildStockInTransitTspl(
   payload: StockInTransitPayload,
   copies = 1,
 ): string {
   return buildTsplLabel(
     [
-      "TEXT 20,20,\"2\",0,1,1,\"ESTOQUE EM TRANSITO\"",
+      'TEXT 20,20,"2",0,1,1,"ESTOQUE EM TRANSITO"',
       "BOX 15,45,435,48,2",
       `TEXT 20,65,\"3\",0,2,1,\"${sanitizeText(payload.productName, 24)}\"`,
       `TEXT 20,115,\"1\",0,1,1,\"Qtd: ${payload.quantity} ${sanitizeText(payload.unit, 10)}\"`,
