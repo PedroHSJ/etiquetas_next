@@ -142,6 +142,45 @@ function normalizeLabelText(value?: string | null, maxLength = 32): string {
   return sanitizeText(cleaned, maxLength).toUpperCase();
 }
 
+type LabelTextSize = "xs" | "sm" | "md" | "lg" | "xl";
+
+const TSPL_TEXT_SIZES: Record<
+  LabelTextSize,
+  { font: string; xMul: number; yMul: number }
+> = {
+  xs: { font: "1", xMul: 1, yMul: 1 },
+  sm: { font: "2", xMul: 1, yMul: 1 },
+  md: { font: "3", xMul: 1, yMul: 1 },
+  lg: { font: "4", xMul: 1, yMul: 1 },
+  xl: { font: "5", xMul: 1, yMul: 1 },
+};
+
+type TsplTextOptions = {
+  bold?: boolean;
+  xMul?: number;
+  yMul?: number;
+};
+
+function tsplText(
+  x: number,
+  y: number,
+  label: string,
+  size: LabelTextSize = "md",
+  options?: TsplTextOptions,
+): string[] {
+  const { font, xMul, yMul } = TSPL_TEXT_SIZES[size];
+  const scaleX = options?.xMul ?? xMul;
+  const scaleY = options?.yMul ?? yMul;
+  const line = `TEXT ${x},${y},"${font}",0,${scaleX},${scaleY},"${label}"`;
+  if (options?.bold) {
+    return [
+      line,
+      `TEXT ${x + 1},${y},"${font}",0,${scaleX},${scaleY},"${label}"`,
+    ];
+  }
+  return [line];
+}
+
 function splitLabelLines(
   value: string,
   maxLen: number,
@@ -311,52 +350,77 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const divider2Y = infoStartY + rowHeight * 4 + 6;
   const section2StartY = divider2Y + 10;
 
-  const divider3Y = section2StartY + rowHeight * 4 + 6;
-  const restLabelY = divider3Y + 10;
-  const restNameY = restLabelY + rowHeight;
-  const orgStartY = restNameY + rowHeight;
-
   const xOffset = 16;
   const yOffset = 16;
+
+  const section2Rows = [
+    ...(lot ? [{ label: "LOTE:", value: lot, valueX: xOffset + 120 }] : []),
+    ...(brandSupplier
+      ? [
+          {
+            label: "MARCA / FORN:",
+            value: brandSupplier,
+            valueX: xOffset + 200,
+          },
+        ]
+      : []),
+  ];
+
+  const divider3Y = section2StartY + rowHeight * section2Rows.length + 6;
+  const responsibleY = divider3Y + 10;
+  const hasResponsible = Boolean(responsible);
+  const restLabelY = responsibleY + (hasResponsible ? rowHeight : 0);
+  const restNameY = restLabelY + rowHeight;
+  const orgStartY = restNameY + rowHeight;
 
   const useBold = false;
 
   const boldLeft = (x: number, y: number, label: string): string[] =>
-    useBold
-      ? [
-          `TEXT ${x},${y},"2",0,1,1,"${label}"`,
-          `TEXT ${x + 1},${y},"2",0,1,1,"${label}"`,
-        ]
-      : [`TEXT ${x},${y},"2",0,1,1,"${label}"`];
+    tsplText(x, y, label, "md", { bold: useBold });
 
   const boldText = (x: number, y: number, label: string): string[] =>
-    useBold
-      ? [
-          `TEXT ${x},${y},"2",0,1,1,"${label}"`,
-          `TEXT ${x + 1},${y},"2",0,1,1,"${label}"`,
-        ]
-      : [`TEXT ${x},${y},"2",0,1,1,"${label}"`];
+    tsplText(x, y, label, "sm", { bold: useBold });
+
+  const section2TextLines = section2Rows.flatMap((row, index) => {
+    const y = yOffset + section2StartY + rowHeight * index;
+    return [
+      ...boldLeft(xOffset + 24, y, row.label),
+      `TEXT ${row.valueX},${y},"2",0,1,1,"${row.value}"`,
+    ];
+  });
+
+  const responsibleTextLines = hasResponsible
+    ? [
+        ...boldLeft(xOffset + 24, yOffset + responsibleY, "RESP.:") ,
+        ...tsplText(xOffset + 120, yOffset + responsibleY, responsible, "sm", { bold: false }),
+      ]
+    : [];
 
   const orgTextLines = orgLines.flatMap((line, index) => {
     const y = yOffset + orgStartY + index * rowHeight;
     const textLine = sanitizeText(line, 32);
-    return boldText(xOffset + 24, y, textLine);
+    return tsplText(xOffset + 24, y, textLine, "xs", { bold: useBold });
   });
 
   const productNameLines = productLines.length
     ? productLines
     : [productName.slice(0, 18)];
 
-  const productTextLines = productNameLines.map((line, index) => {
+  const productTextLines = productNameLines.flatMap((line, index) => {
     const y = yOffset + nameLineY + index * nameLineSpacing;
-    return `TEXT ${xOffset + 24},${y},"3",0,2,2,"${sanitizeText(line, 18)}"`;
+    const textLine = sanitizeText(line, 18);
+    return tsplText(xOffset + 24, y, textLine, "lg", { bold: true });
   });
 
   return buildTsplLabel(
     [
       ...productTextLines,
-      `TEXT ${xOffset + 24},${yOffset + storageY},"2",0,1,1,"${storage}"`,
-      `TEXT ${xOffset + 360},${yOffset + storageY},"2",0,1,1,"${weight}"`,
+      ...tsplText(xOffset + 24, yOffset + storageY, storage, "sm", {
+        bold: useBold,
+      }),
+      ...tsplText(xOffset + 360, yOffset + storageY, weight, "sm", {
+        bold: useBold,
+      }),
       `BOX ${xOffset + 18},${yOffset + divider1Y},${xOffset + 430},${yOffset + divider1Y + 2},1`,
 
       ...boldLeft(xOffset + 24, yOffset + infoStartY, "VAL. ORIGINAL:"),
@@ -382,34 +446,21 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
       `BOX ${xOffset + 18},${yOffset + divider2Y},${xOffset + 430},${yOffset + divider2Y + 2},1`,
 
-      ...boldLeft(xOffset + 24, yOffset + section2StartY, "RESP:"),
-      `TEXT ${xOffset + 120},${yOffset + section2StartY},"2",0,1,1,"${responsible}"`,
-      ...(lot
-        ? [
-            ...boldLeft(
-              xOffset + 24,
-              yOffset + section2StartY + rowHeight,
-              "LOTE:",
-            ),
-            `TEXT ${xOffset + 120},${yOffset + section2StartY + rowHeight},"2",0,1,1,"${lot}"`,
-          ]
-        : []),
-      ...(brandSupplier
-        ? [
-            ...boldLeft(
-              xOffset + 24,
-              yOffset + section2StartY + rowHeight * 2,
-              "MARCA / FORN:",
-            ),
-            `TEXT ${xOffset + 200},${yOffset + section2StartY + rowHeight * 2},"2",0,1,1,"${brandSupplier}"`,
-          ]
-        : []),
+      ...section2TextLines,
 
       `BOX ${xOffset + 18},${yOffset + divider3Y},${xOffset + 430},${yOffset + divider3Y + 2},1`,
 
+      ...responsibleTextLines,
       ...boldLeft(xOffset + 24, yOffset + restLabelY, "RESTAURANTE:"),
-      `TEXT ${xOffset + 24},${yOffset + restNameY},"2",0,1,1,"${organizationName || "-"}"`,
+      ...tsplText(
+        xOffset + 24,
+        yOffset + restNameY,
+        organizationName || "-",
+        "xs",
+        { bold: useBold },
+      ),
       ...orgTextLines,
+
     ],
     copies,
   );

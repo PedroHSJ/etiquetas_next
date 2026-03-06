@@ -40,7 +40,10 @@ import { MemberService } from "@/lib/services/client/member-service";
 import { SettingsService } from "@/lib/services/client/settings-service";
 import { OrganizationService } from "@/lib/services/client/organization-service";
 import { OrganizationExpandedResponseDto } from "@/types/dto/organization/response";
-import { DevicesService, PrinterInfo } from "@/lib/services/client/devices-service";
+import {
+  DevicesService,
+  PrinterInfo,
+} from "@/lib/services/client/devices-service";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -439,32 +442,37 @@ function LabelCopiesField({
 export default function EstoqueTransitoPage() {
   const router = useRouter();
   const { activeProfile } = useProfile();
-  const { activeOrganizationDetails, refreshActiveOrganization } = useOrganization();
+  const { activeOrganizationDetails, refreshActiveOrganization } =
+    useOrganization();
   const { user } = useAuth();
   const organizationId =
     activeProfile?.userOrganization?.organization?.id || "";
   const organizationName =
     activeOrganizationDetails?.name ||
-    activeProfile?.userOrganization?.organization?.name || "";
+    activeProfile?.userOrganization?.organization?.name ||
+    "";
   const organizationCnpj =
     activeOrganizationDetails?.cnpj ||
-    activeProfile?.userOrganization?.organization?.cnpj || "";
+    activeProfile?.userOrganization?.organization?.cnpj ||
+    "";
   const organizationZipCode =
     activeOrganizationDetails?.zipCode ||
-    activeProfile?.userOrganization?.organization?.zipCode || "";
+    activeProfile?.userOrganization?.organization?.zipCode ||
+    "";
   const organizationAddress =
     activeOrganizationDetails?.address ||
-    activeProfile?.userOrganization?.organization?.address || "";
+    activeProfile?.userOrganization?.organization?.address ||
+    "";
   const organizationNumber =
     activeOrganizationDetails?.number ||
-    activeProfile?.userOrganization?.organization?.number || "";
+    activeProfile?.userOrganization?.organization?.number ||
+    "";
   const organizationAddressComplement =
     activeOrganizationDetails?.addressComplement ||
-    activeProfile?.userOrganization?.organization?.addressComplement || "";
-  const organizationCity =
-    activeOrganizationDetails?.city?.name || "";
-  const organizationState =
-    activeOrganizationDetails?.state?.code || "";
+    activeProfile?.userOrganization?.organization?.addressComplement ||
+    "";
+  const organizationCity = activeOrganizationDetails?.city?.name || "";
+  const organizationState = activeOrganizationDetails?.state?.code || "";
   const isGestor =
     activeProfile?.profile?.name?.toLowerCase().includes("gestor") || false;
 
@@ -804,7 +812,8 @@ export default function EstoqueTransitoPage() {
       if (print) {
         if (!validateLabelCopies(sampleLabelCopies)) return;
 
-        const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
+        const finalPrinter =
+          selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printSampleLabel(
           {
             sampleName,
@@ -819,11 +828,15 @@ export default function EstoqueTransitoPage() {
         );
 
         if (!printed) {
-          toast.error("Falha ao imprimir. O registro nao foi salvo no estoque em transito.");
+          toast.error(
+            "Falha ao imprimir. O registro nao foi salvo no estoque em transito.",
+          );
           return;
         }
 
-        toast.success(formatPrintSuccessMessage(sampleLabelCopies, finalPrinter));
+        toast.success(
+          formatPrintSuccessMessage(sampleLabelCopies, finalPrinter),
+        );
       }
 
       await StockInTransitService.create({
@@ -858,35 +871,59 @@ export default function EstoqueTransitoPage() {
         if (!validateLabelCopies(productLabelCopies)) return;
 
         let orgDetailsExpanded: OrganizationExpandedResponseDto | null = null;
-        if (organizationId && (!activeOrganizationDetails?.city || !activeOrganizationDetails?.state)) {
+        if (
+          organizationId &&
+          (!activeOrganizationDetails?.city ||
+            !activeOrganizationDetails?.state)
+        ) {
           try {
             orgDetailsExpanded =
-              await OrganizationService.getOrganizationByIdExpanded(organizationId);
+              await OrganizationService.getOrganizationByIdExpanded(
+                organizationId,
+              );
           } catch (error) {
-            console.warn("Falha ao recarregar detalhes da organizacao para etiqueta", error);
+            console.warn(
+              "Falha ao recarregar detalhes da organizacao para etiqueta",
+              error,
+            );
           }
         }
 
         const resolvedOrganizationName =
-          orgDetailsExpanded?.name || activeOrganizationDetails?.name || organizationName;
+          orgDetailsExpanded?.name ||
+          activeOrganizationDetails?.name ||
+          organizationName;
         const resolvedOrganizationCnpj =
-          orgDetailsExpanded?.cnpj || activeOrganizationDetails?.cnpj || organizationCnpj;
+          orgDetailsExpanded?.cnpj ||
+          activeOrganizationDetails?.cnpj ||
+          organizationCnpj;
         const resolvedOrganizationZipCode =
-          orgDetailsExpanded?.zipCode || activeOrganizationDetails?.zipCode || organizationZipCode;
+          orgDetailsExpanded?.zipCode ||
+          activeOrganizationDetails?.zipCode ||
+          organizationZipCode;
         const resolvedOrganizationAddress =
-          orgDetailsExpanded?.address || activeOrganizationDetails?.address || organizationAddress;
+          orgDetailsExpanded?.address ||
+          activeOrganizationDetails?.address ||
+          organizationAddress;
         const resolvedOrganizationNumber =
-          orgDetailsExpanded?.number || activeOrganizationDetails?.number || organizationNumber;
+          orgDetailsExpanded?.number ||
+          activeOrganizationDetails?.number ||
+          organizationNumber;
         const resolvedOrganizationAddressComplement =
           orgDetailsExpanded?.addressComplement ||
           activeOrganizationDetails?.addressComplement ||
           organizationAddressComplement;
         const resolvedOrganizationCity =
-          orgDetailsExpanded?.city?.name || activeOrganizationDetails?.city?.name || organizationCity;
+          orgDetailsExpanded?.city?.name ||
+          activeOrganizationDetails?.city?.name ||
+          organizationCity;
         const resolvedOrganizationState =
-          orgDetailsExpanded?.state?.code || activeOrganizationDetails?.state?.code || organizationState;
+          orgDetailsExpanded?.state?.code ||
+          activeOrganizationDetails?.state?.code ||
+          organizationState;
 
-        const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
+        const finalPrinter =
+          selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printProductLabel(
           {
             productName: product?.name || "Produto",
@@ -901,7 +938,8 @@ export default function EstoqueTransitoPage() {
             organizationZipCode: resolvedOrganizationZipCode,
             organizationAddress: resolvedOrganizationAddress,
             organizationNumber: resolvedOrganizationNumber,
-            organizationAddressComplement: resolvedOrganizationAddressComplement,
+            organizationAddressComplement:
+              resolvedOrganizationAddressComplement,
             organizationCity: resolvedOrganizationCity,
             organizationState: resolvedOrganizationState,
             quantity: productQuantity,
@@ -913,11 +951,15 @@ export default function EstoqueTransitoPage() {
         );
 
         if (!printed) {
-          toast.error("Falha ao imprimir. O registro nao foi salvo no estoque em transito.");
+          toast.error(
+            "Falha ao imprimir. O registro nao foi salvo no estoque em transito.",
+          );
           return;
         }
 
-        toast.success(formatPrintSuccessMessage(productLabelCopies, finalPrinter));
+        toast.success(
+          formatPrintSuccessMessage(productLabelCopies, finalPrinter),
+        );
       }
 
       await StockInTransitService.create({
@@ -1311,35 +1353,47 @@ export default function EstoqueTransitoPage() {
 
       {/* Fixed Footer */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex flex-col md:flex-row gap-3 z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] md:static md:bg-transparent md:border-none md:shadow-none md:p-4">
-        <div className="flex-1 max-w-xs md:max-w-[200px]">
-          <Select value={selectedPrinter} onValueChange={setSelectedPrinter} disabled={loadingPrinters || printers.length === 0}>
+        <div className="flex-1 w-full md:max-w-[200px]">
+          <Select
+            value={selectedPrinter}
+            onValueChange={setSelectedPrinter}
+            disabled={loadingPrinters || printers.length === 0}
+          >
             <SelectTrigger className="h-12 w-full text-xs font-medium bg-slate-50 border-slate-200">
-               <Printer className="mr-2 h-4 w-4 text-slate-500" />
-               <SelectValue placeholder={printers.length === 0 ? "Impressora Offline" : "Escolher Impressão"} />
+              <Printer className="mr-2 h-4 w-4 text-slate-500" />
+              <SelectValue
+                placeholder={
+                  printers.length === 0
+                    ? "Impressora Offline"
+                    : "Escolher Impressão"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-                {printers.map((p) => (
-                    <SelectItem key={p.printerName} value={p.printerName}>{p.printerName}</SelectItem>
-                ))}
+              {printers.map((p) => (
+                <SelectItem key={p.printerName} value={p.printerName}>
+                  {p.printerName}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div className="flex flex-1 gap-3">
-            <Button
+          <Button
             variant="outline"
             className="flex-1 h-12 gap-2"
             onClick={() => handleSave(false)}
             disabled={saving || !isFormValid()}
-            >
+          >
             <Save className="h-5 w-5" /> Salvar
-            </Button>
-            <Button
+          </Button>
+          <Button
             className="flex-1 h-12 gap-2 bg-primary"
             onClick={() => handleSave(true)}
             disabled={saving || !isFormValid() || printers.length === 0}
-            >
+          >
             <Printer className="h-5 w-5" /> Imprimir
-            </Button>
+          </Button>
         </div>
       </div>
     </div>
