@@ -20,6 +20,12 @@ type HubPrinterInfo = {
   isNetworkPrinter?: boolean;
 };
 
+const BLOCKED_PRINTER_NAMES = new Set(["microsoft print to pdf"]);
+
+function isSelectablePrinter(printerName: string) {
+  return !BLOCKED_PRINTER_NAMES.has(printerName.trim().toLowerCase());
+}
+
 export async function GET(_req: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -70,7 +76,10 @@ export async function GET(_req: NextRequest) {
             portName: printer.portName,
             isNetworkPrinter: printer.isNetworkPrinter ?? false,
           }))
-          .filter((printer) => printer.printerName)
+          .filter(
+            (printer) =>
+              printer.printerName && isSelectablePrinter(printer.printerName),
+          )
       : [];
 
     return NextResponse.json(printers);

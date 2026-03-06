@@ -387,6 +387,50 @@ function UnitOfMeasureField({
 }
 
 // ─────────────────────────────────────────────────
+function parseIntegerInput(value: string): number {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getCurrentClientTime(): string {
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, "0");
+  const minutes = now.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function LabelCopiesField({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>Quantidade de etiquetas</Label>
+      <Input
+        id={id}
+        type="number"
+        min="1"
+        step="1"
+        inputMode="numeric"
+        className="h-12"
+        value={value}
+        onChange={(e) => onChange(parseIntegerInput(e.target.value))}
+        onBlur={() => {
+          if (value <= 0) onChange(1);
+        }}
+      />
+      <p className="text-xs text-slate-400">
+        Usado apenas ao clicar em Imprimir. Nao altera a quantidade do estoque.
+      </p>
+    </div>
+  );
+}
+
 // Main page
 // ─────────────────────────────────────────────────
 export default function EstoqueTransitoPage() {
@@ -437,6 +481,7 @@ export default function EstoqueTransitoPage() {
   const [sampleDiscardDate, setSampleDiscardDate] = useState("");
   const [sampleResponsible, setSampleResponsible] = useState("");
   const [sampleQuantity, setSampleQuantity] = useState<number>(1);
+  const [sampleLabelCopies, setSampleLabelCopies] = useState<number>(1);
 
   // ====== PRODUCTS state ======
   const [productManufacturingDate, setProductManufacturingDate] = useState(
@@ -452,6 +497,7 @@ export default function EstoqueTransitoPage() {
     useState<ConservationMode>("REFRIGERADO");
   const [productResponsible, setProductResponsible] = useState("");
   const [productQuantity, setProductQuantity] = useState<number>(1);
+  const [productLabelCopies, setProductLabelCopies] = useState<number>(1);
   const [filterByGroup, setFilterByGroup] = useState(false);
 
   // ────── Queries ──────
@@ -509,6 +555,10 @@ export default function EstoqueTransitoPage() {
       setSampleDiscardDate(d.toISOString().split("T")[0]);
     }
   }, [sampleCollectionDate]);
+
+  useEffect(() => {
+    setSampleTime((current) => current || getCurrentClientTime());
+  }, []);
 
   useEffect(() => {
     if (organizationId) loadGroups();
@@ -695,6 +745,21 @@ export default function EstoqueTransitoPage() {
     return true;
   };
 
+  const validateLabelCopies = (copies: number): boolean => {
+    if (!Number.isInteger(copies) || copies <= 0) {
+      toast.error("A quantidade de etiquetas deve ser maior que zero");
+      return false;
+    }
+
+    return true;
+  };
+
+  const formatLabelCopies = (copies: number) =>
+    copies === 1 ? "1 etiqueta" : `${copies} etiquetas`;
+
+  const formatPrintSuccessMessage = (copies: number, printerName: string) =>
+    `${formatLabelCopies(copies)} enviada${copies === 1 ? "" : "s"} para ${printerName}!`;
+
   // ────── Save ──────
   const resolveUnit = () =>
     stockInfo && stockInfo.quantity > 0 ? stockInfo.unit : customUnit;
@@ -705,6 +770,8 @@ export default function EstoqueTransitoPage() {
       setSaving(true);
 
       if (print) {
+        if (!validateLabelCopies(sampleLabelCopies)) return;
+
         const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printSampleLabel(
           {
@@ -716,6 +783,7 @@ export default function EstoqueTransitoPage() {
           },
           finalPrinter,
           organizationId,
+          sampleLabelCopies,
         );
 
         if (!printed) {
@@ -723,7 +791,7 @@ export default function EstoqueTransitoPage() {
           return;
         }
 
-        toast.success(`Etiqueta enviada para ${finalPrinter}!`);
+        toast.success(formatPrintSuccessMessage(sampleLabelCopies, finalPrinter));
       }
 
       await StockInTransitService.create({
@@ -755,6 +823,8 @@ export default function EstoqueTransitoPage() {
       );
 
       if (print) {
+        if (!validateLabelCopies(productLabelCopies)) return;
+
         const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printProductLabel(
           {
@@ -768,6 +838,7 @@ export default function EstoqueTransitoPage() {
           },
           finalPrinter,
           organizationId,
+          productLabelCopies,
         );
 
         if (!printed) {
@@ -775,7 +846,7 @@ export default function EstoqueTransitoPage() {
           return;
         }
 
-        toast.success(`Etiqueta enviada para ${finalPrinter}!`);
+        toast.success(formatPrintSuccessMessage(productLabelCopies, finalPrinter));
       }
 
       await StockInTransitService.create({
@@ -918,6 +989,12 @@ export default function EstoqueTransitoPage() {
                   onQuantityChange={setSampleQuantity}
                 />
 
+                <LabelCopiesField
+                  id="sample-label-copies"
+                  value={sampleLabelCopies}
+                  onChange={setSampleLabelCopies}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="sample-time">
@@ -1036,6 +1113,12 @@ export default function EstoqueTransitoPage() {
                   onChange={setCustomUnit}
                   quantity={productQuantity}
                   onQuantityChange={setProductQuantity}
+                />
+
+                <LabelCopiesField
+                  id="product-label-copies"
+                  value={productLabelCopies}
+                  onChange={setProductLabelCopies}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

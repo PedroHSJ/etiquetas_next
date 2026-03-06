@@ -1,4 +1,4 @@
-﻿import axios from "axios";
+import axios from "axios";
 import { format } from "date-fns";
 
 /**
@@ -8,6 +8,11 @@ import { format } from "date-fns";
  */
 export class LabelPrinterService {
   private static readonly BASE_URL = "/api/print-service";
+
+  private static normalizeCopies(copies?: number): number {
+    if (!Number.isFinite(copies)) return 1;
+    return Math.max(1, Math.floor(copies as number));
+  }
 
   private static formatDate(dateStr: string): string {
     if (!dateStr) return "";
@@ -29,7 +34,9 @@ export class LabelPrinterService {
     return value.replace(/["\r\n]+/g, " ").trim().slice(0, maxLength) || "-";
   }
 
-  private static buildTsplLabel(lines: string[]): string {
+  private static buildTsplLabel(lines: string[], copies = 1): string {
+    const normalizedCopies = this.normalizeCopies(copies);
+
     return [
       'SIZE 60 mm, 60 mm',
       'GAP 3 mm, 0 mm',
@@ -38,7 +45,7 @@ export class LabelPrinterService {
       '',
       ...lines,
       '',
-      'PRINT 1',
+      `PRINT 1,${normalizedCopies}`,
       '',
     ].join('\r\n');
   }
@@ -85,17 +92,21 @@ export class LabelPrinterService {
     },
     printerName: string,
     organizationId: string,
+    copies = 1,
   ): Promise<boolean> {
-    const printData = this.buildTsplLabel([
-      `TEXT 20,20,"2",0,1,1,"ESTOQUE EM TRANSITO"`,
-      `BOX 15,45,435,48,2`,
-      `TEXT 20,65,"3",0,2,1,"${this.sanitizeText(data.productName, 24)}"`,
-      `TEXT 20,115,"1",0,1,1,"Qtd: ${data.quantity} ${this.sanitizeText(data.unit, 10)}"`,
-      `TEXT 20,140,"1",0,1,1,"Fab: ${this.formatDate(data.manufacturingDate)}"`,
-      `TEXT 20,165,"1",0,1,1,"Val: ${this.formatDate(data.validityDate)}"`,
-      `TEXT 20,190,"1",0,1,1,"Obs: ${this.sanitizeText(data.observations, 28)}"`,
-      `TEXT 20,215,"1",0,1,1,"Resp: ${this.sanitizeText(data.userName, 24)}"`,
-    ]);
+    const printData = this.buildTsplLabel(
+      [
+        `TEXT 20,20,"2",0,1,1,"ESTOQUE EM TRANSITO"`,
+        `BOX 15,45,435,48,2`,
+        `TEXT 20,65,"3",0,2,1,"${this.sanitizeText(data.productName, 24)}"`,
+        `TEXT 20,115,"1",0,1,1,"Qtd: ${data.quantity} ${this.sanitizeText(data.unit, 10)}"`,
+        `TEXT 20,140,"1",0,1,1,"Fab: ${this.formatDate(data.manufacturingDate)}"`,
+        `TEXT 20,165,"1",0,1,1,"Val: ${this.formatDate(data.validityDate)}"`,
+        `TEXT 20,190,"1",0,1,1,"Obs: ${this.sanitizeText(data.observations, 28)}"`,
+        `TEXT 20,215,"1",0,1,1,"Resp: ${this.sanitizeText(data.userName, 24)}"`,
+      ],
+      copies,
+    );
 
     return this.postPrintJob(printerName, organizationId, printData);
   }
@@ -110,16 +121,20 @@ export class LabelPrinterService {
     },
     printerName: string,
     organizationId: string,
+    copies = 1,
   ): Promise<boolean> {
-    const printData = this.buildTsplLabel([
-      `TEXT 20,20,"2",0,1,1,"AMOSTRA"`,
-      `BOX 15,45,435,48,2`,
-      `TEXT 20,65,"3",0,2,1,"${this.sanitizeText(data.sampleName, 24)}"`,
-      `TEXT 20,115,"1",0,1,1,"Hora: ${this.sanitizeText(data.collectionTime, 8)}"`,
-      `TEXT 20,140,"1",0,1,1,"Coleta: ${this.formatDate(data.collectionDate)}"`,
-      `TEXT 20,165,"1",0,1,1,"Descarte: ${this.formatDate(data.discardDate)}"`,
-      `TEXT 20,190,"1",0,1,1,"Resp: ${this.sanitizeText(data.responsibleName, 24)}"`,
-    ]);
+    const printData = this.buildTsplLabel(
+      [
+        `TEXT 20,20,"2",0,1,1,"AMOSTRA"`,
+        `BOX 15,45,435,48,2`,
+        `TEXT 20,65,"3",0,2,1,"${this.sanitizeText(data.sampleName, 24)}"`,
+        `TEXT 20,115,"1",0,1,1,"Hora: ${this.sanitizeText(data.collectionTime, 8)}"`,
+        `TEXT 20,140,"1",0,1,1,"Coleta: ${this.formatDate(data.collectionDate)}"`,
+        `TEXT 20,165,"1",0,1,1,"Descarte: ${this.formatDate(data.discardDate)}"`,
+        `TEXT 20,190,"1",0,1,1,"Resp: ${this.sanitizeText(data.responsibleName, 24)}"`,
+      ],
+      copies,
+    );
 
     return this.postPrintJob(printerName, organizationId, printData);
   }
@@ -136,18 +151,22 @@ export class LabelPrinterService {
     },
     printerName: string,
     organizationId: string,
+    copies = 1,
   ): Promise<boolean> {
-    const printData = this.buildTsplLabel([
-      `TEXT 20,20,"2",0,1,1,"ETIQUETA PRODUTO"`,
-      `BOX 15,45,435,48,2`,
-      `TEXT 20,65,"3",0,2,1,"${this.sanitizeText(data.productName, 24)}"`,
-      `TEXT 20,115,"1",0,1,1,"Fab: ${this.formatDate(data.manufacturingDate)}"`,
-      `TEXT 20,140,"1",0,1,1,"Val: ${this.formatDate(data.validityDate)}"`,
-      `TEXT 20,165,"1",0,1,1,"Abert: ${this.formatDate(data.openingDate || '')}"`,
-      `TEXT 20,190,"1",0,1,1,"Pos-abert: ${this.formatDate(data.validityAfterOpening || '')}"`,
-      `TEXT 20,215,"1",0,1,1,"Arm: ${this.sanitizeText(data.conservationMode, 18)}"`,
-      `TEXT 20,240,"1",0,1,1,"Resp: ${this.sanitizeText(data.responsibleName, 24)}"`,
-    ]);
+    const printData = this.buildTsplLabel(
+      [
+        `TEXT 20,20,"2",0,1,1,"ETIQUETA PRODUTO"`,
+        `BOX 15,45,435,48,2`,
+        `TEXT 20,65,"3",0,2,1,"${this.sanitizeText(data.productName, 24)}"`,
+        `TEXT 20,115,"1",0,1,1,"Fab: ${this.formatDate(data.manufacturingDate)}"`,
+        `TEXT 20,140,"1",0,1,1,"Val: ${this.formatDate(data.validityDate)}"`,
+        `TEXT 20,165,"1",0,1,1,"Abert: ${this.formatDate(data.openingDate || '')}"`,
+        `TEXT 20,190,"1",0,1,1,"Pos-abert: ${this.formatDate(data.validityAfterOpening || '')}"`,
+        `TEXT 20,215,"1",0,1,1,"Arm: ${this.sanitizeText(data.conservationMode, 18)}"`,
+        `TEXT 20,240,"1",0,1,1,"Resp: ${this.sanitizeText(data.responsibleName, 24)}"`,
+      ],
+      copies,
+    );
 
     return this.postPrintJob(printerName, organizationId, printData);
   }
