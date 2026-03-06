@@ -1,9 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-const PrintJobSchema = z.object({
+const DEFAULT_PRINT_SERVICE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5000/api/print"
+    : "https://printhubservice.duckdns.org/api/print";
+
+const LegacyPrintJobSchema = z.object({
   printerName: z.string(),
   language: z.string(),
   size: z.string(),
@@ -16,12 +21,18 @@ const PrintJobSchema = z.object({
   storage: z.string(),
   responsible: z.string(),
   barcode: z.string(),
-  organizationId: z.string().min(1, "organizationId é obrigatório"),
+  organizationId: z.string().min(1, "organizationId is required"),
 });
 
-type PrintJobVariables = z.infer<typeof PrintJobSchema>;
+const RawPrintJobSchema = z.object({
+  printerName: z.string().min(1, "printerName is required"),
+  organizationId: z.string().min(1, "organizationId is required"),
+  printData: z.string().min(1, "printData is required"),
+});
 
-function buildTSPL(data: PrintJobVariables): string {
+type LegacyPrintJobVariables = z.infer<typeof LegacyPrintJobSchema>;
+
+function buildTSPL(data: LegacyPrintJobVariables): string {
   return (
     `SIZE ${data.size}\r\n` +
     `GAP ${data.gap}\r\n` +
@@ -40,37 +51,55 @@ function buildTSPL(data: PrintJobVariables): string {
 
 export async function POST(req: NextRequest) {
   try {
-    // Verifica autenticação
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { success: false, message: "Usuário não autenticado." },
+        { success: false, message: "Usuario nao autenticado." },
         { status: 401 },
       );
     }
 
     const body = await req.json();
-    const parseResult = PrintJobSchema.safeParse(body);
+    const rawResult = RawPrintJobSchema.safeParse(body);
 
-    if (!parseResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Dados inválidos",
-          errors: parseResult.error.issues,
-        },
-        { status: 400 },
-      );
+    let payload: {
+      tenantId: string;
+      printerName: string;
+      printData: string;
+    };
+
+    if (rawResult.success) {
+      payload = {
+        tenantId: rawResult.data.organizationId,
+        printerName: rawResult.data.printerName,
+        printData: rawResult.data.printData,
+      };
+    } else {
+      const legacyResult = LegacyPrintJobSchema.safeParse(body);
+
+      if (!legacyResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Dados invalidos",
+            errors: legacyResult.error.issues,
+          },
+          { status: 400 },
+        );
+      }
+
+      payload = {
+        tenantId: legacyResult.data.organizationId,
+        printerName: legacyResult.data.printerName,
+        printData: buildTSPL(legacyResult.data),
+      };
     }
 
-    const data = parseResult.data;
-    const printData = buildTSPL(data);
-
     const printServiceUrl =
-      process.env.PRINT_SERVICE_URL || "http://localhost:5000/api/print";
+      process.env.PRINT_SERVICE_URL || DEFAULT_PRINT_SERVICE_URL;
 
     const response = await fetch(printServiceUrl, {
       method: "POST",
@@ -78,20 +107,42 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         "X-Api-Key": process.env.PRINT_HUB_API_KEY || "",
       },
-      body: JSON.stringify({
-        tenantId: data.organizationId,
-        printerName: data.printerName,
-        language: data.language,
-        printData,
-      }),
+      body: JSON.stringify(payload),
+      cache: "no-store",
     });
 
-    const result = await response.json();
+    const responseText = await response.text();
+    let responseBody: unknown = null;
 
-    return NextResponse.json({ result });
+    if (responseText) {
+      try {
+        responseBody = JSON.parse(responseText);
+      } catch {
+        responseBody = { raw: responseText };
+      }
+    }
+
+    if (!response.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Falha ao encaminhar impressao para o hub.",
+          result: responseBody,
+        },
+        { status: response.status },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        result: responseBody,
+      },
+      { status: response.status },
+    );
   } catch (error) {
     return NextResponse.json(
-      { message: "Erro ao processar requisição.", error: String(error) },
+      { message: "Erro ao processar requisicao.", error: String(error) },
       { status: 500 },
     );
   }
