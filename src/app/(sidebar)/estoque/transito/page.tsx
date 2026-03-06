@@ -38,6 +38,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MemberResponseDto as Member } from "@/types/dto/member/response";
 import { MemberService } from "@/lib/services/client/member-service";
 import { SettingsService } from "@/lib/services/client/settings-service";
+import { OrganizationService } from "@/lib/services/client/organization-service";
 import { DevicesService, PrinterInfo } from "@/lib/services/client/devices-service";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -855,6 +856,25 @@ export default function EstoqueTransitoPage() {
       if (print) {
         if (!validateLabelCopies(productLabelCopies)) return;
 
+        let orgDetails = activeOrganizationDetails;
+        if (organizationId && (!orgDetails?.city || !orgDetails?.state)) {
+          try {
+            orgDetails = await OrganizationService.getOrganizationByIdExpanded(organizationId);
+          } catch (error) {
+            console.warn("Falha ao recarregar detalhes da organizacao para etiqueta", error);
+          }
+        }
+
+        const resolvedOrganizationName = orgDetails?.name || organizationName;
+        const resolvedOrganizationCnpj = orgDetails?.cnpj || organizationCnpj;
+        const resolvedOrganizationZipCode = orgDetails?.zipCode || organizationZipCode;
+        const resolvedOrganizationAddress = orgDetails?.address || organizationAddress;
+        const resolvedOrganizationNumber = orgDetails?.number || organizationNumber;
+        const resolvedOrganizationAddressComplement =
+          orgDetails?.addressComplement || organizationAddressComplement;
+        const resolvedOrganizationCity = orgDetails?.city?.name || organizationCity;
+        const resolvedOrganizationState = orgDetails?.state?.code || organizationState;
+
         const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printProductLabel(
           {
@@ -865,14 +885,14 @@ export default function EstoqueTransitoPage() {
             validityAfterOpening: productExpiryAfterOpeningDate,
             conservationMode: productConservationMode,
             responsibleName: productResponsible,
-            organizationName,
-            organizationCnpj,
-            organizationZipCode,
-            organizationAddress,
-            organizationNumber,
-            organizationAddressComplement,
-            organizationCity,
-            organizationState,
+            organizationName: resolvedOrganizationName,
+            organizationCnpj: resolvedOrganizationCnpj,
+            organizationZipCode: resolvedOrganizationZipCode,
+            organizationAddress: resolvedOrganizationAddress,
+            organizationNumber: resolvedOrganizationNumber,
+            organizationAddressComplement: resolvedOrganizationAddressComplement,
+            organizationCity: resolvedOrganizationCity,
+            organizationState: resolvedOrganizationState,
             quantity: productQuantity,
             unit: resolveUnit(),
           },
