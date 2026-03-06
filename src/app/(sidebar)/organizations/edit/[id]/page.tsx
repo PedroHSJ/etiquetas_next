@@ -1,10 +1,12 @@
 "use client";
 
-import { OrganizationWizard } from "@/components/wizard/OrganizationWizard";
-import { WriteGuard } from "@/components/auth/PermissionGuard";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { OrganizationSettings } from "@/components/organization";
+import { WriteGuard } from "@/components/auth/PermissionGuard";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { OrganizationService } from "@/lib/services/client/organization-service";
+import type { Organization } from "@/types/models/organization";
 import { toast } from "sonner";
 
 interface EditOrganizationPageProps {
@@ -16,35 +18,57 @@ interface EditOrganizationPageProps {
 export default function EditOrganizationPage({
   params,
 }: EditOrganizationPageProps) {
-  const { userId } = useAuth();
-  const { refetchOrganizations, onOrganizationCreated } = useOrganization();
   const router = useRouter();
+  const { refetchOrganizations } = useOrganization();
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleWizardComplete = async () => {
-    try {
-      // Recarregar as organizações para atualizar o TeamSwitcher
-      await refetchOrganizations();
-      toast.success("Organização criada com sucesso!");
+  useEffect(() => {
+    let isMounted = true;
 
-      // Usar router.push em vez de redirect para melhor UX
-      router.push("/dashboard");
-    } catch (error) {
-      toast.error(
-        `Não foi possível editar a organização: ${
-          error instanceof Error ? error.message : "Erro desconhecido"
-        }`,
-      );
-    }
+    const loadOrganization = async () => {
+      try {
+        const resolved = await params;
+        const org = await OrganizationService.getOrganizationByIdExpanded(
+          resolved.id,
+        );
+
+        if (!isMounted) return;
+        setOrganization(org as unknown as Organization);
+      } catch (error) {
+        toast.error("Nao foi possivel carregar a organizacao para edicao.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadOrganization();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [params]);
+
+  const handleUpdated = async () => {
+    await refetchOrganizations();
+    toast.success("Organizacao atualizada com sucesso!");
+    router.push("/organizations/list");
   };
 
   return (
     <WriteGuard module="ORGANIZATIONS">
-      <OrganizationWizard
-        userId={userId}
-        onComplete={() => {
-          handleWizardComplete();
-        }}
-      />
+      {loading ? (
+        <div className="p-6">Carregando...</div>
+      ) : organization ? (
+        <OrganizationSettings
+          organization={organization}
+          onUpdate={() => {
+            handleUpdated();
+          }}
+        />
+      ) : (
+        <div className="p-6">Organizacao nao encontrada.</div>
+      )}
     </WriteGuard>
   );
 }

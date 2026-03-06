@@ -23,6 +23,7 @@ import {
   Search,
 } from "lucide-react";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProductService } from "@/lib/services/client/product-service";
 import { StockInTransitService } from "@/lib/services/client/stock-in-transit-service";
@@ -436,9 +437,32 @@ function LabelCopiesField({
 export default function EstoqueTransitoPage() {
   const router = useRouter();
   const { activeProfile } = useProfile();
+  const { activeOrganizationDetails } = useOrganization();
   const { user } = useAuth();
   const organizationId =
     activeProfile?.userOrganization?.organization?.id || "";
+  const organizationName =
+    activeOrganizationDetails?.name ||
+    activeProfile?.userOrganization?.organization?.name || "";
+  const organizationCnpj =
+    activeOrganizationDetails?.cnpj ||
+    activeProfile?.userOrganization?.organization?.cnpj || "";
+  const organizationZipCode =
+    activeOrganizationDetails?.zipCode ||
+    activeProfile?.userOrganization?.organization?.zipCode || "";
+  const organizationAddress =
+    activeOrganizationDetails?.address ||
+    activeProfile?.userOrganization?.organization?.address || "";
+  const organizationNumber =
+    activeOrganizationDetails?.number ||
+    activeProfile?.userOrganization?.organization?.number || "";
+  const organizationAddressComplement =
+    activeOrganizationDetails?.addressComplement ||
+    activeProfile?.userOrganization?.organization?.addressComplement || "";
+  const organizationCity =
+    activeOrganizationDetails?.city?.name || "";
+  const organizationState =
+    activeOrganizationDetails?.state?.code || "";
   const isGestor =
     activeProfile?.profile?.name?.toLowerCase().includes("gestor") || false;
 
@@ -835,6 +859,16 @@ export default function EstoqueTransitoPage() {
             validityAfterOpening: productExpiryAfterOpeningDate,
             conservationMode: productConservationMode,
             responsibleName: productResponsible,
+            organizationName,
+            organizationCnpj,
+            organizationZipCode,
+            organizationAddress,
+            organizationNumber,
+            organizationAddressComplement,
+            organizationCity,
+            organizationState,
+            quantity: productQuantity,
+            unit: resolveUnit(),
           },
           finalPrinter,
           organizationId,

@@ -1,5 +1,4 @@
 import axios from "axios";
-import { format } from "date-fns";
 
 /**
  * Client-side facade for printing labels through the web BFF.
@@ -14,46 +13,12 @@ export class LabelPrinterService {
     return Math.max(1, Math.floor(copies as number));
   }
 
-  private static formatDate(dateStr: string): string {
-    if (!dateStr) return "";
-    try {
-      if (dateStr.includes("-") && dateStr.length === 10) {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        const date = new Date(year, month - 1, day);
-        return format(date, "dd/MM/yyyy");
-      }
-      return format(new Date(dateStr), "dd/MM/yyyy");
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return dateStr;
-    }
-  }
-
-  private static sanitizeText(value?: string, maxLength = 32): string {
-    if (!value) return "-";
-    return value.replace(/["\r\n]+/g, " ").trim().slice(0, maxLength) || "-";
-  }
-
-  private static buildTsplLabel(lines: string[], copies = 1): string {
-    const normalizedCopies = this.normalizeCopies(copies);
-
-    return [
-      'SIZE 60 mm, 60 mm',
-      'GAP 3 mm, 0 mm',
-      'DIRECTION 0',
-      'CLS',
-      '',
-      ...lines,
-      '',
-      `PRINT 1,${normalizedCopies}`,
-      '',
-    ].join('\r\n');
-  }
-
-  private static async postPrintJob(
+  private static async postPrintJob<TPayload>(
     printerName: string,
     organizationId: string,
-    printData: string,
+    template: "sample" | "product" | "stock_in_transit",
+    payload: TPayload,
+    copies = 1,
   ): Promise<boolean> {
     try {
       const response = await axios.post(
@@ -61,7 +26,9 @@ export class LabelPrinterService {
         {
           organizationId,
           printerName,
-          printData,
+          template,
+          payload,
+          copies: this.normalizeCopies(copies),
         },
         {
           validateStatus: () => true,
@@ -94,21 +61,13 @@ export class LabelPrinterService {
     organizationId: string,
     copies = 1,
   ): Promise<boolean> {
-    const printData = this.buildTsplLabel(
-      [
-        `TEXT 20,20,"2",0,1,1,"ESTOQUE EM TRANSITO"`,
-        `BOX 15,45,435,48,2`,
-        `TEXT 20,65,"3",0,2,1,"${this.sanitizeText(data.productName, 24)}"`,
-        `TEXT 20,115,"1",0,1,1,"Qtd: ${data.quantity} ${this.sanitizeText(data.unit, 10)}"`,
-        `TEXT 20,140,"1",0,1,1,"Fab: ${this.formatDate(data.manufacturingDate)}"`,
-        `TEXT 20,165,"1",0,1,1,"Val: ${this.formatDate(data.validityDate)}"`,
-        `TEXT 20,190,"1",0,1,1,"Obs: ${this.sanitizeText(data.observations, 28)}"`,
-        `TEXT 20,215,"1",0,1,1,"Resp: ${this.sanitizeText(data.userName, 24)}"`,
-      ],
+    return this.postPrintJob(
+      printerName,
+      organizationId,
+      "stock_in_transit",
+      data,
       copies,
     );
-
-    return this.postPrintJob(printerName, organizationId, printData);
   }
 
   static async printSampleLabel(
@@ -123,20 +82,13 @@ export class LabelPrinterService {
     organizationId: string,
     copies = 1,
   ): Promise<boolean> {
-    const printData = this.buildTsplLabel(
-      [
-        `TEXT 20,20,"2",0,1,1,"AMOSTRA"`,
-        `BOX 15,45,435,48,2`,
-        `TEXT 20,65,"3",0,2,1,"${this.sanitizeText(data.sampleName, 24)}"`,
-        `TEXT 20,115,"1",0,1,1,"Hora: ${this.sanitizeText(data.collectionTime, 8)}"`,
-        `TEXT 20,140,"1",0,1,1,"Coleta: ${this.formatDate(data.collectionDate)}"`,
-        `TEXT 20,165,"1",0,1,1,"Descarte: ${this.formatDate(data.discardDate)}"`,
-        `TEXT 20,190,"1",0,1,1,"Resp: ${this.sanitizeText(data.responsibleName, 24)}"`,
-      ],
+    return this.postPrintJob(
+      printerName,
+      organizationId,
+      "sample",
+      data,
       copies,
     );
-
-    return this.postPrintJob(printerName, organizationId, printData);
   }
 
   static async printProductLabel(
@@ -148,27 +100,28 @@ export class LabelPrinterService {
       validityAfterOpening?: string;
       conservationMode: "REFRIGERADO" | "CONGELADO" | "AMBIENTE";
       responsibleName: string;
+      organizationName?: string;
+      organizationCnpj?: string;
+      organizationZipCode?: string;
+      organizationAddress?: string;
+      organizationNumber?: string;
+      organizationAddressComplement?: string;
+      organizationCity?: string;
+      organizationState?: string;
+      quantity: number;
+      unit: string;
     },
     printerName: string,
     organizationId: string,
     copies = 1,
   ): Promise<boolean> {
-    const printData = this.buildTsplLabel(
-      [
-        `TEXT 20,20,"2",0,1,1,"ETIQUETA PRODUTO"`,
-        `BOX 15,45,435,48,2`,
-        `TEXT 20,65,"3",0,2,1,"${this.sanitizeText(data.productName, 24)}"`,
-        `TEXT 20,115,"1",0,1,1,"Fab: ${this.formatDate(data.manufacturingDate)}"`,
-        `TEXT 20,140,"1",0,1,1,"Val: ${this.formatDate(data.validityDate)}"`,
-        `TEXT 20,165,"1",0,1,1,"Abert: ${this.formatDate(data.openingDate || '')}"`,
-        `TEXT 20,190,"1",0,1,1,"Pos-abert: ${this.formatDate(data.validityAfterOpening || '')}"`,
-        `TEXT 20,215,"1",0,1,1,"Arm: ${this.sanitizeText(data.conservationMode, 18)}"`,
-        `TEXT 20,240,"1",0,1,1,"Resp: ${this.sanitizeText(data.responsibleName, 24)}"`,
-      ],
+    return this.postPrintJob(
+      printerName,
+      organizationId,
+      "product",
+      data,
       copies,
     );
-
-    return this.postPrintJob(printerName, organizationId, printData);
   }
 
   static async checkStatus(): Promise<boolean> {
