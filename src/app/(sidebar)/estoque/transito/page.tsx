@@ -405,6 +405,63 @@ function getCurrentClientTime(): string {
   return `${hours}:${minutes}`;
 }
 
+function getLocalDateInputValue(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateInputValue(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function buildLocalDateTimeWithOffset(
+  dateValue: string,
+  hours: number,
+  minutes: number,
+): string {
+  const baseDate = parseDateInputValue(dateValue) ?? new Date();
+  const localDate = new Date(
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate(),
+    hours,
+    minutes,
+    0,
+    0,
+  );
+
+  const offsetMinutes = -localDate.getTimezoneOffset();
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absoluteOffset = Math.abs(offsetMinutes);
+  const offsetHours = Math.floor(absoluteOffset / 60)
+    .toString()
+    .padStart(2, "0");
+  const offsetRemainder = (absoluteOffset % 60).toString().padStart(2, "0");
+
+  const year = localDate.getFullYear();
+  const month = (localDate.getMonth() + 1).toString().padStart(2, "0");
+  const day = localDate.getDate().toString().padStart(2, "0");
+  const hour = localDate.getHours().toString().padStart(2, "0");
+  const minute = localDate.getMinutes().toString().padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hour}:${minute}:00${sign}${offsetHours}:${offsetRemainder}`;
+}
+
+function formatDateTimeForLabel(dateTimeValue: string): string {
+  const match = dateTimeValue.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/,
+  );
+
+  if (!match) return dateTimeValue;
+
+  const [, year, month, day, hour, minute] = match;
+  return `${day}/${month}/${year} ${hour}:${minute}`;
+}
+
 function LabelCopiesField({
   id,
   value,
@@ -442,8 +499,7 @@ function LabelCopiesField({
 export default function EstoqueTransitoPage() {
   const router = useRouter();
   const { activeProfile } = useProfile();
-  const { activeOrganizationDetails, refreshActiveOrganization } =
-    useOrganization();
+  const { activeOrganizationDetails, detailsLoading } = useOrganization();
   const { user } = useAuth();
   const organizationId =
     activeProfile?.userOrganization?.organization?.id || "";
@@ -476,9 +532,12 @@ export default function EstoqueTransitoPage() {
   const isGestor =
     activeProfile?.profile?.name?.toLowerCase().includes("gestor") || false;
 
+  useEffect(() => {
+    console.log("Organization details:", activeOrganizationDetails);
+  }, [activeOrganizationDetails]);
   // Tab
   const [activeTab, setActiveTab] = useState<"amostras" | "produtos">(
-    "amostras",
+    "produtos",
   );
 
   // Data
@@ -510,7 +569,7 @@ export default function EstoqueTransitoPage() {
   const [sampleName, setSampleName] = useState("");
   const [sampleTime, setSampleTime] = useState("");
   const [sampleCollectionDate, setSampleCollectionDate] = useState(
-    new Date().toISOString().split("T")[0],
+    getLocalDateInputValue(),
   );
   const [sampleDiscardDate, setSampleDiscardDate] = useState("");
   const [sampleResponsible, setSampleResponsible] = useState("");
@@ -519,11 +578,11 @@ export default function EstoqueTransitoPage() {
 
   // ====== PRODUCTS state ======
   const [productManufacturingDate, setProductManufacturingDate] = useState(
-    new Date().toISOString().split("T")[0],
+    getLocalDateInputValue(),
   );
   const [productExpiryDate, setProductExpiryDate] = useState("");
   const [productOpeningDate, setProductOpeningDate] = useState(
-    new Date().toISOString().split("T")[0],
+    getLocalDateInputValue(),
   );
   const [productExpiryAfterOpeningDate, setProductExpiryAfterOpeningDate] =
     useState("");
@@ -584,9 +643,10 @@ export default function EstoqueTransitoPage() {
   // ────── Effects ──────
   useEffect(() => {
     if (sampleCollectionDate) {
-      const d = new Date(sampleCollectionDate);
+      const d = parseDateInputValue(sampleCollectionDate);
+      if (!d) return;
       d.setDate(d.getDate() + 3);
-      setSampleDiscardDate(d.toISOString().split("T")[0]);
+      setSampleDiscardDate(getLocalDateInputValue(d));
     }
   }, [sampleCollectionDate]);
 
@@ -844,7 +904,7 @@ export default function EstoqueTransitoPage() {
       });
       toast.success("Amostra registrada no estoque em transito!");
 
-      router.push("/estoque");
+      router.push("/estoque-em-transito");
     } catch (error) {
       console.error(error);
       toast.error("Erro ao processar");
@@ -860,6 +920,26 @@ export default function EstoqueTransitoPage() {
       const product = products.find(
         (p) => p.id.toString() === selectedProductId,
       );
+      const now = new Date();
+      const manufacturingDateTime = buildLocalDateTimeWithOffset(
+        productManufacturingDate,
+        0,
+        0,
+      );
+      const expiryDateTime = buildLocalDateTimeWithOffset(
+        productExpiryDate,
+        0,
+        0,
+      );
+      const manipulationDateTime = buildLocalDateTimeWithOffset(
+        productOpeningDate || getLocalDateInputValue(now),
+        now.getHours(),
+        now.getMinutes(),
+      );
+      const validityAfterOpeningDateTime = productExpiryAfterOpeningDate
+        ? buildLocalDateTimeWithOffset(productExpiryAfterOpeningDate, 0, 0)
+        : undefined;
+      const manipulationLabel = formatDateTimeForLabel(manipulationDateTime);
 
       if (print) {
         if (!validateLabelCopies(productLabelCopies)) return;
@@ -921,10 +1001,10 @@ export default function EstoqueTransitoPage() {
         const printed = await LabelPrinterService.printProductLabel(
           {
             productName: product?.name || "Produto",
-            manufacturingDate: productManufacturingDate,
-            validityDate: productExpiryDate,
-            openingDate: productOpeningDate,
-            validityAfterOpening: productExpiryAfterOpeningDate,
+            manufacturingDate: manufacturingDateTime,
+            validityDate: expiryDateTime,
+            openingDate: manipulationDateTime,
+            validityAfterOpening: validityAfterOpeningDateTime,
             conservationMode: productConservationMode,
             responsibleName: productResponsible,
             organizationName: resolvedOrganizationName,
@@ -960,14 +1040,14 @@ export default function EstoqueTransitoPage() {
         productId: parseInt(selectedProductId),
         quantity: productQuantity,
         unitOfMeasureCode: resolveUnit(),
-        manufacturingDate: productManufacturingDate,
-        expiryDate: productExpiryDate,
-        observations: `Conservacao: ${productConservationMode}`,
+        manufacturingDate: manufacturingDateTime,
+        expiryDate: expiryDateTime,
+        observations: `Conservação: ${productConservationMode.slice(0, 1).toUpperCase() + productConservationMode.slice(1).toLowerCase()} | Manipulado: ${manipulationLabel}`,
         organizationId,
       });
       toast.success("Salvo no estoque em transito!");
 
-      router.push("/estoque");
+      router.push("/estoque-em-transito");
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar");

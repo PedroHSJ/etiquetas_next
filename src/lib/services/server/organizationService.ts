@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import {
-  OrganizationResponseDto,
-  OrganizationExpandedResponseDto,
-} from "@/types/dto/organization/response";
-import { organizations } from "@prisma/client";
+  CreateOrganizationDto,
+  UpdateOrganizationDto,
+} from "@/types/dto/organization/request";
+import { OrganizationExpandedResponseDto } from "@/types/dto/organization/response";
+import { Prisma, organizations } from "@prisma/client";
 
 /**
  * Service layer used by the API routes to manage organizations using Prisma.
@@ -11,6 +12,76 @@ import { organizations } from "@prisma/client";
  */
 export class OrganizationBackendService {
   constructor() {}
+
+  private mapExpandedOrganization(
+    org: Prisma.organizationsGetPayload<{
+      include: {
+        states: true;
+        cities: {
+          include: {
+            states: true;
+          };
+        };
+      };
+    }>,
+  ): OrganizationExpandedResponseDto {
+    return {
+      id: org.id,
+      name: org.name,
+      type: org.type,
+      createdBy: org.createdBy,
+      createdAt:
+        org.createdAt instanceof Date
+          ? org.createdAt.toISOString()
+          : String(org.createdAt),
+      updatedAt:
+        org.updatedAt instanceof Date
+          ? org.updatedAt.toISOString()
+          : String(org.updatedAt),
+      cnpj: org.cnpj,
+      capacity: org.capacity,
+      openingDate: org.openingDate
+        ? org.openingDate instanceof Date
+          ? org.openingDate.toISOString()
+          : String(org.openingDate)
+        : null,
+      fullAddress: org.fullAddress,
+      zipCode: org.zipCode,
+      district: org.district,
+      latitude: org.latitude ? Number(org.latitude) : null,
+      longitude: org.longitude ? Number(org.longitude) : null,
+      mainPhone: org.mainPhone,
+      altPhone: org.altPhone,
+      institutionalEmail: org.institutionalEmail,
+      stateId: org.stateId,
+      cityId: org.cityId,
+      address: org.address,
+      number: org.number,
+      addressComplement: org.addressComplement,
+      state: org.states
+        ? {
+            id: org.states.id,
+            code: org.states.code,
+            name: org.states.name,
+            region: org.states.region,
+          }
+        : undefined,
+      city: org.cities
+        ? {
+            id: org.cities.id,
+            name: org.cities.name,
+            ibgeCode: org.cities.ibgeCode,
+            state: org.cities.states
+              ? {
+                  id: org.cities.states.id,
+                  code: org.cities.states.code,
+                  name: org.cities.states.name,
+                }
+              : undefined,
+          }
+        : undefined,
+    };
+  }
 
   /**
    * Returns every organization the user created OR belongs to.
@@ -38,7 +109,10 @@ export class OrganizationBackendService {
     return list;
   }
 
-  async createOrganization(data: any, userId: string): Promise<organizations> {
+  async createOrganization(
+    data: CreateOrganizationDto,
+    userId: string,
+  ): Promise<organizations> {
     const entity = await prisma.organizations.create({
       data: {
         name: data.name,
@@ -66,8 +140,13 @@ export class OrganizationBackendService {
     return entity;
   }
 
-  async updateOrganization(id: string, data: any): Promise<organizations> {
-    const updateData: any = { ...data };
+  async updateOrganization(
+    id: string,
+    data: UpdateOrganizationDto,
+  ): Promise<organizations> {
+    const updateData: Prisma.organizationsUpdateInput = {
+      ...data,
+    };
 
     // Clean numeric strings
     if (data.cnpj !== undefined)
@@ -98,7 +177,7 @@ export class OrganizationBackendService {
   /**
    * Get organization by ID with expanded state/city
    */
-  async getByIdExpanded(id: string): Promise<any> {
+  async getByIdExpanded(id: string): Promise<OrganizationExpandedResponseDto> {
     const org = await prisma.organizations.findUnique({
       where: { id },
       include: {
@@ -115,13 +194,16 @@ export class OrganizationBackendService {
       throw new Error("Organization not found");
     }
 
-    return org;
+    return this.mapExpandedOrganization(org);
   }
 
   /**
    * Update organization and return expanded data
    */
-  async updateExpanded(id: string, data: any): Promise<any> {
+  async updateExpanded(
+    id: string,
+    data: UpdateOrganizationDto,
+  ): Promise<OrganizationExpandedResponseDto> {
     await this.updateOrganization(id, data);
     return this.getByIdExpanded(id);
   }
@@ -129,7 +211,9 @@ export class OrganizationBackendService {
   /**
    * Get all organizations for a user with expanded state/city
    */
-  async listByUserIdExpanded(userId: string): Promise<any[]> {
+  async listByUserIdExpanded(
+    userId: string,
+  ): Promise<OrganizationExpandedResponseDto[]> {
     const list = await prisma.organizations.findMany({
       where: {
         OR: [
@@ -157,6 +241,6 @@ export class OrganizationBackendService {
       },
     });
 
-    return list;
+    return list.map((org) => this.mapExpandedOrganization(org));
   }
 }

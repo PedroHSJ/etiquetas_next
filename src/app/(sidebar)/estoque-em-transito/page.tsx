@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   CalendarClock,
@@ -8,6 +9,7 @@ import {
   Clock3,
   FilterX,
   PackageOpen,
+  Printer,
   Search,
   Trash2,
 } from "lucide-react";
@@ -642,6 +644,12 @@ export default function EstoqueEmTransitoPage() {
               </p>
             </div>
           </div>
+          <Button asChild className="gap-2 self-start sm:self-auto">
+            <Link href="/estoque/transito">
+              <Printer className="h-4 w-4" />
+              Imprimir etiqueta
+            </Link>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">

@@ -257,8 +257,9 @@ function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "";
 
   try {
-    if (dateStr.includes("-") && dateStr.length === 10) {
-      const [year, month, day] = dateStr.split("-").map(Number);
+    const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dateMatch) {
+      const [, year, month, day] = dateMatch.map(Number);
       const date = new Date(year, month - 1, day);
       return formatDateValue(date);
     }
@@ -268,6 +269,21 @@ function formatDate(dateStr?: string | null): string {
   } catch {
     return dateStr;
   }
+}
+
+function formatDateTime(dateStr?: string | null): string {
+  if (!dateStr) return "";
+
+  const dateTimeMatch = dateStr.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/,
+  );
+
+  if (dateTimeMatch) {
+    const [, year, month, day, hour, minute] = dateTimeMatch;
+    return `${day}/${month}/${year} ${hour}:${minute}`;
+  }
+
+  return formatDate(dateStr);
 }
 
 function formatDateValue(date: Date): string {
@@ -324,11 +340,11 @@ function buildSampleTspl(payload: SamplePayload, copies = 1): string {
 }
 
 function buildProductTspl(payload: ProductPayload, copies = 1): string {
-  const productName = sanitizeText(payload.productName, 28).toUpperCase();
+  const productName = normalizeLabelText(payload.productName, 28);
   const storage = sanitizeText(payload.conservationMode, 18).toUpperCase();
   const manufacturing = formatDate(payload.manufacturingDate);
   const validityOriginal = formatDate(payload.validityDate);
-  const handlingDate = formatDate(payload.openingDate);
+  const handlingDate = formatDateTime(payload.openingDate);
   const validityAfterOpening = formatDate(payload.validityAfterOpening);
   const responsible = normalizeLabelText(payload.responsibleName ?? "", 24);
   const organizationName = normalizeLabelText(
@@ -428,20 +444,39 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
     ];
   });
 
+  const responsibleLabelX = xOffset + 24;
+  const responsibleLabelText = "RESP:";
+  const responsibleValueX =
+    responsibleLabelX +
+    estimateTextWidth(responsibleLabelText, "sm", { bold: useBold }) +
+    20;
+
   const responsibleTextLines = hasResponsible
     ? [
-        ...tsplText(xOffset + 24, yOffset + responsibleY, "RESP:", "sm", {
-          bold: useBold,
-        }),
-        ...tsplText(xOffset + 120, yOffset + responsibleY, responsible, "sm", {
-          bold: false,
-        }),
+        ...tsplText(
+          responsibleLabelX,
+          yOffset + responsibleY,
+          responsibleLabelText,
+          "md",
+          {
+            bold: useBold,
+          },
+        ),
+        ...tsplText(
+          responsibleValueX,
+          yOffset + responsibleY,
+          responsible,
+          "md",
+          {
+            bold: false,
+          },
+        ),
       ]
     : [];
 
   const orgTextLines = orgLines.flatMap((line, index) => {
     const y = yOffset + orgStartY + index * rowHeight;
-    const textLine = sanitizeText(line, 32);
+    const textLine = sanitizeText(line, 42);
     return tsplText(xOffset + 24, y, textLine, "sm", { bold: useBold });
   });
 
@@ -458,10 +493,10 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   return buildTsplLabel(
     [
       ...productTextLines,
-      ...tsplText(xOffset + 24, yOffset + storageY, storage, "sm", {
+      ...tsplText(xOffset + 24, yOffset + storageY, storage, "md", {
         bold: useBold,
       }),
-      ...tsplTextRight(boxRight, yOffset + storageY, weight, "sm", {
+      ...tsplTextRight(boxRight, yOffset + storageY, weight, "md", {
         bold: useBold,
       }),
       `BOX ${boxLeft},${yOffset + divider1Y},${boxRight},${yOffset + divider1Y + 2},1`,
@@ -503,11 +538,9 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
       ...section2TextLines,
 
-      // `BOX ${boxLeft},${yOffset + divider3Y},${boxRight},${yOffset + divider3Y + 2},1`,
-
       ...responsibleTextLines,
       ...tsplText(
-        xOffset + 200,
+        xOffset + 24,
         yOffset + restLabelY,
         organizationName || "-",
         "sm",
