@@ -45,22 +45,7 @@ const RawPrintJobSchema = z.object({
   printData: z.string().min(1, "printData is required"),
 });
 
-const SamplePayloadSchema = z.object({
-  sampleName: z.string().min(1, "sampleName is required"),
-  collectionTime: z.string().min(1, "collectionTime is required"),
-  collectionDate: z.string().min(1, "collectionDate is required"),
-  discardDate: z.string().min(1, "discardDate is required"),
-  responsibleName: z.string().min(1, "responsibleName is required"),
-});
-
-const ProductPayloadSchema = z.object({
-  productName: z.string().min(1, "productName is required"),
-  manufacturingDate: z.string().min(1, "manufacturingDate is required"),
-  validityDate: z.string().min(1, "validityDate is required"),
-  openingDate: z.string().optional().nullable(),
-  validityAfterOpening: z.string().optional().nullable(),
-  conservationMode: z.enum(["REFRIGERADO", "CONGELADO", "AMBIENTE"]),
-  responsibleName: z.string().min(1, "responsibleName is required"),
+const OrganizationPayloadSchema = z.object({
   organizationName: z.string().optional().nullable(),
   organizationCnpj: z.string().optional().nullable(),
   organizationZipCode: z.string().optional().nullable(),
@@ -69,21 +54,45 @@ const ProductPayloadSchema = z.object({
   organizationAddressComplement: z.string().optional().nullable(),
   organizationCity: z.string().optional().nullable(),
   organizationState: z.string().optional().nullable(),
+});
+
+const QuantityPayloadSchema = z.object({
   quantity: z.number().positive(),
-  lot: z.string().optional().nullable(),
-  brandSupplier: z.string().optional().nullable(),
   unit: z.string().min(1, "unit is required"),
 });
 
-const StockInTransitPayloadSchema = z.object({
+const SamplePayloadSchema = OrganizationPayloadSchema.extend({
+  sampleName: z.string().min(1, "sampleName is required"),
+  collectionAt: z.string().min(1, "collectionAt is required"),
+  discardAt: z.string().min(1, "discardAt is required"),
+  shift: z.string().optional().nullable(),
+  responsibleName: z.string().min(1, "responsibleName is required"),
+}).extend(QuantityPayloadSchema.shape);
+
+const OpenedProductPayloadSchema = OrganizationPayloadSchema.extend({
   productName: z.string().min(1, "productName is required"),
-  quantity: z.number().positive(),
-  unit: z.string().min(1, "unit is required"),
-  manufacturingDate: z.string().min(1, "manufacturingDate is required"),
+  openedAt: z.string().min(1, "openedAt is required"),
+  originalValidityDate: z.string().min(1, "originalValidityDate is required"),
   validityDate: z.string().min(1, "validityDate is required"),
-  observations: z.string().optional().nullable(),
-  userName: z.string().optional().nullable(),
-});
+  conservationMode: z.enum(["REFRIGERADO", "CONGELADO", "AMBIENTE"]),
+  responsibleName: z.string().min(1, "responsibleName is required"),
+}).extend(QuantityPayloadSchema.shape);
+
+const ThawingPayloadSchema = OrganizationPayloadSchema.extend({
+  productName: z.string().min(1, "productName is required"),
+  startAt: z.string().min(1, "startAt is required"),
+  validityDate: z.string().min(1, "validityDate is required"),
+  responsibleName: z.string().min(1, "responsibleName is required"),
+  lot: z.string().optional().nullable(),
+}).extend(QuantityPayloadSchema.shape);
+
+const ManipulatedPayloadSchema = OrganizationPayloadSchema.extend({
+  preparationName: z.string().min(1, "preparationName is required"),
+  handledAt: z.string().min(1, "handledAt is required"),
+  validityDate: z.string().min(1, "validityDate is required"),
+  conservationMode: z.enum(["REFRIGERADO", "CONGELADO", "AMBIENTE"]),
+  responsibleName: z.string().min(1, "responsibleName is required"),
+}).extend(QuantityPayloadSchema.shape);
 
 const StructuredPrintJobSchema = z.discriminatedUnion("template", [
   z.object({
@@ -96,16 +105,23 @@ const StructuredPrintJobSchema = z.discriminatedUnion("template", [
   z.object({
     printerName: z.string().min(1, "printerName is required"),
     organizationId: z.string().min(1, "organizationId is required"),
-    template: z.literal("product"),
+    template: z.literal("opened_product"),
     copies: z.number().int().min(1).optional(),
-    payload: ProductPayloadSchema,
+    payload: OpenedProductPayloadSchema,
   }),
   z.object({
     printerName: z.string().min(1, "printerName is required"),
     organizationId: z.string().min(1, "organizationId is required"),
-    template: z.literal("stock_in_transit"),
+    template: z.literal("thawing"),
     copies: z.number().int().min(1).optional(),
-    payload: StockInTransitPayloadSchema,
+    payload: ThawingPayloadSchema,
+  }),
+  z.object({
+    printerName: z.string().min(1, "printerName is required"),
+    organizationId: z.string().min(1, "organizationId is required"),
+    template: z.literal("manipulated"),
+    copies: z.number().int().min(1).optional(),
+    payload: ManipulatedPayloadSchema,
   }),
 ]);
 
@@ -117,9 +133,24 @@ type PrintTemplate = StructuredPrintJob["template"];
 
 type SamplePayload = z.infer<typeof SamplePayloadSchema>;
 
-type ProductPayload = z.infer<typeof ProductPayloadSchema>;
+type OrganizationPayload = z.infer<typeof OrganizationPayloadSchema>;
 
-type StockInTransitPayload = z.infer<typeof StockInTransitPayloadSchema>;
+type OpenedProductPayload = z.infer<typeof OpenedProductPayloadSchema>;
+
+type ThawingPayload = z.infer<typeof ThawingPayloadSchema>;
+
+type ManipulatedPayload = z.infer<typeof ManipulatedPayloadSchema>;
+
+type LabelDetailRow = {
+  label: string;
+  value: string;
+};
+
+function formatConservationModeLabel(
+  mode: "REFRIGERADO" | "CONGELADO" | "AMBIENTE",
+): string {
+  return mode === "AMBIENTE" ? "T° AMBIENTE" : mode;
+}
 
 function normalizeCopies(copies?: number): number {
   if (!Number.isFinite(copies)) return 1;
@@ -324,37 +355,11 @@ function buildTsplLabel(lines: string[], copies = 1): string {
   ].join("\r\n");
 }
 
-function buildSampleTspl(payload: SamplePayload, copies = 1): string {
-  return buildTsplLabel(
-    [
-      'TEXT 20,20,"2",0,1,1,"AMOSTRA"',
-      "BOX 15,45,435,48,2",
-      `TEXT 20,65,\"3\",0,2,1,\"${sanitizeText(payload.sampleName, 24)}\"`,
-      `TEXT 20,115,\"1\",0,1,1,\"Hora: ${sanitizeText(payload.collectionTime, 8)}\"`,
-      `TEXT 20,140,\"1\",0,1,1,\"Coleta: ${formatDate(payload.collectionDate)}\"`,
-      `TEXT 20,165,\"1\",0,1,1,\"Descarte: ${formatDate(payload.discardDate)}\"`,
-      `TEXT 20,190,\"1\",0,1,1,\"Resp: ${sanitizeText(payload.responsibleName, 24)}\"`,
-    ],
-    copies,
-  );
-}
-
-function buildProductTspl(payload: ProductPayload, copies = 1): string {
-  const productName = normalizeLabelText(payload.productName, 28);
-  const storage = sanitizeText(payload.conservationMode, 18).toUpperCase();
-  const manufacturing = formatDate(payload.manufacturingDate);
-  const validityOriginal = formatDate(payload.validityDate);
-  const handlingDate = formatDateTime(payload.openingDate);
-  const validityAfterOpening = formatDate(payload.validityAfterOpening);
-  const responsible = normalizeLabelText(payload.responsibleName ?? "", 24);
-  const organizationName = normalizeLabelText(
-    payload.organizationName ?? "",
-    28,
-  );
-  const weight = normalizeLabelText(
-    `${payload.quantity} ${sanitizeText(payload.unit, 10)}`,
-    18,
-  );
+function getOrganizationFooter(payload: OrganizationPayload): {
+  organizationName: string;
+  organizationLines: string[];
+} {
+  const organizationName = normalizeLabelText(payload.organizationName ?? "", 28);
   const cnpj = normalizeLabelText(
     formatCnpjValue(payload.organizationCnpj ?? ""),
     28,
@@ -371,8 +376,6 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
     formatCepValue(payload.organizationZipCode ?? ""),
     12,
   );
-  const lot = normalizeLabelText(payload.lot ?? "", 18);
-  const brandSupplier = normalizeLabelText(payload.brandSupplier ?? "", 22);
 
   const addressLine =
     [address, number].filter(Boolean).join(", ") +
@@ -382,207 +385,323 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const cnpjLine = cnpj ? `CNPJ: ${cnpj}` : "";
   const cnpjCepLine = [cnpjLine, zipLine].filter(Boolean).join(" ");
 
-  const orgLines = [cnpjCepLine, addressLine, cityStateLine]
+  const organizationLines = [cnpjCepLine, addressLine, cityStateLine]
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const productLines = splitLabelLines(productName, 18, 2);
-  const nameLineY = 18;
-  const nameLineSpacing = 28;
-  const rowHeight = 28;
-  const storageY =
-    nameLineY + (productLines.length || 1) * nameLineSpacing + 20;
-  const divider1Y = storageY + 30;
-  const infoStartY = divider1Y + 15;
+  return {
+    organizationName,
+    organizationLines,
+  };
+}
 
-  const divider2Y = infoStartY + rowHeight * 4 + 6;
-  const section2StartY = divider2Y + 10;
-
+function buildOperationalLabelTspl(config: {
+  title: string;
+  primaryText: string;
+  rows: LabelDetailRow[];
+  responsibleName: string;
+  organization: OrganizationPayload;
+  copies?: number;
+}): string {
   const xOffset = 16;
   const yOffset = 16;
-
-  const infoValueX = xOffset + 260;
-
   const boxLeft = xOffset + 24;
   const boxRight = xOffset + 424;
-
-  const section2Rows = [
-    ...(lot ? [{ label: "LOTE:", value: lot, valueX: xOffset + 120 }] : []),
-    ...(brandSupplier
-      ? [
-          {
-            label: "MARCA / FORN:",
-            value: brandSupplier,
-            valueX: xOffset + 200,
-          },
-        ]
-      : []),
-  ];
-
-  const divider3Y = section2StartY + rowHeight * section2Rows.length + 6;
-  const responsibleY = divider3Y + 10;
-  const hasResponsible = Boolean(responsible);
-  const restLabelY = responsibleY + (hasResponsible ? rowHeight : 0);
-  const orgStartY = restLabelY + rowHeight;
-
+  const rowHeight = 26;
+  const titleY = 18;
+  const divider1Y = 46;
+  const primaryTextY = 60;
+  const primaryTextSpacing = 28;
   const useBold = false;
+  const primaryText = normalizeLabelText(config.primaryText, 28);
+  const primaryLines = splitLabelLines(primaryText, 18, 2);
+  const normalizedRows = config.rows.filter((row) => row.value.trim().length > 0);
+  const detailsStartY =
+    primaryTextY + (primaryLines.length || 1) * primaryTextSpacing + 14;
+  const divider2Y = detailsStartY + normalizedRows.length * rowHeight + 6;
+  const responsibleY = divider2Y + 12;
+  const { organizationName, organizationLines } = getOrganizationFooter(
+    config.organization,
+  );
+  const hasOrganizationName = Boolean(organizationName);
+  const organizationNameY = responsibleY + rowHeight;
+  const organizationDetailsY =
+    organizationNameY + (hasOrganizationName ? rowHeight : 0);
 
-  const boldLeft = (x: number, y: number, label: string): string[] =>
-    tsplText(x, y, label, "md", { bold: useBold });
-
-  const boldText = (x: number, y: number, label: string): string[] =>
-    tsplText(x, y, label, "sm", { bold: useBold });
-
-  const normalTextMd = (xRight: number, y: number, label: string): string[] =>
-    tsplTextRight(xRight, y, label, "md", { bold: false });
-
-  const section2TextLines = section2Rows.flatMap((row, index) => {
-    const y = yOffset + section2StartY + rowHeight * index;
+  const detailLines = normalizedRows.flatMap((row, index) => {
+    const y = yOffset + detailsStartY + index * rowHeight;
     return [
-      ...boldLeft(xOffset + 24, y, row.label),
-      `TEXT ${row.valueX},${y},"2",0,1,1,"${row.value}"`,
+      ...tsplText(
+        xOffset + 24,
+        y,
+        sanitizeText(row.label, 16),
+        "md",
+        { bold: useBold },
+      ),
+      ...tsplTextRight(
+        boxRight,
+        y,
+        sanitizeText(row.value, 20),
+        "md",
+        { bold: false },
+      ),
     ];
   });
 
+  const responsibleLabel = "RESP:";
   const responsibleLabelX = xOffset + 24;
-  const responsibleLabelText = "RESP:";
   const responsibleValueX =
     responsibleLabelX +
-    estimateTextWidth(responsibleLabelText, "sm", { bold: useBold }) +
-    20;
+    estimateTextWidth(responsibleLabel, "md", { bold: useBold }) +
+    16;
+  const responsibleText = normalizeLabelText(config.responsibleName, 24);
 
-  const responsibleTextLines = hasResponsible
-    ? [
-        ...tsplText(
-          responsibleLabelX,
-          yOffset + responsibleY,
-          responsibleLabelText,
-          "md",
-          {
-            bold: useBold,
-          },
-        ),
-        ...tsplText(
-          responsibleValueX,
-          yOffset + responsibleY,
-          responsible,
-          "md",
-          {
-            bold: false,
-          },
-        ),
-      ]
-    : [];
-
-  const orgTextLines = orgLines.flatMap((line, index) => {
-    const y = yOffset + orgStartY + index * rowHeight;
-    const textLine = sanitizeText(line, 42);
-    return tsplText(xOffset + 24, y, textLine, "sm", { bold: useBold });
+  const organizationTextLines = organizationLines.flatMap((line, index) => {
+    const y = yOffset + organizationDetailsY + index * rowHeight;
+    return tsplText(xOffset + 24, y, sanitizeText(line, 42), "sm", {
+      bold: useBold,
+    });
   });
 
-  const productNameLines = productLines.length
-    ? productLines
-    : [productName.slice(0, 18)];
-
-  const productTextLines = productNameLines.flatMap((line, index) => {
-    const y = yOffset + nameLineY + index * nameLineSpacing;
-    const textLine = sanitizeText(line, 18);
-    return tsplText(xOffset + 24, y, textLine, "lg", { bold: true });
-  });
+  const primaryTextLines = (primaryLines.length ? primaryLines : [primaryText]).flatMap(
+    (line, index) =>
+      tsplText(
+        xOffset + 24,
+        yOffset + primaryTextY + index * primaryTextSpacing,
+        sanitizeText(line, 18),
+        "lg",
+        { bold: true },
+      ),
+  );
 
   return buildTsplLabel(
     [
-      ...productTextLines,
-      ...tsplText(xOffset + 24, yOffset + storageY, storage, "md", {
-        bold: useBold,
-      }),
-      ...tsplTextRight(boxRight, yOffset + storageY, weight, "md", {
-        bold: useBold,
-      }),
-      `BOX ${boxLeft},${yOffset + divider1Y},${boxRight},${yOffset + divider1Y + 2},1`,
-
-      ...boldLeft(xOffset + 24, yOffset + infoStartY, "VAL. ORIGINAL:"),
-      ...normalTextMd(boxRight, yOffset + infoStartY, validityOriginal),
-      ...boldLeft(
-        xOffset + 24,
-        yOffset + infoStartY + rowHeight,
-        "MANIPULACAO:",
-      ),
-      ...normalTextMd(
-        boxRight,
-        yOffset + infoStartY + rowHeight,
-        handlingDate || "-",
-      ),
-      ...boldLeft(
-        xOffset + 24,
-        yOffset + infoStartY + rowHeight * 2,
-        "VALIDADE:",
-      ),
-      ...normalTextMd(
-        boxRight,
-        yOffset + infoStartY + rowHeight * 2,
-        validityAfterOpening || validityOriginal,
-      ),
-      ...boldLeft(
-        xOffset + 24,
-        yOffset + infoStartY + rowHeight * 3,
-        "FABRICACAO:",
-      ),
-      ...normalTextMd(
-        boxRight,
-        yOffset + infoStartY + rowHeight * 3,
-        manufacturing || "-",
-      ),
-
-      `BOX ${boxLeft},${yOffset + divider2Y},${boxRight},${yOffset + divider2Y + 2},1`,
-
-      ...section2TextLines,
-
-      ...responsibleTextLines,
       ...tsplText(
         xOffset + 24,
-        yOffset + restLabelY,
-        organizationName || "-",
-        "sm",
-        { bold: useBold },
+        yOffset + titleY,
+        normalizeLabelText(config.title, 24),
+        "md",
+        {
+          bold: true,
+        },
       ),
-      ...orgTextLines,
+      `BOX ${boxLeft},${yOffset + divider1Y},${boxRight},${yOffset + divider1Y + 2},1`,
+      ...primaryTextLines,
+      ...detailLines,
+      `BOX ${boxLeft},${yOffset + divider2Y},${boxRight},${yOffset + divider2Y + 2},1`,
+      ...tsplText(
+        responsibleLabelX,
+        yOffset + responsibleY,
+        responsibleLabel,
+        "md",
+        {
+          bold: useBold,
+        },
+      ),
+      ...tsplText(
+        responsibleValueX,
+        yOffset + responsibleY,
+        responsibleText,
+        "md",
+        {
+          bold: false,
+        },
+      ),
+      ...(hasOrganizationName
+        ? tsplText(
+            xOffset + 24,
+            yOffset + organizationNameY,
+            organizationName,
+            "sm",
+            {
+              bold: useBold,
+            },
+          )
+        : []),
+      ...organizationTextLines,
     ],
-    copies,
+    config.copies,
   );
 }
 
-function buildStockInTransitTspl(
-  payload: StockInTransitPayload,
+function buildSampleTspl(payload: SamplePayload, copies = 1): string {
+  const quantity = normalizeLabelText(
+    `${payload.quantity} ${sanitizeText(payload.unit, 10)}`,
+    18,
+  );
+  const rows: LabelDetailRow[] = [
+    {
+      label: "COLETA:",
+      value: formatDateTime(payload.collectionAt),
+    },
+    {
+      label: "DESCARTE:",
+      value: formatDateTime(payload.discardAt),
+    },
+    ...(payload.shift
+      ? [
+          {
+            label: "TURNO:",
+            value: normalizeLabelText(payload.shift, 18),
+          },
+        ]
+      : []),
+    {
+      label: "QTD:",
+      value: quantity,
+    },
+  ];
+
+  return buildOperationalLabelTspl({
+    title: "AMOSTRA",
+    primaryText: payload.sampleName,
+    rows,
+    responsibleName: payload.responsibleName,
+    organization: payload,
+    copies,
+  });
+}
+
+function buildOpenedProductTspl(
+  payload: OpenedProductPayload,
   copies = 1,
 ): string {
-  return buildTsplLabel(
-    [
-      'TEXT 20,20,"2",0,1,1,"ESTOQUE EM TRANSITO"',
-      "BOX 15,45,435,48,2",
-      `TEXT 20,65,\"3\",0,2,1,\"${sanitizeText(payload.productName, 24)}\"`,
-      `TEXT 20,115,\"1\",0,1,1,\"Qtd: ${payload.quantity} ${sanitizeText(payload.unit, 10)}\"`,
-      `TEXT 20,140,\"1\",0,1,1,\"Fab: ${formatDate(payload.manufacturingDate)}\"`,
-      `TEXT 20,165,\"1\",0,1,1,\"Val: ${formatDate(payload.validityDate)}\"`,
-      `TEXT 20,190,\"1\",0,1,1,\"Obs: ${sanitizeText(payload.observations ?? "", 28)}\"`,
-      `TEXT 20,215,\"1\",0,1,1,\"Resp: ${sanitizeText(payload.userName ?? "", 24)}\"`,
-    ],
-    copies,
+  const quantity = normalizeLabelText(
+    `${payload.quantity} ${sanitizeText(payload.unit, 10)}`,
+    18,
   );
+  const rows: LabelDetailRow[] = [
+    {
+      label: "ABERTO:",
+      value: formatDateTime(payload.openedAt),
+    },
+    {
+      label: "VAL. ORIG.:",
+      value: formatDate(payload.originalValidityDate),
+    },
+    {
+      label: "VALIDADE:",
+      value: formatDateTime(payload.validityDate),
+    },
+    {
+      label: "CONSERV.:",
+      value: normalizeLabelText(
+        formatConservationModeLabel(payload.conservationMode),
+        18,
+      ),
+    },
+    {
+      label: "QTD:",
+      value: quantity,
+    },
+  ];
+
+  return buildOperationalLabelTspl({
+    title: "PRODUTO ABERTO",
+    primaryText: payload.productName,
+    rows,
+    responsibleName: payload.responsibleName,
+    organization: payload,
+    copies,
+  });
+}
+
+function buildThawingTspl(payload: ThawingPayload, copies = 1): string {
+  const quantity = normalizeLabelText(
+    `${payload.quantity} ${sanitizeText(payload.unit, 10)}`,
+    18,
+  );
+  const rows: LabelDetailRow[] = [
+    {
+      label: "INICIO:",
+      value: formatDateTime(payload.startAt),
+    },
+    {
+      label: "FIM:",
+      value: formatDateTime(payload.validityDate),
+    },
+    ...(payload.lot
+      ? [
+          {
+            label: "LOTE:",
+            value: normalizeLabelText(payload.lot, 18),
+          },
+        ]
+      : []),
+    {
+      label: "QTD:",
+      value: quantity,
+    },
+  ];
+
+  return buildOperationalLabelTspl({
+    title: "DESCONGELO",
+    primaryText: payload.productName,
+    rows,
+    responsibleName: payload.responsibleName,
+    organization: payload,
+    copies,
+  });
+}
+
+function buildManipulatedTspl(
+  payload: ManipulatedPayload,
+  copies = 1,
+): string {
+  const quantity = normalizeLabelText(
+    `${payload.quantity} ${sanitizeText(payload.unit, 10)}`,
+    18,
+  );
+  const rows: LabelDetailRow[] = [
+    {
+      label: "FABRIC.:",
+      value: formatDateTime(payload.handledAt),
+    },
+    {
+      label: "VALIDADE:",
+      value: formatDateTime(payload.validityDate),
+    },
+    {
+      label: "CONSERV.:",
+      value: normalizeLabelText(
+        formatConservationModeLabel(payload.conservationMode),
+        18,
+      ),
+    },
+    {
+      label: "QTD:",
+      value: quantity,
+    },
+  ];
+
+  return buildOperationalLabelTspl({
+    title: "MANIPULADO",
+    primaryText: payload.preparationName,
+    rows,
+    responsibleName: payload.responsibleName,
+    organization: payload,
+    copies,
+  });
 }
 
 function buildTSPLFromStructured(
   template: PrintTemplate,
-  payload: SamplePayload | ProductPayload | StockInTransitPayload,
+  payload:
+    | SamplePayload
+    | OpenedProductPayload
+    | ThawingPayload
+    | ManipulatedPayload,
   copies = 1,
 ): string {
   switch (template) {
     case "sample":
       return buildSampleTspl(payload as SamplePayload, copies);
-    case "product":
-      return buildProductTspl(payload as ProductPayload, copies);
-    case "stock_in_transit":
-      return buildStockInTransitTspl(payload as StockInTransitPayload, copies);
+    case "opened_product":
+      return buildOpenedProductTspl(payload as OpenedProductPayload, copies);
+    case "thawing":
+      return buildThawingTspl(payload as ThawingPayload, copies);
+    case "manipulated":
+      return buildManipulatedTspl(payload as ManipulatedPayload, copies);
     default:
       return "";
   }

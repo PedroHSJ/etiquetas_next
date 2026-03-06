@@ -55,6 +55,22 @@ import {
 import { UNIT_OF_MEASURE_OPTIONS } from "@/types/stock/product";
 
 type ConservationMode = "REFRIGERADO" | "CONGELADO" | "AMBIENTE";
+type LabelTab = "opened_product" | "sample" | "thawing" | "manipulated";
+
+type OrganizationPrintContext = {
+  organizationName?: string;
+  organizationCnpj?: string;
+  organizationZipCode?: string;
+  organizationAddress?: string;
+  organizationNumber?: string;
+  organizationAddressComplement?: string;
+  organizationCity?: string;
+  organizationState?: string;
+};
+
+function formatConservationModeLabel(mode: ConservationMode): string {
+  return mode === "AMBIENTE" ? "T° AMBIENTE" : mode;
+}
 
 // ─────────────────────────────────────────────────
 // Reusable sub‑components
@@ -398,13 +414,6 @@ function parseIntegerInput(value: string): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function getCurrentClientTime(): string {
-  const now = new Date();
-  const hours = now.getHours().toString().padStart(2, "0");
-  const minutes = now.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
 function getLocalDateInputValue(date: Date = new Date()): string {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -462,6 +471,51 @@ function formatDateTimeForLabel(dateTimeValue: string): string {
   return `${day}/${month}/${year} ${hour}:${minute}`;
 }
 
+function formatDateInputForLabel(dateValue: string): string {
+  const date = parseDateInputValue(dateValue);
+  if (!date) return dateValue;
+
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}
+
+function getLocalTimeInputValue(date: Date = new Date()): string {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function addHoursToLocalDateTime(
+  dateValue: string,
+  timeValue: string,
+  hoursToAdd: number,
+): { date: string; time: string } {
+  const baseDate = parseDateInputValue(dateValue) ?? new Date();
+  const [hours, minutes] = timeValue.split(":").map(Number);
+  const adjustedDate = new Date(
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate(),
+    Number.isFinite(hours) ? hours : 0,
+    Number.isFinite(minutes) ? minutes : 0,
+    0,
+    0,
+  );
+  adjustedDate.setHours(adjustedDate.getHours() + hoursToAdd);
+
+  return {
+    date: getLocalDateInputValue(adjustedDate),
+    time: getLocalTimeInputValue(adjustedDate),
+  };
+}
+
+function getMemberDisplayName(member: Member): string {
+  return member.users?.name || member.user?.name || member.id;
+}
+
 function LabelCopiesField({
   id,
   value,
@@ -499,7 +553,7 @@ function LabelCopiesField({
 export default function EstoqueTransitoPage() {
   const router = useRouter();
   const { activeProfile } = useProfile();
-  const { activeOrganizationDetails, detailsLoading } = useOrganization();
+  const { activeOrganizationDetails } = useOrganization();
   const { user } = useAuth();
   const organizationId =
     activeProfile?.userOrganization?.organization?.id || "";
@@ -531,14 +585,15 @@ export default function EstoqueTransitoPage() {
   const organizationState = activeOrganizationDetails?.state?.code || "";
   const isGestor =
     activeProfile?.profile?.name?.toLowerCase().includes("gestor") || false;
-
-  useEffect(() => {
-    console.log("Organization details:", activeOrganizationDetails);
-  }, [activeOrganizationDetails]);
-  // Tab
-  const [activeTab, setActiveTab] = useState<"amostras" | "produtos">(
-    "produtos",
+  const initialDate = getLocalDateInputValue();
+  const initialTime = getLocalTimeInputValue();
+  const initialSampleDiscard = addHoursToLocalDateTime(
+    initialDate,
+    initialTime,
+    72,
   );
+
+  const [activeTab, setActiveTab] = useState<LabelTab>("opened_product");
 
   // Data
   const [groups, setGroups] = useState<ProductGroup[]>([]);
@@ -558,39 +613,72 @@ export default function EstoqueTransitoPage() {
     unit: string;
   } | null>(null);
 
-  // Custom unit (only used when stockInfo.quantity === 0)
-  const [customUnit, setCustomUnit] = useState("un");
-
   // The effective unit
   const effectiveUnit =
     stockInfo && stockInfo.quantity > 0 ? stockInfo.unit : null;
+  const selectedProduct = products.find(
+    (product) => product.id.toString() === selectedProductId,
+  );
+  const selectedProductName = selectedProduct?.name || "";
 
   // ====== SAMPLES state ======
   const [sampleName, setSampleName] = useState("");
-  const [sampleTime, setSampleTime] = useState("");
-  const [sampleCollectionDate, setSampleCollectionDate] = useState(
-    getLocalDateInputValue(),
+  const [sampleCollectionDate, setSampleCollectionDate] =
+    useState(initialDate);
+  const [sampleCollectionTime, setSampleCollectionTime] =
+    useState(initialTime);
+  const [sampleDiscardDate, setSampleDiscardDate] = useState(
+    initialSampleDiscard.date,
   );
-  const [sampleDiscardDate, setSampleDiscardDate] = useState("");
+  const [sampleDiscardTime, setSampleDiscardTime] = useState(
+    initialSampleDiscard.time,
+  );
+  const [sampleShift, setSampleShift] = useState("");
   const [sampleResponsible, setSampleResponsible] = useState("");
-  const [sampleQuantity, setSampleQuantity] = useState<number>(1);
+  const [sampleQuantity, setSampleQuantity] = useState<number>(100);
+  const [sampleCustomUnit, setSampleCustomUnit] = useState("g");
   const [sampleLabelCopies, setSampleLabelCopies] = useState<number>(1);
 
-  // ====== PRODUCTS state ======
-  const [productManufacturingDate, setProductManufacturingDate] = useState(
-    getLocalDateInputValue(),
-  );
-  const [productExpiryDate, setProductExpiryDate] = useState("");
-  const [productOpeningDate, setProductOpeningDate] = useState(
-    getLocalDateInputValue(),
-  );
-  const [productExpiryAfterOpeningDate, setProductExpiryAfterOpeningDate] =
+  // ====== OPENED PRODUCT state ======
+  const [openedAtDate, setOpenedAtDate] = useState(initialDate);
+  const [openedAtTime, setOpenedAtTime] = useState(initialTime);
+  const [openedOriginalValidityDate, setOpenedOriginalValidityDate] =
     useState("");
-  const [productConservationMode, setProductConservationMode] =
+  const [openedValidityDate, setOpenedValidityDate] = useState("");
+  const [openedValidityTime, setOpenedValidityTime] = useState(initialTime);
+  const [openedConservationMode, setOpenedConservationMode] =
     useState<ConservationMode>("REFRIGERADO");
-  const [productResponsible, setProductResponsible] = useState("");
-  const [productQuantity, setProductQuantity] = useState<number>(1);
-  const [productLabelCopies, setProductLabelCopies] = useState<number>(1);
+  const [openedResponsible, setOpenedResponsible] = useState("");
+  const [openedQuantity, setOpenedQuantity] = useState<number>(1);
+  const [openedCustomUnit, setOpenedCustomUnit] = useState("un");
+  const [openedLabelCopies, setOpenedLabelCopies] = useState<number>(1);
+
+  // ====== THAWING state ======
+  const [thawingStartDate, setThawingStartDate] = useState(initialDate);
+  const [thawingStartTime, setThawingStartTime] = useState(initialTime);
+  const [thawingValidityDate, setThawingValidityDate] = useState("");
+  const [thawingValidityTime, setThawingValidityTime] = useState(initialTime);
+  const [thawingLot, setThawingLot] = useState("");
+  const [thawingResponsible, setThawingResponsible] = useState("");
+  const [thawingQuantity, setThawingQuantity] = useState<number>(1);
+  const [thawingCustomUnit, setThawingCustomUnit] = useState("un");
+  const [thawingLabelCopies, setThawingLabelCopies] = useState<number>(1);
+
+  // ====== MANIPULATED state ======
+  const [manipulatedPreparationName, setManipulatedPreparationName] =
+    useState("");
+  const [manipulatedAtDate, setManipulatedAtDate] = useState(initialDate);
+  const [manipulatedAtTime, setManipulatedAtTime] = useState(initialTime);
+  const [manipulatedValidityDate, setManipulatedValidityDate] = useState("");
+  const [manipulatedValidityTime, setManipulatedValidityTime] =
+    useState(initialTime);
+  const [manipulatedConservationMode, setManipulatedConservationMode] =
+    useState<ConservationMode>("REFRIGERADO");
+  const [manipulatedResponsible, setManipulatedResponsible] = useState("");
+  const [manipulatedQuantity, setManipulatedQuantity] = useState<number>(1);
+  const [manipulatedCustomUnit, setManipulatedCustomUnit] = useState("un");
+  const [manipulatedLabelCopies, setManipulatedLabelCopies] =
+    useState<number>(1);
   const [filterByGroup, setFilterByGroup] = useState(false);
 
   // ────── Queries ──────
@@ -598,9 +686,7 @@ export default function EstoqueTransitoPage() {
     queryKey: ["members", organizationId],
     queryFn: async () => {
       if (!organizationId) return [];
-      return MemberService.listByOrganization(
-        organizationId,
-      ) as unknown as Member[];
+      return MemberService.listByOrganization(organizationId);
     },
     enabled: !!organizationId,
   });
@@ -642,17 +728,14 @@ export default function EstoqueTransitoPage() {
 
   // ────── Effects ──────
   useEffect(() => {
-    if (sampleCollectionDate) {
-      const d = parseDateInputValue(sampleCollectionDate);
-      if (!d) return;
-      d.setDate(d.getDate() + 3);
-      setSampleDiscardDate(getLocalDateInputValue(d));
-    }
-  }, [sampleCollectionDate]);
-
-  useEffect(() => {
-    setSampleTime((current) => current || getCurrentClientTime());
-  }, []);
+    const nextDiscard = addHoursToLocalDateTime(
+      sampleCollectionDate,
+      sampleCollectionTime,
+      72,
+    );
+    setSampleDiscardDate(nextDiscard.date);
+    setSampleDiscardTime(nextDiscard.time);
+  }, [sampleCollectionDate, sampleCollectionTime]);
 
   useEffect(() => {
     if (organizationId) loadGroups();
@@ -681,21 +764,34 @@ export default function EstoqueTransitoPage() {
       if (!sampleResponsible || !isGestor) {
         setSampleResponsible(user.name);
       }
-      if (!productResponsible || !isGestor) {
-        setProductResponsible(user.name);
+      if (!openedResponsible || !isGestor) {
+        setOpenedResponsible(user.name);
+      }
+      if (!thawingResponsible || !isGestor) {
+        setThawingResponsible(user.name);
+      }
+      if (!manipulatedResponsible || !isGestor) {
+        setManipulatedResponsible(user.name);
       }
     }
-  }, [user?.name, isGestor, sampleResponsible, productResponsible]);
+  }, [
+    user?.name,
+    isGestor,
+    sampleResponsible,
+    openedResponsible,
+    thawingResponsible,
+    manipulatedResponsible,
+  ]);
 
-  // Reset selections when switching tabs
   useEffect(() => {
-    setSelectedGroupId("");
-    setSelectedProductId("");
-    setGroupFilter("");
-    setProductFilter("");
-    setStockInfo(null);
-    setCustomUnit("un");
-  }, [activeTab]);
+    if (
+      defaultPrinterName &&
+      !selectedPrinter &&
+      printers.some((printer) => printer.printerName === defaultPrinterName)
+    ) {
+      setSelectedPrinter(defaultPrinterName);
+    }
+  }, [defaultPrinterName, printers, selectedPrinter]);
 
   // ────── Loaders ──────
   const loadGroups = async () => {
@@ -800,39 +896,15 @@ export default function EstoqueTransitoPage() {
       toast.error("A quantidade deve ser maior que zero");
       return false;
     }
-    if (!sampleTime) {
-      toast.error("Preencha o horário");
+    if (!sampleCollectionDate || !sampleCollectionTime) {
+      toast.error("Preencha a data e hora da coleta");
       return false;
     }
-    if (!sampleCollectionDate) {
-      toast.error("Preencha a data da coleta");
+    if (!sampleDiscardDate || !sampleDiscardTime) {
+      toast.error("Preencha a data e hora do descarte");
       return false;
     }
     if (!sampleResponsible.trim()) {
-      toast.error("Selecione o responsável");
-      return false;
-    }
-    return true;
-  };
-
-  const validateProductForm = (): boolean => {
-    if (!selectedProductId) {
-      toast.error("Selecione um produto");
-      return false;
-    }
-    if (productQuantity <= 0) {
-      toast.error("A quantidade deve ser maior que zero");
-      return false;
-    }
-    if (!productManufacturingDate) {
-      toast.error("Preencha a data de fabricação");
-      return false;
-    }
-    if (!productExpiryDate) {
-      toast.error("Preencha a data de validade");
-      return false;
-    }
-    if (!productResponsible.trim()) {
       toast.error("Selecione o responsável");
       return false;
     }
@@ -855,26 +927,122 @@ export default function EstoqueTransitoPage() {
     `${formatLabelCopies(copies)} enviada${copies === 1 ? "" : "s"} para ${printerName}!`;
 
   // ────── Save ──────
-  const resolveUnit = () =>
-    stockInfo && stockInfo.quantity > 0 ? stockInfo.unit : customUnit;
+  const resolveUnit = (fallbackUnit: string) =>
+    stockInfo && stockInfo.quantity > 0 ? stockInfo.unit : fallbackUnit;
+
+  const buildLocalDateTimeFromInputs = (
+    dateValue: string,
+    timeValue: string,
+  ): string => {
+    const [hoursText = "0", minutesText = "0"] = timeValue.split(":");
+    const hours = Number.parseInt(hoursText, 10);
+    const minutes = Number.parseInt(minutesText, 10);
+
+    return buildLocalDateTimeWithOffset(
+      dateValue,
+      Number.isFinite(hours) ? hours : 0,
+      Number.isFinite(minutes) ? minutes : 0,
+    );
+  };
+
+  const buildObservation = (parts: Array<string | undefined>): string =>
+    parts.filter((part): part is string => Boolean(part?.trim())).join(" | ");
+
+  const resolveOrganizationPrintContext =
+    async (): Promise<OrganizationPrintContext> => {
+      const shouldRefetchOrganization =
+        !!organizationId &&
+        (!activeOrganizationDetails ||
+          !activeOrganizationDetails.cnpj ||
+          !activeOrganizationDetails.zipCode ||
+          !activeOrganizationDetails.address ||
+          !activeOrganizationDetails.city ||
+          !activeOrganizationDetails.state);
+
+      let expandedOrganization: OrganizationExpandedResponseDto | null = null;
+
+      if (shouldRefetchOrganization) {
+        try {
+          expandedOrganization =
+            await OrganizationService.getOrganizationByIdExpanded(
+              organizationId,
+            );
+        } catch (error) {
+          console.warn(
+            "Falha ao recarregar detalhes da organizacao para etiqueta",
+            error,
+          );
+        }
+      }
+
+      return {
+        organizationName:
+          expandedOrganization?.name ||
+          activeOrganizationDetails?.name ||
+          organizationName,
+        organizationCnpj:
+          expandedOrganization?.cnpj ||
+          activeOrganizationDetails?.cnpj ||
+          organizationCnpj,
+        organizationZipCode:
+          expandedOrganization?.zipCode ||
+          activeOrganizationDetails?.zipCode ||
+          organizationZipCode,
+        organizationAddress:
+          expandedOrganization?.address ||
+          activeOrganizationDetails?.address ||
+          organizationAddress,
+        organizationNumber:
+          expandedOrganization?.number ||
+          activeOrganizationDetails?.number ||
+          organizationNumber,
+        organizationAddressComplement:
+          expandedOrganization?.addressComplement ||
+          activeOrganizationDetails?.addressComplement ||
+          organizationAddressComplement,
+        organizationCity:
+          expandedOrganization?.city?.name ||
+          activeOrganizationDetails?.city?.name ||
+          organizationCity,
+        organizationState:
+          expandedOrganization?.state?.code ||
+          activeOrganizationDetails?.state?.code ||
+          organizationState,
+      };
+    };
+
+  const buildPrinterName = () =>
+    selectedPrinter || defaultPrinterName || "LABEL PRINTER";
 
   const handleSaveSample = async (print: boolean = false) => {
     if (!validateSampleForm()) return;
     try {
       setSaving(true);
+      const collectionAt = buildLocalDateTimeFromInputs(
+        sampleCollectionDate,
+        sampleCollectionTime,
+      );
+      const discardAt = buildLocalDateTimeFromInputs(
+        sampleDiscardDate,
+        sampleDiscardTime,
+      );
+      const unit = sampleCustomUnit;
 
       if (print) {
         if (!validateLabelCopies(sampleLabelCopies)) return;
 
-        const finalPrinter =
-          selectedPrinter || defaultPrinterName || "LABEL PRINTER";
+        const finalPrinter = buildPrinterName();
+        const organizationContext = await resolveOrganizationPrintContext();
         const printed = await LabelPrinterService.printSampleLabel(
           {
-            sampleName,
-            collectionTime: sampleTime,
-            collectionDate: sampleCollectionDate,
-            discardDate: sampleDiscardDate,
+            ...organizationContext,
+            sampleName: sampleName.trim(),
+            collectionAt,
+            discardAt,
+            shift: sampleShift.trim() || undefined,
             responsibleName: sampleResponsible,
+            quantity: sampleQuantity,
+            unit,
           },
           finalPrinter,
           organizationId,
@@ -896,10 +1064,17 @@ export default function EstoqueTransitoPage() {
       await StockInTransitService.create({
         productId: parseInt(selectedProductId),
         quantity: sampleQuantity,
-        unitOfMeasureCode: resolveUnit(),
-        manufacturingDate: sampleCollectionDate,
-        expiryDate: sampleDiscardDate,
-        observations: `AMOSTRA - ${sampleName} (${sampleTime})`,
+        unitOfMeasureCode: unit,
+        manufacturingDate: collectionAt,
+        expiryDate: discardAt,
+        observations: buildObservation([
+          "AMOSTRA",
+          `Preparacao: ${sampleName.trim()}`,
+          `Coleta: ${formatDateTimeForLabel(collectionAt)}`,
+          `Descarte: ${formatDateTimeForLabel(discardAt)}`,
+          sampleShift.trim() ? `Turno: ${sampleShift.trim()}` : undefined,
+          `Responsavel: ${sampleResponsible}`,
+        ]),
         organizationId,
       });
       toast.success("Amostra registrada no estoque em transito!");
@@ -914,114 +1089,44 @@ export default function EstoqueTransitoPage() {
   };
 
   const handleSaveProduct = async (print: boolean = false) => {
-    if (!validateProductForm()) return;
+    if (!validateOpenedProductForm()) return;
     try {
       setSaving(true);
-      const product = products.find(
-        (p) => p.id.toString() === selectedProductId,
+      const openedAt = buildLocalDateTimeFromInputs(
+        openedAtDate,
+        openedAtTime,
       );
-      const now = new Date();
-      const manufacturingDateTime = buildLocalDateTimeWithOffset(
-        productManufacturingDate,
-        0,
-        0,
+      const validityDate = buildLocalDateTimeFromInputs(
+        openedValidityDate,
+        openedValidityTime,
       );
-      const expiryDateTime = buildLocalDateTimeWithOffset(
-        productExpiryDate,
-        0,
-        0,
+      const originalValidityLabel = formatDateInputForLabel(
+        openedOriginalValidityDate,
       );
-      const manipulationDateTime = buildLocalDateTimeWithOffset(
-        productOpeningDate || getLocalDateInputValue(now),
-        now.getHours(),
-        now.getMinutes(),
-      );
-      const validityAfterOpeningDateTime = productExpiryAfterOpeningDate
-        ? buildLocalDateTimeWithOffset(productExpiryAfterOpeningDate, 0, 0)
-        : undefined;
-      const manipulationLabel = formatDateTimeForLabel(manipulationDateTime);
+      const openedLabel = formatDateTimeForLabel(openedAt);
+      const validityLabel = formatDateTimeForLabel(validityDate);
+      const unit = resolveUnit(openedCustomUnit);
 
       if (print) {
-        if (!validateLabelCopies(productLabelCopies)) return;
+        if (!validateLabelCopies(openedLabelCopies)) return;
 
-        let orgDetailsExpanded: OrganizationExpandedResponseDto | null = null;
-        if (
-          organizationId &&
-          (!activeOrganizationDetails?.city ||
-            !activeOrganizationDetails?.state)
-        ) {
-          try {
-            orgDetailsExpanded =
-              await OrganizationService.getOrganizationByIdExpanded(
-                organizationId,
-              );
-          } catch (error) {
-            console.warn(
-              "Falha ao recarregar detalhes da organizacao para etiqueta",
-              error,
-            );
-          }
-        }
-
-        const resolvedOrganizationName =
-          orgDetailsExpanded?.name ||
-          activeOrganizationDetails?.name ||
-          organizationName;
-        const resolvedOrganizationCnpj =
-          orgDetailsExpanded?.cnpj ||
-          activeOrganizationDetails?.cnpj ||
-          organizationCnpj;
-        const resolvedOrganizationZipCode =
-          orgDetailsExpanded?.zipCode ||
-          activeOrganizationDetails?.zipCode ||
-          organizationZipCode;
-        const resolvedOrganizationAddress =
-          orgDetailsExpanded?.address ||
-          activeOrganizationDetails?.address ||
-          organizationAddress;
-        const resolvedOrganizationNumber =
-          orgDetailsExpanded?.number ||
-          activeOrganizationDetails?.number ||
-          organizationNumber;
-        const resolvedOrganizationAddressComplement =
-          orgDetailsExpanded?.addressComplement ||
-          activeOrganizationDetails?.addressComplement ||
-          organizationAddressComplement;
-        const resolvedOrganizationCity =
-          orgDetailsExpanded?.city?.name ||
-          activeOrganizationDetails?.city?.name ||
-          organizationCity;
-        const resolvedOrganizationState =
-          orgDetailsExpanded?.state?.code ||
-          activeOrganizationDetails?.state?.code ||
-          organizationState;
-
-        const finalPrinter =
-          selectedPrinter || defaultPrinterName || "LABEL PRINTER";
-        const printed = await LabelPrinterService.printProductLabel(
+        const finalPrinter = buildPrinterName();
+        const organizationContext = await resolveOrganizationPrintContext();
+        const printed = await LabelPrinterService.printOpenedProductLabel(
           {
-            productName: product?.name || "Produto",
-            manufacturingDate: manufacturingDateTime,
-            validityDate: expiryDateTime,
-            openingDate: manipulationDateTime,
-            validityAfterOpening: validityAfterOpeningDateTime,
-            conservationMode: productConservationMode,
-            responsibleName: productResponsible,
-            organizationName: resolvedOrganizationName,
-            organizationCnpj: resolvedOrganizationCnpj,
-            organizationZipCode: resolvedOrganizationZipCode,
-            organizationAddress: resolvedOrganizationAddress,
-            organizationNumber: resolvedOrganizationNumber,
-            organizationAddressComplement:
-              resolvedOrganizationAddressComplement,
-            organizationCity: resolvedOrganizationCity,
-            organizationState: resolvedOrganizationState,
-            quantity: productQuantity,
-            unit: resolveUnit(),
+            ...organizationContext,
+            productName: selectedProductName || "Produto",
+            openedAt,
+            originalValidityDate: openedOriginalValidityDate,
+            validityDate,
+            conservationMode: openedConservationMode,
+            responsibleName: openedResponsible,
+            quantity: openedQuantity,
+            unit,
           },
           finalPrinter,
           organizationId,
-          productLabelCopies,
+          openedLabelCopies,
         );
 
         if (!printed) {
@@ -1032,20 +1137,174 @@ export default function EstoqueTransitoPage() {
         }
 
         toast.success(
-          formatPrintSuccessMessage(productLabelCopies, finalPrinter),
+          formatPrintSuccessMessage(openedLabelCopies, finalPrinter),
         );
       }
 
       await StockInTransitService.create({
         productId: parseInt(selectedProductId),
-        quantity: productQuantity,
-        unitOfMeasureCode: resolveUnit(),
-        manufacturingDate: manufacturingDateTime,
-        expiryDate: expiryDateTime,
-        observations: `Conservação: ${productConservationMode.slice(0, 1).toUpperCase() + productConservationMode.slice(1).toLowerCase()} | Manipulado: ${manipulationLabel}`,
+        quantity: openedQuantity,
+        unitOfMeasureCode: unit,
+        manufacturingDate: openedAt,
+        expiryDate: validityDate,
+        observations: buildObservation([
+          "PRODUTO ABERTO",
+          `Aberto: ${openedLabel}`,
+          `Validade original: ${originalValidityLabel}`,
+          `Validade: ${validityLabel}`,
+          `Conservacao: ${formatConservationModeLabel(openedConservationMode)}`,
+          `Responsavel: ${openedResponsible}`,
+        ]),
         organizationId,
       });
-      toast.success("Salvo no estoque em transito!");
+      toast.success("Produto aberto registrado no estoque em transito!");
+
+      router.push("/estoque-em-transito");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveThawing = async (print: boolean = false) => {
+    if (!validateThawingForm()) return;
+    try {
+      setSaving(true);
+      const startAt = buildLocalDateTimeFromInputs(
+        thawingStartDate,
+        thawingStartTime,
+      );
+      const validityDate = buildLocalDateTimeFromInputs(
+        thawingValidityDate,
+        thawingValidityTime,
+      );
+      const unit = resolveUnit(thawingCustomUnit);
+
+      if (print) {
+        if (!validateLabelCopies(thawingLabelCopies)) return;
+
+        const finalPrinter = buildPrinterName();
+        const organizationContext = await resolveOrganizationPrintContext();
+        const printed = await LabelPrinterService.printThawingLabel(
+          {
+            ...organizationContext,
+            productName: selectedProductName || "Produto",
+            startAt,
+            validityDate,
+            responsibleName: thawingResponsible,
+            quantity: thawingQuantity,
+            unit,
+            lot: thawingLot.trim() || undefined,
+          },
+          finalPrinter,
+          organizationId,
+          thawingLabelCopies,
+        );
+
+        if (!printed) {
+          toast.error(
+            "Falha ao imprimir. O registro nao foi salvo no estoque em transito.",
+          );
+          return;
+        }
+
+        toast.success(
+          formatPrintSuccessMessage(thawingLabelCopies, finalPrinter),
+        );
+      }
+
+      await StockInTransitService.create({
+        productId: parseInt(selectedProductId),
+        quantity: thawingQuantity,
+        unitOfMeasureCode: unit,
+        manufacturingDate: startAt,
+        expiryDate: validityDate,
+        observations: buildObservation([
+          "DESCONGELO",
+          `Inicio: ${formatDateTimeForLabel(startAt)}`,
+          `Fim: ${formatDateTimeForLabel(validityDate)}`,
+          thawingLot.trim() ? `Lote: ${thawingLot.trim()}` : undefined,
+          `Responsavel: ${thawingResponsible}`,
+        ]),
+        organizationId,
+      });
+      toast.success("Descongelo registrado no estoque em transito!");
+
+      router.push("/estoque-em-transito");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveManipulated = async (print: boolean = false) => {
+    if (!validateManipulatedForm()) return;
+    try {
+      setSaving(true);
+      const handledAt = buildLocalDateTimeFromInputs(
+        manipulatedAtDate,
+        manipulatedAtTime,
+      );
+      const validityDate = buildLocalDateTimeFromInputs(
+        manipulatedValidityDate,
+        manipulatedValidityTime,
+      );
+      const unit = resolveUnit(manipulatedCustomUnit);
+
+      if (print) {
+        if (!validateLabelCopies(manipulatedLabelCopies)) return;
+
+        const finalPrinter = buildPrinterName();
+        const organizationContext = await resolveOrganizationPrintContext();
+        const printed = await LabelPrinterService.printManipulatedLabel(
+          {
+            ...organizationContext,
+            preparationName: manipulatedPreparationName.trim(),
+            handledAt,
+            validityDate,
+            conservationMode: manipulatedConservationMode,
+            responsibleName: manipulatedResponsible,
+            quantity: manipulatedQuantity,
+            unit,
+          },
+          finalPrinter,
+          organizationId,
+          manipulatedLabelCopies,
+        );
+
+        if (!printed) {
+          toast.error(
+            "Falha ao imprimir. O registro nao foi salvo no estoque em transito.",
+          );
+          return;
+        }
+
+        toast.success(
+          formatPrintSuccessMessage(manipulatedLabelCopies, finalPrinter),
+        );
+      }
+
+      await StockInTransitService.create({
+        productId: parseInt(selectedProductId),
+        quantity: manipulatedQuantity,
+        unitOfMeasureCode: unit,
+        manufacturingDate: handledAt,
+        expiryDate: validityDate,
+        observations: buildObservation([
+          "MANIPULADO",
+          `Preparacao: ${manipulatedPreparationName.trim()}`,
+          `Fabricacao: ${formatDateTimeForLabel(handledAt)}`,
+          `Validade: ${formatDateTimeForLabel(validityDate)}`,
+          `Conservacao: ${formatConservationModeLabel(manipulatedConservationMode)}`,
+          `Responsavel: ${manipulatedResponsible}`,
+        ]),
+        organizationId,
+      });
+      toast.success("Manipulado registrado no estoque em transito!");
 
       router.push("/estoque-em-transito");
     } catch (error) {
@@ -1057,29 +1316,180 @@ export default function EstoqueTransitoPage() {
   };
 
   const handleSave = (print: boolean) => {
-    if (activeTab === "amostras") handleSaveSample(print);
-    else handleSaveProduct(print);
+    switch (activeTab) {
+      case "sample":
+        handleSaveSample(print);
+        return;
+      case "opened_product":
+        handleSaveProduct(print);
+        return;
+      case "thawing":
+        handleSaveThawing(print);
+        return;
+      case "manipulated":
+        handleSaveManipulated(print);
+        return;
+    }
+  };
+
+  const validateOpenedProductForm = (): boolean => {
+    if (!selectedProductId) {
+      toast.error("Selecione um produto");
+      return false;
+    }
+    if (openedQuantity <= 0) {
+      toast.error("A quantidade deve ser maior que zero");
+      return false;
+    }
+    if (!openedAtDate || !openedAtTime) {
+      toast.error("Preencha a data e hora de abertura");
+      return false;
+    }
+    if (!openedOriginalValidityDate) {
+      toast.error("Preencha a validade original");
+      return false;
+    }
+    if (!openedValidityDate || !openedValidityTime) {
+      toast.error("Preencha a data e hora da validade");
+      return false;
+    }
+    if (!openedResponsible.trim()) {
+      toast.error("Selecione o responsável");
+      return false;
+    }
+    return true;
+  };
+
+  const validateThawingForm = (): boolean => {
+    if (!selectedProductId) {
+      toast.error("Selecione um produto");
+      return false;
+    }
+    if (thawingQuantity <= 0) {
+      toast.error("A quantidade deve ser maior que zero");
+      return false;
+    }
+    if (!thawingStartDate || !thawingStartTime) {
+      toast.error("Preencha a data e hora de início");
+      return false;
+    }
+    if (!thawingValidityDate || !thawingValidityTime) {
+      toast.error("Preencha a data e hora do fim");
+      return false;
+    }
+    if (!thawingResponsible.trim()) {
+      toast.error("Selecione o responsável");
+      return false;
+    }
+    return true;
+  };
+
+  const validateManipulatedForm = (): boolean => {
+    if (!selectedProductId) {
+      toast.error("Selecione um produto");
+      return false;
+    }
+    if (!manipulatedPreparationName.trim()) {
+      toast.error("Preencha a preparação");
+      return false;
+    }
+    if (manipulatedQuantity <= 0) {
+      toast.error("A quantidade deve ser maior que zero");
+      return false;
+    }
+    if (!manipulatedAtDate || !manipulatedAtTime) {
+      toast.error("Preencha a data e hora de manipulação");
+      return false;
+    }
+    if (!manipulatedValidityDate || !manipulatedValidityTime) {
+      toast.error("Preencha a data e hora da validade");
+      return false;
+    }
+    if (!manipulatedResponsible.trim()) {
+      toast.error("Selecione o responsável");
+      return false;
+    }
+    return true;
   };
 
   const isFormValid = () => {
-    if (activeTab === "amostras") {
-      return (
-        selectedProductId &&
-        sampleName.trim() &&
-        sampleQuantity > 0 &&
-        sampleTime &&
-        sampleCollectionDate &&
-        sampleResponsible.trim()
-      );
+    switch (activeTab) {
+      case "sample":
+        return Boolean(
+          selectedProductId &&
+            sampleName.trim() &&
+            sampleQuantity > 0 &&
+            sampleCollectionDate &&
+            sampleCollectionTime &&
+            sampleDiscardDate &&
+            sampleDiscardTime &&
+            sampleResponsible.trim(),
+        );
+      case "opened_product":
+        return Boolean(
+          selectedProductId &&
+            openedQuantity > 0 &&
+            openedAtDate &&
+            openedAtTime &&
+            openedOriginalValidityDate &&
+            openedValidityDate &&
+            openedValidityTime &&
+            openedResponsible.trim(),
+        );
+      case "thawing":
+        return Boolean(
+          selectedProductId &&
+            thawingQuantity > 0 &&
+            thawingStartDate &&
+            thawingStartTime &&
+            thawingValidityDate &&
+            thawingValidityTime &&
+            thawingResponsible.trim(),
+        );
+      case "manipulated":
+        return Boolean(
+          selectedProductId &&
+            manipulatedPreparationName.trim() &&
+            manipulatedQuantity > 0 &&
+            manipulatedAtDate &&
+            manipulatedAtTime &&
+            manipulatedValidityDate &&
+            manipulatedValidityTime &&
+            manipulatedResponsible.trim(),
+        );
     }
-    return (
-      selectedProductId &&
-      productQuantity > 0 &&
-      productManufacturingDate &&
-      productExpiryDate &&
-      productResponsible.trim()
-    );
   };
+
+  const renderResponsibleSelect = (
+    value: string,
+    onChange: (nextValue: string) => void,
+  ) => (
+    <div className="space-y-2">
+      <Label>
+        Responsável <span className="text-destructive">*</span>
+      </Label>
+      <Select value={value} onValueChange={onChange} disabled={!isGestor}>
+        <SelectTrigger className="w-full h-12">
+          <SelectValue placeholder="Selecione o responsável" />
+        </SelectTrigger>
+        <SelectContent>
+          {members.map((member) => {
+            const name = getMemberDisplayName(member);
+            return (
+              <SelectItem key={member.id} value={name}>
+                {name !== member.id ? name : "Usuário"}
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  const renderProductSummary = () =>
+    selectedProductId ? (
+      <p className="text-xs text-slate-400 mt-1">Produto: {selectedProductName}</p>
+    ) : null;
 
   // ──────────────────────────────────────────────
   // Render
@@ -1103,28 +1513,42 @@ export default function EstoqueTransitoPage() {
       <div className="px-4 pt-4 flex-1 overflow-y-auto pb-28">
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as "amostras" | "produtos")}
+          onValueChange={(value) => setActiveTab(value as LabelTab)}
           className="w-full"
         >
-          <TabsList className="w-full grid grid-cols-2 h-12 bg-slate-100 p-1 rounded-xl sticky top-0 z-10">
+          <TabsList className="w-full grid grid-cols-2 md:grid-cols-4 h-auto bg-slate-100 p-1 rounded-xl sticky top-0 z-10 gap-1">
             <TabsTrigger
-              value="amostras"
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2"
-            >
-              <FlaskConical className="h-4 w-4" />
-              Amostras
-            </TabsTrigger>
-            <TabsTrigger
-              value="produtos"
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2"
+              value="opened_product"
+              className="min-h-11 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2"
             >
               <ShoppingBasket className="h-4 w-4" />
-              Produtos
+              Produto Aberto
+            </TabsTrigger>
+            <TabsTrigger
+              value="sample"
+              className="min-h-11 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2"
+            >
+              <FlaskConical className="h-4 w-4" />
+              Amostra
+            </TabsTrigger>
+            <TabsTrigger
+              value="thawing"
+              className="min-h-11 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2"
+            >
+              <Snowflake className="h-4 w-4" />
+              Descongelo
+            </TabsTrigger>
+            <TabsTrigger
+              value="manipulated"
+              className="min-h-11 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2"
+            >
+              <Thermometer className="h-4 w-4" />
+              Manipulado
             </TabsTrigger>
           </TabsList>
 
-          {/* ═══════ SAMPLES TAB ═══════ */}
-          <TabsContent value="amostras" className="mt-4 space-y-4">
+          {/* ═══════ OPENED PRODUCT TAB ═══════ */}
+          <TabsContent value="opened_product" className="mt-4 space-y-4">
             {/* 1 – Product picker */}
             <ProductPickerSection
               groups={groups}
@@ -1150,18 +1574,173 @@ export default function EstoqueTransitoPage() {
             <Card className="border-none shadow-sm overflow-hidden">
               <CardHeader className="pb-3 border-b">
                 <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                  <ShoppingBasket className="h-4 w-4 text-sky-600" />
+                  Dados do Produto Aberto
+                </CardTitle>
+                {renderProductSummary()}
+              </CardHeader>
+              <CardContent className="pt-4 space-y-4">
+                <UnitOfMeasureField
+                  stockUnit={effectiveUnit}
+                  value={openedCustomUnit}
+                  onChange={setOpenedCustomUnit}
+                  quantity={openedQuantity}
+                  onQuantityChange={setOpenedQuantity}
+                />
+
+                <LabelCopiesField
+                  id="opened-product-label-copies"
+                  value={openedLabelCopies}
+                  onChange={setOpenedLabelCopies}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="opened-at-date">
+                      Aberto em <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="opened-at-date"
+                      type="date"
+                      className="h-12"
+                      value={openedAtDate}
+                      onChange={(e) => setOpenedAtDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="opened-at-time">
+                      Hora da abertura <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="opened-at-time"
+                      type="time"
+                      className="h-12"
+                      value={openedAtTime}
+                      onChange={(e) => setOpenedAtTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="opened-original-validity-date">
+                      Validade original <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="opened-original-validity-date"
+                      type="date"
+                      className="h-12"
+                      value={openedOriginalValidityDate}
+                      onChange={(e) =>
+                        setOpenedOriginalValidityDate(e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="opened-validity-date">
+                      Validade <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="opened-validity-date"
+                      type="date"
+                      className="h-12"
+                      value={openedValidityDate}
+                      onChange={(e) => setOpenedValidityDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="opened-validity-time">
+                      Hora da validade <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="opened-validity-time"
+                      type="time"
+                      className="h-12"
+                      value={openedValidityTime}
+                      onChange={(e) => setOpenedValidityTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>
+                    Conservação <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <ConservationOption
+                      mode="REFRIGERADO"
+                      label="Refrigerado"
+                      icon={<Thermometer className="h-5 w-5" />}
+                      isSelected={openedConservationMode === "REFRIGERADO"}
+                      onSelect={setOpenedConservationMode}
+                    />
+                    <ConservationOption
+                      mode="CONGELADO"
+                      label="Congelado"
+                      icon={<Snowflake className="h-5 w-5" />}
+                      isSelected={openedConservationMode === "CONGELADO"}
+                      onSelect={setOpenedConservationMode}
+                    />
+                    <ConservationOption
+                      mode="AMBIENTE"
+                      label="T° AMBIENTE"
+                      icon={<Sun className="h-5 w-5" />}
+                      isSelected={openedConservationMode === "AMBIENTE"}
+                      onSelect={setOpenedConservationMode}
+                    />
+                  </div>
+                </div>
+
+                {renderResponsibleSelect(
+                  openedResponsible,
+                  setOpenedResponsible,
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ═══════ SAMPLE TAB ═══════ */}
+          <TabsContent value="sample" className="mt-4 space-y-4">
+            <ProductPickerSection
+              groups={groups}
+              products={products}
+              loading={loading}
+              selectedGroupId={selectedGroupId}
+              selectedProductId={selectedProductId}
+              groupFilter={groupFilter}
+              productFilter={productFilter}
+              onGroupSelect={handleGroupSelect}
+              onProductSelect={handleProductSelect}
+              onGroupFilterChange={setGroupFilter}
+              onProductFilterChange={setProductFilter}
+              onCreateProduct={handleCreateProduct}
+              filterByGroup={filterByGroup}
+              onFilterByGroupChange={(value) => {
+                setFilterByGroup(value);
+                if (!value) setSelectedGroupId("");
+              }}
+            />
+
+            <Card className="border-none shadow-sm overflow-hidden">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
                   <FlaskConical className="h-4 w-4 text-purple-600" />
                   Dados da Amostra
                 </CardTitle>
+                {renderProductSummary()}
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="sample-name">
-                    Nome da Amostra <span className="text-destructive">*</span>
+                    Preparação / Amostra{" "}
+                    <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="sample-name"
-                    placeholder="Ex: Salada de Frutas"
+                    placeholder="Ex: Feijoada, Salpicão"
                     className="h-12"
                     value={sampleName}
                     onChange={(e) => setSampleName(e.target.value)}
@@ -1169,9 +1748,9 @@ export default function EstoqueTransitoPage() {
                 </div>
 
                 <UnitOfMeasureField
-                  stockUnit={effectiveUnit}
-                  value={customUnit}
-                  onChange={setCustomUnit}
+                  stockUnit={null}
+                  value={sampleCustomUnit}
+                  onChange={setSampleCustomUnit}
                   quantity={sampleQuantity}
                   onQuantityChange={setSampleQuantity}
                 />
@@ -1184,78 +1763,84 @@ export default function EstoqueTransitoPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="sample-time">
-                      Horário <span className="text-destructive">*</span>
+                    <Label htmlFor="sample-collection-date">
+                      Data da coleta <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id="sample-time"
-                      type="time"
-                      className="h-12"
-                      value={sampleTime}
-                      onChange={(e) => setSampleTime(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sample-collection">
-                      Data Coleta <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="sample-collection"
+                      id="sample-collection-date"
                       type="date"
                       className="h-12"
                       value={sampleCollectionDate}
                       onChange={(e) => setSampleCollectionDate(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sample-collection-time">
+                      Hora da coleta <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="sample-collection-time"
+                      type="time"
+                      className="h-12"
+                      value={sampleCollectionTime}
+                      onChange={(e) => setSampleCollectionTime(e.target.value)}
+                    />
+                  </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="sample-discard-date">
+                      Data do descarte <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="sample-discard-date"
+                      type="date"
+                      className="h-12 bg-slate-50"
+                      value={sampleDiscardDate}
+                      onChange={(e) => setSampleDiscardDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sample-discard-time">
+                      Hora do descarte <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="sample-discard-time"
+                      type="time"
+                      className="h-12 bg-slate-50"
+                      value={sampleDiscardTime}
+                      onChange={(e) => setSampleDiscardTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Descarte sugerido automaticamente para 72h após a coleta.
+                </p>
+
                 <div className="space-y-2">
-                  <Label htmlFor="sample-discard">Data do Descarte</Label>
+                  <Label htmlFor="sample-shift">Turno</Label>
                   <Input
-                    id="sample-discard"
-                    type="date"
-                    className="h-12 bg-slate-50"
-                    value={sampleDiscardDate}
-                    onChange={(e) => setSampleDiscardDate(e.target.value)}
+                    id="sample-shift"
+                    placeholder="Ex: Almoco"
+                    className="h-12"
+                    value={sampleShift}
+                    onChange={(e) => setSampleShift(e.target.value)}
                   />
-                  <p className="text-xs text-slate-400 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    Calculado automaticamente (72h após coleta)
-                  </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>
-                    Responsável <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={sampleResponsible}
-                    onValueChange={setSampleResponsible}
-                    disabled={!isGestor}
-                  >
-                    <SelectTrigger className="w-full h-12">
-                      <SelectValue placeholder="Selecione o responsável" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(members as any[]).map((member) => {
-                        const name =
-                          member.users?.name || member.user?.name || member.id;
-                        return (
-                          <SelectItem key={member.id} value={name}>
-                            {name !== member.id ? name : "Usuário"}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {renderResponsibleSelect(
+                  sampleResponsible,
+                  setSampleResponsible,
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* ═══════ PRODUCTS TAB ═══════ */}
-          <TabsContent value="produtos" className="mt-4 space-y-4">
-            {/* 1 – Product picker */}
+          {/* ═══════ THAWING TAB ═══════ */}
+          <TabsContent value="thawing" className="mt-4 space-y-4">
             <ProductPickerSection
               groups={groups}
               products={products}
@@ -1270,101 +1855,226 @@ export default function EstoqueTransitoPage() {
               onProductFilterChange={setProductFilter}
               onCreateProduct={handleCreateProduct}
               filterByGroup={filterByGroup}
-              onFilterByGroupChange={(v) => {
-                setFilterByGroup(v);
-                if (!v) setSelectedGroupId("");
+              onFilterByGroupChange={(value) => {
+                setFilterByGroup(value);
+                if (!value) setSelectedGroupId("");
               }}
             />
 
-            {/* 2 – Form fields (always visible) */}
             <Card className="border-none shadow-sm overflow-hidden">
               <CardHeader className="pb-3 border-b">
                 <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  📋 Informações da Etiqueta
+                  <Snowflake className="h-4 w-4 text-cyan-600" />
+                  Dados do Descongelo
                 </CardTitle>
-                {selectedProductId && (
-                  <p className="text-xs text-slate-400 mt-1">
-                    Produto:{" "}
-                    {
-                      products.find(
-                        (p) => p.id.toString() === selectedProductId,
-                      )?.name
-                    }
-                  </p>
-                )}
+                {renderProductSummary()}
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 <UnitOfMeasureField
                   stockUnit={effectiveUnit}
-                  value={customUnit}
-                  onChange={setCustomUnit}
-                  quantity={productQuantity}
-                  onQuantityChange={setProductQuantity}
+                  value={thawingCustomUnit}
+                  onChange={setThawingCustomUnit}
+                  quantity={thawingQuantity}
+                  onQuantityChange={setThawingQuantity}
                 />
 
                 <LabelCopiesField
-                  id="product-label-copies"
-                  value={productLabelCopies}
-                  onChange={setProductLabelCopies}
+                  id="thawing-label-copies"
+                  value={thawingLabelCopies}
+                  onChange={setThawingLabelCopies}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="product-manufacturing">
-                      Fabricação <span className="text-destructive">*</span>
+                    <Label htmlFor="thawing-start-date">
+                      Início do descongelo <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id="product-manufacturing"
+                      id="thawing-start-date"
                       type="date"
                       className="h-12"
-                      value={productManufacturingDate}
-                      onChange={(e) =>
-                        setProductManufacturingDate(e.target.value)
-                      }
+                      value={thawingStartDate}
+                      onChange={(e) => setThawingStartDate(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="product-expiry">
-                      Validade <span className="text-destructive">*</span>
+                    <Label htmlFor="thawing-start-time">
+                      Hora do início <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id="product-expiry"
-                      type="date"
+                      id="thawing-start-time"
+                      type="time"
                       className="h-12"
-                      value={productExpiryDate}
-                      onChange={(e) => setProductExpiryDate(e.target.value)}
+                      value={thawingStartTime}
+                      onChange={(e) => setThawingStartTime(e.target.value)}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="product-opening">Abertura</Label>
+                    <Label htmlFor="thawing-validity-date">
+                      Fim <span className="text-destructive">*</span>
+                    </Label>
                     <Input
-                      id="product-opening"
+                      id="thawing-validity-date"
                       type="date"
                       className="h-12"
-                      value={productOpeningDate}
-                      onChange={(e) => setProductOpeningDate(e.target.value)}
+                      value={thawingValidityDate}
+                      onChange={(e) => setThawingValidityDate(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="product-expiry-after-opening">
-                      Val. após abertura
+                    <Label htmlFor="thawing-validity-time">
+                      Hora do fim <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id="product-expiry-after-opening"
+                      id="thawing-validity-time"
+                      type="time"
+                      className="h-12"
+                      value={thawingValidityTime}
+                      onChange={(e) => setThawingValidityTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="thawing-lot">Lote</Label>
+                  <Input
+                    id="thawing-lot"
+                    placeholder="Ex: LT-001"
+                    className="h-12"
+                    value={thawingLot}
+                    onChange={(e) => setThawingLot(e.target.value)}
+                  />
+                </div>
+
+                {renderResponsibleSelect(
+                  thawingResponsible,
+                  setThawingResponsible,
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ═══════ MANIPULATED TAB ═══════ */}
+          <TabsContent value="manipulated" className="mt-4 space-y-4">
+            <ProductPickerSection
+              groups={groups}
+              products={products}
+              loading={loading}
+              selectedGroupId={selectedGroupId}
+              selectedProductId={selectedProductId}
+              groupFilter={groupFilter}
+              productFilter={productFilter}
+              onGroupSelect={handleGroupSelect}
+              onProductSelect={handleProductSelect}
+              onGroupFilterChange={setGroupFilter}
+              onProductFilterChange={setProductFilter}
+              onCreateProduct={handleCreateProduct}
+              filterByGroup={filterByGroup}
+              onFilterByGroupChange={(value) => {
+                setFilterByGroup(value);
+                if (!value) setSelectedGroupId("");
+              }}
+            />
+
+            <Card className="border-none shadow-sm overflow-hidden">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                  <Thermometer className="h-4 w-4 text-emerald-600" />
+                  Dados do Manipulado
+                </CardTitle>
+                {renderProductSummary()}
+              </CardHeader>
+              <CardContent className="pt-4 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="manipulated-preparation-name">
+                    Preparação <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="manipulated-preparation-name"
+                    placeholder="Ex: Feijoada, Salpicão"
+                    className="h-12"
+                    value={manipulatedPreparationName}
+                    onChange={(e) =>
+                      setManipulatedPreparationName(e.target.value)
+                    }
+                  />
+                </div>
+
+                <UnitOfMeasureField
+                  stockUnit={effectiveUnit}
+                  value={manipulatedCustomUnit}
+                  onChange={setManipulatedCustomUnit}
+                  quantity={manipulatedQuantity}
+                  onQuantityChange={setManipulatedQuantity}
+                />
+
+                <LabelCopiesField
+                  id="manipulated-label-copies"
+                  value={manipulatedLabelCopies}
+                  onChange={setManipulatedLabelCopies}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="manipulated-at-date">
+                      Fabricação <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="manipulated-at-date"
                       type="date"
                       className="h-12"
-                      value={productExpiryAfterOpeningDate}
+                      value={manipulatedAtDate}
+                      onChange={(e) => setManipulatedAtDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="manipulated-at-time">
+                      Hora da fabricação <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="manipulated-at-time"
+                      type="time"
+                      className="h-12"
+                      value={manipulatedAtTime}
+                      onChange={(e) => setManipulatedAtTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="manipulated-validity-date">
+                      Validade <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="manipulated-validity-date"
+                      type="date"
+                      className="h-12"
+                      value={manipulatedValidityDate}
                       onChange={(e) =>
-                        setProductExpiryAfterOpeningDate(e.target.value)
+                        setManipulatedValidityDate(e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="manipulated-validity-time">
+                      Hora da validade <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="manipulated-validity-time"
+                      type="time"
+                      className="h-12"
+                      value={manipulatedValidityTime}
+                      onChange={(e) =>
+                        setManipulatedValidityTime(e.target.value)
                       }
                     />
                   </div>
                 </div>
 
-                {/* Conservation Mode */}
                 <div className="space-y-2">
                   <Label>
                     Conservação <span className="text-destructive">*</span>
@@ -1374,51 +2084,30 @@ export default function EstoqueTransitoPage() {
                       mode="REFRIGERADO"
                       label="Refrigerado"
                       icon={<Thermometer className="h-5 w-5" />}
-                      isSelected={productConservationMode === "REFRIGERADO"}
-                      onSelect={setProductConservationMode}
+                      isSelected={manipulatedConservationMode === "REFRIGERADO"}
+                      onSelect={setManipulatedConservationMode}
                     />
                     <ConservationOption
                       mode="CONGELADO"
                       label="Congelado"
                       icon={<Snowflake className="h-5 w-5" />}
-                      isSelected={productConservationMode === "CONGELADO"}
-                      onSelect={setProductConservationMode}
+                      isSelected={manipulatedConservationMode === "CONGELADO"}
+                      onSelect={setManipulatedConservationMode}
                     />
                     <ConservationOption
                       mode="AMBIENTE"
-                      label="T° Ambiente"
+                      label="T° AMBIENTE"
                       icon={<Sun className="h-5 w-5" />}
-                      isSelected={productConservationMode === "AMBIENTE"}
-                      onSelect={setProductConservationMode}
+                      isSelected={manipulatedConservationMode === "AMBIENTE"}
+                      onSelect={setManipulatedConservationMode}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>
-                    Responsável <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={productResponsible}
-                    onValueChange={setProductResponsible}
-                    disabled={!isGestor}
-                  >
-                    <SelectTrigger className="w-full h-12">
-                      <SelectValue placeholder="Selecione o responsável" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(members as any[]).map((member) => {
-                        const name =
-                          member.users?.name || member.user?.name || member.id;
-                        return (
-                          <SelectItem key={member.id} value={name}>
-                            {name !== member.id ? name : "Usuário"}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {renderResponsibleSelect(
+                  manipulatedResponsible,
+                  setManipulatedResponsible,
+                )}
               </CardContent>
             </Card>
           </TabsContent>

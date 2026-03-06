@@ -1,5 +1,65 @@
 import axios from "axios";
 
+type ConservationMode = "REFRIGERADO" | "CONGELADO" | "AMBIENTE";
+
+type OrganizationPrintPayload = {
+  organizationName?: string;
+  organizationCnpj?: string;
+  organizationZipCode?: string;
+  organizationAddress?: string;
+  organizationNumber?: string;
+  organizationAddressComplement?: string;
+  organizationCity?: string;
+  organizationState?: string;
+};
+
+type LabelTemplate =
+  | "sample"
+  | "opened_product"
+  | "thawing"
+  | "manipulated";
+
+export type SampleLabelPayload = OrganizationPrintPayload & {
+  sampleName: string;
+  collectionAt: string;
+  discardAt: string;
+  shift?: string;
+  responsibleName: string;
+  quantity: number;
+  unit: string;
+};
+
+export type OpenedProductLabelPayload = OrganizationPrintPayload & {
+  productName: string;
+  openedAt: string;
+  originalValidityDate: string;
+  validityDate: string;
+  conservationMode: ConservationMode;
+  responsibleName: string;
+  quantity: number;
+  unit: string;
+};
+
+export type ThawingLabelPayload = OrganizationPrintPayload & {
+  productName: string;
+  startAt: string;
+  validityDate: string;
+  responsibleName: string;
+  quantity: number;
+  unit: string;
+  lot?: string;
+};
+
+export type ManipulatedLabelPayload = OrganizationPrintPayload & {
+  preparationName: string;
+  handledAt: string;
+  validityDate: string;
+  conservationMode: ConservationMode;
+  responsibleName: string;
+  quantity: number;
+  unit: string;
+};
+
 /**
  * Client-side facade for printing labels through the web BFF.
  * The browser never talks to the Hub directly; the Next.js route
@@ -16,7 +76,7 @@ export class LabelPrinterService {
   private static async postPrintJob<TPayload>(
     printerName: string,
     organizationId: string,
-    template: "sample" | "product" | "stock_in_transit",
+    template: LabelTemplate,
     payload: TPayload,
     copies = 1,
   ): Promise<boolean> {
@@ -47,37 +107,8 @@ export class LabelPrinterService {
     }
   }
 
-  static async printStockInTransitLabel(
-    data: {
-      productName: string;
-      quantity: number;
-      unit: string;
-      manufacturingDate: string;
-      validityDate: string;
-      observations?: string;
-      userName?: string;
-    },
-    printerName: string,
-    organizationId: string,
-    copies = 1,
-  ): Promise<boolean> {
-    return this.postPrintJob(
-      printerName,
-      organizationId,
-      "stock_in_transit",
-      data,
-      copies,
-    );
-  }
-
   static async printSampleLabel(
-    data: {
-      sampleName: string;
-      collectionTime: string;
-      collectionDate: string;
-      discardDate: string;
-      responsibleName: string;
-    },
+    data: SampleLabelPayload,
     printerName: string,
     organizationId: string,
     copies = 1,
@@ -91,28 +122,8 @@ export class LabelPrinterService {
     );
   }
 
-  static async printProductLabel(
-    data: {
-      productName: string;
-      manufacturingDate: string;
-      validityDate: string;
-      openingDate?: string;
-      validityAfterOpening?: string;
-      conservationMode: "REFRIGERADO" | "CONGELADO" | "AMBIENTE";
-      responsibleName: string;
-      organizationName?: string;
-      organizationCnpj?: string;
-      organizationZipCode?: string;
-      organizationAddress?: string;
-      organizationNumber?: string;
-      organizationAddressComplement?: string;
-      organizationCity?: string;
-      organizationState?: string;
-      lot?: string;
-      brandSupplier?: string;
-      quantity: number;
-      unit: string;
-    },
+  static async printOpenedProductLabel(
+    data: OpenedProductLabelPayload,
     printerName: string,
     organizationId: string,
     copies = 1,
@@ -120,7 +131,37 @@ export class LabelPrinterService {
     return this.postPrintJob(
       printerName,
       organizationId,
-      "product",
+      "opened_product",
+      data,
+      copies,
+    );
+  }
+
+  static async printThawingLabel(
+    data: ThawingLabelPayload,
+    printerName: string,
+    organizationId: string,
+    copies = 1,
+  ): Promise<boolean> {
+    return this.postPrintJob(
+      printerName,
+      organizationId,
+      "thawing",
+      data,
+      copies,
+    );
+  }
+
+  static async printManipulatedLabel(
+    data: ManipulatedLabelPayload,
+    printerName: string,
+    organizationId: string,
+    copies = 1,
+  ): Promise<boolean> {
+    return this.postPrintJob(
+      printerName,
+      organizationId,
+      "manipulated",
       data,
       copies,
     );
