@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { SignJWT } from "jose";
+
+const DEFAULT_PRINT_SERVICE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5000/api/print"
+    : "https://printhubservice.duckdns.org/api/print";
+
+function getHubBaseUrl() {
+  const printServiceUrl = process.env.PRINT_SERVICE_URL || DEFAULT_PRINT_SERVICE_URL;
+  return printServiceUrl.replace(/\/api\/print\/?$/, "").replace(/\/$/, "");
+}
 
 export async function POST(_req: NextRequest) {
   try {
-    // Authenticate user session
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -24,7 +32,7 @@ export async function POST(_req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Usuário não autenticado ou sem restaurante ativo.",
+          message: "Usuario nao autenticado ou sem restaurante ativo.",
         },
         { status: 401 },
       );
@@ -32,26 +40,66 @@ export async function POST(_req: NextRequest) {
 
     const tenantId = activeOrganizationId;
     const clientSecret =
-      process.env.PRINT_HUB_JWT_SECRET || "Segredo_Compartilhado_Hub"; // The same secret the Hub AuthController expects. We MUST securely inject this.
+      process.env.PRINT_HUB_CLIENT_SECRET || process.env.PRINT_HUB_JWT_SECRET;
 
-    // Next.js directly mints the JWT locally, bypassing the circular dependency on the uninstalled Hub!
-    const secretKey = new TextEncoder().encode(clientSecret);
-    const token = await new SignJWT({
-      tenantId: tenantId,
-      clientId: `web_agent_${tenantId}`,
-    })
-      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setIssuedAt()
-      .setExpirationTime("10y") // Long-lived token for a physical device integration
-      .setSubject(`web_agent_${tenantId}`)
-      .sign(secretKey);
+    if (!clientSecret) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "PRINT_HUB_CLIENT_SECRET nao configurado no ambiente.",
+        },
+        { status: 500 },
+      );
+    }
+
+    const hubResponse = await fetch(`${getHubBaseUrl()}/api/auth/token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        clientId: `web_agent_${tenantId}`,
+        tenantId,
+        secret: clientSecret,
+      }),
+      cache: "no-store",
+    });
+
+    if (!hubResponse.ok) {
+      const errorText = await hubResponse.text();
+      console.error("Hub token generation failed:", {
+        status: hubResponse.status,
+        errorText,
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Falha ao gerar token no Hub de impressao.",
+          error: errorText,
+        },
+        { status: hubResponse.status },
+      );
+    }
+
+    const { token } = (await hubResponse.json()) as { token?: string };
+
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Hub respondeu sem token.",
+        },
+        { status: 502 },
+      );
+    }
 
     return NextResponse.json({ token, success: true });
   } catch (error) {
     console.error("POST /api/devices/token erro:", error);
     return NextResponse.json(
       {
-        message: "Erro ao pedir a geração do Token JWT.",
+        message: "Erro ao pedir a geracao do Token JWT.",
         error: String(error),
       },
       { status: 500 },

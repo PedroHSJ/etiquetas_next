@@ -2,9 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
+const DEFAULT_PRINT_SERVICE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5000/api/print"
+    : "https://printhubservice.duckdns.org/api/print";
+
+function getPrintServiceUrl() {
+  return (process.env.PRINT_SERVICE_URL || DEFAULT_PRINT_SERVICE_URL).replace(
+    /\/$/,
+    "",
+  );
+}
+
+type HubPrinterInfo = {
+  name?: string;
+  portName?: string;
+  isNetworkPrinter?: boolean;
+};
+
 export async function GET(_req: NextRequest) {
   try {
-    // Authenticate user session
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -15,27 +32,21 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Usuário não autenticado ou sem restaurante ativo.",
+          message: "Usuario nao autenticado ou sem restaurante ativo.",
         },
         { status: 401 },
       );
     }
 
     const tenantId = activeOrganizationId;
+    const fetchUrl = `${getPrintServiceUrl()}/impressoras/${encodeURIComponent(tenantId)}`;
 
-    // Use PRINT_SERVICE_URL but strip the /api/print and hit the base
-    const printServiceBaseUrl = process.env.PRINT_SERVICE_URL
-      ? process.env.PRINT_SERVICE_URL.replace(/\/api\/print\/?$/, "")
-      : "http://localhost:5000";
-
-    const fetchUrl = `${printServiceBaseUrl}/api/Print/impressoras/${tenantId}`;
-
-    // Call the PrinterHub.Server
     const response = await fetch(fetchUrl, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
+      cache: "no-store",
     });
 
     if (!response.ok) {
@@ -44,21 +55,30 @@ export async function GET(_req: NextRequest) {
       );
       return NextResponse.json(
         {
-          message:
-            "Falha ao obter impressoras conectadas do servidor de impressão.",
+          message: "Falha ao obter impressoras conectadas do servidor de impressao.",
         },
         { status: response.status },
       );
     }
 
-    const result = await response.json();
+    const result = (await response.json()) as HubPrinterInfo[];
 
-    return NextResponse.json(result);
+    const printers = Array.isArray(result)
+      ? result
+          .map((printer) => ({
+            printerName: printer.name || "",
+            portName: printer.portName,
+            isNetworkPrinter: printer.isNetworkPrinter ?? false,
+          }))
+          .filter((printer) => printer.printerName)
+      : [];
+
+    return NextResponse.json(printers);
   } catch (error) {
     console.error("GET /api/devices/printers erro:", error);
     return NextResponse.json(
       {
-        message: "Erro ao processar requisição interna.",
+        message: "Erro ao processar requisicao interna.",
         error: String(error),
       },
       { status: 500 },
