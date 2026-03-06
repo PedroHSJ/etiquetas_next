@@ -39,6 +39,7 @@ import { MemberResponseDto as Member } from "@/types/dto/member/response";
 import { MemberService } from "@/lib/services/client/member-service";
 import { SettingsService } from "@/lib/services/client/settings-service";
 import { OrganizationService } from "@/lib/services/client/organization-service";
+import { OrganizationExpandedResponseDto } from "@/types/dto/organization/response";
 import { DevicesService, PrinterInfo } from "@/lib/services/client/devices-service";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -856,24 +857,34 @@ export default function EstoqueTransitoPage() {
       if (print) {
         if (!validateLabelCopies(productLabelCopies)) return;
 
-        let orgDetails = activeOrganizationDetails;
-        if (organizationId && (!orgDetails?.city || !orgDetails?.state)) {
+        let orgDetailsExpanded: OrganizationExpandedResponseDto | null = null;
+        if (organizationId && (!activeOrganizationDetails?.city || !activeOrganizationDetails?.state)) {
           try {
-            orgDetails = await OrganizationService.getOrganizationByIdExpanded(organizationId);
+            orgDetailsExpanded =
+              await OrganizationService.getOrganizationByIdExpanded(organizationId);
           } catch (error) {
             console.warn("Falha ao recarregar detalhes da organizacao para etiqueta", error);
           }
         }
 
-        const resolvedOrganizationName = orgDetails?.name || organizationName;
-        const resolvedOrganizationCnpj = orgDetails?.cnpj || organizationCnpj;
-        const resolvedOrganizationZipCode = orgDetails?.zipCode || organizationZipCode;
-        const resolvedOrganizationAddress = orgDetails?.address || organizationAddress;
-        const resolvedOrganizationNumber = orgDetails?.number || organizationNumber;
+        const resolvedOrganizationName =
+          orgDetailsExpanded?.name || activeOrganizationDetails?.name || organizationName;
+        const resolvedOrganizationCnpj =
+          orgDetailsExpanded?.cnpj || activeOrganizationDetails?.cnpj || organizationCnpj;
+        const resolvedOrganizationZipCode =
+          orgDetailsExpanded?.zipCode || activeOrganizationDetails?.zipCode || organizationZipCode;
+        const resolvedOrganizationAddress =
+          orgDetailsExpanded?.address || activeOrganizationDetails?.address || organizationAddress;
+        const resolvedOrganizationNumber =
+          orgDetailsExpanded?.number || activeOrganizationDetails?.number || organizationNumber;
         const resolvedOrganizationAddressComplement =
-          orgDetails?.addressComplement || organizationAddressComplement;
-        const resolvedOrganizationCity = orgDetails?.city?.name || organizationCity;
-        const resolvedOrganizationState = orgDetails?.state?.code || organizationState;
+          orgDetailsExpanded?.addressComplement ||
+          activeOrganizationDetails?.addressComplement ||
+          organizationAddressComplement;
+        const resolvedOrganizationCity =
+          orgDetailsExpanded?.city?.name || activeOrganizationDetails?.city?.name || organizationCity;
+        const resolvedOrganizationState =
+          orgDetailsExpanded?.state?.code || activeOrganizationDetails?.state?.code || organizationState;
 
         const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printProductLabel(
