@@ -149,10 +149,10 @@ const TSPL_TEXT_SIZES: Record<
   { font: string; xMul: number; yMul: number }
 > = {
   xs: { font: "1", xMul: 1, yMul: 1 },
-  sm: { font: "2", xMul: 1, yMul: 1 },
-  md: { font: "3", xMul: 1, yMul: 1 },
-  lg: { font: "4", xMul: 1, yMul: 1 },
-  xl: { font: "5", xMul: 1, yMul: 1 },
+  sm: { font: "1", xMul: 1, yMul: 1 },
+  md: { font: "2", xMul: 1, yMul: 1 },
+  lg: { font: "3", xMul: 1, yMul: 1 },
+  xl: { font: "4", xMul: 1, yMul: 1 },
 };
 
 type TsplTextOptions = {
@@ -179,6 +179,38 @@ function tsplText(
     ];
   }
   return [line];
+}
+
+const TSPL_FONT_WIDTH: Record<string, number> = {
+  "1": 8,
+  "2": 12,
+  "3": 16,
+  "4": 24,
+  "5": 32,
+};
+
+function estimateTextWidth(
+  label: string,
+  size: LabelTextSize,
+  options?: TsplTextOptions,
+): number {
+  if (!label) return 0;
+  const { font, xMul } = TSPL_TEXT_SIZES[size];
+  const scaleX = options?.xMul ?? xMul;
+  const fontWidth = TSPL_FONT_WIDTH[font] ?? 10;
+  return label.length * fontWidth * scaleX;
+}
+
+function tsplTextRight(
+  xRight: number,
+  y: number,
+  label: string,
+  size: LabelTextSize = "md",
+  options?: TsplTextOptions,
+): string[] {
+  const width = estimateTextWidth(label, size, options);
+  const x = Math.max(0, Math.round(xRight - width));
+  return tsplText(x, y, label, size, options);
 }
 
 function splitLabelLines(
@@ -332,9 +364,9 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const cityStateLine = [city, state].filter(Boolean).join("/");
   const zipLine = zip ? `CEP: ${zip}` : "";
   const cnpjLine = cnpj ? `CNPJ: ${cnpj}` : "";
-  const cityStateAndCep = [cityStateLine, zipLine].filter(Boolean).join(" - ");
+  const cnpjCepLine = [cnpjLine, zipLine].filter(Boolean).join(" ");
 
-  const orgLines = [cnpjLine, addressLine, cityStateAndCep]
+  const orgLines = [cnpjCepLine, addressLine, cityStateLine]
     .map((line) => line.trim())
     .filter(Boolean);
 
@@ -352,6 +384,8 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
   const xOffset = 16;
   const yOffset = 16;
+
+  const infoValueX = xOffset + 260;
 
   const boxLeft = xOffset + 24;
   const boxRight = xOffset + 424;
@@ -373,8 +407,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const responsibleY = divider3Y + 10;
   const hasResponsible = Boolean(responsible);
   const restLabelY = responsibleY + (hasResponsible ? rowHeight : 0);
-  const restNameY = restLabelY + rowHeight;
-  const orgStartY = restNameY + rowHeight;
+  const orgStartY = restLabelY + rowHeight;
 
   const useBold = false;
 
@@ -384,8 +417,8 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const boldText = (x: number, y: number, label: string): string[] =>
     tsplText(x, y, label, "sm", { bold: useBold });
 
-  const normalTextMd = (x: number, y: number, label: string): string[] =>
-    tsplText(x, y, label, "md", { bold: false });
+  const normalTextMd = (xRight: number, y: number, label: string): string[] =>
+    tsplTextRight(xRight, y, label, "md", { bold: false });
 
   const section2TextLines = section2Rows.flatMap((row, index) => {
     const y = yOffset + section2StartY + rowHeight * index;
@@ -397,8 +430,10 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
   const responsibleTextLines = hasResponsible
     ? [
-        ...boldLeft(xOffset + 24, yOffset + responsibleY, "RESP:"),
-        ...tsplText(xOffset + 120, yOffset + responsibleY, responsible, "md", {
+        ...tsplText(xOffset + 24, yOffset + responsibleY, "RESP:", "sm", {
+          bold: useBold,
+        }),
+        ...tsplText(xOffset + 120, yOffset + responsibleY, responsible, "sm", {
           bold: false,
         }),
       ]
@@ -426,20 +461,20 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
       ...tsplText(xOffset + 24, yOffset + storageY, storage, "sm", {
         bold: useBold,
       }),
-      ...tsplText(xOffset + 360, yOffset + storageY, weight, "sm", {
+      ...tsplTextRight(boxRight, yOffset + storageY, weight, "sm", {
         bold: useBold,
       }),
       `BOX ${boxLeft},${yOffset + divider1Y},${boxRight},${yOffset + divider1Y + 2},1`,
 
       ...boldLeft(xOffset + 24, yOffset + infoStartY, "VAL. ORIGINAL:"),
-      ...normalTextMd(xOffset + 300, yOffset + infoStartY, validityOriginal),
+      ...normalTextMd(boxRight, yOffset + infoStartY, validityOriginal),
       ...boldLeft(
         xOffset + 24,
         yOffset + infoStartY + rowHeight,
         "MANIPULACAO:",
       ),
       ...normalTextMd(
-        xOffset + 300,
+        boxRight,
         yOffset + infoStartY + rowHeight,
         handlingDate || "-",
       ),
@@ -449,7 +484,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
         "VALIDADE:",
       ),
       ...normalTextMd(
-        xOffset + 300,
+        boxRight,
         yOffset + infoStartY + rowHeight * 2,
         validityAfterOpening || validityOriginal,
       ),
@@ -459,7 +494,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
         "FABRICACAO:",
       ),
       ...normalTextMd(
-        xOffset + 300,
+        boxRight,
         yOffset + infoStartY + rowHeight * 3,
         manufacturing || "-",
       ),
@@ -472,8 +507,8 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
       ...responsibleTextLines,
       ...tsplText(
-        xOffset + 24,
-        yOffset + restNameY,
+        xOffset + 200,
+        yOffset + restLabelY,
         organizationName || "-",
         "sm",
         { bold: useBold },
