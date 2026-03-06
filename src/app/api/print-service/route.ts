@@ -304,8 +304,8 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const nameLineSpacing = 28;
   const rowHeight = 22;
   const storageY =
-    nameLineY + (productLines.length || 1) * nameLineSpacing + 12;
-  const divider1Y = storageY + 20;
+    nameLineY + (productLines.length || 1) * nameLineSpacing + 20;
+  const divider1Y = storageY + 28;
   const infoStartY = divider1Y + 10;
 
   const divider2Y = infoStartY + rowHeight * 4 + 6;
@@ -349,7 +349,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
   const productTextLines = productNameLines.map((line, index) => {
     const y = yOffset + nameLineY + index * nameLineSpacing;
-    return `TEXT ${xOffset + 24},${y},"3",0,1,1,"${sanitizeText(line, 18)}"`;
+    return `TEXT ${xOffset + 24},${y},"3",0,2,2,"${sanitizeText(line, 18)}"`;
   });
 
   return buildTsplLabel(
@@ -382,7 +382,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
       `BOX ${xOffset + 18},${yOffset + divider2Y},${xOffset + 430},${yOffset + divider2Y + 2},1`,
 
-      ...boldLeft(xOffset + 24, yOffset + section2StartY, "RESP.:"),
+      ...boldLeft(xOffset + 24, yOffset + section2StartY, "RESP:"),
       `TEXT ${xOffset + 120},${yOffset + section2StartY},"2",0,1,1,"${responsible}"`,
       ...(lot
         ? [
