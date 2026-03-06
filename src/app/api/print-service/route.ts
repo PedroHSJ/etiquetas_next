@@ -8,6 +8,20 @@ const DEFAULT_PRINT_SERVICE_URL =
     ? "http://localhost:5000/api/print"
     : "https://printhubservice.duckdns.org/api/print";
 
+function getPrintServiceActionUrl(): string {
+  const configuredUrl = process.env.PRINT_SERVICE_URL || DEFAULT_PRINT_SERVICE_URL;
+  const normalizedUrl = configuredUrl.replace(/\/$/, "");
+
+  if (
+    normalizedUrl.endsWith("/api/print/print") ||
+    normalizedUrl.endsWith("/api/print/imprimir")
+  ) {
+    return normalizedUrl;
+  }
+
+  return `${normalizedUrl}/print`;
+}
+
 const LegacyPrintJobSchema = z.object({
   printerName: z.string(),
   language: z.string(),
@@ -98,8 +112,7 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    const printServiceUrl =
-      process.env.PRINT_SERVICE_URL || DEFAULT_PRINT_SERVICE_URL;
+    const printServiceUrl = getPrintServiceActionUrl();
 
     const response = await fetch(printServiceUrl, {
       method: "POST",
