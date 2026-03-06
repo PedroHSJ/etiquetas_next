@@ -283,7 +283,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const rowHeight = 22;
   const storageY =
     nameLineY + (productLines.length || 1) * nameLineSpacing + 4;
-  const divider1Y = storageY + 16;
+  const divider1Y = storageY + 20;
   const infoStartY = divider1Y + 10;
 
   const divider2Y = infoStartY + rowHeight * 4 + 6;
