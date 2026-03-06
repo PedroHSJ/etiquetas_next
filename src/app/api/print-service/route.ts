@@ -398,7 +398,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const responsibleTextLines = hasResponsible
     ? [
         ...boldLeft(xOffset + 24, yOffset + responsibleY, "RESP:"),
-        ...tsplText(xOffset + 120, yOffset + responsibleY, responsible, "sm", {
+        ...tsplText(xOffset + 120, yOffset + responsibleY, responsible, "md", {
           bold: false,
         }),
       ]
