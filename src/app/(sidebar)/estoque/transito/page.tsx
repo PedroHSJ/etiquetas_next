@@ -460,11 +460,9 @@ export default function EstoqueTransitoPage() {
     activeOrganizationDetails?.addressComplement ||
     activeProfile?.userOrganization?.organization?.addressComplement || "";
   const organizationCity =
-    activeOrganizationDetails?.city?.name ||
-    activeProfile?.userOrganization?.organization?.city?.name || "";
+    activeOrganizationDetails?.city?.name || "";
   const organizationState =
-    activeOrganizationDetails?.state?.code ||
-    activeProfile?.userOrganization?.organization?.state?.code || "";
+    activeOrganizationDetails?.state?.code || "";
   const isGestor =
     activeProfile?.profile?.name?.toLowerCase().includes("gestor") || false;
 
