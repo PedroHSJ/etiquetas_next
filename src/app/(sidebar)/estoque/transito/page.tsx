@@ -599,12 +599,6 @@ export default function EstoqueTransitoPage() {
   }, [organizationId]);
 
   useEffect(() => {
-    if (organizationId) {
-      refreshActiveOrganization();
-    }
-  }, [organizationId, refreshActiveOrganization]);
-
-  useEffect(() => {
     if ((selectedGroupId || !filterByGroup) && organizationId) {
       loadProducts(filterByGroup ? selectedGroupId : undefined);
     } else {

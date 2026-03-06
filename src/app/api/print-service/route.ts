@@ -381,6 +381,9 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const boldText = (x: number, y: number, label: string): string[] =>
     tsplText(x, y, label, "sm", { bold: useBold });
 
+  const normalTextMd = (x: number, y: number, label: string): string[] =>
+    tsplText(x, y, label, "md", { bold: false });
+
   const section2TextLines = section2Rows.flatMap((row, index) => {
     const y = yOffset + section2StartY + rowHeight * index;
     return [
@@ -391,8 +394,10 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
   const responsibleTextLines = hasResponsible
     ? [
-        ...boldLeft(xOffset + 24, yOffset + responsibleY, "RESP.:") ,
-        ...tsplText(xOffset + 120, yOffset + responsibleY, responsible, "sm", { bold: false }),
+        ...boldLeft(xOffset + 24, yOffset + responsibleY, "RESP:"),
+        ...tsplText(xOffset + 120, yOffset + responsibleY, responsible, "sm", {
+          bold: false,
+        }),
       ]
     : [];
 
@@ -424,43 +429,53 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
       `BOX ${xOffset + 18},${yOffset + divider1Y},${xOffset + 430},${yOffset + divider1Y + 2},1`,
 
       ...boldLeft(xOffset + 24, yOffset + infoStartY, "VAL. ORIGINAL:"),
-      `TEXT ${xOffset + 300},${yOffset + infoStartY},"2",0,1,1,"${validityOriginal}"`,
+      ...normalTextMd(xOffset + 300, yOffset + infoStartY, validityOriginal),
       ...boldLeft(
         xOffset + 24,
         yOffset + infoStartY + rowHeight,
         "MANIPULACAO:",
       ),
-      `TEXT ${xOffset + 300},${yOffset + infoStartY + rowHeight},"2",0,1,1,"${handlingDate}"`,
+      ...normalTextMd(
+        xOffset + 300,
+        yOffset + infoStartY + rowHeight,
+        handlingDate || "-",
+      ),
       ...boldLeft(
         xOffset + 24,
         yOffset + infoStartY + rowHeight * 2,
         "VALIDADE:",
       ),
-      `TEXT ${xOffset + 300},${yOffset + infoStartY + rowHeight * 2},"2",0,1,1,"${validityAfterOpening || validityOriginal}"`,
+      ...normalTextMd(
+        xOffset + 300,
+        yOffset + infoStartY + rowHeight * 2,
+        validityAfterOpening || validityOriginal,
+      ),
       ...boldLeft(
         xOffset + 24,
         yOffset + infoStartY + rowHeight * 3,
         "FABRICACAO:",
       ),
-      `TEXT ${xOffset + 300},${yOffset + infoStartY + rowHeight * 3},"2",0,1,1,"${manufacturing}"`,
+      ...normalTextMd(
+        xOffset + 300,
+        yOffset + infoStartY + rowHeight * 3,
+        manufacturing || "-",
+      ),
 
       `BOX ${xOffset + 18},${yOffset + divider2Y},${xOffset + 430},${yOffset + divider2Y + 2},1`,
 
       ...section2TextLines,
 
-      `BOX ${xOffset + 18},${yOffset + divider3Y},${xOffset + 430},${yOffset + divider3Y + 2},1`,
+      // `BOX ${xOffset + 18},${yOffset + divider3Y},${xOffset + 430},${yOffset + divider3Y + 2},1`,
 
       ...responsibleTextLines,
-      ...boldLeft(xOffset + 24, yOffset + restLabelY, "RESTAURANTE:"),
       ...tsplText(
         xOffset + 24,
         yOffset + restNameY,
         organizationName || "-",
-        "xs",
+        "sm",
         { bold: useBold },
       ),
       ...orgTextLines,
-
     ],
     copies,
   );
