@@ -66,6 +66,9 @@
     --input: #eaeaea;
     --ring: #0c4651;
     --radius: 1rem;
+    --scrollbar-track: #dfe7e8;
+    --scrollbar-thumb: #0c4651;
+    --scrollbar-thumb-hover: #09353e;
     --chart-1: #0c4651;
     --chart-2: #898b8f;
     --chart-3: #0c4651;
@@ -103,6 +106,9 @@
     --border: #09353e;
     --input: #09353e;
     --ring: #f8f8f2;
+    --scrollbar-track: #09353e;
+    --scrollbar-thumb: #f8f8f2;
+    --scrollbar-thumb-hover: #d7dfdd;
     --chart-1: #f8f8f2;
     --chart-2: #0c4651;
     --chart-3: #898b8f;
@@ -125,6 +131,35 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border: 2px solid var(--scrollbar-track);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 

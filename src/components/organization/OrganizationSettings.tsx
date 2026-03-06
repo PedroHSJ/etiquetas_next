@@ -153,7 +153,7 @@ export function OrganizationSettings({
         updateData,
       );
 
-      toast.success("As informações foram salvas com sucesso.");
+      toast.success("Organizacao atualizada com sucesso!");
 
       onUpdate?.(updatedOrg as unknown as Organization);
     } catch (error) {

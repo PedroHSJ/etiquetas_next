@@ -51,7 +51,6 @@ export default function EditOrganizationPage({
 
   const handleUpdated = async () => {
     await refetchOrganizations();
-    toast.success("Organizacao atualizada com sucesso!");
     router.push("/organizations/list");
   };
 
