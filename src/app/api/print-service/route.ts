@@ -277,9 +277,9 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const productLines = splitLabelLines(productName, 24, 2);
-  const nameLineY = 20;
-  const nameLineSpacing = 22;
+  const productLines = splitLabelLines(productName, 18, 2);
+  const nameLineY = 18;
+  const nameLineSpacing = 28;
   const rowHeight = 22;
   const storageY =
     nameLineY + (productLines.length || 1) * nameLineSpacing + 4;
@@ -315,16 +315,15 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
   const productNameLines = productLines.length
     ? productLines
-    : [productName.slice(0, 24)];
+    : [productName.slice(0, 18)];
 
   const productTextLines = productNameLines.map((line, index) => {
     const y = yOffset + nameLineY + index * nameLineSpacing;
-    return `TEXT ${xOffset + 24},${y},"1",0,1,1,"${sanitizeText(line, 24)}"`;
+    return `TEXT ${xOffset + 24},${y},"3",0,1,1,"${sanitizeText(line, 18)}"`;
   });
 
   return buildTsplLabel(
     [
-      `BOX ${xOffset + 12},${yOffset + 12},${xOffset + 436},${yOffset + 436},2`,
       ...productTextLines,
       `TEXT ${xOffset + 24},${yOffset + storageY},"2",0,1,1,"${storage}"`,
       `BOX ${xOffset + 18},${yOffset + divider1Y},${xOffset + 430},${yOffset + divider1Y + 2},1`,

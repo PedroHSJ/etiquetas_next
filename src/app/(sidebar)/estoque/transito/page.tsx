@@ -437,7 +437,7 @@ function LabelCopiesField({
 export default function EstoqueTransitoPage() {
   const router = useRouter();
   const { activeProfile } = useProfile();
-  const { activeOrganizationDetails } = useOrganization();
+  const { activeOrganizationDetails, refreshActiveOrganization } = useOrganization();
   const { user } = useAuth();
   const organizationId =
     activeProfile?.userOrganization?.organization?.id || "";
@@ -460,9 +460,11 @@ export default function EstoqueTransitoPage() {
     activeOrganizationDetails?.addressComplement ||
     activeProfile?.userOrganization?.organization?.addressComplement || "";
   const organizationCity =
-    activeOrganizationDetails?.city?.name || "";
+    activeOrganizationDetails?.city?.name ||
+    activeProfile?.userOrganization?.organization?.city?.name || "";
   const organizationState =
-    activeOrganizationDetails?.state?.code || "";
+    activeOrganizationDetails?.state?.code ||
+    activeProfile?.userOrganization?.organization?.state?.code || "";
   const isGestor =
     activeProfile?.profile?.name?.toLowerCase().includes("gestor") || false;
 
@@ -587,6 +589,12 @@ export default function EstoqueTransitoPage() {
   useEffect(() => {
     if (organizationId) loadGroups();
   }, [organizationId]);
+
+  useEffect(() => {
+    if (organizationId) {
+      refreshActiveOrganization();
+    }
+  }, [organizationId, refreshActiveOrganization]);
 
   useEffect(() => {
     if ((selectedGroupId || !filterByGroup) && organizationId) {
