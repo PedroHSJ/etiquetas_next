@@ -704,17 +704,6 @@ export default function EstoqueTransitoPage() {
     try {
       setSaving(true);
 
-      await StockInTransitService.create({
-        productId: parseInt(selectedProductId),
-        quantity: sampleQuantity,
-        unitOfMeasureCode: resolveUnit(),
-        manufacturingDate: sampleCollectionDate,
-        expiryDate: sampleDiscardDate,
-        observations: `AMOSTRA - ${sampleName} (${sampleTime})`,
-        organizationId,
-      });
-      toast.success("Amostra registrada no estoque em trânsito!");
-
       if (print) {
         const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printSampleLabel(
@@ -728,9 +717,25 @@ export default function EstoqueTransitoPage() {
           finalPrinter,
           organizationId,
         );
-        if (printed) toast.success(`Etiqueta enviada para ${finalPrinter}!`);
-        else toast.error("Falha ao imprimir.");
+
+        if (!printed) {
+          toast.error("Falha ao imprimir. O registro nao foi salvo no estoque em transito.");
+          return;
+        }
+
+        toast.success(`Etiqueta enviada para ${finalPrinter}!`);
       }
+
+      await StockInTransitService.create({
+        productId: parseInt(selectedProductId),
+        quantity: sampleQuantity,
+        unitOfMeasureCode: resolveUnit(),
+        manufacturingDate: sampleCollectionDate,
+        expiryDate: sampleDiscardDate,
+        observations: `AMOSTRA - ${sampleName} (${sampleTime})`,
+        organizationId,
+      });
+      toast.success("Amostra registrada no estoque em transito!");
 
       router.push("/estoque");
     } catch (error) {
@@ -749,17 +754,6 @@ export default function EstoqueTransitoPage() {
         (p) => p.id.toString() === selectedProductId,
       );
 
-      await StockInTransitService.create({
-        productId: parseInt(selectedProductId),
-        quantity: productQuantity,
-        unitOfMeasureCode: resolveUnit(),
-        manufacturingDate: productManufacturingDate,
-        expiryDate: productExpiryDate,
-        observations: `Conservação: ${productConservationMode}`,
-        organizationId,
-      });
-      toast.success("Salvo no estoque em trânsito!");
-
       if (print) {
         const finalPrinter = selectedPrinter || defaultPrinterName || "LABEL PRINTER";
         const printed = await LabelPrinterService.printProductLabel(
@@ -775,9 +769,25 @@ export default function EstoqueTransitoPage() {
           finalPrinter,
           organizationId,
         );
-        if (printed) toast.success(`Etiqueta enviada para ${finalPrinter}!`);
-        else toast.error("Falha ao imprimir.");
+
+        if (!printed) {
+          toast.error("Falha ao imprimir. O registro nao foi salvo no estoque em transito.");
+          return;
+        }
+
+        toast.success(`Etiqueta enviada para ${finalPrinter}!`);
       }
+
+      await StockInTransitService.create({
+        productId: parseInt(selectedProductId),
+        quantity: productQuantity,
+        unitOfMeasureCode: resolveUnit(),
+        manufacturingDate: productManufacturingDate,
+        expiryDate: productExpiryDate,
+        observations: `Conservacao: ${productConservationMode}`,
+        organizationId,
+      });
+      toast.success("Salvo no estoque em transito!");
 
       router.push("/estoque");
     } catch (error) {
