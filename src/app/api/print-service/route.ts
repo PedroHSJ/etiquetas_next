@@ -137,6 +137,43 @@ function normalizeLabelText(value?: string | null, maxLength = 32): string {
   return sanitizeText(cleaned, maxLength).toUpperCase();
 }
 
+function splitLabelLines(value: string, maxLen: number, maxLines = 2): string[] {
+  if (!value) return [];
+  const words = value.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [];
+
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxLen) {
+      current = candidate;
+      continue;
+    }
+
+    if (current) {
+      lines.push(current);
+      current = word;
+    } else {
+      lines.push(word.slice(0, maxLen));
+      current = word.slice(maxLen);
+    }
+
+    if (lines.length >= maxLines) {
+      current = "";
+      break;
+    }
+  }
+
+  if (current && lines.length < maxLines) {
+    lines.push(current);
+  }
+
+  return lines.slice(0, maxLines).map((line) => line.slice(0, maxLen));
+}
+
+
 function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "";
 
@@ -208,15 +245,18 @@ function buildSampleTspl(payload: SamplePayload, copies = 1): string {
 }
 
 function buildProductTspl(payload: ProductPayload, copies = 1): string {
-  const productName = sanitizeText(payload.productName, 24).toUpperCase();
+  const productName = sanitizeText(payload.productName, 28).toUpperCase();
   const storage = sanitizeText(payload.conservationMode, 18).toUpperCase();
   const manufacturing = formatDate(payload.manufacturingDate);
   const validityOriginal = formatDate(payload.validityDate);
   const handlingDate = formatDate(payload.openingDate);
   const validityAfterOpening = formatDate(payload.validityAfterOpening);
-  const responsible = sanitizeText(payload.responsibleName, 24).toUpperCase();
+  const responsible = normalizeLabelText(payload.responsibleName ?? "", 24);
   const organizationName = normalizeLabelText(payload.organizationName ?? "", 28);
-  const weight = `${payload.quantity} ${sanitizeText(payload.unit, 10)}`.toUpperCase();
+  const weight = normalizeLabelText(
+    `${payload.quantity} ${sanitizeText(payload.unit, 10)}`,
+    18,
+  );
   const cnpj = normalizeLabelText(formatCnpjValue(payload.organizationCnpj ?? ""), 28);
   const address = normalizeLabelText(payload.organizationAddress ?? "", 28);
   const number = normalizeLabelText(payload.organizationNumber ?? "", 10);
@@ -225,52 +265,100 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const state = normalizeLabelText(payload.organizationState ?? "", 6);
   const zip = normalizeLabelText(formatCepValue(payload.organizationZipCode ?? ""), 12);
 
-  const addressLine = [address, number].filter(Boolean).join(", ") + (complement ? ` - ${complement}` : "");
-  const cityStateLine = [city, state].filter(Boolean).join(" / ");
+  const addressLine =
+    [address, number].filter(Boolean).join(", ") +
+    (complement ? ` - ${complement}` : "");
+  const cityStateLine = [city, state].filter(Boolean).join("/");
   const zipLine = zip ? `CEP: ${zip}` : "";
   const cnpjLine = cnpj ? `CNPJ: ${cnpj}` : "";
+  const cityStateAndCep = [cityStateLine, zipLine].filter(Boolean).join(" - ");
 
-  const orgLines = [cnpjLine, addressLine, cityStateLine, zipLine]
+  const orgLines = [cnpjLine, addressLine, cityStateAndCep]
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const orgTextLines = orgLines.map((line, index) => {
-    const y = 360 + index * 24;
-    return `TEXT 24,${y},"1",0,1,1,"${sanitizeText(line, 32).toUpperCase()}"`;
+  const productLines = splitLabelLines(productName, 24, 2);
+  const nameLineY = 20;
+  const nameLineSpacing = 22;
+  const rowHeight = 22;
+  const storageY =
+    nameLineY + (productLines.length || 1) * nameLineSpacing + 4;
+  const divider1Y = storageY + 16;
+  const infoStartY = divider1Y + 10;
+
+  const divider2Y = infoStartY + rowHeight * 4 + 6;
+  const section2StartY = divider2Y + 10;
+
+  const divider3Y = section2StartY + rowHeight * 4 + 6;
+  const restLabelY = divider3Y + 10;
+  const restNameY = restLabelY + rowHeight;
+  const orgStartY = restNameY + rowHeight;
+
+  const xOffset = 16;
+  const yOffset = 16;
+
+  const boldLeft = (x: number, y: number, label: string): string[] => [
+    `TEXT ${x},${y},"2",0,1,1,"${label}"`,
+    `TEXT ${x + 1},${y},"2",0,1,1,"${label}"`,
+  ];
+
+  const boldText = (x: number, y: number, label: string): string[] => [
+    `TEXT ${x},${y},"2",0,1,1,"${label}"`,
+    `TEXT ${x + 1},${y},"2",0,1,1,"${label}"`,
+  ];
+
+  const orgTextLines = orgLines.flatMap((line, index) => {
+    const y = yOffset + orgStartY + index * rowHeight;
+    const textLine = sanitizeText(line, 32);
+    return boldText(xOffset + 24, y, textLine);
+  });
+
+  const productNameLines = productLines.length
+    ? productLines
+    : [productName.slice(0, 24)];
+
+  const productTextLines = productNameLines.map((line, index) => {
+    const y = yOffset + nameLineY + index * nameLineSpacing;
+    return `TEXT ${xOffset + 24},${y},"1",0,1,1,"${sanitizeText(line, 24)}"`;
   });
 
   return buildTsplLabel(
     [
-      'BOX 12,12,436,436,2',
-      `TEXT 24,22,"2",0,1,1,"${productName}"`,
-      `TEXT 24,52,"1",0,1,1,"${storage}"`,
-      'TEXT 320,52,"1",0,1,1,""',
-      'BOX 18,78,430,80,1',
-      'TEXT 24,92,"1",0,1,1,"VAL. ORIGINAL:"',
-      `TEXT 300,92,"1",0,1,1,"${validityOriginal}"`,
-      'TEXT 24,116,"1",0,1,1,"MANIPULACAO:"',
-      `TEXT 300,116,"1",0,1,1,"${handlingDate}"`,
-      'TEXT 24,140,"1",0,1,1,"VALIDADE:"',
-      `TEXT 300,140,"1",0,1,1,"${validityAfterOpening || validityOriginal}"`,
-      'TEXT 24,164,"1",0,1,1,"FABRICACAO:"',
-      `TEXT 300,164,"1",0,1,1,"${manufacturing}"`,
-      'BOX 18,188,430,190,1',
-      'TEXT 24,202,"1",0,1,1,"RESP.:"',
-      `TEXT 120,202,"1",0,1,1,"${responsible}"`,
-      'TEXT 24,226,"1",0,1,1,"LOTE:"',
-      'TEXT 120,226,"1",0,1,1,"-"',
-      'TEXT 24,250,"1",0,1,1,"PESO:"',
-      `TEXT 120,250,"1",0,1,1,"${weight}"`,
-      'TEXT 24,274,"1",0,1,1,"MARCA / FORN:"',
-      'TEXT 180,274,"1",0,1,1,"-"',
-      'BOX 18,298,430,300,1',
-      'TEXT 24,312,"1",0,1,1,"RESTAURANTE:"',
-      `TEXT 24,336,"1",0,1,1,"${organizationName || "-"}"`,
+      `BOX ${xOffset + 12},${yOffset + 12},${xOffset + 436},${yOffset + 436},2`,
+      ...productTextLines,
+      `TEXT ${xOffset + 24},${yOffset + storageY},"2",0,1,1,"${storage}"`,
+      `BOX ${xOffset + 18},${yOffset + divider1Y},${xOffset + 430},${yOffset + divider1Y + 2},1`,
+
+      ...boldLeft(xOffset + 24, yOffset + infoStartY, "VAL. ORIGINAL:"),
+      `TEXT ${xOffset + 300},${yOffset + infoStartY},"2",0,1,1,"${validityOriginal}"`,
+      ...boldLeft(xOffset + 24, yOffset + infoStartY + rowHeight, "MANIPULACAO:"),
+      `TEXT ${xOffset + 300},${yOffset + infoStartY + rowHeight},"2",0,1,1,"${handlingDate}"`,
+      ...boldLeft(xOffset + 24, yOffset + infoStartY + rowHeight * 2, "VALIDADE:"),
+      `TEXT ${xOffset + 300},${yOffset + infoStartY + rowHeight * 2},"2",0,1,1,"${validityAfterOpening || validityOriginal}"`,
+      ...boldLeft(xOffset + 24, yOffset + infoStartY + rowHeight * 3, "FABRICACAO:"),
+      `TEXT ${xOffset + 300},${yOffset + infoStartY + rowHeight * 3},"2",0,1,1,"${manufacturing}"`,
+
+      `BOX ${xOffset + 18},${yOffset + divider2Y},${xOffset + 430},${yOffset + divider2Y + 2},1`,
+
+      ...boldLeft(xOffset + 24, yOffset + section2StartY, "RESP.:"),
+      `TEXT ${xOffset + 120},${yOffset + section2StartY},"2",0,1,1,"${responsible}"`,
+      ...boldLeft(xOffset + 24, yOffset + section2StartY + rowHeight, "LOTE:"),
+      `TEXT ${xOffset + 120},${yOffset + section2StartY + rowHeight},"2",0,1,1,"-"`,
+      ...boldLeft(xOffset + 24, yOffset + section2StartY + rowHeight * 2, "PESO:"),
+      `TEXT ${xOffset + 120},${yOffset + section2StartY + rowHeight * 2},"2",0,1,1,"${weight}"`,
+      ...boldLeft(xOffset + 24, yOffset + section2StartY + rowHeight * 3, "MARCA / FORN:"),
+      `TEXT ${xOffset + 200},${yOffset + section2StartY + rowHeight * 3},"2",0,1,1,"-"`,
+
+      `BOX ${xOffset + 18},${yOffset + divider3Y},${xOffset + 430},${yOffset + divider3Y + 2},1`,
+
+      ...boldLeft(xOffset + 24, yOffset + restLabelY, "RESTAURANTE:"),
+      `TEXT ${xOffset + 24},${yOffset + restNameY},"2",0,1,1,"${organizationName || "-"}"`,
       ...orgTextLines,
     ],
     copies,
   );
 }
+
 
 
 function buildStockInTransitTspl(
