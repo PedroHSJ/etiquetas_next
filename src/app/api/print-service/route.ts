@@ -70,6 +70,8 @@ const ProductPayloadSchema = z.object({
   organizationCity: z.string().optional().nullable(),
   organizationState: z.string().optional().nullable(),
   quantity: z.number().positive(),
+  lot: z.string().optional().nullable(),
+  brandSupplier: z.string().optional().nullable(),
   unit: z.string().min(1, "unit is required"),
 });
 
@@ -282,6 +284,8 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
     formatCepValue(payload.organizationZipCode ?? ""),
     12,
   );
+  const lot = normalizeLabelText(payload.lot ?? "", 18);
+  const brandSupplier = normalizeLabelText(payload.brandSupplier ?? "", 22);
 
   const addressLine =
     [address, number].filter(Boolean).join(", ") +
@@ -299,7 +303,8 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const nameLineY = 18;
   const nameLineSpacing = 28;
   const rowHeight = 22;
-  const storageY = nameLineY + (productLines.length || 1) * nameLineSpacing + 12;
+  const storageY =
+    nameLineY + (productLines.length || 1) * nameLineSpacing + 12;
   const divider1Y = storageY + 20;
   const infoStartY = divider1Y + 10;
 
@@ -314,15 +319,23 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const xOffset = 16;
   const yOffset = 16;
 
-  const boldLeft = (x: number, y: number, label: string): string[] => [
-    `TEXT ${x},${y},"2",0,1,1,"${label}"`,
-    `TEXT ${x + 1},${y},"2",0,1,1,"${label}"`,
-  ];
+  const useBold = false;
 
-  const boldText = (x: number, y: number, label: string): string[] => [
-    `TEXT ${x},${y},"2",0,1,1,"${label}"`,
-    `TEXT ${x + 1},${y},"2",0,1,1,"${label}"`,
-  ];
+  const boldLeft = (x: number, y: number, label: string): string[] =>
+    useBold
+      ? [
+          `TEXT ${x},${y},"2",0,1,1,"${label}"`,
+          `TEXT ${x + 1},${y},"2",0,1,1,"${label}"`,
+        ]
+      : [`TEXT ${x},${y},"2",0,1,1,"${label}"`];
+
+  const boldText = (x: number, y: number, label: string): string[] =>
+    useBold
+      ? [
+          `TEXT ${x},${y},"2",0,1,1,"${label}"`,
+          `TEXT ${x + 1},${y},"2",0,1,1,"${label}"`,
+        ]
+      : [`TEXT ${x},${y},"2",0,1,1,"${label}"`];
 
   const orgTextLines = orgLines.flatMap((line, index) => {
     const y = yOffset + orgStartY + index * rowHeight;
@@ -343,7 +356,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
     [
       ...productTextLines,
       `TEXT ${xOffset + 24},${yOffset + storageY},"2",0,1,1,"${storage}"`,
-      `TEXT ${xOffset + 300},${yOffset + storageY},"2",0,1,1,"${weight}"`,
+      `TEXT ${xOffset + 360},${yOffset + storageY},"2",0,1,1,"${weight}"`,
       `BOX ${xOffset + 18},${yOffset + divider1Y},${xOffset + 430},${yOffset + divider1Y + 2},1`,
 
       ...boldLeft(xOffset + 24, yOffset + infoStartY, "VAL. ORIGINAL:"),
@@ -371,14 +384,26 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
 
       ...boldLeft(xOffset + 24, yOffset + section2StartY, "RESP.:"),
       `TEXT ${xOffset + 120},${yOffset + section2StartY},"2",0,1,1,"${responsible}"`,
-      ...boldLeft(xOffset + 24, yOffset + section2StartY + rowHeight, "LOTE:"),
-      `TEXT ${xOffset + 120},${yOffset + section2StartY + rowHeight},"2",0,1,1,"-"`,
-      ...boldLeft(
-        xOffset + 24,
-        yOffset + section2StartY + rowHeight * 3,
-        "MARCA / FORN:",
-      ),
-      `TEXT ${xOffset + 200},${yOffset + section2StartY + rowHeight * 3},"2",0,1,1,"-"`,
+      ...(lot
+        ? [
+            ...boldLeft(
+              xOffset + 24,
+              yOffset + section2StartY + rowHeight,
+              "LOTE:",
+            ),
+            `TEXT ${xOffset + 120},${yOffset + section2StartY + rowHeight},"2",0,1,1,"${lot}"`,
+          ]
+        : []),
+      ...(brandSupplier
+        ? [
+            ...boldLeft(
+              xOffset + 24,
+              yOffset + section2StartY + rowHeight * 2,
+              "MARCA / FORN:",
+            ),
+            `TEXT ${xOffset + 200},${yOffset + section2StartY + rowHeight * 2},"2",0,1,1,"${brandSupplier}"`,
+          ]
+        : []),
 
       `BOX ${xOffset + 18},${yOffset + divider3Y},${xOffset + 430},${yOffset + divider3Y + 2},1`,
 

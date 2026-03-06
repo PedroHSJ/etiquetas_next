@@ -108,6 +108,8 @@ export class LabelPrinterService {
       organizationAddressComplement?: string;
       organizationCity?: string;
       organizationState?: string;
+      lot?: string;
+      brandSupplier?: string;
       quantity: number;
       unit: string;
     },
