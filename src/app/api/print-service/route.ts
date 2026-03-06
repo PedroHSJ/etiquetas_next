@@ -341,17 +341,20 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const productLines = splitLabelLines(productName, 18, 2);
   const nameLineY = 18;
   const nameLineSpacing = 28;
-  const rowHeight = 22;
+  const rowHeight = 28;
   const storageY =
     nameLineY + (productLines.length || 1) * nameLineSpacing + 20;
-  const divider1Y = storageY + 28;
-  const infoStartY = divider1Y + 10;
+  const divider1Y = storageY + 30;
+  const infoStartY = divider1Y + 15;
 
   const divider2Y = infoStartY + rowHeight * 4 + 6;
   const section2StartY = divider2Y + 10;
 
   const xOffset = 16;
   const yOffset = 16;
+
+  const boxLeft = xOffset + 24;
+  const boxRight = xOffset + 424;
 
   const section2Rows = [
     ...(lot ? [{ label: "LOTE:", value: lot, valueX: xOffset + 120 }] : []),
@@ -404,7 +407,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
   const orgTextLines = orgLines.flatMap((line, index) => {
     const y = yOffset + orgStartY + index * rowHeight;
     const textLine = sanitizeText(line, 32);
-    return tsplText(xOffset + 24, y, textLine, "xs", { bold: useBold });
+    return tsplText(xOffset + 24, y, textLine, "sm", { bold: useBold });
   });
 
   const productNameLines = productLines.length
@@ -426,7 +429,7 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
       ...tsplText(xOffset + 360, yOffset + storageY, weight, "sm", {
         bold: useBold,
       }),
-      `BOX ${xOffset + 18},${yOffset + divider1Y},${xOffset + 430},${yOffset + divider1Y + 2},1`,
+      `BOX ${boxLeft},${yOffset + divider1Y},${boxRight},${yOffset + divider1Y + 2},1`,
 
       ...boldLeft(xOffset + 24, yOffset + infoStartY, "VAL. ORIGINAL:"),
       ...normalTextMd(xOffset + 300, yOffset + infoStartY, validityOriginal),
@@ -461,11 +464,11 @@ function buildProductTspl(payload: ProductPayload, copies = 1): string {
         manufacturing || "-",
       ),
 
-      `BOX ${xOffset + 18},${yOffset + divider2Y},${xOffset + 430},${yOffset + divider2Y + 2},1`,
+      `BOX ${boxLeft},${yOffset + divider2Y},${boxRight},${yOffset + divider2Y + 2},1`,
 
       ...section2TextLines,
 
-      // `BOX ${xOffset + 18},${yOffset + divider3Y},${xOffset + 430},${yOffset + divider3Y + 2},1`,
+      // `BOX ${boxLeft},${yOffset + divider3Y},${boxRight},${yOffset + divider3Y + 2},1`,
 
       ...responsibleTextLines,
       ...tsplText(
