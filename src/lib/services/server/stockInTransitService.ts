@@ -158,7 +158,6 @@ export class StockInTransitBackendService {
       organizationId: organizationId,
       observation: `Descarte do estoque em trânsito. Obs: ${item.observations || "-"}`,
       unitOfMeasureCode: item.unitOfMeasureCode,
-      skipStockUpdate: true,
     });
 
     // Remove from in-transit

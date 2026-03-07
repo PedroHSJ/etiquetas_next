@@ -22,11 +22,10 @@ import {
   GenericTableColumn,
 } from "@/components/ui/generic-table";
 import { formatCnpj } from "@/lib/utils";
-import { OrganizationExpandedResponseDto } from "@/types/dto/organization/response";
-import { useQuery } from "@tanstack/react-query";
-import { OrganizationService } from "@/lib/services/client/organization-service";
+import { useOrganizationsExpandedByUserQuery } from "@/hooks/useOrganizationsQuery";
 import { useProfile } from "@/contexts/ProfileContext";
 import { formatPhone } from "@/lib/utils/organization";
+import type { Organization } from "@/types/models/organization";
 
 export const OrganizacaoIcon = () => {
   const themeColor = "#007BFF"; // Azul vibrante
@@ -101,7 +100,7 @@ export default function Page() {
   const { userId } = useAuth();
   const { userProfiles } = useProfile();
   const [filteredOrganizations, setfilteredOrganizations] = useState<
-    OrganizationExpandedResponseDto[]
+    Organization[]
   >([]);
   const [selectedOrganization, setSelectedOrganization] = useState<
     string | undefined
@@ -114,7 +113,7 @@ export default function Page() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Colunas da tabela
-  const organizationsColumns: GenericTableColumn<OrganizationExpandedResponseDto>[] =
+  const organizationsColumns: GenericTableColumn<Organization>[] =
     [
       {
         id: "nome",
@@ -184,7 +183,7 @@ export default function Page() {
         visible: true,
         render: (value) => (
           <div className="text-sm">
-            {format(new Date(value as string), "dd/MM/yyyy", { locale: ptBR })}
+            {format(new Date(value as Date), "dd/MM/yyyy", { locale: ptBR })}
           </div>
         ),
       },
@@ -197,17 +196,8 @@ export default function Page() {
     isDeleting: false,
   });
 
-  const { data: orgsData, isLoading: orgsLoading } = useQuery<
-    OrganizationExpandedResponseDto[],
-    Error
-  >({
-    queryKey: ["organizations", userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      return await OrganizationService.getOrganizationsByUserIdExpanded(userId);
-    },
-    enabled: !!userId,
-  });
+  const { data: orgsData, isLoading: orgsLoading } =
+    useOrganizationsExpandedByUserQuery(userId);
 
   // Filtros
   useEffect(() => {
@@ -331,7 +321,7 @@ export default function Page() {
           </div>
 
           {/* Tabela de Organizações */}
-          <GenericTable<OrganizationExpandedResponseDto>
+          <GenericTable<Organization>
             title="Organizações"
             description="Visualize e gerencie todas as suas organizações"
             columns={organizationsColumns}
@@ -342,7 +332,7 @@ export default function Page() {
             itemsPerPage={itemsPerPage}
             onItemsPerPageChange={setItemsPerPage}
             showAdvancedPagination={true}
-            rowActions={(row: OrganizationExpandedResponseDto) => {
+            rowActions={(row: Organization) => {
               const hasGestorProfile = userProfiles.some(
                 (profile) =>
                   profile.userOrganization?.organization?.id === row.id &&

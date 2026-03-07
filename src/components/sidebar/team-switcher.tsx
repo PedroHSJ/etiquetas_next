@@ -16,12 +16,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronsUpDown, User } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { UserProfile } from "@/types/models/profile";
-import type { Organization } from "@/types/models/organization";
 
 export function TeamSwitcher() {
   const { activeProfile, userProfiles, loading, setActiveProfile } =
@@ -48,7 +46,7 @@ export function TeamSwitcher() {
       ) {
         const org = singleProfile.userOrganization?.organization;
         if (org) {
-          setSelectedOrganization(org as unknown as Organization);
+          setSelectedOrganization(org);
         }
       }
     }
@@ -70,7 +68,7 @@ export function TeamSwitcher() {
     ) {
       const org = activeProfile.userOrganization?.organization;
       if (org) {
-        setSelectedOrganization(org as unknown as Organization);
+        setSelectedOrganization(org);
       }
     }
   }, [activeProfile, selectedOrganization, setSelectedOrganization]);
@@ -127,7 +125,8 @@ export function TeamSwitcher() {
                   {activeProfile?.profile?.name}
                 </span>
                 <span className="truncate text-xs text-sidebar-foreground">
-                  {activeProfile?.userOrganization?.organization?.name}
+                  {selectedOrganization?.name ||
+                    activeProfile?.userOrganization?.organization?.name}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4 text-sidebar-foreground" />
@@ -157,7 +156,7 @@ export function TeamSwitcher() {
                 onClick={() => {
                   const org = profile.userOrganization?.organization;
                   if (org) {
-                    setSelectedOrganization(org as unknown as Organization);
+                    setSelectedOrganization(org);
                   }
                   handleProfileChange(profile as unknown as UserProfile);
                 }}

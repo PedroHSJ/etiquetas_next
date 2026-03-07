@@ -96,7 +96,11 @@ function getExpiryMeta(expiryDate: string | null): ExpiryMeta {
   }
 
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
   const diffDays = Math.round(
     (parsedDate.getTime() - startOfToday.getTime()) / MS_PER_DAY,
   );
@@ -283,11 +287,13 @@ function MobileStockCard({
             <p className="font-medium text-slate-700">
               {formatDate(row.expiryDate)}
             </p>
-            <p className="text-xs text-slate-500">{row.expiryMeta.helperText}</p>
+            <p className="text-xs text-slate-500">
+              {row.expiryMeta.helperText}
+            </p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-400">
-              Fabricacao
+              Fabricação
             </p>
             <p className="font-medium text-slate-700">
               {formatDate(row.manufacturingDate)}
@@ -538,7 +544,7 @@ export default function EstoqueEmTransitoPage() {
     {
       id: "manufacturingDate",
       key: "manufacturingDate",
-      label: "Data fabricacao",
+      label: "Data fabricação",
       accessor: (row) => row.manufacturingDate,
       visible: true,
       render: (value) => <div>{formatarData(value as string)}</div>,
@@ -569,7 +575,7 @@ export default function EstoqueEmTransitoPage() {
     {
       id: "observations",
       key: "observations",
-      label: "Observacoes",
+      label: "Observações",
       accessor: (row) => row.observations || "-",
       visible: true,
     },
@@ -584,7 +590,7 @@ export default function EstoqueEmTransitoPage() {
     {
       id: "actions",
       key: "id",
-      label: "Acoes",
+      label: "Ações",
       accessor: (row) => row.id,
       visible: true,
       width: 100,
@@ -597,7 +603,7 @@ export default function EstoqueEmTransitoPage() {
             className="flex h-8 items-center gap-2"
           >
             <Trash2 className="h-4 w-4" />
-            Descarte
+            Descartar
           </Button>
         </div>
       ),
@@ -714,7 +720,9 @@ export default function EstoqueEmTransitoPage() {
               {filterOptions.map((option) => (
                 <Button
                   key={option.value}
-                  variant={expiryFilter === option.value ? "default" : "outline"}
+                  variant={
+                    expiryFilter === option.value ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => setExpiryFilter(option.value)}
                   className="gap-2"
@@ -804,10 +812,17 @@ export default function EstoqueEmTransitoPage() {
                   variant="outline"
                   className="w-full"
                   onClick={() =>
-                    setMobileVisibleCount((current) => current + MOBILE_PAGE_SIZE)
+                    setMobileVisibleCount(
+                      (current) => current + MOBILE_PAGE_SIZE,
+                    )
                   }
                 >
-                  Mostrar mais {Math.min(MOBILE_PAGE_SIZE, mobileRows.length - mobileVisibleCount)} item(ns)
+                  Mostrar mais{" "}
+                  {Math.min(
+                    MOBILE_PAGE_SIZE,
+                    mobileRows.length - mobileVisibleCount,
+                  )}{" "}
+                  item(ns)
                 </Button>
               )}
             </>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -40,7 +39,7 @@ import {
 import type { Organization } from "@/types/models/organization";
 import { OrganizationType } from "@/types/enums/organization";
 import type { UpdateOrganizationDto } from "@/types/dto/organization";
-import { OrganizationService } from "@/lib/services/client/organization-service";
+import { useUpdateOrganizationExpandedMutation } from "@/hooks/useOrganizationsQuery";
 import { useToast } from "@/hooks/use-toast";
 import { LocationSelector } from "@/components/location/LocationSelector";
 
@@ -92,8 +91,8 @@ export function OrganizationSettings({
   onUpdate,
   readOnly = false,
 }: OrganizationSettingsProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const updateOrganizationMutation = useUpdateOrganizationExpandedMutation();
 
   // Prepare initial form data from Organization model
   const defaultValues: OrganizationFormData = {
@@ -124,8 +123,6 @@ export function OrganizationSettings({
   const onSubmit = async (data: OrganizationFormData) => {
     if (readOnly) return;
 
-    setIsLoading(true);
-
     try {
       // Prepare DTO for update
       const updateData: UpdateOrganizationDto = {
@@ -148,19 +145,17 @@ export function OrganizationSettings({
         capacity: data.capacity,
       };
 
-      const updatedOrg = await OrganizationService.updateOrganizationExpanded(
-        organization.id,
-        updateData,
-      );
+      const updatedOrg = await updateOrganizationMutation.mutateAsync({
+        organizationId: organization.id,
+        update: updateData,
+      });
 
       toast.success("Organizacao atualizada com sucesso!");
 
-      onUpdate?.(updatedOrg as unknown as Organization);
+      onUpdate?.(updatedOrg);
     } catch (error) {
       console.error("Erro ao atualizar organização:", error);
       toast.error("Não foi possível atualizar as informações da organização.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -385,8 +380,8 @@ export function OrganizationSettings({
         {/* Actions */}
         {!readOnly && (
           <div className="flex justify-end gap-4">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
+            <Button type="submit" disabled={updateOrganizationMutation.isPending}>
+              {updateOrganizationMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Salvando...

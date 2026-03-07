@@ -165,8 +165,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
         {
           title: "Dispositivos",
-          url: "/organizations/devices",
-          isActive: pathname.startsWith("/organizations/devices"),
+          url: "/devices",
+          isActive: pathname === "/devices",
           icon: Printer,
         },
       ],

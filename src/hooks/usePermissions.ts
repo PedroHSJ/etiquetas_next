@@ -9,27 +9,53 @@ import {
 } from "@/types/models/functionality";
 
 export function usePermissions() {
-  const { user } = useAuth();
-  const { activeProfile } = useProfile();
+  const { user, loading: authLoading } = useAuth();
+  const {
+    activeProfile,
+    loading: profileLoading,
+    userProfiles,
+  } = useProfile();
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && activeProfile) {
-      loadPermissions();
-    } else {
+    if (authLoading || profileLoading) {
+      setLoading(true);
+      return;
+    }
+
+    if (!user) {
       setPermissions(null);
       setLoading(false);
+      return;
     }
-  }, [user, activeProfile]);
+
+    // Aguarda o perfil ativo ser restaurado/selecionado para evitar
+    // piscar "Acesso Negado" antes da hidratação das permissões.
+    if (userProfiles.length > 0 && !activeProfile) {
+      setLoading(true);
+      return;
+    }
+
+    if (!activeProfile) {
+      setPermissions(null);
+      setLoading(false);
+      return;
+    }
+
+    void loadPermissions();
+  }, [activeProfile, authLoading, profileLoading, user, userProfiles.length]);
 
   const loadPermissions = async () => {
     if (
       !user ||
       !activeProfile ||
       !activeProfile.userOrganization?.organization?.id
-    )
+    ) {
+      setPermissions(null);
+      setLoading(false);
       return;
+    }
 
     try {
       setLoading(true);
@@ -163,7 +189,7 @@ export function usePermissions() {
   };
 
   const refreshPermissions = () => {
-    loadPermissions();
+    void loadPermissions();
   };
 
   return {

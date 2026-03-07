@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { OrganizationSettings } from "@/components/organization";
 import { WriteGuard } from "@/components/auth/PermissionGuard";
-import { useOrganization } from "@/contexts/OrganizationContext";
-import { OrganizationService } from "@/lib/services/client/organization-service";
-import type { Organization } from "@/types/models/organization";
+import { useOrganizationExpandedQuery } from "@/hooks/useOrganizationsQuery";
 import { toast } from "sonner";
 
 interface EditOrganizationPageProps {
@@ -19,44 +17,40 @@ export default function EditOrganizationPage({
   params,
 }: EditOrganizationPageProps) {
   const router = useRouter();
-  const { refetchOrganizations } = useOrganization();
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [organizationId, setOrganizationId] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadOrganization = async () => {
+    const resolveOrganizationId = async () => {
       try {
         const resolved = await params;
-        const org = await OrganizationService.getOrganizationByIdExpanded(
-          resolved.id,
-        );
-
         if (!isMounted) return;
-        setOrganization(org as unknown as Organization);
+        setOrganizationId(resolved.id);
       } catch (error) {
         toast.error("Nao foi possivel carregar a organizacao para edicao.");
-      } finally {
-        if (isMounted) setLoading(false);
       }
     };
 
-    loadOrganization();
+    void resolveOrganizationId();
 
     return () => {
       isMounted = false;
     };
   }, [params]);
 
-  const handleUpdated = async () => {
-    await refetchOrganizations();
+  const {
+    data: organization,
+    isLoading,
+  } = useOrganizationExpandedQuery(organizationId);
+
+  const handleUpdated = () => {
     router.push("/organizations/list");
   };
 
   return (
     <WriteGuard module="ORGANIZATIONS">
-      {loading ? (
+      {isLoading || !organizationId ? (
         <div className="p-6">Carregando...</div>
       ) : organization ? (
         <OrganizationSettings

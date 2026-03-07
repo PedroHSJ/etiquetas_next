@@ -461,9 +461,7 @@ function buildLocalDateTimeWithOffset(
 }
 
 function formatDateTimeForLabel(dateTimeValue: string): string {
-  const match = dateTimeValue.match(
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/,
-  );
+  const match = dateTimeValue.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
 
   if (!match) return dateTimeValue;
 
@@ -623,10 +621,8 @@ export default function EstoqueTransitoPage() {
 
   // ====== SAMPLES state ======
   const [sampleName, setSampleName] = useState("");
-  const [sampleCollectionDate, setSampleCollectionDate] =
-    useState(initialDate);
-  const [sampleCollectionTime, setSampleCollectionTime] =
-    useState(initialTime);
+  const [sampleCollectionDate, setSampleCollectionDate] = useState(initialDate);
+  const [sampleCollectionTime, setSampleCollectionTime] = useState(initialTime);
   const [sampleDiscardDate, setSampleDiscardDate] = useState(
     initialSampleDiscard.date,
   );
@@ -1092,10 +1088,7 @@ export default function EstoqueTransitoPage() {
     if (!validateOpenedProductForm()) return;
     try {
       setSaving(true);
-      const openedAt = buildLocalDateTimeFromInputs(
-        openedAtDate,
-        openedAtTime,
-      );
+      const openedAt = buildLocalDateTimeFromInputs(openedAtDate, openedAtTime);
       const validityDate = buildLocalDateTimeFromInputs(
         openedValidityDate,
         openedValidityTime,
@@ -1296,11 +1289,11 @@ export default function EstoqueTransitoPage() {
         expiryDate: validityDate,
         observations: buildObservation([
           "MANIPULADO",
-          `Preparacao: ${manipulatedPreparationName.trim()}`,
-          `Fabricacao: ${formatDateTimeForLabel(handledAt)}`,
+          `Preparação: ${manipulatedPreparationName.trim()}`,
+          `Fabricação: ${formatDateTimeForLabel(handledAt)}`,
           `Validade: ${formatDateTimeForLabel(validityDate)}`,
-          `Conservacao: ${formatConservationModeLabel(manipulatedConservationMode)}`,
-          `Responsavel: ${manipulatedResponsible}`,
+          `Conservação: ${formatConservationModeLabel(manipulatedConservationMode)}`,
+          `Responsável: ${manipulatedResponsible}`,
         ]),
         organizationId,
       });
@@ -1417,45 +1410,45 @@ export default function EstoqueTransitoPage() {
       case "sample":
         return Boolean(
           selectedProductId &&
-            sampleName.trim() &&
-            sampleQuantity > 0 &&
-            sampleCollectionDate &&
-            sampleCollectionTime &&
-            sampleDiscardDate &&
-            sampleDiscardTime &&
-            sampleResponsible.trim(),
+          sampleName.trim() &&
+          sampleQuantity > 0 &&
+          sampleCollectionDate &&
+          sampleCollectionTime &&
+          sampleDiscardDate &&
+          sampleDiscardTime &&
+          sampleResponsible.trim(),
         );
       case "opened_product":
         return Boolean(
           selectedProductId &&
-            openedQuantity > 0 &&
-            openedAtDate &&
-            openedAtTime &&
-            openedOriginalValidityDate &&
-            openedValidityDate &&
-            openedValidityTime &&
-            openedResponsible.trim(),
+          openedQuantity > 0 &&
+          openedAtDate &&
+          openedAtTime &&
+          openedOriginalValidityDate &&
+          openedValidityDate &&
+          openedValidityTime &&
+          openedResponsible.trim(),
         );
       case "thawing":
         return Boolean(
           selectedProductId &&
-            thawingQuantity > 0 &&
-            thawingStartDate &&
-            thawingStartTime &&
-            thawingValidityDate &&
-            thawingValidityTime &&
-            thawingResponsible.trim(),
+          thawingQuantity > 0 &&
+          thawingStartDate &&
+          thawingStartTime &&
+          thawingValidityDate &&
+          thawingValidityTime &&
+          thawingResponsible.trim(),
         );
       case "manipulated":
         return Boolean(
           selectedProductId &&
-            manipulatedPreparationName.trim() &&
-            manipulatedQuantity > 0 &&
-            manipulatedAtDate &&
-            manipulatedAtTime &&
-            manipulatedValidityDate &&
-            manipulatedValidityTime &&
-            manipulatedResponsible.trim(),
+          manipulatedPreparationName.trim() &&
+          manipulatedQuantity > 0 &&
+          manipulatedAtDate &&
+          manipulatedAtTime &&
+          manipulatedValidityDate &&
+          manipulatedValidityTime &&
+          manipulatedResponsible.trim(),
         );
     }
   };
@@ -1488,7 +1481,9 @@ export default function EstoqueTransitoPage() {
 
   const renderProductSummary = () =>
     selectedProductId ? (
-      <p className="text-xs text-slate-400 mt-1">Produto: {selectedProductName}</p>
+      <p className="text-xs text-slate-400 mt-1">
+        Produto: {selectedProductName}
+      </p>
     ) : null;
 
   // ──────────────────────────────────────────────
@@ -1609,7 +1604,8 @@ export default function EstoqueTransitoPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="opened-at-time">
-                      Hora da abertura <span className="text-destructive">*</span>
+                      Hora da abertura{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="opened-at-time"
@@ -1624,7 +1620,8 @@ export default function EstoqueTransitoPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="opened-original-validity-date">
-                      Validade original <span className="text-destructive">*</span>
+                      Validade original{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="opened-original-validity-date"
@@ -1653,7 +1650,8 @@ export default function EstoqueTransitoPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="opened-validity-time">
-                      Hora da validade <span className="text-destructive">*</span>
+                      Hora da validade{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="opened-validity-time"
@@ -1791,7 +1789,8 @@ export default function EstoqueTransitoPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="sample-discard-date">
-                      Data do descarte <span className="text-destructive">*</span>
+                      Data do descarte{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="sample-discard-date"
@@ -1803,7 +1802,8 @@ export default function EstoqueTransitoPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sample-discard-time">
-                      Hora do descarte <span className="text-destructive">*</span>
+                      Hora do descarte{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="sample-discard-time"
@@ -1887,7 +1887,8 @@ export default function EstoqueTransitoPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="thawing-start-date">
-                      Início do descongelo <span className="text-destructive">*</span>
+                      Início do descongelo{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="thawing-start-date"
@@ -2032,7 +2033,8 @@ export default function EstoqueTransitoPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="manipulated-at-time">
-                      Hora da fabricação <span className="text-destructive">*</span>
+                      Hora da fabricação{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="manipulated-at-time"
@@ -2061,7 +2063,8 @@ export default function EstoqueTransitoPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="manipulated-validity-time">
-                      Hora da validade <span className="text-destructive">*</span>
+                      Hora da validade{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="manipulated-validity-time"

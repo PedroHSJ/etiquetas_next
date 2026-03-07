@@ -6,34 +6,27 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { useQueryClient } from "@tanstack/react-query";
-import { USER_PROFILES_QUERY_KEY } from "@/hooks/useUserProfilesQuery";
+import { useInvalidateOrganizations } from "@/hooks/useOrganizationsQuery";
 import { WriteGuard } from "@/components/auth/PermissionGuard";
 
 export default function Page() {
   const { userId } = useAuth();
-  const { refetchOrganizations } = useOrganization();
+  const { onOrganizationCreated } = useOrganization();
   const { refreshProfiles } = useProfile();
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const invalidateOrganizations = useInvalidateOrganizations();
 
-  const handleWizardComplete = async () => {
+  const handleWizardComplete = async (
+    organizationId: string,
+    _organizationName: string,
+  ) => {
     try {
-      // Invalidar todas as queries relacionadas
-      await queryClient.invalidateQueries({ queryKey: ["organizations"] });
-      await queryClient.invalidateQueries({
-        queryKey: USER_PROFILES_QUERY_KEY,
-      });
+      onOrganizationCreated({ id: organizationId });
 
-      // Recarregar as organizações para atualizar o TeamSwitcher
-      await refetchOrganizations();
-
-      // Refresh dos perfis no contexto também
-      await refreshProfiles();
+      await Promise.all([invalidateOrganizations(), refreshProfiles()]);
 
       toast.success("Organização criada com sucesso!");
 
-      // Usar router.push em vez de redirect para melhor UX
       router.push("/organizations/list");
     } catch (error) {
       toast.error(

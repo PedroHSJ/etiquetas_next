@@ -87,16 +87,8 @@ export class StockBackendService {
       prisma.stock.count({ where }),
     ]);
 
-    const formattedData = data.map((item: any) => ({
-      ...item,
-      product: item.products,
-      storageLocation: item.storage_locations,
-      products: undefined,
-      storage_locations: undefined,
-    }));
-
     return {
-      data: formattedData,
+      data,
       total: count,
       page,
       pageSize,
@@ -251,7 +243,6 @@ export class StockBackendService {
     organizationId: string;
     observation?: string;
     unitOfMeasureCode?: string;
-    skipStockUpdate?: boolean;
   }): Promise<any> {
     const {
       productId,
@@ -261,7 +252,6 @@ export class StockBackendService {
       organizationId,
       observation,
       unitOfMeasureCode,
-      skipStockUpdate,
     } = params;
 
     // Verificar se o produto existe
@@ -318,37 +308,35 @@ export class StockBackendService {
       };
 
       // Atualizar estoque
-      if (!skipStockUpdate) {
-        if (movementType === "ENTRADA") {
-          await tx.stock.upsert({
-            where: { productId },
-            create: {
-              productId,
-              userId,
-              organizationId: organizationId,
-              currentQuantity: quantity,
-              unitOfMeasureCode: finalUnitCode,
-            },
-            update: {
-              currentQuantity: { increment: quantity },
-            },
-          });
-        } else {
-          const stockRow = await tx.stock.findUnique({
-            where: { productId },
-          });
+      if (movementType === "ENTRADA") {
+        await tx.stock.upsert({
+          where: { productId },
+          create: {
+            productId,
+            userId,
+            organizationId: organizationId,
+            currentQuantity: quantity,
+            unitOfMeasureCode: finalUnitCode,
+          },
+          update: {
+            currentQuantity: { increment: quantity },
+          },
+        });
+      } else {
+        const stockRow = await tx.stock.findUnique({
+          where: { productId },
+        });
 
-          if (!stockRow || Number(stockRow.currentQuantity) < quantity) {
-            throw new Error(STOCK_MESSAGES.ERROR_INSUFFICIENT_QUANTITY);
-          }
-
-          await tx.stock.update({
-            where: { productId },
-            data: {
-              currentQuantity: { decrement: quantity },
-            },
-          });
+        if (!stockRow || Number(stockRow.currentQuantity) < quantity) {
+          throw new Error(STOCK_MESSAGES.ERROR_INSUFFICIENT_QUANTITY);
         }
+
+        await tx.stock.update({
+          where: { productId },
+          data: {
+            currentQuantity: { decrement: quantity },
+          },
+        });
       }
 
       return formattedMovement;

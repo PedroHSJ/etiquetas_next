@@ -85,7 +85,21 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
 
   // Atualizar perfil ativo quando perfis carregarem ou mudarem
   useEffect(() => {
-    if (userProfiles.length === 0) return;
+    if (userProfiles.length === 0) {
+      setActiveProfile(null);
+      return;
+    }
+
+    if (activeProfile) {
+      const refreshedActiveProfile = userProfiles.find(
+        (profile) => profile.id === activeProfile.id,
+      );
+
+      if (refreshedActiveProfile && refreshedActiveProfile !== activeProfile) {
+        setActiveProfile(refreshedActiveProfile);
+        return;
+      }
+    }
 
     // Restaurar perfil ativo do localStorage se existir
     const savedProfileId =
@@ -104,13 +118,10 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     }
 
     // Se não há perfil salvo ou não existe mais, usar o primeiro disponível
-    if (
-      !activeProfile ||
-      !userProfiles.find((p) => p.id === activeProfile.id)
-    ) {
+    if (!activeProfile || !userProfiles.find((p) => p.id === activeProfile.id)) {
       setActiveProfile(userProfiles[0]);
     }
-  }, [userProfiles]);
+  }, [activeProfile, userProfiles]);
 
   // Carregar permissões quando o perfil ativo mudar
   useEffect(() => {

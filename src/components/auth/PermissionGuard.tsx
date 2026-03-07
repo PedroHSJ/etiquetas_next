@@ -117,11 +117,12 @@ export function PermissionGuard({
   acao,
   children,
   fallback,
+  loadingFallback,
 }: PermissionGuardProps) {
   const { hasPermission, loading } = usePermissions();
 
   if (loading) {
-    return null;
+    return loadingFallback ? <>{loadingFallback}</> : null;
   }
 
   if (!loading && !hasPermission(funcionalidade, acao)) {
