@@ -137,7 +137,10 @@ export default function DashboardPage() {
             <div className="text-sm font-bold">
               {activeOrganizationDetails?.city &&
               activeOrganizationDetails?.state
-                ? `${activeOrganizationDetails.city}/${activeOrganizationDetails.state}`
+                ? `${activeOrganizationDetails.city.name}/${
+                    activeOrganizationDetails.state.code ||
+                    activeOrganizationDetails.state.name
+                  }`
                 : "--"}
             </div>
             <p className="text-xs text-muted-foreground">Cidade/Estado</p>

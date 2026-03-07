@@ -36,6 +36,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { StockInTransitResponseDto } from "@/types/dto/stock-in-transit/response";
 import { StockInTransitService } from "@/lib/services/client/stock-in-transit-service";
 import { ReadGuard } from "@/components/auth/PermissionGuard";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const FETCH_LIMIT = 500;
 const MOBILE_PAGE_SIZE = 20;
@@ -343,6 +344,12 @@ export default function EstoqueEmTransitoPage() {
   const { activeProfile } = useProfile();
   const organizationId =
     activeProfile?.userOrganization?.organization?.id || "";
+  const {
+    loading: permissionsLoading,
+    permissions,
+    hasPermissionByCode,
+    getProfiles,
+  } = usePermissions();
 
   const [data, setData] = useState<StockInTransitResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -377,6 +384,35 @@ export default function EstoqueEmTransitoPage() {
       carregarDados();
     }
   }, [organizationId]);
+
+  useEffect(() => {
+    if (permissionsLoading) return;
+    if (!activeProfile) return;
+
+    const profileNames = getProfiles().map((profile) => profile.name);
+    const stockPermissions = (permissions?.permissions ?? [])
+      .filter((permission) => permission.functionality?.code?.startsWith("STOCK:"))
+      .map((permission) => ({
+        code: permission.functionality?.code,
+        active: permission.active,
+      }));
+
+    // Logs de diagnóstico de permissão (remover após investigação).
+    console.groupCollapsed("[Estoque em Trânsito] Diagnóstico de acesso");
+    console.log("organizationId:", organizationId);
+    console.log("activeProfileId:", activeProfile.id);
+    console.log("profiles:", profileNames);
+    console.log("has STOCK:READ:", hasPermissionByCode("STOCK:READ"));
+    console.log("STOCK perms:", stockPermissions);
+    console.groupEnd();
+  }, [
+    activeProfile,
+    getProfiles,
+    hasPermissionByCode,
+    organizationId,
+    permissions,
+    permissionsLoading,
+  ]);
 
   useEffect(() => {
     setMobileVisibleCount(MOBILE_PAGE_SIZE);

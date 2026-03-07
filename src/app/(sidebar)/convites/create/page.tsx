@@ -29,12 +29,11 @@ import {
 import { CalendarIcon, Mail, UserPlus, ArrowLeft, Send } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {} from "@/hooks/usePermissions";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { InviteService } from "@/lib/services/client/invite-service";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { PermissionGuard, WriteGuard } from "@/components/auth/PermissionGuard";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Profile } from "@/types/models/profile";
 import { ProfileService } from "@/lib/services/client/profile-service";
@@ -44,6 +43,7 @@ export default function CreateConvitePage() {
   const router = useRouter();
   const { userId } = useAuth();
   const { selectedOrganization } = useOrganization();
+  const { isGestor, loading: permissionsLoading } = usePermissions();
   const [loading, setLoading] = useState(false);
   const [perfis, setPerfis] = useState<Profile[]>([]);
 
@@ -102,9 +102,27 @@ export default function CreateConvitePage() {
     }
   };
 
+  if (permissionsLoading) {
+    return null;
+  }
+
+  if (!isGestor()) {
+    return (
+      <div className="flex items-center justify-center p-4 text-center">
+        <div className="space-y-2">
+          <div className="text-lg font-semibold text-red-600">
+            Acesso Negado
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Apenas gestores podem criar novos convites.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <WriteGuard module="Convites">
-      <div className="flex flex-1 flex-col gap-6">
+    <div className="flex flex-1 flex-col gap-6">
         {/* Cabeçalho */}
         <div className="flex items-center gap-4">
           <NavigationButton href="/convites" variant="outline" size="sm">
@@ -297,6 +315,5 @@ export default function CreateConvitePage() {
           </CardContent>
         </Card>
       </div>
-    </WriteGuard>
   );
 }

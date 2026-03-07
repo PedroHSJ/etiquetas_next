@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export function NavUser({
   user,
@@ -32,6 +33,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
+  const { isGestor, loading } = usePermissions();
 
   const handleLogout = async () => {
     try {
@@ -104,12 +106,14 @@ export function NavUser({
                 <User />
                 Dashboard
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => router.push("/organizations/list")}
-              >
-                <Building2 />
-                Organizações
-              </DropdownMenuItem>
+              {!loading && isGestor() && (
+                <DropdownMenuItem
+                  onClick={() => router.push("/organizations/list")}
+                >
+                  <Building2 />
+                  Organizações
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => router.push("/onboarding")}>
                 <Settings />
                 Configurações

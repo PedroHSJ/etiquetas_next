@@ -27,6 +27,7 @@ export interface PermissionResponseDto {
   active: boolean;
   createdAt: string;
   functionality?: FunctionalityResponseDto;
+  profile?: ProfileResponseDto;
 }
 
 /**

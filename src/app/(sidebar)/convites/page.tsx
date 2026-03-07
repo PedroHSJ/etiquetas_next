@@ -46,6 +46,7 @@ import { ReadGuard } from "@/components/auth/PermissionGuard";
 import { toast } from "sonner";
 import { InviteWithRelationsResponseDto } from "@/types/dto/invite";
 import React from "react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export const ConvitesIcon = () => {
   const themeColor = "#FD7E14"; // Laranja
@@ -85,6 +86,7 @@ export const ConvitesIcon = () => {
 export default function ConvitesPage() {
   const { userId, user } = useAuth();
   const { selectedOrganization } = useOrganization();
+  const { isGestor, loading: permissionsLoading } = usePermissions();
   const organizacaoId = selectedOrganization?.id;
   const organizacaoNome = selectedOrganization?.name || "";
   const [invites, setInvites] = useState<InviteWithRelationsResponseDto[]>([]);
@@ -615,10 +617,12 @@ export default function ConvitesPage() {
                 </p>
               </div>
             </div>
-            <NavigationButton href="/convites/create">
-              <User className="mr-2 h-4 w-4" />
-              Novo Convite
-            </NavigationButton>
+            {!permissionsLoading && isGestor() && (
+              <NavigationButton href="/convites/create">
+                <User className="mr-2 h-4 w-4" />
+                Novo Convite
+              </NavigationButton>
+            )}
           </div>
 
           {/* Tabs */}

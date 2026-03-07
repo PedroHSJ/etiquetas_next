@@ -10,8 +10,20 @@ export const PermissionService = {
       params: { organizationId },
     });
     if (status !== 200) throw new Error("Não foi possível buscar permissões");
-    // Quando não há permissões, a API pode retornar null; tratamos como "sem permissões"
-    return (data as UserPermissions | null) ?? ({} as UserPermissions);
+    if (!data) {
+      return {
+        userId: "",
+        organizationId,
+        permissions: [],
+        profiles: [],
+      };
+    }
+    return {
+      userId: data.userId,
+      organizationId: data.organizationId,
+      permissions: data.permissions ?? [],
+      profiles: data.profiles ?? [],
+    };
   },
 
   /**

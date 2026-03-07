@@ -46,6 +46,7 @@ import { useStorageLocationsQuery } from "@/hooks/useStorageLocationsQuery";
 import { StorageLocationResponseDto as StorageLocation } from "@/types/dto/storage-location";
 import { ReadGuard } from "@/components/auth/PermissionGuard";
 import { Button } from "@/components/ui/button";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export const EstoqueIcon = () => {
   const themeColor = "#D68910"; // Âmbar / Marrom
@@ -91,6 +92,12 @@ export default function EstoquePage() {
   const { activeProfile } = useProfile();
   const organizationId =
     activeProfile?.userOrganization?.organization?.id || "";
+  const {
+    loading: permissionsLoading,
+    permissions,
+    hasPermissionByCode,
+    getProfiles,
+  } = usePermissions();
   const [stats, setStats] = useState<StockStatistics | null>(null);
   const [carregandoStats, setCarregandoStats] = useState(true);
 
@@ -197,6 +204,35 @@ export default function EstoquePage() {
       carregarAlertas();
     }
   }, [organizationId]);
+
+  useEffect(() => {
+    if (permissionsLoading) return;
+    if (!activeProfile) return;
+
+    const profileNames = getProfiles().map((profile) => profile.name);
+    const stockPermissions = (permissions?.permissions ?? [])
+      .filter((permission) => permission.functionality?.code?.startsWith("STOCK:"))
+      .map((permission) => ({
+        code: permission.functionality?.code,
+        active: permission.active,
+      }));
+
+    // Logs de diagnóstico de permissão (remover após investigação).
+    console.groupCollapsed("[Estoque] Diagnóstico de acesso");
+    console.log("organizationId:", organizationId);
+    console.log("activeProfileId:", activeProfile.id);
+    console.log("profiles:", profileNames);
+    console.log("has STOCK:READ:", hasPermissionByCode("STOCK:READ"));
+    console.log("STOCK perms:", stockPermissions);
+    console.groupEnd();
+  }, [
+    activeProfile,
+    getProfiles,
+    hasPermissionByCode,
+    organizationId,
+    permissions,
+    permissionsLoading,
+  ]);
 
   useEffect(() => {
     if (organizationId) {

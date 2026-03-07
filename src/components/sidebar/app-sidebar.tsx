@@ -73,7 +73,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Função para verificar se o usuário tem permissão para acessar uma rota
   const hasPermissionForRoute = (url: string): boolean => {
     // Dashboard sempre visível
-    if (url === "/dashboard" || url === "#") return true;
+    if (url === "/dashboard" || url === "#" || url.startsWith("/convites")) {
+      return true;
+    }
 
     if (isGestor()) return true;
 

@@ -44,11 +44,13 @@ VALUES
 ((SELECT id FROM public.functionalities WHERE code = 'STOCK:READ'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'granted', true),
 ((SELECT id FROM public.functionalities WHERE code = 'STOCK:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'granted', true),
 ((SELECT id FROM public.functionalities WHERE code = 'DASHBOARD:STOCK'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'granted', true),
-
+((SELECT id FROM public.functionalities WHERE code = 'INVITES:READ'), (SELECT id FROM public.profiles WHERE name = 'Estoquista'), 'granted', true),
 -- Cozinheiro - Acesso apenas ao estoque
+
 ((SELECT id FROM public.functionalities WHERE code = 'STOCK:READ'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'granted', true),
 ((SELECT id FROM public.functionalities WHERE code = 'STOCK:WRITE'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'granted', true),
 ((SELECT id FROM public.functionalities WHERE code = 'DASHBOARD:KITCHEN'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'granted', true),
+((SELECT id FROM public.functionalities WHERE code = 'INVITES:READ'), (SELECT id FROM public.profiles WHERE name = 'Cozinheiro'), 'granted', true);
 
 -- Gestor - Acesso completo a todas as funcionalidades
 ((SELECT id FROM public.functionalities WHERE code = 'DASHBOARD:MANAGER'), (SELECT id FROM public.profiles WHERE name = 'Gestor'), 'granted', true),

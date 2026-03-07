@@ -1,11 +1,62 @@
 import { prisma } from "@/lib/prisma";
 import { permissions, profiles, functionalities } from "@prisma/client";
+import {
+  FunctionalityResponseDto,
+  PermissionResponseDto,
+  ProfileResponseDto,
+  UserPermissionsResponseDto,
+} from "@/types/dto/profile/response";
 
 /**
  * Backend service for permission management
  * Updated to use camelCase Prisma fields.
  */
 export class PermissionBackendService {
+  private mapProfileToDto(entity: profiles): ProfileResponseDto {
+    return {
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      active: entity.active ?? false,
+      createdAt: entity.createdAt?.toISOString() ?? new Date().toISOString(),
+    };
+  }
+
+  private mapFunctionalityToDto(
+    entity: functionalities,
+  ): FunctionalityResponseDto {
+    return {
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      code: entity.code,
+      active: entity.active ?? false,
+      createdAt: entity.createdAt?.toISOString() ?? new Date().toISOString(),
+    };
+  }
+
+  private mapPermissionToDto(
+    entity: permissions & {
+      functionalities?: functionalities | null;
+      profiles?: profiles | null;
+    },
+  ): PermissionResponseDto {
+    return {
+      id: entity.id,
+      functionalityId: entity.functionalityId,
+      profileId: entity.profileId,
+      action: entity.action,
+      active: entity.active ?? false,
+      createdAt: entity.createdAt?.toISOString() ?? new Date().toISOString(),
+      functionality: entity.functionalities
+        ? this.mapFunctionalityToDto(entity.functionalities)
+        : undefined,
+      profile: entity.profiles
+        ? this.mapProfileToDto(entity.profiles)
+        : undefined,
+    };
+  }
+
   /**
    * Checks if a user has permission for a specific action
    */
@@ -69,12 +120,7 @@ export class PermissionBackendService {
   async getUserPermissions(
     userId: string,
     organizationId: string,
-  ): Promise<{
-    userId: string;
-    organizationId: string;
-    permissions: permissions[];
-    profiles: profiles[];
-  } | null> {
+  ): Promise<UserPermissionsResponseDto | null> {
     const usuarioOrg = await prisma.user_organizations.findFirst({
       where: {
         userId,
@@ -113,8 +159,8 @@ export class PermissionBackendService {
     return {
       userId,
       organizationId,
-      permissions: perms,
-      profiles: userProfiles.map((up) => up.profiles),
+      permissions: perms.map((permission) => this.mapPermissionToDto(permission)),
+      profiles: userProfiles.map((up) => this.mapProfileToDto(up.profiles)),
     };
   }
 
@@ -150,7 +196,7 @@ export class PermissionBackendService {
     return funcs;
   }
 
-  async getPermissions(): Promise<permissions[]> {
+  async getPermissions(): Promise<PermissionResponseDto[]> {
     const perms = await prisma.permissions.findMany({
       where: { active: true },
       include: {
@@ -160,7 +206,7 @@ export class PermissionBackendService {
       orderBy: [{ functionalityId: "asc" }, { action: "asc" }],
     });
 
-    return perms;
+    return perms.map((permission) => this.mapPermissionToDto(permission));
   }
 
   /**

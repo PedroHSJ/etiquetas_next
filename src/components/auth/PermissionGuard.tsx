@@ -3,6 +3,7 @@
 import React from "react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { FunctionalityCodeType } from "@/types/models/functionality";
+import { Spinner } from "../ui/spinner";
 
 interface PermissionGuardProps {
   funcionalidade: string;
@@ -32,7 +33,14 @@ export function CodePermissionGuard({
   const { hasPermissionByCode, loading } = usePermissions();
 
   if (loading) {
-    return loadingFallback ? <>{loadingFallback}</> : null;
+    return loadingFallback ? (
+      <>{loadingFallback}</>
+    ) : (
+      <div className="flex flex-row gap-4 items-center justify-center p-4">
+        <Spinner className="" />
+        <p>Carregando...</p>
+      </div>
+    );
   }
 
   if (!hasPermissionByCode(code) && !loading) {
